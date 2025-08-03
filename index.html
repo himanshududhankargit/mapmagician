@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MapMagician - Professional GIS & Mapping Solutions</title>
+    <title>MapMagician - Professional GIS Applications</title>
     <style>
         * {
             margin: 0;
@@ -11,1043 +11,797 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #7c3aed;
+            --accent-color: #10b981;
+            --dark-bg: #111827;
+            --light-bg: #f3f4f6;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: var(--text-dark);
             overflow-x: hidden;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        /* Header */
-        header {
-            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-            color: white;
-            padding: 1rem 0;
+        /* Navigation */
+        nav {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             position: fixed;
             width: 100%;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
-        nav {
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .logo {
-            font-size: 1.8rem;
-            font-weight: bold;
             display: flex;
             align-items: center;
             gap: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
         }
 
-        .logo::before {
-            content: "🗺️";
-            font-size: 2rem;
+        .logo img {
+            width: 40px;
+            height: 40px;
         }
 
         .nav-links {
             display: flex;
-            list-style: none;
             gap: 2rem;
+            align-items: center;
         }
 
         .nav-links a {
-            color: white;
             text-decoration: none;
-            transition: color 0.3s ease;
+            color: var(--text-dark);
             font-weight: 500;
+            transition: color 0.3s;
         }
 
         .nav-links a:hover {
-            color: #f39c12;
+            color: var(--primary-color);
         }
 
         /* Hero Section */
         .hero {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: url('mapmagicianlogo.png') center left / contain no-repeat, 
+                        linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             padding: 120px 0 80px;
-            text-align: center;
+            color: var(--text-dark);
+            min-height: 70vh;
             position: relative;
-            overflow: hidden;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1.5" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="60" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="60" cy="80" r="2.5" fill="rgba(255,255,255,0.1)"/></svg>');
-            animation: float 20s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
         }
 
         .hero-content {
-            position: relative;
-            z-index: 2;
-        }
-
-        .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 1rem;
-            animation: slideInDown 1s ease-out;
-        }
-
-        .hero p {
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-            opacity: 0.9;
-            animation: slideInUp 1s ease-out 0.3s both;
-        }
-
-        @keyframes slideInDown {
-            from { opacity: 0; transform: translateY(-50px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideInUp {
-            from { opacity: 0; transform: translateY(50px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .cta-buttons {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
             display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            animation: fadeIn 1s ease-out 0.6s both;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 50px;
-            font-size: 1rem;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-            cursor: pointer;
+            min-height: 50vh;
         }
 
-        .btn-primary {
-            background: linear-gradient(45deg, #f39c12, #e67e22);
-            color: white;
-            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+        .hero-text {
+            flex: 1;
+            padding-left: 50%;
+            text-align: left;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(243, 156, 18, 0.4);
-        }
-
-        .btn-secondary {
-            background: rgba(255,255,255,0.1);
-            color: white;
-            border: 2px solid rgba(255,255,255,0.3);
-            backdrop-filter: blur(10px);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-2px);
-        }
-
-        /* App Showcase Section */
-        .app-showcase {
-            padding: 80px 0;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            color: #2c3e50;
-            position: relative;
-        }
-
-        .section-subtitle {
-            text-align: center;
-            font-size: 1.1rem;
-            color: #666;
-            margin-bottom: 3rem;
-        }
-
-        .section-title::after {
-            content: '';
-            width: 100px;
-            height: 4px;
-            background: linear-gradient(45deg, #3498db, #2c3e50);
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-radius: 2px;
-        }
-
-        .app-showcase-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 4rem;
-            margin-top: 4rem;
-        }
-
-        .app-showcase-item {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 3rem;
-            align-items: center;
-            background: white;
-            border-radius: 20px;
-            padding: 3rem;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-        }
-
-        .app-showcase-item:nth-child(even) {
-            direction: rtl;
-        }
-
-        .app-showcase-item:nth-child(even) > * {
-            direction: ltr;
-        }
-
-        .app-showcase-item:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-        }
-
-        .app-content h3 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            color: #2c3e50;
+        .hero-header {
             display: flex;
             align-items: center;
             gap: 15px;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease-out;
         }
 
-        .app-icon {
+        .hero-header img {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .hero-title {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hero-title h1 {
             font-size: 2.5rem;
-        }
-
-        .app-description {
-            font-size: 1.1rem;
-            color: #666;
-            margin-bottom: 2rem;
-            line-height: 1.8;
-        }
-
-        .app-features {
-            list-style: none;
-            margin-bottom: 2rem;
-        }
-
-        .app-features li {
-            padding: 0.7rem 0;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: #555;
-            font-size: 1rem;
-        }
-
-        .app-features li::before {
-            content: "✅";
-            font-size: 1.1rem;
-            flex-shrink: 0;
-        }
-
-        .app-visual {
-            position: relative;
-            min-height: 400px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 15px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .phone-mockup {
-            width: 200px;
-            height: 360px;
-            background: #333;
-            border-radius: 25px;
-            padding: 15px;
-            position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-
-        .phone-screen {
-            width: 100%;
-            height: 100%;
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .app-screenshot {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            color: #666;
-        }
-
-        .download-section {
-            margin-top: 2rem;
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .playstore-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: #34a853;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(52, 168, 83, 0.3);
-        }
-
-        .playstore-btn:hover {
-            background: #2d8f47;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(52, 168, 83, 0.4);
-        }
-
-        .demo-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: transparent;
-            color: #3498db;
-            padding: 12px 24px;
-            border: 2px solid #3498db;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .demo-btn:hover {
-            background: #3498db;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        /* Video Demo Section */
-        .video-section {
-            padding: 80px 0;
-            background: white;
-        }
-
-        .video-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 3rem;
-            margin-top: 3rem;
-        }
-
-        .video-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
-            padding: 2rem;
-            color: white;
-            text-align: center;
-        }
-
-        .video-placeholder {
-            width: 100%;
-            height: 250px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px dashed rgba(255,255,255,0.3);
-        }
-
-        .video-placeholder:hover {
-            background: rgba(255,255,255,0.2);
-            border-color: rgba(255,255,255,0.6);
-        }
-
-        .video-placeholder .play-icon {
-            font-size: 4rem;
-            opacity: 0.8;
-        }
-
-        .video-title {
-            font-size: 1.3rem;
             margin-bottom: 0.5rem;
+            color: var(--primary-color);
+            font-weight: 700;
         }
 
-        .video-description {
-            opacity: 0.9;
-            line-height: 1.6;
+        .hero-title p {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            margin: 0;
         }
 
-        /* Coverage Section */
-        .coverage-section {
-            padding: 80px 0;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        .hero-description {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            color: var(--text-light);
+            animation: fadeInUp 0.8s ease-out 0.2s;
+            animation-fill-mode: both;
+            line-height: 1.7;
         }
 
-        .coverage-intro {
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Screenshots section moved below hero */
+        .screenshots-section {
+            background: white;
+            padding: 60px 0;
+        }
+
+        .screenshots-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            padding: 0 40px;
+        }
+
+        .screenshots-title {
             text-align: center;
             margin-bottom: 3rem;
         }
 
-        .coverage-intro p {
-            font-size: 1.1rem;
-            color: #666;
-            margin-top: 1rem;
-        }
-
-        .coverage-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
-            margin-bottom: 4rem;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .stat-number {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #3498db;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            font-size: 1.1rem;
-            color: #666;
-        }
-
-        .coverage-regions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-
-        .region-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .region-card h4 {
-            color: #2c3e50;
+        .screenshots-title h2 {
+            font-size: 2.2rem;
+            color: var(--text-dark);
             margin-bottom: 1rem;
-            font-size: 1.3rem;
+        }
+
+        .screenshots-title p {
+            font-size: 1.1rem;
+            color: var(--text-light);
+        }
+
+        .screenshots {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding: 1rem 0;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-color) #e5e7eb;
+        }
+
+        .screenshots::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .screenshots::-webkit-scrollbar-track {
+            background: #e5e7eb;
+            border-radius: 4px;
+        }
+
+        .screenshots::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .screenshot {
+            flex: 0 0 auto;
+            width: auto;
+            height: 650px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .screenshot:hover {
+            transform: scale(1.02);
+        }
+
+        .screenshot img {
+            height: 100%;
+            width: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        /* Scroll buttons */
+        .scroll-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: center;
+            z-index: 10;
+            transition: background-color 0.3s;
         }
 
-        .region-list {
-            color: #666;
-            line-height: 1.8;
+        .scroll-button:hover {
+            background-color: var(--primary-color);
+            color: white;
         }
 
-        /* Features Section */
-        .features-section {
+        .scroll-button.prev {
+            left: 0;
+        }
+
+        .scroll-button.next {
+            right: 0;
+        }
+
+        .scroll-button svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* App Sections */
+        .app-section {
             padding: 80px 0;
             background: white;
         }
 
+        .app-section:nth-child(even) {
+            background: var(--light-bg);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .app-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 3rem;
+        }
+
+        .app-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .app-title h2 {
+            font-size: 2.5rem;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .app-title p {
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        .disclaimer {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            color: #92400e;
+        }
+
+        .disclaimer strong {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Features Grid */
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 2rem;
-            margin-top: 3rem;
+            margin: 3rem 0;
         }
 
         .feature-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2.5rem;
-            border-radius: 20px;
-            text-align: center;
-            transition: all 0.3s ease;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
         }
 
         .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
         }
 
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .feature-card h4 {
-            font-size: 1.5rem;
+        .feature-card h3 {
+            color: var(--primary-color);
             margin-bottom: 1rem;
         }
 
-        .feature-card p {
-            opacity: 0.9;
-            line-height: 1.7;
+        .feature-card p, .feature-card ul {
+            color: var(--text-light);
+            text-align: justify;
+            line-height: 1.8;
+        }
+
+        /* Video Section */
+        .video-container {
+            margin: 3rem 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .video-container iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
+        }
+
+        /* Coverage */
+        .coverage {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            padding: 3rem;
+            border-radius: 12px;
+            margin: 3rem 0;
+        }
+
+        .coverage h3 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            color: var(--text-dark);
+        }
+
+        .coverage-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .coverage-category {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .coverage-category h4 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .coverage-category ul {
+            list-style: none;
+            color: var(--text-light);
+        }
+
+        .coverage-category li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        /* CTA Section */
+        .cta {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 4rem 0;
+            text-align: center;
+            margin-top: 4rem;
+        }
+
+        .cta h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: var(--primary-color);
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-top: 1rem;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Coming Soon */
+        .coming-soon {
+            text-align: center;
+            padding: 4rem;
+            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+            border-radius: 12px;
+            margin: 3rem 0;
+        }
+
+        .coming-soon h3 {
+            font-size: 2rem;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
         }
 
         /* Footer */
         footer {
-            background: #2c3e50;
+            background: var(--dark-bg);
             color: white;
-            padding: 3rem 0 1rem;
-        }
-
-        .footer-content {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .footer-section h3 {
-            margin-bottom: 1rem;
-            color: #3498db;
-        }
-
-        .footer-section p, .footer-section a {
-            color: #bdc3c7;
-            text-decoration: none;
-            line-height: 1.8;
-        }
-
-        .footer-section a:hover {
-            color: white;
-        }
-
-        .footer-bottom {
-            border-top: 1px solid #34495e;
-            padding-top: 1rem;
-            margin-top: 2rem;
+            padding: 3rem 0;
             text-align: center;
         }
 
-        .disclaimer {
-            background: #e74c3c;
-            color: white;
-            padding: 1rem 0;
-            text-align: center;
-            font-weight: 600;
+        footer p {
+            opacity: 0.8;
         }
 
-        /* Responsive Design */
+        /* Responsive */
         @media (max-width: 768px) {
+            .hero {
+                background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+                padding: 120px 0 60px;
+            }
+
+            .hero-text {
+                padding-left: 0;
+                text-align: center;
+            }
+
+            .hero-title h1 {
+                font-size: 2rem;
+            }
+
             .nav-links {
                 display: none;
             }
-            
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-            
-            .app-showcase-item {
-                grid-template-columns: 1fr;
+
+            .app-header {
+                flex-direction: column;
                 text-align: center;
             }
-            
-            .app-showcase-item:nth-child(even) {
-                direction: ltr;
-            }
-            
-            .cta-buttons {
-                flex-direction: column;
-                align-items: center;
+
+            .video-container iframe {
+                height: 300px;
             }
 
-            .video-grid {
-                grid-template-columns: 1fr;
+            .screenshots-container {
+                padding: 0 20px;
             }
 
-            .phone-mockup {
-                width: 150px;
-                height: 270px;
+            .screenshot {
+                width: auto;
+                height: 540px;
             }
-        }
 
-        /* Scroll animations */
-        .fade-in {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.6s ease;
-        }
-
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Modal for image gallery */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 10000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.9);
-        }
-
-        .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            max-width: 90%;
-            max-height: 90%;
-        }
-
-        .close {
-            position: absolute;
-            top: 15px;
-            right: 35px;
-            color: #f1f1f1;
-            font-size: 40px;
-            font-weight: bold;
-            cursor: pointer;
+            .scroll-button {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="disclaimer">
-        🚫 INDEPENDENT APP - NOT AFFILIATED WITH ANY GOVERNMENT AUTHORITY 🚫
-    </div>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo">
+                <img src="AssetsGIS/image-1.png" alt="MapMagician Logo">
+                MapMagician
+            </div>
+            <div class="nav-links" style="flex: 1; margin: 0 2rem;">
+                <div style="display: flex; align-items: center; gap: 15px; background: var(--primary-color); color: white; padding: 8px 20px; border-radius: 25px;">
+                    <img src="AssetsGIS/image-1.png" alt="Development Plan GIS" style="width: 30px; height: 30px;">
+                    <span style="font-weight: 600;">Development Plan GIS</span>
+                </div>
+            </div>
+            <div class="nav-links">
+                <a href="#gis-info">About GIS</a>
+                <a href="#overlayr">Overlayr</a>
+                <a href="#contact">Contact</a>
+            </div>
+        </div>
+    </nav>
 
-    <header>
-        <nav class="container">
-            <div class="logo">MapMagician</div>
-            <ul class="nav-links">
-                <li><a href="#home">Home</a></li>
-                <li><a href="#apps">Apps</a></li>
-                <li><a href="#videos">Demos</a></li>
-                <li><a href="#coverage">Coverage</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <section id="home" class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <h1>Professional GIS & Mapping Solutions</h1>
-                <p>Transforming mobile GIS with innovative apps for real estate developers, urban planners, and GIS professionals</p>
-                <div class="cta-buttons">
-                    <a href="#apps" class="btn btn-primary">🚀 Explore Our Apps</a>
-                    <a href="#videos" class="btn btn-secondary">🎥 Watch Demos</a>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <div class="hero-header">
+                    <img src="AssetsGIS/image-1.png" alt="Development Plan GIS Icon">
+                    <div class="hero-title">
+                        <h1>Development Plan GIS</h1>
+                        <p>Interactive GIS Platform for Urban Development Plans</p>
+                    </div>
+                </div>
+                <div class="hero-description">
+                    Explore development plans and custom maps with cutting-edge GIS technology. 
+                    Access comprehensive development plans for 157+ locations across India with 
+                    satellite imagery overlay and precision measurement tools.
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="apps" class="app-showcase">
-        <div class="container">
-            <h2 class="section-title fade-in">Our Professional Apps</h2>
-            <p class="section-subtitle fade-in">Cutting-edge mobile GIS solutions trusted by professionals across India</p>
+    <!-- Screenshots Section -->
+    <section class="screenshots-section">
+        <div class="screenshots-container">
+            <div class="screenshots-title">
+                <h2>See the App in Action</h2>
+                <p>Explore our comprehensive GIS platform through these interactive screenshots</p>
+            </div>
             
-            <div class="app-showcase-grid">
-                <!-- Development Plans GIS -->
-                <div class="app-showcase-item fade-in">
-                    <div class="app-content">
-                        <h3><span class="app-icon">🏗️</span>Development Plans GIS</h3>
-                        <p class="app-description">
-                            Interactive GIS platform that overlays official government development plans on high-resolution satellite imagery. Essential tool for real estate professionals, urban planners, and investors across 157+ locations in Maharashtra, Hyderabad, and Bengaluru.
-                        </p>
-                        
-                        <ul class="app-features">
-                            <li><strong>157+ locations</strong> across Maharashtra, Hyderabad & Bengaluru</li>
-                            <li><strong>Satellite imagery overlay</strong> with development plans</li>
-                            <li><strong>Measurement tools</strong> for area and distance calculation</li>
-                            <li><strong>Zone classification</strong> (residential, commercial, industrial)</li>
-                            <li><strong>Development potential analysis</strong> for investment decisions</li>
-                            <li><strong>Official data sources</strong> from government planning departments</li>
-                        </ul>
-                        
-                        <div class="download-section">
-                            <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en" class="playstore-btn" target="_blank">
-                                📱 Download on Play Store
-                            </a>
-                            <a href="#development-plans-demo" class="demo-btn">
-                                🎥 Watch Demo
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <div class="app-visual">
-                        <div class="phone-mockup">
-                            <div class="phone-screen">
-                                <div class="app-screenshot">🗺️</div>
-                            </div>
-                        </div>
-                    </div>
+            <button class="scroll-button prev" onclick="scrollScreenshots('left')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg>
+            </button>
+            <div class="screenshots" id="screenshotsContainer">
+                <div class="screenshot">
+                    <img src="AssetsGIS/demo-animation.gif" alt="App Demo Animation">
                 </div>
-
-                <!-- Overlayr -->
-                <div class="app-showcase-item fade-in">
-                    <div class="app-content">
-                        <h3><span class="app-icon">📐</span>Overlayr - Professional Georeferencing</h3>
-                        <p class="app-description">
-                            Transform your maps, site plans, and scanned images into georeferenced overlays on satellite imagery. Brings desktop-grade precision to your Android device for surveyors, GIS experts, and field professionals.
-                        </p>
-                        
-                        <ul class="app-features">
-                            <li><strong>Precision georeferencing</strong> with magnified control points</li>
-                            <li><strong>Real-time overlay transformation</strong> with live preview</li>
-                            <li><strong>Professional export formats</strong> (KMZ for GIS software)</li>
-                            <li><strong>Multiple file support</strong> (JPG, PNG, PDF)</li>
-                            <li><strong>Offline capability</strong> for field work</li>
-                            <li><strong>Area & distance measurements</strong> in multiple units</li>
-                        </ul>
-                        
-                        <div class="download-section">
-                            <a href="https://play.google.com/store/apps/details?id=com.himanshu.overlayr&hl=en" class="playstore-btn" target="_blank">
-                                📱 Download on Play Store
-                            </a>
-                            <a href="#overlayr-demo" class="demo-btn">
-                                🎥 Watch Demo
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <div class="app-visual">
-                        <div class="phone-mockup">
-                            <div class="phone-screen">
-                                <div class="app-screenshot">📐</div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="screenshot">
+                    <img src="AssetsGIS/image-2.png" alt="Georeferenced Plans Over Satellite Imagery">
+                </div>
+                <div class="screenshot">
+                    <img src="AssetsGIS/image-3.png" alt="Custom Markers and Area Measurement">
+                </div>
+                <div class="screenshot">
+                    <img src="AssetsGIS/image-4.png" alt="Download Development Plans">
+                </div>
+                <div class="screenshot">
+                    <img src="AssetsGIS/image-5.png" alt="Part Development Plan View">
+                </div>
+                <div class="screenshot">
+                    <img src="AssetsGIS/image-6.png" alt="Main Menu Interface">
+                </div>
+                <div class="screenshot">
+                    <img src="AssetsGIS/image-7.png" alt="Maharashtra Districts Selection">
+                </div>
+                <div class="screenshot">
+                    <img src="AssetsGIS/image-8.png" alt="Multiple Village Plans View">
+                </div>
+                <div class="screenshot">
+                    <img src="AssetsGIS/image-9.png" alt="Village Plan with Survey Numbers">
                 </div>
             </div>
+            <button class="scroll-button next" onclick="scrollScreenshots('right')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 18l6-6-6-6" />
+                </svg>
+            </button>
         </div>
     </section>
 
-    <section id="videos" class="video-section">
+    <!-- GIS Introduction Section -->
+    <section id="gis-info" class="app-section">
         <div class="container">
-            <h2 class="section-title fade-in">App Demonstrations</h2>
-            <p class="section-subtitle fade-in">See our apps in action with these detailed video demonstrations</p>
-            
-            <div class="video-grid">
-                <div class="video-card fade-in" id="development-plans-demo">
-                    <div class="video-placeholder" onclick="openVideoModal('dp-video')">
-                        <span class="play-icon">▶️</span>
-                    </div>
-                    <h3 class="video-title">Development Plans GIS Demo</h3>
-                    <p class="video-description">
-                        Learn how to overlay development plans on satellite imagery, measure areas, and analyze zoning for real estate investment decisions.
-                    </p>
-                </div>
-                
-                <div class="video-card fade-in" id="overlayr-demo">
-                    <div class="video-placeholder" onclick="openVideoModal('overlayr-video')">
-                        <span class="play-icon">▶️</span>
-                    </div>
-                    <h3 class="video-title">Overlayr Professional Tutorial</h3>
-                    <p class="video-description">
-                        Step-by-step tutorial on georeferencing maps and images with precision, perfect for surveyors and GIS professionals.
-                    </p>
-                </div>
-            </div>
-            
-            <div style="text-align: center; margin-top: 3rem;" class="fade-in">
-                <p style="background: #f8f9fa; padding: 2rem; border-radius: 15px; border-left: 5px solid #3498db;">
-                    <strong>📹 Video Integration Instructions:</strong><br>
-                    Replace the video placeholders above with your actual app demonstration videos from the Play Store. 
-                    You can embed YouTube videos, upload MP4 files, or link to your promotional content.
-                </p>
-            </div>
-        </div>
-    </section>
-
-    <section class="features-section">
-        <div class="container">
-            <h2 class="section-title fade-in">Why Choose MapMagician Apps?</h2>
+            <h2 style="text-align: center; margin-bottom: 2rem; color: var(--text-dark);">What is GIS and How Does It Work?</h2>
             
             <div class="features-grid">
-                <div class="feature-card fade-in">
-                    <span class="feature-icon">🎯</span>
-                    <h4>Professional Accuracy</h4>
-                    <p>Desktop-grade precision in mobile apps, trusted by thousands of professionals for critical decision-making.</p>
+                <div class="feature-card">
+                    <h3>🌍 Geographic Information System</h3>
+                    <p>GIS is a powerful technology that combines maps with data to help you visualize, analyze, and understand geographic information. It creates smart maps that show relationships, patterns, and trends in your data.</p>
                 </div>
-                
-                <div class="feature-card fade-in">
-                    <span class="feature-icon">📱</span>
-                    <h4>Mobile-First Design</h4>
-                    <p>Intuitive interfaces designed specifically for field work and on-the-go GIS analysis.</p>
+                <div class="feature-card">
+                    <h3>🛰️ Satellite Imagery Overlay</h3>
+                    <p>Our app overlays official development plans directly onto Google satellite imagery, allowing you to see exactly how planned developments relate to the current landscape and existing structures.</p>
                 </div>
-                
-                <div class="feature-card fade-in">
-                    <span class="feature-icon">🔄</span>
-                    <h4>Regular Updates</h4>
-                    <p>Continuous improvements with new features, bug fixes, and expanded coverage areas.</p>
+                <div class="feature-card">
+                    <h3>📍 GPS Integration</h3>
+                    <p>Using your phone's GPS and survey numbers, the app provides precise location understanding, helping you identify exactly where you are standing in relation to development zones and plans.</p>
                 </div>
-                
-                <div class="feature-card fade-in">
-                    <span class="feature-icon">🛡️</span>
-                    <h4>Data Privacy</h4>
-                    <p>Your data stays on your device. We never access personal files without explicit permission.</p>
+            </div>
+
+            <h3 style="margin: 3rem 0 2rem; color: var(--text-dark);">Key Use Cases for Professionals</h3>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>📊 For Valuers</h3>
+                    <ul style="list-style: none; padding: 0; color: var(--text-light);">
+                        <li>• Understand property zoning and surrounding land use</li>
+                        <li>• Identify potential future developments affecting property value</li>
+                        <li>• Locate survey numbers and find adjacent property information</li>
+                        <li>• Analyze location data, amenities access, and reservations</li>
+                    </ul>
                 </div>
-                
-                <div class="feature-card fade-in">
-                    <span class="feature-icon">🌐</span>
-                    <h4>Offline Capability</h4>
-                    <p>Work in the field without internet connectivity. Perfect for remote surveys and field work.</p>
+                <div class="feature-card">
+                    <h3>🏗️ For Developers</h3>
+                    <ul style="list-style: none; padding: 0; color: var(--text-light);">
+                        <li>• View comprehensive development plans on satellite imagery</li>
+                        <li>• Assess development potential of specific land parcels</li>
+                        <li>• Understand surrounding proposed developments</li>
+                        <li>• Make informed decisions with real-time GPS data</li>
+                    </ul>
                 </div>
-                
-                <div class="feature-card fade-in">
-                    <span class="feature-icon">🤝</span>
-                    <h4>Professional Support</h4>
-                    <p>Dedicated support for professional users with comprehensive documentation and tutorials.</p>
+                <div class="feature-card">
+                    <h3>🏛️ For Urban Planners</h3>
+                    <ul style="list-style: none; padding: 0; color: var(--text-light);">
+                        <li>• Access development plans of various cities in one place</li>
+                        <li>• Compare planned growth across different urban areas</li>
+                        <li>• Evaluate feasibility of development projects</li>
+                        <li>• Understand the evolution of urban areas over time</li>
+                    </ul>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="coverage" class="coverage-section">
+    <!-- Development Plan GIS Section -->
+    <section id="development-plan" class="app-section">
         <div class="container">
-            <div class="coverage-intro fade-in">
-                <h2 class="section-title">Comprehensive Coverage</h2>
-                <p>Development Plans GIS covers major urban centers and growth regions across India</p>
-            </div>
-            
-            <div class="coverage-stats">
-                <div class="stat-card fade-in">
-                    <div class="stat-number">157+</div>
-                    <div class="stat-label">Total Locations</div>
-                </div>
-                <div class="stat-card fade-in">
-                    <div class="stat-number">54+</div>
-                    <div class="stat-label">Pune Region</div>
-                </div>
-                <div class="stat-card fade-in">
-                    <div class="stat-number">30+</div>
-                    <div class="stat-label">Hyderabad HMDA</div>
-                </div>
-                <div class="stat-card fade-in">
-                    <div class="stat-number">15+</div>
-                    <div class="stat-label">Solapur District</div>
+            <div class="app-header">
+                <img src="AssetsGIS/image-1.png" alt="Development Plan GIS" class="app-icon">
+                <div class="app-title">
+                    <h2>Development Plan GIS</h2>
+                    <p>Interactive GIS Platform for Urban Development Plans</p>
                 </div>
             </div>
 
-            <div class="coverage-regions">
-                <div class="region-card fade-in">
-                    <h4>🟠 Maharashtra (120+ Locations)</h4>
-                    <div class="region-list">
-                        <strong>Pune Region (54+):</strong> Pune, Pimpri Chinchwad, Hinjewadi IT Park, Chakan, Baramati, Lonavala<br><br>
-                        <strong>Mumbai Metropolitan:</strong> Navi Mumbai, Thane, Kalyan, Vasai-Virar, Panvel<br><br>
-                        <strong>Other Major Cities:</strong> Nashik, Aurangabad, Solapur, Kolhapur, Sangli, Ahmednagar
-                    </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>🌐 Interactive GIS Platform</h3>
+                    <p>Satellite imagery overlay with high-resolution maps for visualizing development plans</p>
                 </div>
-                
-                <div class="region-card fade-in">
-                    <h4>🔵 Hyderabad HMDA (30+ Locations)</h4>
-                    <div class="region-list">
-                        <strong>Key Areas:</strong> Bibinagar, Ghatkesar, Medchal, Shamshabad, Chevella, Sangareddy<br><br>
-                        <strong>IT Corridors:</strong> Gachibowli vicinity, Madhapur periphery, Hitec City extensions<br><br>
-                        <strong>Growth Centers:</strong> Patancheruvu, Maheshwaram, Hayathnagar
-                    </div>
+                <div class="feature-card">
+                    <h3>📏 Measurement Tools</h3>
+                    <p>Calculate area and distance directly on interactive maps with precision</p>
                 </div>
-                
-                <div class="region-card fade-in">
-                    <h4>🟢 Bengaluru (Complete Coverage)</h4>
-                    <div class="region-list">
-                        <strong>Silicon Valley of India:</strong> Complete BDA/BMRDA Revised Master Plan 2031 coverage<br><br>
-                        <strong>IT Hubs:</strong> Electronic City, Whitefield, Sarjapur, Outer Ring Road<br><br>
-                        <strong>Growth Areas:</strong> All major development zones and IT corridors
+                <div class="feature-card">
+                    <h3>🏢 Zone Classification</h3>
+                    <p>View residential, commercial, industrial, and special zones at a glance</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📊 Development Analysis</h3>
+                    <p>Essential for real estate developers, valuers, investors, and urban planners</p>
+                </div>
+            </div>
+
+            <div class="video-container">
+                <iframe src="https://www.youtube.com/embed/wXzAkViLXZ4" 
+                        title="Development Plan GIS Demo" 
+                        allowfullscreen>
+                </iframe>
+            </div>
+
+            <div class="coverage">
+                <h3>📍 Comprehensive Coverage - 157+ Locations</h3>
+                <div class="coverage-grid">
+                    <div class="coverage-category">
+                        <h4>🏙️ Metropolitan Cities & IT Hubs</h4>
+                        <ul>
+                            <li><strong>Hyderabad HMDA (30+ locations)</strong></li>
+                            <li>Bibinagar, Ghatkesar, Medchal, Shamshabad</li>
+                            <li>Chevella, Sangareddy, Patancheruvu</li>
+                            <li>Maheshwaram, Hayathnagar, Pochampalli</li>
+                            <li><strong>Bengaluru City</strong></li>
+                            <li>Complete development plan coverage</li>
+                        </ul>
+                    </div>
+                    <div class="coverage-category">
+                        <h4>🟠 Maharashtra Districts</h4>
+                        <ul>
+                            <li><strong>Pune Region (54+ locations)</strong></li>
+                            <li>Pune, Pimpri Chinchwad, Baramati, Lonavala</li>
+                            <li>Hinjewadi IT Park, Chakan, Alandi, Talegaon</li>
+                            <li><strong>Mumbai Metropolitan Region</strong></li>
+                            <li>Navi Mumbai, Thane, Vasai-Virar, Panvel</li>
+                            <li><strong>Solapur District (15 towns)</strong></li>
+                        </ul>
+                    </div>
+                    <div class="coverage-category">
+                        <h4>🟢 Western & Other Regions</h4>
+                        <ul>
+                            <li><strong>Western Maharashtra</strong></li>
+                            <li>Satara, Sangli, Ahmednagar, Nashik</li>
+                            <li><strong>Marathwada Region</strong></li>
+                            <li>Latur, Osmanabad, Aurangabad</li>
+                            <li><strong>Individual Cities</strong></li>
+                            <li>Kolhapur, Nagpur, Amravati, Jalgaon</li>
+                        </ul>
                     </div>
                 </div>
             </div>
 
-            <div style="margin-top: 3rem; text-align: center;" class="fade-in">
-                <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-                    <h3 style="color: #2c3e50; margin-bottom: 1rem;">📊 Data Sources</h3>
-                    <p style="color: #666; line-height: 1.8;">
-                        All development plans are sourced from official government websites:<br>
-                        • Maharashtra Directorate of Town Planning<br>
-                        • Hyderabad HMDA Master Plan 2031<br>
-                        • Bengaluru BDA/BMRDA Revised Master Plan 2031
-                    </p>
-                </div>
+            <div class="cta">
+                <h2>Get Development Plan GIS Today</h2>
+                <p>Access development plans for 157+ locations across India</p>
+                <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en" 
+                   class="cta-button" 
+                   target="_blank">
+                    Download on Google Play
+                </a>
             </div>
         </div>
     </section>
 
-    <section class="app-screenshots-section" style="padding: 80px 0; background: white;">
+    <!-- Overlayr Section (Placeholder) -->
+    <section id="overlayr" class="app-section">
         <div class="container">
-            <h2 class="section-title fade-in">App Screenshots Gallery</h2>
-            <p class="section-subtitle fade-in">Explore the user interface and features of our professional GIS apps</p>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 3rem;">
-                <div class="screenshot-placeholder fade-in" onclick="openImageModal('dp-screenshot-1')" style="height: 500px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.3s ease;">
-                    <div style="text-align: center; color: white;">
-                        <div style="font-size: 4rem; margin-bottom: 1rem;">📱</div>
-                        <h4>Development Plans GIS</h4>
-                        <p>Main Interface Screenshot</p>
-                        <small style="opacity: 0.8;">Click to view full size</small>
-                    </div>
-                </div>
-                
-                <div class="screenshot-placeholder fade-in" onclick="openImageModal('dp-screenshot-2')" style="height: 500px; background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); border-radius: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.3s ease;">
-                    <div style="text-align: center; color: white;">
-                        <div style="font-size: 4rem; margin-bottom: 1rem;">🗺️</div>
-                        <h4>Satellite Overlay View</h4>
-                        <p>Development Plans on Maps</p>
-                        <small style="opacity: 0.8;">Click to view full size</small>
-                    </div>
-                </div>
-                
-                <div class="screenshot-placeholder fade-in" onclick="openImageModal('overlayr-screenshot-1')" style="height: 500px; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); border-radius: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.3s ease;">
-                    <div style="text-align: center; color: white;">
-                        <div style="font-size: 4rem; margin-bottom: 1rem;">📐</div>
-                        <h4>Overlayr Interface</h4>
-                        <p>Georeferencing Tools</p>
-                        <small style="opacity: 0.8;">Click to view full size</small>
-                    </div>
+            <div class="app-header">
+                <img src="AssetsGIS/image-1.png" alt="Overlayr" class="app-icon">
+                <div class="app-title">
+                    <h2>Overlayr - Over Custom Map</h2>
+                    <p>Custom Map Overlay Solutions</p>
                 </div>
             </div>
-            
-            <div style="background: #f8f9fa; padding: 2rem; border-radius: 15px; margin-top: 3rem; border-left: 5px solid #3498db;" class="fade-in">
-                <h4 style="color: #2c3e50; margin-bottom: 1rem;">📸 Screenshot Integration Instructions:</h4>
-                <p style="color: #666; line-height: 1.8;">
-                    Replace the placeholder images above with actual screenshots from your Play Store listing. 
-                    You can download high-resolution images directly from your Google Play Console and upload them here. 
-                    Each placeholder can be replaced with multiple screenshots showing different features of your apps.
-                </p>
+
+            <div class="coming-soon">
+                <h3>Coming Soon!</h3>
+                <p>Our next-generation custom map overlay application is currently in development.</p>
+                <p>Stay tuned for powerful features including custom map imports, advanced layering, and more!</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>🗺️ Custom Map Import</h3>
+                    <p>Import and overlay your own custom maps on satellite imagery</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📐 Advanced Layering</h3>
+                    <p>Multiple layer support with opacity controls and blending modes</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🎨 Annotation Tools</h3>
+                    <p>Draw, measure, and annotate directly on your custom maps</p>
+                </div>
+                <div class="feature-card">
+                    <h3>💾 Project Management</h3>
+                    <p>Save and organize multiple map projects with ease</p>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Modal for images and videos -->
-    <div id="imageModal" class="modal">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <div class="modal-content">
-            <img id="modalImage" style="width: 100%; height: auto;">
-        </div>
-    </div>
-
-    <div id="videoModal" class="modal">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <div class="modal-content">
-            <div id="modalVideo" style="width: 100%; height: 80vh; background: #000; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white;">
-                <div style="text-align: center;">
-                    <h3>Video Player Placeholder</h3>
-                    <p>Embed your actual app demonstration videos here</p>
-                    <p style="opacity: 0.8; margin-top: 1rem;">
-                        You can use YouTube embeds, Vimeo, or direct MP4 files
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <!-- Footer -->
     <footer id="contact">
         <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>🗺️ MapMagician</h3>
-                    <p>Developing innovative GIS and mapping solutions for professionals. Transforming how you visualize and analyze spatial data on mobile devices.</p>
-                    <p style="margin-top: 1rem;">
-                        <strong>🚫 Independent Developer Notice:</strong><br>
-                        Not affiliated with any government authority. All data sourced from public government websites for reference only.
-                    </p>
-                </div>
-                
-                <div class="footer-section">
-                    <h3>📱 Our Professional Apps</h3>
-                    <p><a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en" target="_blank">Development Plans GIS - 157+ Locations</a></p>
-                    <p><a href="https://play.google.com/store/apps/details?id=com.himanshu.overlayr&hl=en" target="_blank">Overlayr - Professional Georeferencing</a></p>
-                    <p style="margin-top: 1rem;">
-                        <strong>Total Downloads:</strong> 10,000+ users<br>
-                        <strong>User Rating:</strong> Professional Grade<br>
-                        <strong>Support:</strong> Regular updates & improvements
-                    </p>
-                </div>
-                
-                <div class="footer-section">
-                    <h3>🎯 For Professionals</h3>
-                    <p>✅ Real Estate Developers & Investors</p>
-                    <p>✅ Urban Planners & Architects</p>
-                    <p>✅ GIS Professionals & Analysts</p>
-                    <p>✅ Surveyors & Land Valuers</p>
-                    <p>✅ Construction Project Managers</p>
-                    <p>✅ Environmental Consultants</p>
-                </div>
-                
-                <div class="footer-section">
-                    <h3>📊 Coverage Highlights</h3>
-                    <p><strong>Maharashtra:</strong> Mumbai, Pune, Nashik, Aurangabad</p>
-                    <p><strong>Hyderabad:</strong> HMDA Periphery (30+ locations)</p>
-                    <p><strong>Bengaluru:</strong> Complete Master Plan Coverage</p>
-                    <p style="margin-top: 1rem;">
-                        <strong>Data Sources:</strong><br>
-                        Official government planning departments<br>
-                        Updated development plans & zoning maps
-                    </p>
-                </div>
+            <div class="disclaimer" style="background: rgba(254, 243, 199, 0.2); border-color: rgba(245, 158, 11, 0.3); margin-bottom: 2rem; max-width: 800px; margin-left: auto; margin-right: auto;">
+                <strong>THIS IS NOT A GOVERNMENT APP</strong>
+                This app is developed by an independent third party and has NO affiliation with any government authority. 
+                Information shown is sourced from public government websites and is for reference only. 
+                Do NOT use for legal or official decisions.
             </div>
-            
-            <div class="footer-bottom">
-                <p>&copy; 2025 MapMagician. All rights reserved. | Developing Innovative GIS Apps</p>
-                <p style="margin-top: 0.5rem; font-size: 0.9rem; opacity: 0.8;">
-                    🏢 Professional mobile GIS solutions • 📱 Available on Google Play Store • 🔄 Regular updates & new features
-                </p>
-            </div>
+            <p>&copy; 2024 MapMagician.in - Professional GIS Applications</p>
+            <p>Developed by Independent Third Party | Contact: haxydeveloper@gmail.com</p>
         </div>
     </footer>
 
@@ -1056,115 +810,49 @@
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-
-        // Scroll animations
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, observerOptions);
-
-        // Observe all fade-in elements
-        document.querySelectorAll('.fade-in').forEach(el => {
-            observer.observe(el);
-        });
-
-        // Header background on scroll
-        window.addEventListener('scroll', () => {
-            const header = document.querySelector('header');
-            if (window.scrollY > 100) {
-                header.style.background = 'rgba(44, 62, 80, 0.95)';
-                header.style.backdropFilter = 'blur(10px)';
-            } else {
-                header.style.background = 'linear-gradient(135deg, #2c3e50 0%, #3498db 100%)';
-                header.style.backdropFilter = 'none';
-            }
-        });
-
-        // Screenshot hover effects
-        document.querySelectorAll('.screenshot-placeholder').forEach(placeholder => {
-            placeholder.addEventListener('mouseenter', function() {
-                this.style.transform = 'scale(1.05)';
-            });
-            
-            placeholder.addEventListener('mouseleave', function() {
-                this.style.transform = 'scale(1)';
-            });
-        });
-
-        // Modal functions
-        function openImageModal(imageId) {
-            const modal = document.getElementById('imageModal');
-            const modalImg = document.getElementById('modalImage');
-            
-            // Here you would set the actual image source
-            // modalImg.src = 'path/to/your/screenshot/' + imageId + '.jpg';
-            
-            modal.style.display = 'block';
-            document.body.style.overflow = 'hidden';
-            
-            // Placeholder for now
-            modalImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjgwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkFwcCBTY3JlZW5zaG90IFBsYWNlaG9sZGVyPC90ZXh0Pjwvc3ZnPg==';
-        }
-
-        function openVideoModal(videoId) {
-            const modal = document.getElementById('videoModal');
-            modal.style.display = 'block';
-            document.body.style.overflow = 'hidden';
-            
-            // Here you would embed your actual video
-            // For example, YouTube embed or direct video element
-        }
-
-        function closeModal() {
-            document.getElementById('imageModal').style.display = 'none';
-            document.getElementById('videoModal').style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-
-        // Close modal when clicking outside
-        window.addEventListener('click', function(event) {
-            const imageModal = document.getElementById('imageModal');
-            const videoModal = document.getElementById('videoModal');
-            
-            if (event.target === imageModal) {
-                closeModal();
-            }
-            if (event.target === videoModal) {
-                closeModal();
-            }
-        });
-
-        // Add some interactive features
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add loading animation to download buttons
-            document.querySelectorAll('.playstore-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const originalText = this.innerHTML;
-                    this.innerHTML = '⏳ Opening Play Store...';
-                    
-                    setTimeout(() => {
-                        this.innerHTML = originalText;
-                    }, 2000);
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
                 });
             });
         });
-    </script>
-</body>
-</html>
+
+        // Add scroll effect to navigation
+        window.addEventListener('scroll', function() {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.style.boxShadow = '0 5px 20px rgba(0, 0, 0, 0.1)';
+            } else {
+                nav.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+            }
+        });
+
+        // Screenshot scrolling functionality
+        function scrollScreenshots(direction) {
+            const container = document.getElementById('screenshotsContainer');
+            const scrollAmount = 320; // Width of one screenshot + gap
+            
+            if (direction === 'left') {
+                container.scrollBy({
+                    left: -scrollAmount,
+                    behavior: 'smooth'
+                });
+            } else {
+                container.scrollBy({
+                    left: scrollAmount,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        // Update scroll button visibility
+        function updateScrollButtons() {
+            const container = document.getElementById('screenshotsContainer');
+            const prevButton = document.querySelector('.scroll-button.prev');
+            const nextButton = document.querySelector('.scroll-button.next');
+            
+            // Hide/show buttons based on scroll position
+            if (container.scrollLeft <= 0) {
+                prevButton.style.opacity = '0.3';
+                prevButton.style.cursor = 'not-allowed';
+            } else {
+                prevButton.style.opacity
