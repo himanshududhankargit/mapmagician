@@ -79,6 +79,46 @@
             color: var(--primary-color);
         }
 
+        /* Mobile Menu */
+        .mobile-menu-button {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-dark);
+        }
+
+        .mobile-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+        }
+
+        .mobile-menu.active {
+            display: block;
+        }
+
+        .mobile-menu a {
+            display: block;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 500;
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.3s;
+        }
+
+        .mobile-menu a:hover {
+            background-color: var(--light-bg);
+            color: var(--primary-color);
+        }
+
         /* Hero Section */
         .hero {
             background: 
@@ -110,7 +150,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(135deg, rgba(248, 250, 252, 0.85) 0%, rgba(226, 232, 240, 0.85) 100%);
+            background: linear-gradient(135deg, rgba(248, 250, 252, 0.75) 0%, rgba(226, 232, 240, 0.75) 100%);
             z-index: 0;
         }
 
@@ -588,9 +628,19 @@
                 font-size: 0.9rem;
             }
 
-            .nav-links {
+            /* Mobile Navigation */
+            .nav-links:not(.mobile-menu) {
                 display: none;
             }
+
+            .mobile-menu-button {
+                display: block;
+            }
+
+            .nav-container {
+                position: relative;
+            }
+        }
 
             .app-header {
                 flex-direction: column;
@@ -634,6 +684,12 @@
                 <a href="#gis-info">About GIS</a>
                 <a href="#overlayr">Overlayr</a>
                 <a href="#contact">Contact</a>
+            </div>
+            <button class="mobile-menu-button" onclick="toggleMobileMenu()">☰</button>
+            <div class="mobile-menu nav-links" id="mobileMenu">
+                <a href="#gis-info" onclick="closeMobileMenu()">About GIS</a>
+                <a href="#overlayr" onclick="closeMobileMenu()">Overlayr</a>
+                <a href="#contact" onclick="closeMobileMenu()">Contact</a>
             </div>
         </div>
     </nav>
@@ -983,6 +1039,27 @@
         document.getElementById('screenshotsContainer').addEventListener('scroll', updateScrollButtons);
         window.addEventListener('load', updateScrollButtons);
         window.addEventListener('resize', updateScrollButtons);
+
+        // Mobile menu functionality
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('active');
+        }
+
+        function closeMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.remove('active');
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const mobileMenu = document.getElementById('mobileMenu');
+            const menuButton = document.querySelector('.mobile-menu-button');
+            
+            if (!mobileMenu.contains(event.target) && !menuButton.contains(event.target)) {
+                mobileMenu.classList.remove('active');
+            }
+        });
     </script>
 </body>
 </html>
