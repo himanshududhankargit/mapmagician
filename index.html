@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MapMagician - Professional GIS Applications</title>
+    <title>Overlayr - Georeference Maps & Overlay Images</title>
     <style>
         * {
             margin: 0;
@@ -285,6 +285,17 @@
             text-align: center;
             margin-bottom: 3rem;
             animation: fadeInUp 0.8s ease-out;
+        }
+
+        .hero-logo {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            margin: 0 auto 2rem;
+            display: block;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            background: white;
+            padding: 20px;
         }
 
         .hero-intro h1 {
@@ -628,18 +639,56 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+            .hero {
+                padding: 100px 0 40px;
+            }
+
+            .hero-logo {
+                width: 80px;
+                height: 80px;
+                padding: 8px;
+            }
+
             .hero-intro h1 {
                 font-size: 2rem;
             }
 
+            .hero-intro p {
+                font-size: 1rem;
+                padding: 0 1rem;
+            }
+
             .app-switcher {
-                flex-direction: column;
-                margin: 1rem 0;
+                flex-direction: row;
+                margin: 0.5rem 1rem;
+                gap: 5px;
             }
 
             .app-switch-btn {
-                width: 100%;
-                justify-content: center;
+                padding: 6px 12px;
+                font-size: 0.85rem;
+            }
+
+            .app-switch-btn img {
+                width: 24px;
+                height: 24px;
+            }
+
+            .app-switch-btn span {
+                display: none;
+            }
+
+            .nav-container {
+                padding: 0.75rem 1rem;
+            }
+
+            .logo {
+                font-size: 1.2rem;
+            }
+
+            .logo img {
+                width: 35px;
+                height: 35px;
             }
 
             .nav-links:not(.mobile-menu) {
@@ -652,6 +701,21 @@
 
             .featured-apps {
                 grid-template-columns: 1fr;
+                gap: 1.5rem;
+                padding: 0 1rem;
+            }
+
+            .app-card {
+                padding: 1.5rem;
+            }
+
+            .app-card-icon {
+                width: 50px;
+                height: 50px;
+            }
+
+            .app-card-title h3 {
+                font-size: 1.3rem;
             }
 
             .app-header {
@@ -673,6 +737,39 @@
 
             .scroll-button {
                 display: none;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+
+            .app-section {
+                padding: 60px 0;
+            }
+
+            .features-grid {
+                gap: 1.5rem;
+            }
+
+            .feature-card {
+                padding: 1.5rem;
+            }
+
+            .coverage {
+                padding: 2rem 1.5rem;
+                margin: 2rem 0;
+            }
+
+            .cta {
+                padding: 3rem 1rem;
+            }
+
+            .cta h2 {
+                font-size: 2rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
             }
         }
     </style>
@@ -700,14 +797,12 @@
             
             <div class="nav-links">
                 <a href="#gis-info">About GIS</a>
-                <a href="#contact">Contact</a>
             </div>
             <button class="mobile-menu-button" onclick="toggleMobileMenu()">☰</button>
             <div class="mobile-menu nav-links" id="mobileMenu">
                 <a href="#gis-info" onclick="closeMobileMenu()">About GIS</a>
                 <a href="#development-plan" onclick="closeMobileMenu()">Development Plan GIS</a>
                 <a href="#overlayr" onclick="closeMobileMenu()">Overlayr</a>
-                <a href="#contact" onclick="closeMobileMenu()">Contact</a>
             </div>
         </div>
     </nav>
@@ -716,8 +811,8 @@
     <section class="hero">
         <div class="hero-content">
             <div class="hero-intro">
+                <img src="AssetsGIS/mapmagiciansmall.png" alt="MapMagician Logo" class="hero-logo">
                 <h1>MapMagician Suite</h1>
-                <p>Professional GIS Applications for Urban Planning, Surveying, and Map Analysis</p>
             </div>
 
             <!-- Featured Apps Cards -->
@@ -732,7 +827,7 @@
                         </div>
                     </div>
                     <div class="app-card-description">
-                        Access comprehensive development plans across India with satellite imagery overlay. Essential for real estate developers, valuers, and urban planners to visualize zoning, analyze land use, and make informed decisions.
+                        Access comprehensive development plans across selected regions overlaid on satellite imagery for visualization. Essential for real estate developers, valuers, and urban planners to visualize zoning, analyze land use, and make informed decisions.
                     </div>
                     <div class="app-card-cta">
                         <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en" 
@@ -753,7 +848,7 @@
                     <div class="app-card-header">
                         <img src="AssetOverlayr/image-1.png" alt="Overlayr" class="app-card-icon">
                         <div class="app-card-title">
-                            <h3>Overlayr</h3>
+                            <h3>Overlayr-Over custom map</h3>
                             <span class="badge">Pro Georeferencing</span>
                         </div>
                     </div>
@@ -972,7 +1067,7 @@
             <div class="app-header">
                 <img src="AssetOverlayr/image-1.png" alt="Overlayr" class="app-icon">
                 <div class="app-title">
-                    <h2>Overlayr - Georeference Maps & Overlay Images</h2>
+                    <h2>Overlayr - Over custom map</h2>
                     <p>Desktop-grade precision georeferencing on your Android device</p>
                 </div>
             </div>
@@ -991,7 +1086,7 @@
                 </button>
                 <div class="screenshots" id="overlayrScreenshots">
                     <div class="screenshot">
-                        <img src="AssetOverlayr/image-2.png" alt="Import and Project Management">
+                        <img src="AssetOverlayr/image-2.jpg" alt="Import and Project Management">
                     </div>
                     <div class="screenshot">
                         <img src="AssetOverlayr/image-3.png" alt="Saved Georeferencing Projects">
