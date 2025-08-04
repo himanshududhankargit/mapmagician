@@ -62,6 +62,46 @@
             height: 40px;
         }
 
+        /* App Switcher in Nav */
+        .app-switcher {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            margin: 0 2rem;
+            justify-content: center;
+        }
+
+        .app-switch-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            color: var(--text-dark);
+            padding: 8px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .app-switch-btn:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .app-switch-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .app-switch-btn img {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+        }
+
         .nav-links {
             display: flex;
             gap: 2rem;
@@ -121,152 +161,146 @@
 
         /* Hero Section */
         .hero {
-            background: 
-                url('AssetsGIS/mapmagicianlogo.png') center left / contain no-repeat,
-                url('AssetsGIS/mapmagicianlogo-banner.png') center / cover no-repeat,
-                linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(226, 232, 240, 0.9) 100%);
-            padding: 120px 0 80px;
+            background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(226, 232, 240, 0.95) 100%);
+            padding: 120px 0 60px;
             color: var(--text-dark);
-            min-height: 70vh;
             position: relative;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('AssetsGIS/mapmagicianlogo-banner.png') center / cover no-repeat;
-            filter: blur(3px);
-            z-index: -1;
-        }
-
-        .hero::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(248, 250, 252, 0.75) 0%, rgba(226, 232, 240, 0.75) 100%);
-            z-index: 0;
         }
 
         .hero-content {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 2rem;
-            display: flex;
-            align-items: center;
-            min-height: 50vh;
+        }
+
+        /* Featured Apps Cards */
+        .featured-apps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .app-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
             position: relative;
-            z-index: 1;
+            overflow: hidden;
         }
 
-        .hero-text {
-            flex: 1;
-            padding-left: 0;
-            text-align: center;
-            max-width: 1200px;
-            margin: 0 auto;
+        .app-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
         }
 
-        .hero-header {
+        .app-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .app-card-header {
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 15px;
-            margin-bottom: 2rem;
-            animation: fadeInUp 0.8s ease-out;
+            margin-bottom: 1.5rem;
         }
 
-        .hero-header img {
+        .app-card-icon {
             width: 60px;
             height: 60px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 14px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
 
-        .hero-title {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .hero-title h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            color: var(--primary-color);
-            font-weight: 700;
-            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.9);
-        }
-
-        .hero-title p {
-            font-size: 1.2rem;
+        .app-card-title h3 {
+            font-size: 1.5rem;
             color: var(--text-dark);
-            margin: 0;
-            font-weight: 600;
-            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+            margin-bottom: 0.25rem;
         }
 
-        .hero-description {
-            font-size: 1.1rem;
-            margin-bottom: 2rem;
-            color: var(--text-dark);
-            animation: fadeInUp 0.8s ease-out 0.2s;
-            animation-fill-mode: both;
-            line-height: 1.7;
-            font-weight: 500;
-            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
-            background: rgba(255, 255, 255, 0.85);
-            padding: 20px;
-            border-radius: 12px;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .hero-cta {
-            animation: fadeInUp 0.8s ease-out 0.4s;
-            animation-fill-mode: both;
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .play-store-button, .download-button {
+        .app-card-title .badge {
             display: inline-block;
-            transition: transform 0.3s ease;
+            background: var(--accent-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
         }
 
-        .play-store-button:hover, .download-button:hover {
-            transform: translateY(-2px);
+        .app-card-description {
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
         }
 
-        .play-store-button img {
-            height: 60px;
+        .app-card-cta {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .app-store-btn {
+            display: inline-block;
+            transition: transform 0.3s;
+        }
+
+        .app-store-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .app-store-btn img {
+            height: 50px;
             width: auto;
         }
 
-        .download-button {
-            background: var(--primary-color);
+        .learn-more-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
-            padding: 15px 30px;
-            border-radius: 50px;
+            padding: 12px 24px;
+            border-radius: 25px;
             text-decoration: none;
-            font-weight: bold;
-            font-size: 1rem;
-            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
-            display: flex;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
-        .download-button:hover {
-            background: #1d4ed8;
-            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+        .learn-more-btn:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Hero Intro */
+        .hero-intro {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .hero-intro h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-intro p {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            max-width: 700px;
+            margin: 0 auto;
         }
 
         @keyframes fadeInUp {
@@ -280,7 +314,7 @@
             }
         }
 
-        /* Screenshots section moved below hero */
+        /* Screenshots section */
         .screenshots-section {
             background: white;
             padding: 60px 0;
@@ -433,20 +467,6 @@
             font-size: 1.1rem;
         }
 
-        .disclaimer {
-            background: #fef3c7;
-            border: 1px solid #f59e0b;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 2rem;
-            color: #92400e;
-        }
-
-        .disclaimer strong {
-            display: block;
-            margin-bottom: 0.5rem;
-        }
-
         /* Features Grid */
         .features-grid {
             display: grid;
@@ -553,6 +573,15 @@
             margin-bottom: 1rem;
         }
 
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
         .cta-button {
             display: inline-block;
             background: white;
@@ -563,7 +592,6 @@
             font-weight: bold;
             font-size: 1.1rem;
             transition: transform 0.3s, box-shadow 0.3s;
-            margin-top: 1rem;
         }
 
         .cta-button:hover {
@@ -571,19 +599,19 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
 
-        /* Coming Soon */
-        .coming-soon {
-            text-align: center;
-            padding: 4rem;
-            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-            border-radius: 12px;
-            margin: 3rem 0;
+        /* Disclaimer */
+        .disclaimer {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            color: #92400e;
         }
 
-        .coming-soon h3 {
-            font-size: 2rem;
-            color: var(--secondary-color);
-            margin-bottom: 1rem;
+        .disclaimer strong {
+            display: block;
+            margin-bottom: 0.5rem;
         }
 
         /* Footer */
@@ -600,35 +628,20 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            .hero {
-                background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(226, 232, 240, 0.95) 100%);
-                padding: 120px 0 60px;
-            }
-
-            .hero::before {
-                filter: blur(2px);
-            }
-
-            .hero-text {
-                padding-left: 0;
-                text-align: center;
-            }
-
-            .hero-title h1 {
+            .hero-intro h1 {
                 font-size: 2rem;
             }
 
-            .hero-cta {
+            .app-switcher {
                 flex-direction: column;
-                gap: 10px;
+                margin: 1rem 0;
             }
 
-            .download-button {
-                padding: 12px 25px;
-                font-size: 0.9rem;
+            .app-switch-btn {
+                width: 100%;
+                justify-content: center;
             }
 
-            /* Mobile Navigation */
             .nav-links:not(.mobile-menu) {
                 display: none;
             }
@@ -637,10 +650,9 @@
                 display: block;
             }
 
-            .nav-container {
-                position: relative;
+            .featured-apps {
+                grid-template-columns: 1fr;
             }
-        }
 
             .app-header {
                 flex-direction: column;
@@ -656,7 +668,6 @@
             }
 
             .screenshot {
-                width: auto;
                 height: 540px;
             }
 
@@ -674,20 +685,27 @@
                 <img src="AssetsGIS/mapmagiciansmall.png" alt="MapMagician Logo">
                 MapMagician
             </div>
-            <div class="nav-links" style="flex: 1; margin: 0 2rem;">
-                <div style="display: flex; align-items: center; gap: 15px; background: var(--primary-color); color: white; padding: 8px 20px; border-radius: 25px;">
-                    <img src="AssetsGIS/image-1.png" alt="Development Plan GIS" style="width: 30px; height: 30px;">
-                    <span style="font-weight: 600;">Development Plan GIS</span>
-                </div>
+            
+            <!-- App Switcher -->
+            <div class="app-switcher">
+                <a href="#development-plan" class="app-switch-btn" id="gis-btn">
+                    <img src="AssetsGIS/image-1.png" alt="Development Plan GIS">
+                    <span>Development Plan GIS</span>
+                </a>
+                <a href="#overlayr" class="app-switch-btn" id="overlayr-btn">
+                    <img src="AssetOverlayr/image-1.png" alt="Overlayr">
+                    <span>Overlayr</span>
+                </a>
             </div>
+            
             <div class="nav-links">
                 <a href="#gis-info">About GIS</a>
-                <a href="#overlayr">Overlayr</a>
                 <a href="#contact">Contact</a>
             </div>
             <button class="mobile-menu-button" onclick="toggleMobileMenu()">☰</button>
             <div class="mobile-menu nav-links" id="mobileMenu">
                 <a href="#gis-info" onclick="closeMobileMenu()">About GIS</a>
+                <a href="#development-plan" onclick="closeMobileMenu()">Development Plan GIS</a>
                 <a href="#overlayr" onclick="closeMobileMenu()">Overlayr</a>
                 <a href="#contact" onclick="closeMobileMenu()">Contact</a>
             </div>
@@ -697,86 +715,65 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
-            <div class="hero-text">
-                <div class="hero-header">
-                    <img src="AssetsGIS/image-1.png" alt="Development Plan GIS Icon">
-                    <div class="hero-title">
-                        <h1>Development Plan GIS</h1>
-                        <p>Interactive GIS Platform for Urban Development Plans</p>
+            <div class="hero-intro">
+                <h1>MapMagician Suite</h1>
+                <p>Professional GIS Applications for Urban Planning, Surveying, and Map Analysis</p>
+            </div>
+
+            <!-- Featured Apps Cards -->
+            <div class="featured-apps">
+                <!-- Development Plan GIS Card -->
+                <div class="app-card">
+                    <div class="app-card-header">
+                        <img src="AssetsGIS/image-1.png" alt="Development Plan GIS" class="app-card-icon">
+                        <div class="app-card-title">
+                            <h3>Development Plan GIS</h3>
+                            <span class="badge">157+ Locations</span>
+                        </div>
+                    </div>
+                    <div class="app-card-description">
+                        Access comprehensive development plans across India with satellite imagery overlay. Essential for real estate developers, valuers, and urban planners to visualize zoning, analyze land use, and make informed decisions.
+                    </div>
+                    <div class="app-card-cta">
+                        <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en" 
+                           target="_blank" class="app-store-btn">
+                            <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play">
+                        </a>
+                        <a href="#development-plan" class="learn-more-btn">
+                            Learn More 
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14m-7-7l7 7-7 7"/>
+                            </svg>
+                        </a>
                     </div>
                 </div>
-                <div class="hero-description">
-                    Explore development plans and custom maps with cutting-edge GIS technology. 
-                    Access comprehensive development plans for 157+ locations across India with 
-                    satellite imagery overlay and precision measurement tools.
-                </div>
-                
-                <div class="hero-cta">
-                    <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en" 
-                       target="_blank" class="play-store-button">
-                        <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" />
-                    </a>
-                    <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en" 
-                       target="_blank" class="download-button">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="7,10 12,15 17,10"/>
-                            <line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                        Download from PlayStore
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- Screenshots Section -->
-    <section class="screenshots-section">
-        <div class="screenshots-container">
-            <div class="screenshots-title">
-                <h2>See the App in Action</h2>
-                <p>Explore our comprehensive GIS platform through these interactive screenshots</p>
-            </div>
-            
-            <button class="scroll-button prev" onclick="scrollScreenshots('left')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M15 18l-6-6 6-6" />
-                </svg>
-            </button>
-            <div class="screenshots" id="screenshotsContainer">
-                <div class="screenshot">
-                    <img src="AssetsGIS/demo-animation.gif" alt="App Demo Animation">
-                </div>
-                <div class="screenshot">
-                    <img src="AssetsGIS/image-2.png" alt="Georeferenced Plans Over Satellite Imagery">
-                </div>
-                <div class="screenshot">
-                    <img src="AssetsGIS/image-3.png" alt="Custom Markers and Area Measurement">
-                </div>
-                <div class="screenshot">
-                    <img src="AssetsGIS/image-4.png" alt="Download Development Plans">
-                </div>
-                <div class="screenshot">
-                    <img src="AssetsGIS/image-5.png" alt="Part Development Plan View">
-                </div>
-                <div class="screenshot">
-                    <img src="AssetsGIS/image-6.png" alt="Main Menu Interface">
-                </div>
-                <div class="screenshot">
-                    <img src="AssetsGIS/image-7.png" alt="Maharashtra Districts Selection">
-                </div>
-                <div class="screenshot">
-                    <img src="AssetsGIS/image-8.png" alt="Multiple Village Plans View">
-                </div>
-                <div class="screenshot">
-                    <img src="AssetsGIS/image-9.png" alt="Village Plan with Survey Numbers">
+                <!-- Overlayr Card -->
+                <div class="app-card">
+                    <div class="app-card-header">
+                        <img src="AssetOverlayr/image-1.png" alt="Overlayr" class="app-card-icon">
+                        <div class="app-card-title">
+                            <h3>Overlayr</h3>
+                            <span class="badge">Pro Georeferencing</span>
+                        </div>
+                    </div>
+                    <div class="app-card-description">
+                        Transform maps, site plans, and scanned images into georeferenced overlays on satellite imagery. Ideal for surveyors, GIS experts, real estate professionals, planners, and field researchers with desktop-grade precision on Android.
+                    </div>
+                    <div class="app-card-cta">
+                        <a href="https://play.google.com/store/apps/details?id=com.himanshu.overlayr&hl=en" 
+                           target="_blank" class="app-store-btn">
+                            <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play">
+                        </a>
+                        <a href="#overlayr" class="learn-more-btn">
+                            Learn More 
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14m-7-7l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    </div>
                 </div>
             </div>
-            <button class="scroll-button next" onclick="scrollScreenshots('right')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 18l6-6-6-6" />
-                </svg>
-            </button>
         </div>
     </section>
 
@@ -792,11 +789,11 @@
                 </div>
                 <div class="feature-card">
                     <h3>🛰️ Satellite Imagery Overlay</h3>
-                    <p>Our app overlays official development plans directly onto Google satellite imagery, allowing you to see exactly how planned developments relate to the current landscape and existing structures.</p>
+                    <p>Our apps overlay official development plans and custom maps directly onto Google satellite imagery, allowing you to see exactly how planned developments relate to the current landscape.</p>
                 </div>
                 <div class="feature-card">
-                    <h3>📍 GPS Integration</h3>
-                    <p>Using your phone's GPS and survey numbers, the app provides precise location understanding, helping you identify exactly where you are standing in relation to development zones and plans.</p>
+                    <h3>📍 GPS & Georeferencing</h3>
+                    <p>Using GPS integration and precision georeferencing tools, our apps provide accurate location understanding and allow you to transform any map into a georeferenced overlay.</p>
                 </div>
             </div>
 
@@ -807,27 +804,27 @@
                     <h3>📊 For Valuers</h3>
                     <ul style="list-style: none; padding: 0; color: var(--text-light);">
                         <li>• Understand property zoning and surrounding land use</li>
+                        <li>• Overlay custom valuation maps on satellite imagery</li>
                         <li>• Identify potential future developments affecting property value</li>
-                        <li>• Locate survey numbers and find adjacent property information</li>
                         <li>• Analyze location data, amenities access, and reservations</li>
                     </ul>
                 </div>
                 <div class="feature-card">
-                    <h3>🏗️ For Developers</h3>
+                    <h3>🏗️ For Developers & Surveyors</h3>
                     <ul style="list-style: none; padding: 0; color: var(--text-light);">
                         <li>• View comprehensive development plans on satellite imagery</li>
+                        <li>• Georeference survey maps and site plans with precision</li>
                         <li>• Assess development potential of specific land parcels</li>
-                        <li>• Understand surrounding proposed developments</li>
-                        <li>• Make informed decisions with real-time GPS data</li>
+                        <li>• Export to KMZ for use in Google Earth and GIS software</li>
                     </ul>
                 </div>
                 <div class="feature-card">
                     <h3>🏛️ For Urban Planners</h3>
                     <ul style="list-style: none; padding: 0; color: var(--text-light);">
                         <li>• Access development plans of various cities in one place</li>
+                        <li>• Overlay custom planning maps and proposals</li>
                         <li>• Compare planned growth across different urban areas</li>
-                        <li>• Evaluate feasibility of development projects</li>
-                        <li>• Understand the evolution of urban areas over time</li>
+                        <li>• Visualize zoning changes and development patterns</li>
                     </ul>
                 </div>
             </div>
@@ -840,9 +837,57 @@
             <div class="app-header">
                 <img src="AssetsGIS/image-1.png" alt="Development Plan GIS" class="app-icon">
                 <div class="app-title">
-                    <h2>Development Plan GIS Features</h2>
+                    <h2>Development Plan GIS</h2>
                     <p>Comprehensive GIS tools for urban development analysis</p>
                 </div>
+            </div>
+
+            <!-- Screenshots Section for Development Plan GIS -->
+            <div class="screenshots-container">
+                <div class="screenshots-title">
+                    <h2>Development Plan GIS in Action</h2>
+                    <p>Explore comprehensive development plans with satellite overlay</p>
+                </div>
+                
+                <button class="scroll-button prev" onclick="scrollScreenshots('gis', 'left')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6" />
+                    </svg>
+                </button>
+                <div class="screenshots" id="gisScreenshots">
+                    <div class="screenshot">
+                        <img src="AssetsGIS/demo-animation.gif" alt="App Demo Animation">
+                    </div>
+                    <div class="screenshot">
+                        <img src="AssetsGIS/image-2.png" alt="Georeferenced Plans Over Satellite Imagery">
+                    </div>
+                    <div class="screenshot">
+                        <img src="AssetsGIS/image-3.png" alt="Custom Markers and Area Measurement">
+                    </div>
+                    <div class="screenshot">
+                        <img src="AssetsGIS/image-4.png" alt="Download Development Plans">
+                    </div>
+                    <div class="screenshot">
+                        <img src="AssetsGIS/image-5.png" alt="Part Development Plan View">
+                    </div>
+                    <div class="screenshot">
+                        <img src="AssetsGIS/image-6.png" alt="Main Menu Interface">
+                    </div>
+                    <div class="screenshot">
+                        <img src="AssetsGIS/image-7.png" alt="Maharashtra Districts Selection">
+                    </div>
+                    <div class="screenshot">
+                        <img src="AssetsGIS/image-8.png" alt="Multiple Village Plans View">
+                    </div>
+                    <div class="screenshot">
+                        <img src="AssetsGIS/image-9.png" alt="Village Plan with Survey Numbers">
+                    </div>
+                </div>
+                <button class="scroll-button next" onclick="scrollScreenshots('gis', 'right')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6" />
+                    </svg>
+                </button>
             </div>
 
             <div class="features-grid">
@@ -915,45 +960,151 @@
                 <p>Access development plans for 157+ locations across India</p>
                 <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en" 
                    target="_blank" class="play-store-button">
-                    <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" />
+                    <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" style="height: 60px;">
                 </a>
             </div>
         </div>
     </section>
 
-    <!-- Overlayr Section (Placeholder) -->
+    <!-- Overlayr Section -->
     <section id="overlayr" class="app-section">
         <div class="container">
             <div class="app-header">
-                <img src="AssetsGIS/image-1.png" alt="Overlayr" class="app-icon">
+                <img src="AssetOverlayr/image-1.png" alt="Overlayr" class="app-icon">
                 <div class="app-title">
-                    <h2>Overlayr - Over Custom Map</h2>
-                    <p>Custom Map Overlay Solutions</p>
+                    <h2>Overlayr - Georeference Maps & Overlay Images</h2>
+                    <p>Desktop-grade precision georeferencing on your Android device</p>
                 </div>
             </div>
 
-            <div class="coming-soon">
-                <h3>Coming Soon!</h3>
-                <p>Our next-generation custom map overlay application is currently in development.</p>
-                <p>Stay tuned for powerful features including custom map imports, advanced layering, and more!</p>
+            <!-- Screenshots Section for Overlayr -->
+            <div class="screenshots-container">
+                <div class="screenshots-title">
+                    <h2>Overlayr in Action</h2>
+                    <p>Professional georeferencing with precision control points</p>
+                </div>
+                
+                <button class="scroll-button prev" onclick="scrollScreenshots('overlayr', 'left')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6" />
+                    </svg>
+                </button>
+                <div class="screenshots" id="overlayrScreenshots">
+                    <div class="screenshot">
+                        <img src="AssetOverlayr/image-2.png" alt="Import and Project Management">
+                    </div>
+                    <div class="screenshot">
+                        <img src="AssetOverlayr/image-3.png" alt="Saved Georeferencing Projects">
+                    </div>
+                    <div class="screenshot">
+                        <img src="AssetOverlayr/image-4.png" alt="Georeferenced Overlay View">
+                    </div>
+                    <div class="screenshot">
+                        <img src="AssetOverlayr/image-5.png" alt="Precision Point Selection">
+                    </div>
+                    <div class="screenshot">
+                        <img src="AssetOverlayr/image-6.png" alt="Map Matching and Alignment">
+                    </div>
+                </div>
+                <button class="scroll-button next" onclick="scrollScreenshots('overlayr', 'right')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6" />
+                    </svg>
+                </button>
             </div>
 
             <div class="features-grid">
                 <div class="feature-card">
-                    <h3>🗺️ Custom Map Import</h3>
-                    <p>Import and overlay your own custom maps on satellite imagery</p>
+                    <h3>🧭 Georeferencing Tools</h3>
+                    <p>Precision control points with magnified views, live overlay transformation, drag & drop accuracy, and transparency controls for seamless blending</p>
                 </div>
                 <div class="feature-card">
-                    <h3>📐 Advanced Layering</h3>
-                    <p>Multiple layer support with opacity controls and blending modes</p>
+                    <h3>🗺️ Mapping Features</h3>
+                    <p>High-res satellite imagery, smart location search, GPS integration for auto-location, and custom markers with labels and details</p>
                 </div>
                 <div class="feature-card">
-                    <h3>🎨 Annotation Tools</h3>
-                    <p>Draw, measure, and annotate directly on your custom maps</p>
+                    <h3>📏 Measurements & Analysis</h3>
+                    <p>Area calculation in m², hectares, acres, distance measurement tools, live calculations with instant feedback, metric and imperial support</p>
                 </div>
                 <div class="feature-card">
-                    <h3>💾 Project Management</h3>
-                    <p>Save and organize multiple map projects with ease</p>
+                    <h3>📤 Export & Share</h3>
+                    <p>Export as KMZ for Google Earth & GIS software, high-res screenshots, easy sharing via email and cloud apps, industry-standard formats</p>
+                </div>
+                <div class="feature-card">
+                    <h3>⚙️ Technical Power</h3>
+                    <p>Supports JPG, PNG, PDF formats, high-resolution image handling, offline capability, memory optimized for large files</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📁 Project Management</h3>
+                    <p>Unlimited projects with Premium, auto-save protection, organized project library, instant loading and resuming</p>
+                </div>
+            </div>
+
+            <div class="video-container">
+                <iframe src="https://www.youtube.com/embed/AlFbcXE62VY" 
+                        title="Overlayr Tutorial Video" 
+                        allowfullscreen>
+                </iframe>
+            </div>
+
+            <h3 style="text-align: center; margin: 3rem 0 2rem; color: var(--text-dark);">Professional Use Cases</h3>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>🏗️ Land Surveying</h3>
+                    <p>Overlay survey maps on satellite imagery with precision control points for accurate field verification and boundary marking</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🏙️ Urban Planning</h3>
+                    <p>Visualize development plans on live maps, assess zoning changes, and present proposals with professional overlays</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🌿 Environmental Studies</h3>
+                    <p>Map field areas, habitats, and ecological zones. Document environmental changes with georeferenced overlays</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🏘️ Real Estate & Valuation</h3>
+                    <p>Mark property boundaries and zoning plans, create professional presentations for clients with accurate overlays</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🚧 Construction</h3>
+                    <p>Overlay site layouts and building plans on location for better project planning and coordination</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🚨 Emergency Planning</h3>
+                    <p>Visualize evacuation routes and response zones, plan emergency services deployment with georeferenced maps</p>
+                </div>
+            </div>
+
+            <h3 style="text-align: center; margin: 3rem 0 2rem; color: var(--text-dark);">Why Choose Overlayr?</h3>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>✔️ Professional-Grade Accuracy</h3>
+                    <p>Desktop-level precision on your Android device with advanced georeferencing algorithms</p>
+                </div>
+                <div class="feature-card">
+                    <h3>✔️ Beginner-Friendly Design</h3>
+                    <p>Intuitive interface that makes professional georeferencing accessible to everyone</p>
+                </div>
+                <div class="feature-card">
+                    <h3>✔️ Reliable Performance</h3>
+                    <p>Stable and tested on thousands of devices with frequent updates and new features</p>
+                </div>
+            </div>
+
+            <div class="cta">
+                <h2>Transform Your Maps with Overlayr</h2>
+                <p>Professional georeferencing tools for surveyors, planners, and GIS experts</p>
+                <div class="cta-buttons">
+                    <a href="https://play.google.com/store/apps/details?id=com.himanshu.overlayr&hl=en" 
+                       target="_blank" class="play-store-button">
+                        <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" style="height: 60px;">
+                    </a>
+                    <a href="https://www.youtube.com/watch?v=AlFbcXE62VY" 
+                       target="_blank" class="cta-button">
+                        📹 Watch Tutorial
+                    </a>
                 </div>
             </div>
         </div>
@@ -963,13 +1114,24 @@
     <footer id="contact">
         <div class="container">
             <div class="disclaimer" style="background: rgba(254, 243, 199, 0.2); border-color: rgba(245, 158, 11, 0.3); margin-bottom: 2rem; max-width: 800px; margin-left: auto; margin-right: auto;">
-                <strong>THIS IS NOT A GOVERNMENT APP</strong>
-                This app is developed by an independent third party and has NO affiliation with any government authority. 
+                <strong>THESE ARE NOT GOVERNMENT APPS</strong>
+                These apps are developed by an independent third party and have NO affiliation with any government authority. 
                 Information shown is sourced from public government websites and is for reference only. 
                 Do NOT use for legal or official decisions.
             </div>
             <p>&copy; 2024 MapMagician.in - Professional GIS Applications</p>
             <p>Developed by Independent Third Party | Contact: haxydeveloper@gmail.com</p>
+            <div style="margin-top: 2rem; display: flex; gap: 20px; justify-content: center;">
+                <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en" 
+                   target="_blank" style="color: white; text-decoration: none; opacity: 0.8; transition: opacity 0.3s;">
+                   Development Plan GIS on Play Store
+                </a>
+                <span style="opacity: 0.5;">|</span>
+                <a href="https://play.google.com/store/apps/details?id=com.himanshu.overlayr&hl=en" 
+                   target="_blank" style="color: white; text-decoration: none; opacity: 0.8; transition: opacity 0.3s;">
+                   Overlayr on Play Store
+                </a>
+            </div>
         </div>
     </footer>
 
@@ -978,9 +1140,13 @@
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
             });
         });
 
@@ -994,10 +1160,35 @@
             }
         });
 
+        // Highlight active app button based on scroll position
+        function updateActiveAppButton() {
+            const gisSection = document.getElementById('development-plan');
+            const overlayrSection = document.getElementById('overlayr');
+            const gisBtn = document.getElementById('gis-btn');
+            const overlayrBtn = document.getElementById('overlayr-btn');
+            
+            const scrollPosition = window.scrollY + 200;
+            
+            if (overlayrSection && scrollPosition >= overlayrSection.offsetTop) {
+                gisBtn.classList.remove('active');
+                overlayrBtn.classList.add('active');
+            } else if (gisSection && scrollPosition >= gisSection.offsetTop) {
+                gisBtn.classList.add('active');
+                overlayrBtn.classList.remove('active');
+            } else {
+                gisBtn.classList.remove('active');
+                overlayrBtn.classList.remove('active');
+            }
+        }
+
+        window.addEventListener('scroll', updateActiveAppButton);
+        window.addEventListener('load', updateActiveAppButton);
+
         // Screenshot scrolling functionality
-        function scrollScreenshots(direction) {
-            const container = document.getElementById('screenshotsContainer');
-            const scrollAmount = 320; // Width of one screenshot + gap
+        function scrollScreenshots(app, direction) {
+            const containerId = app === 'gis' ? 'gisScreenshots' : 'overlayrScreenshots';
+            const container = document.getElementById(containerId);
+            const scrollAmount = 320;
             
             if (direction === 'left') {
                 container.scrollBy({
@@ -1014,30 +1205,39 @@
 
         // Update scroll button visibility
         function updateScrollButtons() {
-            const container = document.getElementById('screenshotsContainer');
-            const prevButton = document.querySelector('.scroll-button.prev');
-            const nextButton = document.querySelector('.scroll-button.next');
+            const containers = ['gisScreenshots', 'overlayrScreenshots'];
             
-            // Hide/show buttons based on scroll position
-            if (container.scrollLeft <= 0) {
-                prevButton.style.opacity = '0.3';
-                prevButton.style.cursor = 'not-allowed';
-            } else {
-                prevButton.style.opacity = '1';
-                prevButton.style.cursor = 'pointer';
-            }
-            
-            if (container.scrollLeft >= container.scrollWidth - container.clientWidth - 10) {
-                nextButton.style.opacity = '0.3';
-                nextButton.style.cursor = 'not-allowed';
-            } else {
-                nextButton.style.opacity = '1';
-                nextButton.style.cursor = 'pointer';
-            }
+            containers.forEach(containerId => {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                
+                const parent = container.parentElement;
+                const prevButton = parent.querySelector('.scroll-button.prev');
+                const nextButton = parent.querySelector('.scroll-button.next');
+                
+                if (!prevButton || !nextButton) return;
+                
+                if (container.scrollLeft <= 0) {
+                    prevButton.style.opacity = '0.3';
+                    prevButton.style.cursor = 'not-allowed';
+                } else {
+                    prevButton.style.opacity = '1';
+                    prevButton.style.cursor = 'pointer';
+                }
+                
+                if (container.scrollLeft >= container.scrollWidth - container.clientWidth - 10) {
+                    nextButton.style.opacity = '0.3';
+                    nextButton.style.cursor = 'not-allowed';
+                } else {
+                    nextButton.style.opacity = '1';
+                    nextButton.style.cursor = 'pointer';
+                }
+            });
         }
 
         // Initialize scroll button visibility
-        document.getElementById('screenshotsContainer').addEventListener('scroll', updateScrollButtons);
+        document.getElementById('gisScreenshots')?.addEventListener('scroll', updateScrollButtons);
+        document.getElementById('overlayrScreenshots')?.addEventListener('scroll', updateScrollButtons);
         window.addEventListener('load', updateScrollButtons);
         window.addEventListener('resize', updateScrollButtons);
 
