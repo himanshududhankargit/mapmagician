@@ -501,10 +501,10 @@
             font-size: 1.1rem;
         }
 
-        /* Features Grid */
+        /* Features Grid - UPDATED WITH PROPER ALIGNMENT */
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 2rem;
             margin: 3rem 0;
         }
@@ -515,6 +515,10 @@
             border-radius: 12px;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s, box-shadow 0.3s;
+            height: 100%; /* Ensure all cards have equal height */
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #e2e8f0;
         }
 
         .feature-card:hover {
@@ -525,12 +529,76 @@
         .feature-card h3 {
             color: var(--primary-color);
             margin-bottom: 1rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .feature-card p, .feature-card ul {
             color: var(--text-light);
             text-align: justify;
             line-height: 1.8;
+            flex: 1; /* This makes the content area flexible */
+        }
+
+        /* Special styling for user type cards */
+        .user-type-card {
+            position: relative;
+        }
+
+        .user-type-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .user-type-card.valuers::before {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .user-type-card.developers::before {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .user-type-card.planners::before {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        /* Enhanced list styling for better alignment */
+        .feature-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-card ul li {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            position: relative;
+            line-height: 1.7;
+            font-size: 0.95rem;
+            min-height: 2.5rem;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .feature-card ul li:before {
+            content: "•";
+            color: var(--primary-color);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.2rem;
+            top: 0;
+        }
+
+        .feature-card ul li:last-child {
+            margin-bottom: 0;
         }
 
         /* Video Section */
@@ -771,6 +839,7 @@
             }
 
             .features-grid {
+                grid-template-columns: 1fr;
                 gap: 1.5rem;
             }
 
@@ -919,31 +988,31 @@
             <h3 style="margin: 3rem 0 2rem; color: var(--text-dark);">Key Use Cases for Professionals</h3>
             
             <div class="features-grid">
-                <div class="feature-card">
+                <div class="feature-card user-type-card valuers">
                     <h3>📊 For Valuers</h3>
-                    <ul style="list-style: none; padding: 0; color: var(--text-light);">
-                        <li>• Understand property zoning and surrounding land use</li>
-                        <li>• Overlay custom valuation maps on satellite imagery</li>
-                        <li>• Identify potential future developments affecting property value</li>
-                        <li>• Analyze location data, amenities access, and reservations</li>
+                    <ul>
+                        <li>Understand property zoning and surrounding land use</li>
+                        <li>Overlay custom valuation maps on satellite imagery</li>
+                        <li>Identify potential future developments affecting property value</li>
+                        <li>Analyze location data, amenities access, and reservations</li>
                     </ul>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card user-type-card developers">
                     <h3>🏗️ For Developers & Surveyors</h3>
-                    <ul style="list-style: none; padding: 0; color: var(--text-light);">
-                        <li>• View comprehensive development plans on satellite imagery</li>
-                        <li>• Georeference survey maps and site plans with precision</li>
-                        <li>• Assess development potential of specific land parcels</li>
-                        <li>• Export to KMZ for use in Google Earth and GIS software</li>
+                    <ul>
+                        <li>View comprehensive development plans on satellite imagery</li>
+                        <li>Georeference survey maps and site plans with precision</li>
+                        <li>Assess development potential of specific land parcels</li>
+                        <li>Export to KMZ for use in Google Earth and GIS software</li>
                     </ul>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card user-type-card planners">
                     <h3>🏛️ For Urban Planners</h3>
-                    <ul style="list-style: none; padding: 0; color: var(--text-light);">
-                        <li>• Access development plans of various cities in one place</li>
-                        <li>• Overlay custom planning maps and proposals</li>
-                        <li>• Compare planned growth across different urban areas</li>
-                        <li>• Visualize zoning changes and development patterns</li>
+                    <ul>
+                        <li>Access development plans of various cities in one place</li>
+                        <li>Overlay custom planning maps and proposals</li>
+                        <li>Compare planned growth across different urban areas</li>
+                        <li>Visualize zoning changes and development patterns</li>
                     </ul>
                 </div>
             </div>
