@@ -81,12 +81,37 @@
 
         /* Hero Section */
         .hero {
-            background: url('mapmagicianlogo.png') center left / contain no-repeat, 
-                        linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            background: 
+                url('AssetsGIS/mapmagicianlogo.png') center left / contain no-repeat,
+                url('AssetsGIS/mapmagicianlogo-banner.png') center / cover no-repeat,
+                linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(226, 232, 240, 0.9) 100%);
             padding: 120px 0 80px;
             color: var(--text-dark);
             min-height: 70vh;
             position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('AssetsGIS/mapmagicianlogo-banner.png') center / cover no-repeat;
+            filter: blur(3px);
+            z-index: -1;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(248, 250, 252, 0.85) 0%, rgba(226, 232, 240, 0.85) 100%);
+            z-index: 0;
         }
 
         .hero-content {
@@ -96,17 +121,22 @@
             display: flex;
             align-items: center;
             min-height: 50vh;
+            position: relative;
+            z-index: 1;
         }
 
         .hero-text {
             flex: 1;
-            padding-left: 50%;
-            text-align: left;
+            padding-left: 0;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .hero-header {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 15px;
             margin-bottom: 2rem;
             animation: fadeInUp 0.8s ease-out;
@@ -129,21 +159,74 @@
             margin-bottom: 0.5rem;
             color: var(--primary-color);
             font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.9);
         }
 
         .hero-title p {
             font-size: 1.2rem;
-            color: var(--text-light);
+            color: var(--text-dark);
             margin: 0;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
         }
 
         .hero-description {
             font-size: 1.1rem;
             margin-bottom: 2rem;
-            color: var(--text-light);
+            color: var(--text-dark);
             animation: fadeInUp 0.8s ease-out 0.2s;
             animation-fill-mode: both;
             line-height: 1.7;
+            font-weight: 500;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.85);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .hero-cta {
+            animation: fadeInUp 0.8s ease-out 0.4s;
+            animation-fill-mode: both;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .play-store-button, .download-button {
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        .play-store-button:hover, .download-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .play-store-button img {
+            height: 60px;
+            width: auto;
+        }
+
+        .download-button {
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .download-button:hover {
+            background: #1d4ed8;
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
         }
 
         @keyframes fadeInUp {
@@ -478,8 +561,12 @@
         /* Responsive */
         @media (max-width: 768px) {
             .hero {
-                background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+                background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(226, 232, 240, 0.95) 100%);
                 padding: 120px 0 60px;
+            }
+
+            .hero::before {
+                filter: blur(2px);
             }
 
             .hero-text {
@@ -489,6 +576,16 @@
 
             .hero-title h1 {
                 font-size: 2rem;
+            }
+
+            .hero-cta {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .download-button {
+                padding: 12px 25px;
+                font-size: 0.9rem;
             }
 
             .nav-links {
@@ -524,7 +621,7 @@
     <nav>
         <div class="nav-container">
             <div class="logo">
-                <img src="AssetsGIS/image-1.png" alt="MapMagician Logo">
+                <img src="AssetsGIS/mapmagiciansmall.png" alt="MapMagician Logo">
                 MapMagician
             </div>
             <div class="nav-links" style="flex: 1; margin: 0 2rem;">
@@ -556,6 +653,21 @@
                     Explore development plans and custom maps with cutting-edge GIS technology. 
                     Access comprehensive development plans for 157+ locations across India with 
                     satellite imagery overlay and precision measurement tools.
+                </div>
+                
+                <div class="hero-cta">
+                    <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en" 
+                       target="_blank" class="play-store-button">
+                        <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" />
+                    </a>
+                    <a href="#" class="download-button">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7,10 12,15 17,10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Download from PlayStore
+                    </a>
                 </div>
             </div>
         </div>
@@ -671,8 +783,8 @@
             <div class="app-header">
                 <img src="AssetsGIS/image-1.png" alt="Development Plan GIS" class="app-icon">
                 <div class="app-title">
-                    <h2>Development Plan GIS</h2>
-                    <p>Interactive GIS Platform for Urban Development Plans</p>
+                    <h2>Development Plan GIS Features</h2>
+                    <p>Comprehensive GIS tools for urban development analysis</p>
                 </div>
             </div>
 
@@ -745,9 +857,8 @@
                 <h2>Get Development Plan GIS Today</h2>
                 <p>Access development plans for 157+ locations across India</p>
                 <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en" 
-                   class="cta-button" 
-                   target="_blank">
-                    Download on Google Play
+                   target="_blank" class="play-store-button">
+                    <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" />
                 </a>
             </div>
         </div>
@@ -855,4 +966,23 @@
                 prevButton.style.opacity = '0.3';
                 prevButton.style.cursor = 'not-allowed';
             } else {
-                prevButton.style.opacity
+                prevButton.style.opacity = '1';
+                prevButton.style.cursor = 'pointer';
+            }
+            
+            if (container.scrollLeft >= container.scrollWidth - container.clientWidth - 10) {
+                nextButton.style.opacity = '0.3';
+                nextButton.style.cursor = 'not-allowed';
+            } else {
+                nextButton.style.opacity = '1';
+                nextButton.style.cursor = 'pointer';
+            }
+        }
+
+        // Initialize scroll button visibility
+        document.getElementById('screenshotsContainer').addEventListener('scroll', updateScrollButtons);
+        window.addEventListener('load', updateScrollButtons);
+        window.addEventListener('resize', updateScrollButtons);
+    </script>
+</body>
+</html>
