@@ -410,6 +410,7 @@
             overflow: hidden;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s;
+            cursor: pointer;
         }
 
         .screenshot:hover {
@@ -421,6 +422,110 @@
             width: auto;
             object-fit: contain;
             display: block;
+        }
+
+        /* Fullscreen Modal */
+        .fullscreen-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .fullscreen-modal.active {
+            display: flex;
+        }
+
+        .fullscreen-content {
+            position: relative;
+            max-width: 95vw;
+            max-height: 95vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .fullscreen-image {
+            max-width: 100%;
+            max-height: 85vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .fullscreen-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 10001;
+        }
+
+        .fullscreen-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 10001;
+        }
+
+        .fullscreen-nav:hover {
+            background: white;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .fullscreen-nav.prev {
+            left: 20px;
+        }
+
+        .fullscreen-nav.next {
+            right: 20px;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .close-btn:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .fullscreen-caption {
+            margin-top: 20px;
+            color: white;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 500;
+            max-width: 600px;
         }
 
         /* Scroll buttons */
@@ -863,6 +968,28 @@
             .cta-buttons {
                 flex-direction: column;
             }
+
+            .fullscreen-nav {
+                width: 40px;
+                height: 40px;
+            }
+
+            .fullscreen-nav.prev {
+                left: 10px;
+            }
+
+            .fullscreen-nav.next {
+                right: 10px;
+            }
+
+            .fullscreen-controls {
+                top: 10px;
+                right: 10px;
+            }
+
+            .fullscreen-image {
+                max-height: 80vh;
+            }
         }
     </style>
 </head>
@@ -898,6 +1025,27 @@
             </div>
         </div>
     </nav>
+
+    <!-- Fullscreen Modal -->
+    <div class="fullscreen-modal" id="fullscreenModal">
+        <div class="fullscreen-content">
+            <div class="fullscreen-controls">
+                <button class="close-btn" onclick="closeFullscreen()">&times;</button>
+            </div>
+            <button class="fullscreen-nav prev" onclick="navigateFullscreen(-1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg>
+            </button>
+            <img class="fullscreen-image" id="fullscreenImage" src="" alt="">
+            <button class="fullscreen-nav next" onclick="navigateFullscreen(1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 18l6-6-6-6" />
+                </svg>
+            </button>
+            <div class="fullscreen-caption" id="fullscreenCaption"></div>
+        </div>
+    </div>
 
     <!-- Hero Section -->
     <section class="hero">
@@ -1043,31 +1191,31 @@
                     </svg>
                 </button>
                 <div class="screenshots" id="gisScreenshots">
-                    <div class="screenshot">
+                    <div class="screenshot" onclick="openFullscreen('AssetsGIS/demo-animation.gif', 'App Demo Animation', 'gis', 0)">
                         <img src="AssetsGIS/demo-animation.gif" alt="App Demo Animation">
                     </div>
-                    <div class="screenshot">
+                    <div class="screenshot" onclick="openFullscreen('AssetsGIS/image-2.png', 'Georeferenced Plans Over Satellite Imagery', 'gis', 1)">
                         <img src="AssetsGIS/image-2.png" alt="Georeferenced Plans Over Satellite Imagery">
                     </div>
-                    <div class="screenshot">
+                    <div class="screenshot" onclick="openFullscreen('AssetsGIS/image-3.png', 'Custom Markers and Area Measurement', 'gis', 2)">
                         <img src="AssetsGIS/image-3.png" alt="Custom Markers and Area Measurement">
                     </div>
-                    <div class="screenshot">
+                    <div class="screenshot" onclick="openFullscreen('AssetsGIS/image-4.png', 'Download Development Plans', 'gis', 3)">
                         <img src="AssetsGIS/image-4.png" alt="Download Development Plans">
                     </div>
-                    <div class="screenshot">
+                    <div class="screenshot" onclick="openFullscreen('AssetsGIS/image-5.png', 'Part Development Plan View', 'gis', 4)">
                         <img src="AssetsGIS/image-5.png" alt="Part Development Plan View">
                     </div>
-                    <div class="screenshot">
+                    <div class="screenshot" onclick="openFullscreen('AssetsGIS/image-6.png', 'Main Menu Interface', 'gis', 5)">
                         <img src="AssetsGIS/image-6.png" alt="Main Menu Interface">
                     </div>
-                    <div class="screenshot">
+                    <div class="screenshot" onclick="openFullscreen('AssetsGIS/image-7.png', 'Maharashtra Districts Selection', 'gis', 6)">
                         <img src="AssetsGIS/image-7.png" alt="Maharashtra Districts Selection">
                     </div>
-                    <div class="screenshot">
+                    <div class="screenshot" onclick="openFullscreen('AssetsGIS/image-8.png', 'Multiple Village Plans View', 'gis', 7)">
                         <img src="AssetsGIS/image-8.png" alt="Multiple Village Plans View">
                     </div>
-                    <div class="screenshot">
+                    <div class="screenshot" onclick="openFullscreen('AssetsGIS/image-9.png', 'Village Plan with Survey Numbers', 'gis', 8)">
                         <img src="AssetsGIS/image-9.png" alt="Village Plan with Survey Numbers">
                     </div>
                 </div>
@@ -1178,19 +1326,19 @@
                     </svg>
                 </button>
                 <div class="screenshots" id="overlayrScreenshots">
-                    <div class="screenshot">
+                    <div class="screenshot" onclick="openFullscreen('AssetOverlayr/image-2.png', 'Import and Project Management', 'overlayr', 0)">
                         <img src="AssetOverlayr/image-2.png" alt="Import and Project Management">
                     </div>
-                    <div class="screenshot">
+                    <div class="screenshot" onclick="openFullscreen('AssetOverlayr/image-3.png', 'Saved Georeferencing Projects', 'overlayr', 1)">
                         <img src="AssetOverlayr/image-3.png" alt="Saved Georeferencing Projects">
                     </div>
-                    <div class="screenshot">
+                    <div class="screenshot" onclick="openFullscreen('AssetOverlayr/image-4.png', 'Georeferenced Overlay View', 'overlayr', 2)">
                         <img src="AssetOverlayr/image-4.png" alt="Georeferenced Overlay View">
                     </div>
-                    <div class="screenshot">
+                    <div class="screenshot" onclick="openFullscreen('AssetOverlayr/image-5.png', 'Precision Point Selection', 'overlayr', 3)">
                         <img src="AssetOverlayr/image-5.png" alt="Precision Point Selection">
                     </div>
-                    <div class="screenshot">
+                    <div class="screenshot" onclick="openFullscreen('AssetOverlayr/image-6.png', 'Map Matching and Alignment', 'overlayr', 4)">
                         <img src="AssetOverlayr/image-6.png" alt="Map Matching and Alignment">
                     </div>
                 </div>
@@ -1324,6 +1472,100 @@
     </footer>
 
     <script>
+        // Global variables for fullscreen functionality
+        let currentFullscreenIndex = 0;
+        let currentFullscreenApp = '';
+        let fullscreenImages = {
+            gis: [
+                { src: 'AssetsGIS/demo-animation.gif', caption: 'App Demo Animation' },
+                { src: 'AssetsGIS/image-2.png', caption: 'Georeferenced Plans Over Satellite Imagery' },
+                { src: 'AssetsGIS/image-3.png', caption: 'Custom Markers and Area Measurement' },
+                { src: 'AssetsGIS/image-4.png', caption: 'Download Development Plans' },
+                { src: 'AssetsGIS/image-5.png', caption: 'Part Development Plan View' },
+                { src: 'AssetsGIS/image-6.png', caption: 'Main Menu Interface' },
+                { src: 'AssetsGIS/image-7.png', caption: 'Maharashtra Districts Selection' },
+                { src: 'AssetsGIS/image-8.png', caption: 'Multiple Village Plans View' },
+                { src: 'AssetsGIS/image-9.png', caption: 'Village Plan with Survey Numbers' }
+            ],
+            overlayr: [
+                { src: 'AssetOverlayr/image-2.png', caption: 'Import and Project Management' },
+                { src: 'AssetOverlayr/image-3.png', caption: 'Saved Georeferencing Projects' },
+                { src: 'AssetOverlayr/image-4.png', caption: 'Georeferenced Overlay View' },
+                { src: 'AssetOverlayr/image-5.png', caption: 'Precision Point Selection' },
+                { src: 'AssetOverlayr/image-6.png', caption: 'Map Matching and Alignment' }
+            ]
+        };
+
+        // Function to open fullscreen modal
+        function openFullscreen(imageSrc, caption, app, index) {
+            currentFullscreenIndex = index;
+            currentFullscreenApp = app;
+            
+            const modal = document.getElementById('fullscreenModal');
+            const image = document.getElementById('fullscreenImage');
+            const captionElement = document.getElementById('fullscreenCaption');
+            
+            image.src = imageSrc;
+            image.alt = caption;
+            captionElement.textContent = caption;
+            
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        // Function to close fullscreen modal
+        function closeFullscreen() {
+            const modal = document.getElementById('fullscreenModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+
+        // Function to navigate between images in fullscreen
+        function navigateFullscreen(direction) {
+            const images = fullscreenImages[currentFullscreenApp];
+            currentFullscreenIndex += direction;
+            
+            // Wrap around if at the beginning or end
+            if (currentFullscreenIndex < 0) {
+                currentFullscreenIndex = images.length - 1;
+            } else if (currentFullscreenIndex >= images.length) {
+                currentFullscreenIndex = 0;
+            }
+            
+            const image = document.getElementById('fullscreenImage');
+            const captionElement = document.getElementById('fullscreenCaption');
+            const currentImage = images[currentFullscreenIndex];
+            
+            image.src = currentImage.src;
+            image.alt = currentImage.caption;
+            captionElement.textContent = currentImage.caption;
+        }
+
+        // Close fullscreen when clicking outside the image
+        document.getElementById('fullscreenModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeFullscreen();
+            }
+        });
+
+        // Keyboard navigation for fullscreen
+        document.addEventListener('keydown', function(e) {
+            const modal = document.getElementById('fullscreenModal');
+            if (modal.classList.contains('active')) {
+                switch(e.key) {
+                    case 'Escape':
+                        closeFullscreen();
+                        break;
+                    case 'ArrowLeft':
+                        navigateFullscreen(-1);
+                        break;
+                    case 'ArrowRight':
+                        navigateFullscreen(1);
+                        break;
+                }
+            }
+        });
+
         // Smooth scrolling for navigation links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
