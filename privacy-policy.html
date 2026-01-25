@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy | MapMagician</title>
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Privacy Policy | MapMagician">
+    <meta property="og:description" content="Privacy Policy for MapMagician services">
+    <meta property="og:image" content="https://www.mapmagician.in/AssetsGIS/mapmagiciansmall.png">
+    <meta property="og:url" content="https://www.mapmagician.in/privacy-policy">
+    <meta property="og:type" content="website">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="AssetsGIS/mapmagiciansmall.png">
+    <link rel="apple-touch-icon" href="AssetsGIS/mapmagiciansmall.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #7c3aed;
+            --accent-color: #10b981;
+            --dark-bg: #111827;
+            --light-bg: #f8fafc;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.7;
+            color: var(--text-dark);
+            background: var(--light-bg);
+        }
+
+        /* Navigation */
+        nav {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .logo img {
+            width: 40px;
+            height: 40px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-color);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 800px;
+            margin: 100px auto 0;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .policy-header {
+            background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .policy-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .policy-header .app-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 1.5rem;
+            opacity: 0.9;
+        }
+
+        .policy-header .app-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: white;
+            padding: 8px;
+        }
+
+        .policy-header .app-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        /* Content */
+        .policy-content {
+            padding: 3rem 2rem;
+        }
+
+        .policy-content h2 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 2.5rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .policy-content h2:first-child {
+            margin-top: 0;
+        }
+
+        .policy-content p {
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+            text-align: justify;
+        }
+
+        .policy-content ul {
+            margin: 1rem 0 1.5rem 2rem;
+            list-style: none;
+        }
+
+        .policy-content ul li {
+            position: relative;
+            margin-bottom: 0.8rem;
+            padding-left: 1.5rem;
+        }
+
+        .policy-content ul li:before {
+            content: "";
+            color: var(--primary-color);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.2rem;
+        }
+
+        .policy-content a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .policy-content a:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+
+        .highlight-box {
+            background: var(--light-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary-color);
+            margin: 1.5rem 0;
+        }
+
+        .highlight-box p {
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Effective Date */
+        .effective-date {
+            background: var(--light-bg);
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--border-color);
+            font-style: italic;
+            color: var(--text-light);
+            text-align: center;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--dark-bg);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 4rem;
+        }
+
+        footer p {
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+
+        footer a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        footer a:hover {
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-container {
+                padding: 0.75rem 1rem;
+            }
+
+            .logo {
+                font-size: 1.2rem;
+            }
+
+            .logo img {
+                width: 35px;
+                height: 35px;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .container {
+                margin: 80px 1rem 0;
+                border-radius: 12px;
+            }
+
+            .policy-header {
+                padding: 2rem 1.5rem;
+            }
+
+            .policy-header h1 {
+                font-size: 2rem;
+            }
+
+            .policy-header .app-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .policy-content {
+                padding: 2rem 1.5rem;
+            }
+
+            .policy-content h2 {
+                font-size: 1.3rem;
+            }
+
+            .effective-date {
+                padding: 1rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="https://mapmagician.in" class="logo">
+                <img src="AssetsGIS/mapmagiciansmall.png" alt="MapMagician Logo">
+                MapMagician
+            </a>
+            <div class="nav-links">
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <div class="policy-header">
+            <h1>Privacy Policy</h1>
+            <div class="app-info">
+                <img src="AssetsGIS/mapmagiciansmall.png" alt="MapMagician" class="app-icon">
+                <div class="app-name">MapMagician</div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="policy-content">
+            <h2>Introduction</h2>
+            <p>Welcome to MapMagician (<a href="https://mapmagician.in">mapmagician.in</a>). We respect your privacy and are committed to protecting your personal data. This privacy policy explains how we collect, use, and safeguard your information when you use our services.</p>
+
+            <h2>Information We Collect</h2>
+            <p>When you use MapMagician, we may collect the following information:</p>
+            <ul>
+                <li><strong>Account Information:</strong> When you sign in using Google OAuth, we receive your name, email address, and profile picture from your Google account.</li>
+                <li><strong>Usage Data:</strong> Information about how you interact with our service, including pages visited and features used.</li>
+                <li><strong>Device Information:</strong> Browser type, operating system, and device identifiers.</li>
+            </ul>
+
+            <h2>How We Use Your Information</h2>
+            <p>We use the collected information for the following purposes:</p>
+            <ul>
+                <li>To provide and maintain our service</li>
+                <li>To authenticate your identity and manage your account</li>
+                <li>To communicate with you about service updates</li>
+                <li>To improve our service and user experience</li>
+                <li>To comply with legal obligations</li>
+            </ul>
+
+            <h2>Google OAuth and User Data</h2>
+            <div class="highlight-box">
+                <p>MapMagician uses Google OAuth for authentication. When you sign in with Google, we only access:</p>
+                <ul>
+                    <li>Your basic profile information (name and profile picture)</li>
+                    <li>Your email address</li>
+                </ul>
+                <p>We do not access your contacts, calendar, or any other Google services data. We do not store your Google password.</p>
+            </div>
+
+            <h2>Data Storage and Security</h2>
+            <p>We implement appropriate technical and organizational security measures to protect your personal data against unauthorized access, alteration, disclosure, or destruction. Your data is stored securely and accessed only when necessary to provide our services.</p>
+
+            <h2>Data Sharing</h2>
+            <p>We do not sell, trade, or rent your personal information to third parties. We may share your information only in the following circumstances:</p>
+            <ul>
+                <li>With your explicit consent</li>
+                <li>To comply with legal requirements</li>
+                <li>To protect our rights and safety</li>
+            </ul>
+
+            <h2>Third-Party Services</h2>
+            <p>Our service may use third-party services that collect information used to identify you. Links to privacy policies of third-party service providers used:</p>
+            <ul>
+                <li><a href="https://www.google.com/policies/privacy/" target="_blank">Google Play Services</a></li>
+                <li><a href="https://policies.google.com/privacy" target="_blank">Google OAuth</a></li>
+            </ul>
+
+            <h2>Data Retention</h2>
+            <p>We retain your personal data only for as long as necessary to fulfill the purposes outlined in this privacy policy. You may request deletion of your data at any time by contacting us.</p>
+
+            <h2>Your Rights</h2>
+            <p>You have the following rights regarding your personal data:</p>
+            <ul>
+                <li><strong>Access:</strong> Request a copy of your personal data</li>
+                <li><strong>Correction:</strong> Request correction of inaccurate data</li>
+                <li><strong>Deletion:</strong> Request deletion of your data</li>
+                <li><strong>Withdrawal:</strong> Withdraw consent for data processing</li>
+                <li><strong>Portability:</strong> Request transfer of your data</li>
+            </ul>
+
+            <h2>Cookies</h2>
+            <p>Cookies are files with a small amount of data that are commonly used as anonymous unique identifiers. These are sent to your browser from the websites that you visit and are stored on your device's internal memory.</p>
+            <p>This Service may use cookies and similar technologies to maintain your session and improve your experience. You can control cookie settings through your browser preferences.</p>
+
+            <h2>Children's Privacy</h2>
+            <p>Our service is not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and you are aware that your child has provided us with personal information, please contact us so that we will be able to take necessary actions.</p>
+
+            <h2>Changes to This Privacy Policy</h2>
+            <p>We may update our Privacy Policy from time to time. Thus, you are advised to review this page periodically for any changes. We will notify you of any changes by posting the new Privacy Policy on this page.</p>
+
+            <h2>Contact Us</h2>
+            <p>If you have any questions about this privacy policy or our data practices, please contact us:</p>
+            <ul>
+                <li>Website: <a href="https://mapmagician.in">mapmagician.in</a></li>
+                <li>Email: <a href="mailto:support@mapmagician.in">support@mapmagician.in</a></li>
+            </ul>
+        </div>
+
+        <!-- Effective Date -->
+        <div class="effective-date">
+            This policy is effective as of January 25, 2025
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 MapMagician.in - Professional GIS Applications</p>
+        <p>Contact: <a href="mailto:support@mapmagician.in">support@mapmagician.in</a></p>
+    </footer>
+</body>
+</html>
