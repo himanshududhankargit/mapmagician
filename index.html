@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Overlayr - Georeference Maps & Overlay Images</title>
+    <title>Overlayr - Map Overlay Tool</title>
     
     <!-- Open Graph Meta Tags for Social Media Sharing -->
     <meta property="og:title" content="MapMagician - Professional GIS Applications">
-    <meta property="og:description" content="Access comprehensive development plans and georeference maps with Overlayr and Development Plan GIS. Professional tools for surveyors, planners, and GIS experts.">
+    <meta property="og:description" content="Access comprehensive development plans, georeference maps, and create professional location plans with Development Plan GIS, Overlayr, and Location Plan Maker Pro.">
     <meta property="og:image" content="https://www.mapmagician.in/AssetsGIS/mapmagiciansmall.png">
     <meta property="og:url" content="https://www.mapmagician.in">
     <meta property="og:type" content="website">
@@ -16,11 +16,11 @@
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="MapMagician - Professional GIS Applications">
-    <meta name="twitter:description" content="Access comprehensive development plans and georeference maps with professional GIS tools.">
+    <meta name="twitter:description" content="Professional GIS tools: development plans, georeferencing, and location plan creation for field professionals.">
     <meta name="twitter:image" content="https://www.mapmagician.in/AssetsGIS/mapmagiciansmall.png">
     
     <!-- Additional Meta Tags -->
-    <meta name="description" content="MapMagician offers professional GIS applications including Development Plan GIS for 157+ locations and Overlayr for georeferencing maps on satellite imagery.">
+    <meta name="description" content="MapMagician offers professional GIS applications including Development Plan GIS for 157+ locations, Overlayr for georeferencing, and Location Plan Maker Pro for creating professional location plans.">
     <meta name="keywords" content="GIS, development plans, georeferencing, map overlay, satellite imagery, urban planning, surveying">
     <meta name="author" content="MapMagician">
     
@@ -212,6 +212,8 @@
             transition: transform 0.3s, box-shadow 0.3s;
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .app-card::before {
@@ -263,6 +265,8 @@
             color: var(--text-light);
             margin-bottom: 1.5rem;
             line-height: 1.6;
+            text-align: justify;
+            flex: 1;
         }
 
         .app-card-cta {
@@ -296,6 +300,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            white-space: nowrap;
         }
 
         .learn-more-btn:hover {
@@ -1010,7 +1015,11 @@
                 </a>
                 <a href="#overlayr" class="app-switch-btn" id="overlayr-btn">
                     <img src="AssetOverlayr/image-1.png" alt="Overlayr">
-                    <span>Overlayr</span>
+                    <span>Overlayr - Map Overlay Tool</span>
+                </a>
+                <a href="#location-plan-maker" class="app-switch-btn" id="lpm-btn">
+                    <img src="AssetsLocationPlanMaker/icon.png" alt="Location Plan Maker Pro">
+                    <span>Location Plan Maker Pro</span>
                 </a>
             </div>
             
@@ -1021,7 +1030,8 @@
             <div class="mobile-menu nav-links" id="mobileMenu">
                 <a href="#gis-info" onclick="closeMobileMenu()">About GIS</a>
                 <a href="#development-plan" onclick="closeMobileMenu()">Development Plan GIS</a>
-                <a href="#overlayr" onclick="closeMobileMenu()">Overlayr</a>
+                <a href="#overlayr" onclick="closeMobileMenu()">Overlayr - Map Overlay Tool</a>
+                <a href="#location-plan-maker" onclick="closeMobileMenu()">Location Plan Maker Pro</a>
             </div>
         </div>
     </nav>
@@ -1057,6 +1067,7 @@
             </div>
 
             <!-- Featured Apps Cards -->
+            <h2 style="text-align: center; margin-bottom: 2rem; font-size: 2rem; color: var(--text-dark);">Our Applications</h2>
             <div class="featured-apps">
                 <!-- Development Plan GIS Card -->
                 <div class="app-card">
@@ -1089,7 +1100,7 @@
                     <div class="app-card-header">
                         <img src="AssetOverlayr/image-1.png" alt="Overlayr" class="app-card-icon">
                         <div class="app-card-title">
-                            <h3>Overlayr</h3>
+                            <h3>Overlayr - Map Overlay Tool</h3>
                             <span class="badge">Pro Georeferencing</span>
                         </div>
                     </div>
@@ -1097,12 +1108,38 @@
                         Transform maps, site plans, and scanned images into georeferenced overlays on satellite imagery. Ideal for surveyors, GIS experts, real estate professionals, planners, and field researchers with desktop-grade precision on Android.
                     </div>
                     <div class="app-card-cta">
-                        <a href="https://play.google.com/store/apps/details?id=com.himanshu.overlayr&hl=en" 
+                        <a href="https://play.google.com/store/apps/details?id=com.himanshu.overlayr&hl=en"
                            target="_blank" class="app-store-btn">
                             <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play">
                         </a>
                         <a href="#overlayr" class="learn-more-btn">
-                            Learn More 
+                            Learn More
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14m-7-7l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Location Plan Maker Pro Card -->
+                <div class="app-card">
+                    <div class="app-card-header">
+                        <img src="AssetsLocationPlanMaker/icon.png" alt="Location Plan Maker Pro" class="app-card-icon">
+                        <div class="app-card-title">
+                            <h3>Location Plan Maker Pro</h3>
+                            <span class="badge">Pro Map Creation</span>
+                        </div>
+                    </div>
+                    <div class="app-card-description">
+                        Create professional location plans, site maps, and property layouts in minutes directly from your phone. Built for real estate professionals, engineers, surveyors, and developers who need fast, accurate, and client-ready maps on-site.
+                    </div>
+                    <div class="app-card-cta">
+                        <a href="https://play.google.com/store/apps/details?id=com.himanshu.locationplanmaker"
+                           target="_blank" class="app-store-btn">
+                            <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play">
+                        </a>
+                        <a href="#location-plan-maker" class="learn-more-btn">
+                            Learn More
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M5 12h14m-7-7l7 7-7 7"/>
                             </svg>
@@ -1308,7 +1345,7 @@
             <div class="app-header">
                 <img src="AssetOverlayr/image-1.png" alt="Overlayr" class="app-icon">
                 <div class="app-title">
-                    <h2>Overlayr - Georeference Maps & Overlay Images</h2>
+                    <h2>Overlayr - Map Overlay Tool</h2>
                     <p>Desktop-grade precision georeferencing on your Android device</p>
                 </div>
             </div>
@@ -1316,7 +1353,7 @@
             <!-- Screenshots Section for Overlayr -->
             <div class="screenshots-container">
                 <div class="screenshots-title">
-                    <h2>Overlayr in Action</h2>
+                    <h2>Overlayr - Map Overlay Tool in Action</h2>
                     <p>Professional georeferencing with precision control points</p>
                 </div>
                 
@@ -1421,7 +1458,7 @@
                 </div>
             </div>
 
-            <h3 style="text-align: center; margin: 3rem 0 2rem; color: var(--text-dark);">Why Choose Overlayr?</h3>
+            <h3 style="text-align: center; margin: 3rem 0 2rem; color: var(--text-dark);">Why Choose Overlayr - Map Overlay Tool?</h3>
             
             <div class="features-grid">
                 <div class="feature-card">
@@ -1439,7 +1476,7 @@
             </div>
 
             <div class="cta">
-                <h2>Transform Your Maps with Overlayr</h2>
+                <h2>Transform Your Maps with Overlayr - Map Overlay Tool</h2>
                 <p>Professional georeferencing tools for surveyors, planners, and GIS experts</p>
                 <div class="cta-buttons">
                     <a href="https://play.google.com/store/apps/details?id=com.himanshu.overlayr&hl=en" 
@@ -1449,6 +1486,219 @@
                     <a href="https://www.youtube.com/playlist?list=PLLqkqPMZldH9vswRWN-QZJDYjpI_mmBMa"
                        target="_blank" class="cta-button">
                         📹 Watch Tutorial Playlist
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Location Plan Maker Pro Section -->
+    <section id="location-plan-maker" class="app-section">
+        <div class="container">
+            <div class="app-header">
+                <img src="AssetsLocationPlanMaker/icon.png" alt="Location Plan Maker Pro" class="app-icon">
+                <div class="app-title">
+                    <h2>Location Plan Maker Pro</h2>
+                    <p>Create professional location plans, site maps & property layouts from your phone</p>
+                </div>
+            </div>
+
+            <!-- Blog-style Intro -->
+            <div style="max-width: 800px; margin: 0 auto 3rem; line-height: 1.9; color: var(--text-light); font-size: 1.05rem;">
+                <p style="margin-bottom: 1.5rem;">
+                    Whether you're a real estate agent rushing between site visits, a civil engineer preparing a client report, or a surveyor documenting a plot — you know how painful it is to create a clean location map. Most professionals still rely on screenshot-and-annotate workflows or expensive desktop GIS software that's overkill for a simple location plan.
+                </p>
+                <p style="margin-bottom: 1.5rem;">
+                    <strong style="color: var(--text-dark);">Location Plan Maker Pro changes that.</strong> It puts a full-featured location plan studio right in your pocket. Open the app, drop markers for nearby landmarks, draw roads and plot boundaries, measure distances and areas, and export a polished, branded PDF — all in under 10 minutes, right from the field.
+                </p>
+                <p>
+                    The output isn't a rough sketch. It's a clean, professional-grade map with proper markers, labels, measurements, and your custom logo — ready to attach to a listing, embed in a report, or present to a client. No internet required after the initial map load. No learning curve. Just open, create, and deliver.
+                </p>
+            </div>
+
+            <!-- Screenshots Section -->
+            <div class="screenshots-container">
+                <div class="screenshots-title">
+                    <h2>Location Plan Maker Pro in Action</h2>
+                    <p>Professional location plans created directly on your phone</p>
+                </div>
+
+                <button class="scroll-button prev" onclick="scrollScreenshots('lpm', 'left')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6" />
+                    </svg>
+                </button>
+                <div class="screenshots" id="lpmScreenshots">
+                    <div class="screenshot" onclick="openFullscreen('AssetsLocationPlanMaker/screenshot-1.png', 'Professional Location Plan Output', 'lpm', 0)">
+                        <img src="AssetsLocationPlanMaker/screenshot-1.png" alt="Professional Location Plan Output">
+                    </div>
+                    <div class="screenshot" onclick="openFullscreen('AssetsLocationPlanMaker/screenshot-2.png', 'Marker Placement & Categories', 'lpm', 1)">
+                        <img src="AssetsLocationPlanMaker/screenshot-2.png" alt="Marker Placement & Categories">
+                    </div>
+                    <div class="screenshot" onclick="openFullscreen('AssetsLocationPlanMaker/screenshot-3.png', 'Road Drawing & Styling', 'lpm', 2)">
+                        <img src="AssetsLocationPlanMaker/screenshot-3.png" alt="Road Drawing & Styling">
+                    </div>
+                    <div class="screenshot" onclick="openFullscreen('AssetsLocationPlanMaker/screenshot-4.png', 'Area & Distance Measurement', 'lpm', 3)">
+                        <img src="AssetsLocationPlanMaker/screenshot-4.png" alt="Area & Distance Measurement">
+                    </div>
+                    <div class="screenshot" onclick="openFullscreen('AssetsLocationPlanMaker/screenshot-5.png', 'Region Marking & Polygons', 'lpm', 4)">
+                        <img src="AssetsLocationPlanMaker/screenshot-5.png" alt="Region Marking & Polygons">
+                    </div>
+                    <div class="screenshot" onclick="openFullscreen('AssetsLocationPlanMaker/screenshot-6.png', 'Export & Share Options', 'lpm', 5)">
+                        <img src="AssetsLocationPlanMaker/screenshot-6.png" alt="Export & Share Options">
+                    </div>
+                    <div class="screenshot" onclick="openFullscreen('AssetsLocationPlanMaker/sample-output.png', 'Sample Exported Location Plan', 'lpm', 6)">
+                        <img src="AssetsLocationPlanMaker/sample-output.png" alt="Sample Exported Location Plan">
+                    </div>
+                </div>
+                <button class="scroll-button next" onclick="scrollScreenshots('lpm', 'right')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- How It Helps You Earn -->
+            <h3 style="text-align: center; margin: 3rem 0 2rem; color: var(--text-dark);">How It Helps You Earn</h3>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>🏠 Property Listings</h3>
+                    <p>Create location maps for property listings that show nearby amenities, roads, and landmarks. Clean maps increase buyer trust and boost conversions.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📋 Site Visit Reports</h3>
+                    <p>Generate professional site plans during field visits. Attach accurate, branded maps to your reports without going back to the office.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>💼 Client Presentations</h3>
+                    <p>Deliver polished map outputs that impress clients. Add your logo, customize styling, and present plans that build trust and credibility.</p>
+                </div>
+            </div>
+
+            <!-- Core Features -->
+            <h3 style="text-align: center; margin: 3rem 0 2rem; color: var(--text-dark);">Powerful Features</h3>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>📍 33+ Professional Markers</h3>
+                    <ul>
+                        <li>Hospitals, schools, banks, police stations, bus stops, railway stations, metro, airports, and more</li>
+                        <li>9 organized categories: Civic, Transport, Education, Religious, Utilities, Roads, Financial, Government, General</li>
+                        <li>Add custom text labels anywhere on the map</li>
+                        <li>Full control over marker placement and naming</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>📏 Accurate Measurements</h3>
+                    <ul>
+                        <li>Measure distance in meters, feet, and kilometers</li>
+                        <li>Calculate area in sq. meters, sq. feet, acres, and hectares</li>
+                        <li>Accurate spherical geometry calculations</li>
+                        <li>Visual measurement lines with start/end markers</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>🗺️ Area & Region Marking</h3>
+                    <ul>
+                        <li>Draw polygonal regions for plots, properties, and zones</li>
+                        <li>Customize fill color, opacity, and borders</li>
+                        <li>Auto-calculate area with unit selection</li>
+                        <li>Add area labels with custom positioning</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>🛣️ Road & Route Drawing</h3>
+                    <ul>
+                        <li>Draw roads with realistic multi-layer styling</li>
+                        <li>Customize road width, colors, and borders</li>
+                        <li>Add road name labels along paths</li>
+                        <li>Mark highways, lanes, and access roads</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>🌍 Map & Location</h3>
+                    <ul>
+                        <li>Google Maps with satellite and terrain view</li>
+                        <li>Location search with autocomplete</li>
+                        <li>GPS-based current location detection</li>
+                        <li>Coordinate input in Decimal & DMS formats</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>📤 Export & Project Management</h3>
+                    <ul>
+                        <li>Export high-quality maps as PNG or PDF</li>
+                        <li>Share via WhatsApp, Email, or other apps</li>
+                        <li>Save multiple projects with thumbnails</li>
+                        <li>Add custom logo and branding to exports</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Video -->
+            <div class="video-container">
+                <iframe src="https://www.youtube.com/embed/K2PxmJgLwMU"
+                        title="Location Plan Maker Pro Demo"
+                        allowfullscreen>
+                </iframe>
+            </div>
+
+            <!-- Who Is This For -->
+            <h3 style="text-align: center; margin: 3rem 0 2rem; color: var(--text-dark);">Built For Field Professionals</h3>
+
+            <div class="features-grid">
+                <div class="feature-card user-type-card valuers">
+                    <h3>🏘️ Real Estate Professionals</h3>
+                    <ul>
+                        <li>Real estate agents and brokers creating listing maps</li>
+                        <li>Property consultants preparing client presentations</li>
+                        <li>Builders and developers documenting site layouts</li>
+                    </ul>
+                </div>
+                <div class="feature-card user-type-card developers">
+                    <h3>🏗️ Engineers & Surveyors</h3>
+                    <ul>
+                        <li>Civil engineers creating site reference plans</li>
+                        <li>Surveyors documenting plot boundaries and landmarks</li>
+                        <li>Architects and planners creating location context maps</li>
+                    </ul>
+                </div>
+                <div class="feature-card user-type-card planners">
+                    <h3>🎓 Students & Academics</h3>
+                    <ul>
+                        <li>Civil engineering students preparing project submissions</li>
+                        <li>Architecture students creating site analysis maps</li>
+                        <li>Anyone who needs a quick, professional location plan</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Why Choose -->
+            <h3 style="text-align: center; margin: 3rem 0 2rem; color: var(--text-dark);">Why Professionals Choose This App</h3>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>✔️ No Expensive Software Needed</h3>
+                    <p>Skip the desktop GIS tools and expensive licenses. Create professional maps directly on your phone with an intuitive, purpose-built interface.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>✔️ Create Maps On-Site</h3>
+                    <p>Don't wait until you're back at the office. Open the app at the location, use GPS, drop markers, and export a finished plan in minutes.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>✔️ Professional Output That Builds Trust</h3>
+                    <p>Clean designs with branding support, accurate measurements, and polished visuals. Suitable for reports, documentation, and client presentations.</p>
+                </div>
+            </div>
+
+            <div class="cta">
+                <h2>Create Professional Location Plans Instantly</h2>
+                <p>Fast, accurate, and client-ready maps from your phone</p>
+                <div class="cta-buttons">
+                    <a href="https://play.google.com/store/apps/details?id=com.himanshu.locationplanmaker"
+                       target="_blank" class="play-store-button">
+                        <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" style="height: 60px;">
                     </a>
                 </div>
             </div>
@@ -1474,7 +1724,12 @@
                 <span style="opacity: 0.5;">|</span>
                 <a href="https://play.google.com/store/apps/details?id=com.himanshu.overlayr&hl=en"
                    target="_blank" style="color: white; text-decoration: none; opacity: 0.8; transition: opacity 0.3s;">
-                   Overlayr on Play Store
+                   Overlayr - Map Overlay Tool on Play Store
+                </a>
+                <span style="opacity: 0.5;">|</span>
+                <a href="https://play.google.com/store/apps/details?id=com.himanshu.locationplanmaker"
+                   target="_blank" style="color: white; text-decoration: none; opacity: 0.8; transition: opacity 0.3s;">
+                   Location Plan Maker Pro on Play Store
                 </a>
                 <span style="opacity: 0.5;">|</span>
                 <a href="privacy-policy.html" style="color: white; text-decoration: none; opacity: 0.8; transition: opacity 0.3s;">
@@ -1506,6 +1761,15 @@
                 { src: 'AssetOverlayr/image-4.png', caption: 'Georeferenced Overlay View' },
                 { src: 'AssetOverlayr/image-5.png', caption: 'Precision Point Selection' },
                 { src: 'AssetOverlayr/image-6.png', caption: 'Map Matching and Alignment' }
+            ],
+            lpm: [
+                { src: 'AssetsLocationPlanMaker/screenshot-1.png', caption: 'Professional Location Plan Output' },
+                { src: 'AssetsLocationPlanMaker/screenshot-2.png', caption: 'Marker Placement & Categories' },
+                { src: 'AssetsLocationPlanMaker/screenshot-3.png', caption: 'Road Drawing & Styling' },
+                { src: 'AssetsLocationPlanMaker/screenshot-4.png', caption: 'Area & Distance Measurement' },
+                { src: 'AssetsLocationPlanMaker/screenshot-5.png', caption: 'Region Marking & Polygons' },
+                { src: 'AssetsLocationPlanMaker/screenshot-6.png', caption: 'Export & Share Options' },
+                { src: 'AssetsLocationPlanMaker/sample-output.png', caption: 'Sample Exported Location Plan' }
             ]
         };
 
@@ -1607,20 +1871,29 @@
         function updateActiveAppButton() {
             const gisSection = document.getElementById('development-plan');
             const overlayrSection = document.getElementById('overlayr');
+            const lpmSection = document.getElementById('location-plan-maker');
             const gisBtn = document.getElementById('gis-btn');
             const overlayrBtn = document.getElementById('overlayr-btn');
-            
+            const lpmBtn = document.getElementById('lpm-btn');
+
             const scrollPosition = window.scrollY + 200;
-            
-            if (overlayrSection && scrollPosition >= overlayrSection.offsetTop) {
+
+            if (lpmSection && scrollPosition >= lpmSection.offsetTop) {
+                gisBtn.classList.remove('active');
+                overlayrBtn.classList.remove('active');
+                lpmBtn.classList.add('active');
+            } else if (overlayrSection && scrollPosition >= overlayrSection.offsetTop) {
                 gisBtn.classList.remove('active');
                 overlayrBtn.classList.add('active');
+                lpmBtn.classList.remove('active');
             } else if (gisSection && scrollPosition >= gisSection.offsetTop) {
                 gisBtn.classList.add('active');
                 overlayrBtn.classList.remove('active');
+                lpmBtn.classList.remove('active');
             } else {
                 gisBtn.classList.remove('active');
                 overlayrBtn.classList.remove('active');
+                lpmBtn.classList.remove('active');
             }
         }
 
@@ -1629,8 +1902,8 @@
 
         // Screenshot scrolling functionality
         function scrollScreenshots(app, direction) {
-            const containerId = app === 'gis' ? 'gisScreenshots' : 'overlayrScreenshots';
-            const container = document.getElementById(containerId);
+            const containerMap = { gis: 'gisScreenshots', overlayr: 'overlayrScreenshots', lpm: 'lpmScreenshots' };
+            const container = document.getElementById(containerMap[app]);
             const scrollAmount = 320;
             
             if (direction === 'left') {
@@ -1648,7 +1921,7 @@
 
         // Update scroll button visibility
         function updateScrollButtons() {
-            const containers = ['gisScreenshots', 'overlayrScreenshots'];
+            const containers = ['gisScreenshots', 'overlayrScreenshots', 'lpmScreenshots'];
             
             containers.forEach(containerId => {
                 const container = document.getElementById(containerId);
@@ -1681,6 +1954,7 @@
         // Initialize scroll button visibility
         document.getElementById('gisScreenshots')?.addEventListener('scroll', updateScrollButtons);
         document.getElementById('overlayrScreenshots')?.addEventListener('scroll', updateScrollButtons);
+        document.getElementById('lpmScreenshots')?.addEventListener('scroll', updateScrollButtons);
         window.addEventListener('load', updateScrollButtons);
         window.addEventListener('resize', updateScrollButtons);
 
