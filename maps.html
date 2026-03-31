@@ -611,7 +611,6 @@
 
         // Global variables
         let map;
-        let searchBox;
         let markers = [];
         let currentOpacity = 0.5;
         
@@ -825,74 +824,31 @@
                 fullscreenControl: false
             });
 
-            // Create the search box and link it to the UI element
+            // Places Autocomplete (New API)
             const input = document.getElementById('search-input');
-            searchBox = new google.maps.places.SearchBox(input);
-
-            // Bias the SearchBox results towards current map's viewport
-            map.addListener('bounds_changed', function() {
-                searchBox.setBounds(map.getBounds());
+            const autocomplete = new google.maps.places.Autocomplete(input, {
+                fields: ['geometry', 'name'],
+                types: ['geocode', 'establishment']
             });
+            autocomplete.bindTo('bounds', map);
 
-            // Listen for the event fired when the user selects a prediction
-            searchBox.addListener('places_changed', function() {
-                const places = searchBox.getPlaces();
+            autocomplete.addListener('place_changed', function() {
+                const place = autocomplete.getPlace();
+                if (!place.geometry) return;
 
-                if (places.length === 0) {
-                    return;
-                }
-
-                // Clear out the old markers
-                markers.forEach(function(marker) {
-                    marker.setMap(null);
-                });
+                markers.forEach(m => m.setMap(null));
                 markers = [];
 
-                // For each place, get the icon, name and location
-                const bounds = new google.maps.LatLngBounds();
-                let selectedPlace = null;
-                
-                places.forEach(function(place) {
-                    if (!place.geometry) {
-                        console.log("Returned place contains no geometry");
-                        return;
-                    }
-
-                    // Create a marker for each place
-                    const marker = new google.maps.Marker({
-                        map: map,
-                        title: place.name,
-                        position: place.geometry.location
-                    });
-
-                    markers.push(marker);
-                    selectedPlace = place;
-
-                    if (place.geometry.viewport) {
-                        // Only geocodes have viewport
-                        bounds.union(place.geometry.viewport);
-                    } else {
-                        bounds.extend(place.geometry.location);
-                    }
+                const marker = new google.maps.Marker({
+                    map: map,
+                    title: place.name,
+                    position: place.geometry.location
                 });
-                
-                // Instead of using fitBounds, which might zoom out too far,
-                // we directly set the center and zoom level
-                if (selectedPlace && selectedPlace.geometry) {
-                    map.setCenter(selectedPlace.geometry.location);
-                    map.setZoom(17); // Zoom level 17 gives good detail while limiting loaded plans
-                    updateStatus("Zoomed to location, level 17");
-                } else {
-                    // Fallback to fitBounds if needed
-                    map.fitBounds(bounds);
-                    // Force a minimum zoom level
-                    google.maps.event.addListenerOnce(map, 'bounds_changed', function() {
-                        if (map.getZoom() < 17) {
-                            map.setZoom(17);
-                            updateStatus("Adjusted zoom to level 17");
-                        }
-                    });
-                }
+                markers.push(marker);
+
+                map.setCenter(place.geometry.location);
+                map.setZoom(17);
+                updateStatus('Zoomed to ' + place.name);
             });
 
             // Single debounced handler for all viewport changes
