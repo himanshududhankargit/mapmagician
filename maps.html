@@ -480,7 +480,7 @@
     <script>
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
-        const functions = firebase.functions();
+        const functions = firebase.app().functions('us-central1');
         let currentUser = null;
         const activePurchases = new Map(); // productId → expiry timestamp
 
@@ -605,7 +605,8 @@
                 rzp.open();
             } catch (error) {
                 console.error('Purchase error:', error);
-                updateStatus('Payment failed: ' + (error.message || 'Unknown error'));
+                alert('Payment error: ' + (error.message || error.code || JSON.stringify(error)));
+                updateStatus('Payment failed');
             }
         }
 
