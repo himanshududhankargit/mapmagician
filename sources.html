@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Sources - MahaGIS Development Plan Viewer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #1976d2 100%);
+            color: white;
+            padding: 40px 20px 36px;
+            text-align: center;
+            position: relative;
+        }
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(to bottom, rgba(13,71,161,0.08), transparent);
+        }
+        header h1 {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+        header .subtitle {
+            font-size: 14px;
+            opacity: 0.85;
+            font-weight: 400;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 12px;
+            margin-top: 12px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        /* Container */
+        .container {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 24px 16px;
+        }
+
+        /* Disclaimer */
+        .disclaimer {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-left: 4px solid #ef6c00;
+            padding: 18px 20px;
+            margin: 8px 0 28px;
+            border-radius: 0 10px 10px 0;
+            font-size: 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .disclaimer-title {
+            color: #d84315;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .disclaimer strong {
+            color: #bf360c;
+        }
+
+        /* Section heading */
+        .section-heading {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 6px;
+        }
+        .section-desc {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* Count badge */
+        .count {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .count span {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1565c0;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 16px;
+            border-radius: 20px;
+        }
+
+        /* Sources list */
+        .sources-list {
+            list-style: none;
+        }
+        .sources-list li {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: box-shadow 0.2s, transform 0.15s;
+        }
+        .sources-list li:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transform: translateY(-1px);
+        }
+        .region-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .region-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: #1a1a2e;
+            display: block;
+        }
+        .source-url {
+            font-size: 13px;
+            color: #1565c0;
+            display: block;
+            margin-top: 4px;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+        .source-link {
+            color: #fff;
+            background: #1565c0;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 18px;
+            border-radius: 8px;
+            white-space: nowrap;
+            margin-left: 16px;
+            transition: background 0.2s, box-shadow 0.2s;
+            flex-shrink: 0;
+        }
+        .source-link:hover {
+            background: #0d47a1;
+            box-shadow: 0 2px 8px rgba(21,101,192,0.3);
+        }
+
+        /* Loading spinner */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid #e0e0e0;
+            border-top: 3px solid #1565c0;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text {
+            color: #888;
+            font-size: 14px;
+        }
+
+        /* Error */
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #c62828;
+            background: #ffebee;
+            border-radius: 10px;
+            font-size: 15px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 28px 20px;
+            color: #999;
+            font-size: 13px;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 36px;
+        }
+        footer a {
+            color: #1565c0;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+        .footer-sep {
+            margin: 0 8px;
+            color: #ccc;
+        }
+
+        /* Mobile */
+        @media (max-width: 600px) {
+            header { padding: 32px 16px 28px; }
+            header h1 { font-size: 22px; }
+            .container { padding: 20px 12px; }
+            .disclaimer { padding: 14px 16px; }
+            .sources-list li {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 14px 16px;
+                gap: 10px;
+            }
+            .source-link {
+                margin-left: 0;
+                text-align: center;
+                padding: 10px 18px;
+            }
+            .source-url {
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Development Plan GIS</h1>
+        <p class="subtitle">Data Sources & Attribution</p>
+        <span class="badge">Third-Party Reference App</span>
+    </header>
+
+    <div class="container">
+        <div class="disclaimer">
+            <div class="disclaimer-title">Important Disclaimer</div>
+            This is a privately developed GIS visualization and mapping application.
+            It is <strong>NOT</strong> affiliated with, endorsed by, or connected to any government agency or authority.
+            It does <strong>NOT</strong> represent a government entity and does <strong>NOT</strong> provide official
+            government data, legal records, or authoritative planning information.
+            Maps and layers are independently processed into map tiles and visualized for reference
+            and spatial understanding purposes only.
+        </div>
+
+        <h2 class="section-heading">Official Sources of Reference Material</h2>
+        <p class="section-desc">
+            Publicly released planning documents from the following government authorities are referred to
+            as general reference material during visualization. The accuracy, completeness, legal validity,
+            revisions, and updates are governed solely by the issuing authorities.
+        </p>
+
+        <div id="content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <div class="loading-text">Loading sources...</div>
+            </div>
+        </div>
+
+        <footer>
+            <p>This page updates automatically from our records.</p>
+            <p style="margin-top: 10px;">
+                <a href="https://www.mapmagician.in/PrivacyPolicyDevelopmentPlanGIS.html">Privacy Policy</a>
+                <span class="footer-sep">&middot;</span>
+                <a href="https://www.mapmagician.in">mapmagician.in</a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // JSONP approach - bypasses all CORS restrictions
+        var SHEET_JSONP_URL = 'https://docs.google.com/spreadsheets/d/1Qx7dCCzUmQrtOMqCGk_JppKsoOIIuPs2l_AE67r_4_c/gviz/tq?tqx=responseHandler:handleSheetData&gid=1981986606';
+
+        function escapeHtml(text) {
+            var el = document.createElement('span');
+            el.textContent = text;
+            return el.innerHTML;
+        }
+
+        function displayUrl(url) {
+            return url;
+        }
+
+        function handleSheetData(data) {
+            var contentDiv = document.getElementById('content');
+
+            if (!data || !data.table || data.status === 'error') {
+                contentDiv.innerHTML = '<div class="error">Unable to load sources. Please try again later.</div>';
+                return;
+            }
+
+            var tableRows = data.table.rows;
+            var rows = [];
+
+            for (var i = 0; i < tableRows.length; i++) {
+                var cells = tableRows[i].c;
+                var id = (cells[0] && cells[0].v) ? cells[0].v.toString().trim() : '';
+                var regionName = (cells[1] && cells[1].v) ? cells[1].v.toString().trim() : '';
+                var source = (cells[2] && cells[2].v) ? cells[2].v.toString().trim() : '';
+                if (source && id !== 'id' && regionName !== 'Region Name') {
+                    rows.push({ id: id, regionName: regionName, source: source });
+                }
+            }
+
+            if (rows.length === 0) {
+                contentDiv.innerHTML = '<div class="error">No sources available at this time.</div>';
+                return;
+            }
+
+            var html = '<ul class="sources-list">';
+
+            for (var j = 0; j < rows.length; j++) {
+                var row = rows[j];
+                var displayName = row.regionName || row.id;
+                var sourceUrl = row.source;
+                if (!sourceUrl.startsWith('http')) {
+                    sourceUrl = 'https://' + sourceUrl;
+                }
+                var shortUrl = displayUrl(sourceUrl);
+
+                html += '<li>';
+                html += '<div class="region-info">';
+                html += '<span class="region-name">' + escapeHtml(displayName) + '</span>';
+                html += '<span class="source-url">' + escapeHtml(shortUrl) + '</span>';
+                html += '</div>';
+                html += '<a class="source-link" href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noopener noreferrer">View Source</a>';
+                html += '</li>';
+            }
+
+            html += '</ul>';
+            contentDiv.innerHTML = html;
+        }
+
+        // Inject script tag to trigger JSONP callback
+        var script = document.createElement('script');
+        script.src = SHEET_JSONP_URL;
+        script.onerror = function() {
+            document.getElementById('content').innerHTML = '<div class="error">Unable to load sources. Please try again later.</div>';
+        };
+        document.body.appendChild(script);
+    </script>
+</body>
+</html>
