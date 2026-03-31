@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Development Plans (GIS)</title>
+    <!--
+    SECURITY: Before publishing, you MUST:
+    1. Restrict your Google Maps API key to your domain's HTTP referrer in Google Cloud Console
+    2. Set Firebase Realtime Database rules to: {"rules": {".read": true, ".write": false}}
+    -->
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; overflow: hidden; }
+        #map { height: 100vh; width: 100%; }
+
+        /* Top search row */
+        .top-search-row {
+            position: absolute; top: 4px; left: 64px; right: 8px;
+            height: 40px; display: flex; gap: 8px; z-index: 1000;
+        }
+        #search-input {
+            flex: 1; height: 40px; border: none; outline: none;
+            border-radius: 20px; padding: 0 16px; font-size: 14px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3); background: #fff;
+        }
+        #map-type {
+            height: 40px; border: none; border-radius: 20px;
+            padding: 0 12px; font-size: 12px; background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer;
+            outline: none; -webkit-appearance: none; appearance: none;
+        }
+
+        /* Horizontal toolbar buttons */
+        .toolbar-scroll {
+            position: absolute; top: 48px; left: 56px; right: 0;
+            z-index: 1000; overflow-x: auto; overflow-y: hidden;
+            white-space: nowrap; padding: 4px 8px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .toolbar-scroll::-webkit-scrollbar { display: none; }
+        .pill-btn {
+            display: inline-block; height: 32px; line-height: 32px;
+            padding: 0 12px; margin-right: 4px;
+            border-radius: 24px; border: none;
+            background: #fff; color: #000; font-size: 11px;
+            cursor: pointer; white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            transition: background 0.15s;
+        }
+        .pill-btn:hover { background: #e8e8e8; }
+        .pill-btn.active { background: #008577; color: #fff; }
+
+        /* Center crosshair */
+        .crosshair {
+            position: absolute; top: 50%; left: 50%;
+            width: 40px; height: 40px;
+            transform: translate(-50%, -50%);
+            pointer-events: none; z-index: 999;
+        }
+        .crosshair::before {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            width: 20px; height: 2px; background: #FF0000;
+            transform: translate(-50%, -50%);
+        }
+        .crosshair::after {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            width: 2px; height: 20px; background: #FF0000;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Right-side floating buttons */
+        .fab-stack {
+            position: absolute; right: 8px; z-index: 1000;
+            display: flex; flex-direction: column; gap: 8px;
+            bottom: 140px;
+        }
+        .fab {
+            width: 48px; height: 48px; border-radius: 50%;
+            border: none; background: #fff; cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s;
+        }
+        .fab:hover { background: #f0f0f0; }
+        .fab svg { width: 24px; height: 24px; }
+
+        /* Layer panel (slide-in from right) */
+        .layer-panel {
+            position: absolute; top: 0; right: -300px; width: 280px;
+            height: 100%; background: #fff; z-index: 2000;
+            box-shadow: -2px 0 8px rgba(0,0,0,0.3);
+            transition: right 0.3s ease; padding: 16px;
+            overflow-y: auto;
+        }
+        .layer-panel.open { right: 0; }
+        .layer-panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #E0E0E0;
+        }
+        .layer-panel-header h3 { font-size: 16px; color: #212121; margin: 0; }
+        .layer-panel-close {
+            width: 32px; height: 32px; border: none; background: none;
+            cursor: pointer; font-size: 20px; color: #757575;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        }
+        .layer-panel-close:hover { background: #f0f0f0; }
+        .layer-section { margin-bottom: 16px; }
+        .layer-section-title {
+            font-size: 11px; font-weight: 600; color: #757575;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+        }
+        .layer-toggle {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 0; cursor: pointer;
+        }
+        .layer-toggle input[type="checkbox"] { display: none; }
+        .toggle-track {
+            width: 36px; height: 20px; border-radius: 10px;
+            background: #ccc; position: relative; transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .toggle-track::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #fff; transition: transform 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .layer-toggle input:checked + .toggle-track {
+            background: #008577;
+        }
+        .layer-toggle input:checked + .toggle-track::after {
+            transform: translateX(16px);
+        }
+        .layer-toggle-label { font-size: 14px; color: #212121; }
+
+        /* Layer panel overlay (dim background) */
+        .layer-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3); z-index: 1999;
+            display: none;
+        }
+        .layer-overlay.open { display: block; }
+
+        /* Compact bottom dock (centered, Mac-style) */
+        .compact-bottom-bar {
+            position: absolute; bottom: 8px;
+            left: 50%; transform: translateX(-50%);
+            background: rgba(255,255,255,0.92); border-radius: 20px;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            z-index: 1000; padding: 6px 16px;
+            display: flex; align-items: center; gap: 12px;
+            max-width: 520px; width: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        #opacity-slider {
+            width: 120px; height: 4px; -webkit-appearance: none; appearance: none;
+            background: rgba(255,255,255,0.3); border-radius: 2px; outline: none;
+            flex-shrink: 0;
+        }
+        #opacity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 16px; height: 16px;
+            border-radius: 50%; background: #fff; cursor: pointer;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+        #opacity-slider::-moz-range-thumb {
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #fff; cursor: pointer; border: none;
+        }
+        .dock-divider {
+            width: 1px; height: 18px; background: rgba(0,0,0,0.12);
+            flex-shrink: 0;
+        }
+        .coord-chip {
+            background: rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.12);
+            border-radius: 12px; padding: 2px 10px; font-size: 10px;
+            color: #333; white-space: nowrap; cursor: pointer;
+        }
+        .coord-chip:hover { background: rgba(0,0,0,0.1); }
+        #opacity-slider-bottom {
+            width: 120px; height: 4px; -webkit-appearance: none; appearance: none;
+            background: #ddd; border-radius: 2px; outline: none;
+            flex-shrink: 0;
+        }
+        #opacity-slider-bottom::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 16px; height: 16px;
+            border-radius: 50%; background: #008577; cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        #opacity-slider-bottom::-moz-range-thumb {
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #008577; cursor: pointer; border: none;
+        }
+        #status-indicator { font-size: 10px; color: #555; white-space: nowrap; }
+        #zoom-level { font-size: 10px; color: #555; white-space: nowrap; }
+
+        /* Custom search results dropdown (above Google Places pac-container) */
+        .search-results {
+            position: absolute; top: 44px; left: 64px; right: 8px;
+            max-height: 320px; overflow-y: auto; z-index: 99999;
+            background: #fff; border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            display: none;
+        }
+        .search-results.open { display: block; }
+        /* Push Google Places dropdown below ours */
+        .pac-container { z-index: 99998 !important; }
+        .search-result-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 14px; cursor: pointer; border: none;
+            background: none; width: 100%; text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item:hover { background: #f5f5f5; }
+        .search-result-icon {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: #e8f5e9; display: flex; align-items: center;
+            justify-content: center; font-size: 14px; font-weight: 700;
+            color: #2E7D32; flex-shrink: 0;
+        }
+        .search-result-text { flex: 1; min-width: 0; }
+        .search-result-name { font-size: 13px; color: #212121; font-weight: 500; }
+        .search-result-name mark { background: #fff3cd; border-radius: 2px; padding: 0 1px; }
+        .search-result-path { font-size: 11px; color: #757575; margin-top: 1px; }
+        .search-result-header {
+            padding: 6px 14px; font-size: 10px; font-weight: 600;
+            color: #008577; text-transform: uppercase; letter-spacing: 0.5px;
+            background: #f9f9f9; border-bottom: 1px solid #eee;
+        }
+
+        /* Left sidebar rail (Google Maps style) */
+        .left-rail {
+            position: absolute; top: 0; left: 0; width: 56px;
+            height: 100%; background: #fff; z-index: 1500;
+            box-shadow: 2px 0 6px rgba(0,0,0,0.15);
+            display: flex; flex-direction: column;
+            overflow-y: auto; overflow-x: hidden;
+            scrollbar-width: none;
+        }
+        .left-rail::-webkit-scrollbar { display: none; }
+        .rail-hamburger {
+            width: 56px; height: 48px; border: none; background: none;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; border-bottom: 1px solid #eee;
+        }
+        .rail-hamburger svg { width: 22px; height: 22px; stroke: #333; }
+        .rail-item {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 8px 4px; cursor: pointer; border: none; background: none;
+            border-bottom: 1px solid #f0f0f0; flex-shrink: 0;
+            transition: background 0.15s;
+        }
+        .rail-item:hover { background: #f0f0f0; }
+        .rail-item-icon {
+            width: 36px; height: 36px; border-radius: 8px;
+            background: #e8f5e9; display: flex; align-items: center;
+            justify-content: center; font-size: 16px; font-weight: 700;
+            color: #2E7D32; position: relative;
+        }
+        .rail-item-badge {
+            position: absolute; top: -4px; right: -4px;
+            background: #fff; border: 1px solid #ccc; border-radius: 8px;
+            font-size: 9px; padding: 0 4px; line-height: 16px;
+            color: #333; font-weight: 600;
+        }
+        .rail-item-name {
+            font-size: 9px; color: #333; margin-top: 2px;
+            text-align: center; line-height: 1.1;
+            max-width: 52px; overflow: hidden;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        }
+
+        /* Expanded sidebar panel */
+        .sidebar-panel {
+            position: absolute; top: 0; left: -340px; width: 320px;
+            height: 100%; background: #fff; z-index: 2500;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.25);
+            transition: left 0.3s ease; display: flex; flex-direction: column;
+        }
+        .sidebar-panel.open { left: 0; }
+        .sidebar-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3); z-index: 2499; display: none;
+        }
+        .sidebar-overlay.open { display: block; }
+        .sidebar-header {
+            padding: 12px 16px; border-bottom: 1px solid #E0E0E0;
+            display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+        }
+        .sidebar-back {
+            width: 32px; height: 32px; border: none; background: none;
+            cursor: pointer; font-size: 20px; color: #333; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .sidebar-back:hover { background: #f0f0f0; }
+        .sidebar-title { font-size: 16px; font-weight: 600; color: #212121; }
+        .sidebar-search {
+            margin: 8px 12px; padding: 8px 12px; border: 1px solid #ddd;
+            border-radius: 20px; font-size: 13px; outline: none;
+        }
+        .sidebar-search:focus { border-color: #008577; }
+        .sidebar-list {
+            flex: 1; overflow-y: auto; padding: 4px 0;
+        }
+        .sidebar-list-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 16px; cursor: pointer; border: none;
+            background: none; width: 100%; text-align: left;
+            transition: background 0.15s; border-bottom: 1px solid #f5f5f5;
+        }
+        .sidebar-list-item:hover { background: #f5f5f5; }
+        .sidebar-list-icon {
+            width: 40px; height: 40px; border-radius: 8px;
+            background: #e8f5e9; display: flex; align-items: center;
+            justify-content: center; font-size: 18px; font-weight: 700;
+            color: #2E7D32; flex-shrink: 0;
+        }
+        .sidebar-list-text { flex: 1; min-width: 0; }
+        .sidebar-list-name {
+            font-size: 14px; color: #212121; font-weight: 500;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .sidebar-list-sub {
+            font-size: 11px; color: #757575; margin-top: 1px;
+        }
+        .sidebar-list-arrow { color: #999; font-size: 16px; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <!-- Left sidebar rail (Google Maps style) -->
+    <div class="left-rail" id="left-rail">
+        <button class="rail-hamburger" id="rail-hamburger" title="Menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+        <div id="rail-items"></div>
+        <!-- Auth button at bottom of rail -->
+        <div style="margin-top:auto;border-top:1px solid #eee;">
+            <button class="rail-item" id="rail-auth" title="Sign in">
+                <div class="rail-item-icon" style="background:#e3f2fd;color:#1976D2;border-radius:50%;font-size:14px;" id="rail-auth-icon">G</div>
+                <div class="rail-item-name" id="rail-auth-name">Sign in</div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Expanded sidebar panel -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <div class="sidebar-panel" id="sidebar-panel">
+        <div class="sidebar-header">
+            <button class="sidebar-back" id="sidebar-back">&larr;</button>
+            <span class="sidebar-title" id="sidebar-title">Locations</span>
+        </div>
+        <input type="text" class="sidebar-search" id="sidebar-search" placeholder="Search locations...">
+        <div class="sidebar-list" id="sidebar-list"></div>
+    </div>
+
+    <!-- Center crosshair -->
+    <div class="crosshair"></div>
+
+    <!-- Top search row -->
+    <div class="top-search-row">
+        <input id="search-input" type="text" placeholder="Search Place...">
+        <select id="map-type">
+            <option value="hybrid">Hybrid</option>
+            <option value="satellite">Satellite</option>
+            <option value="roadmap">Roadmap</option>
+            <option value="terrain">Terrain</option>
+        </select>
+    </div>
+
+    <!-- Custom search results (Firebase locations) -->
+    <div class="search-results" id="search-results"></div>
+
+    <!-- Horizontal toolbar pills -->
+    <div class="toolbar-scroll">
+        <button class="pill-btn" id="btn-old-maps" style="display:none">Load Old Maps</button>
+        <button class="pill-btn" id="btn-measure-area">Measure Area</button>
+        <button class="pill-btn" id="btn-measure-length">Measure Length</button>
+    </div>
+
+    <!-- Right-side floating action buttons -->
+    <div class="fab-stack">
+        <!-- Layers button -->
+        <button class="fab" id="btn-layers" title="Layers">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
+                <polygon points="12,2 22,8.5 12,15 2,8.5"/>
+                <polyline points="2,12.5 12,19 22,12.5"/>
+                <polyline points="2,16.5 12,23 22,16.5"/>
+            </svg>
+        </button>
+        <!-- GPS button -->
+        <button class="fab" id="btn-gps" title="My Location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
+                <circle cx="12" cy="12" r="4"/>
+                <line x1="12" y1="2" x2="12" y2="6"/>
+                <line x1="12" y1="18" x2="12" y2="22"/>
+                <line x1="2" y1="12" x2="6" y2="12"/>
+                <line x1="18" y1="12" x2="22" y2="12"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Layer panel overlay -->
+    <div class="layer-overlay" id="layer-overlay"></div>
+
+    <!-- Slide-in layer panel -->
+    <div class="layer-panel" id="layer-panel">
+        <div class="layer-panel-header">
+            <h3>Map Layers</h3>
+            <button class="layer-panel-close" id="layer-panel-close">&times;</button>
+        </div>
+
+        <div class="layer-section">
+            <div class="layer-section-title">Overlay Layers</div>
+            <label class="layer-toggle">
+                <input type="checkbox" id="dp-layer" checked>
+                <span class="toggle-track"></span>
+                <span class="layer-toggle-label">Development Plan</span>
+            </label>
+            <label class="layer-toggle">
+                <input type="checkbox" id="village-layer">
+                <span class="toggle-track"></span>
+                <span class="layer-toggle-label">Village Plans</span>
+            </label>
+        </div>
+
+        <div class="layer-section">
+            <div class="layer-section-title">Opacity</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <input type="range" id="opacity-slider" min="0" max="100" value="50"
+                       style="flex:1;height:4px;-webkit-appearance:none;appearance:none;background:#ccc;border-radius:2px;outline:none;">
+                <span id="opacity-value" style="font-size:13px;color:#212121;min-width:36px;">50%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom dock (Mac-style, centered) -->
+    <div class="compact-bottom-bar">
+        <input type="range" id="opacity-slider-bottom" min="0" max="100" value="50">
+        <div class="dock-divider"></div>
+        <span class="coord-chip" id="center-coord">--</span>
+        <div class="dock-divider"></div>
+        <span id="zoom-level">Z=13</span>
+        <div class="dock-divider"></div>
+        <span id="status-indicator">Ready</span>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
+    <!-- Razorpay checkout -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    
+    <!-- Firebase initialization must come after the Firebase scripts have loaded -->
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCJ1MkbVviNX0RrqOEg-00wKBiB3zCtUsQ",
+            authDomain: "sodium-hour-256110.firebaseapp.com",
+            databaseURL: "https://sodium-hour-256110.firebaseio.com",
+            projectId: "sodium-hour-256110",
+            storageBucket: "sodium-hour-256110.appspot.com",
+            messagingSenderId: "427608700943",
+            appId: "1:427608700943:android:5a92253b98544125654b7a"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+    </script>
+    
+    <script>
+        // --- Auth & Payment ---
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+        const functions = firebase.functions();
+        let currentUser = null;
+        const activePurchases = new Map(); // productId → expiry timestamp
+
+        // Auth state listener
+        firebase.auth().onAuthStateChanged(user => {
+            currentUser = user;
+            const authIcon = document.getElementById('rail-auth-icon');
+            const authName = document.getElementById('rail-auth-name');
+
+            if (user) {
+                // Show user avatar
+                if (user.photoURL) {
+                    authIcon.innerHTML = '<img src="' + user.photoURL + '" style="width:36px;height:36px;border-radius:50%;">';
+                    authIcon.style.background = 'none';
+                } else {
+                    authIcon.textContent = user.displayName ? user.displayName.charAt(0) : 'U';
+                    authIcon.style.background = '#e8f5e9';
+                    authIcon.style.color = '#2E7D32';
+                }
+                authName.textContent = (user.displayName || 'Account').split(' ')[0];
+                loadPurchaseStatus(user.email);
+            } else {
+                authIcon.textContent = 'G';
+                authIcon.style.background = '#e3f2fd';
+                authIcon.style.color = '#1976D2';
+                authName.textContent = 'Sign in';
+                activePurchases.clear();
+            }
+        });
+
+        // Auth button click
+        document.getElementById('rail-auth').addEventListener('click', () => {
+            if (currentUser) {
+                if (confirm('Sign out of ' + currentUser.email + '?')) {
+                    firebase.auth().signOut();
+                }
+            } else {
+                alert('Signing in...');
+                firebase.auth().signInWithPopup(googleProvider).then(result => {
+                    alert('Signed in as ' + result.user.email);
+                }).catch(err => {
+                    alert('Login failed: ' + err.code + ' - ' + err.message);
+                    console.error('Login failed:', err);
+                });
+            }
+        });
+
+        // Load purchase status from Firebase
+        function loadPurchaseStatus(email) {
+            const emailKey = email.replace(/\./g, ',');
+
+            // Listen for 7-day passes
+            database.ref('GISAPPOneTimePurchase/' + emailKey).on('value', snapshot => {
+                activePurchases.clear();
+                const purchases = snapshot.val() || {};
+                Object.entries(purchases).forEach(([productId, expiry]) => {
+                    if (expiry > Date.now()) {
+                        activePurchases.set(productId, expiry);
+                    }
+                });
+            });
+
+            // Also check subscription overrides
+            database.ref('overrideGISMaharashtra/' + emailKey + '/districts').on('value', snapshot => {
+                const overrides = snapshot.val() || {};
+                Object.entries(overrides).forEach(([productId, data]) => {
+                    if (data && data.expiry) {
+                        const exp = new Date(data.expiry).getTime();
+                        if (exp > Date.now()) {
+                            activePurchases.set(productId, exp);
+                        }
+                    }
+                });
+            });
+        }
+
+        // Check if a product is purchased
+        function hasPurchase(productId) {
+            if (!productId) return false;
+            const pid = productId.toLowerCase().replace(/gst$/, '');
+            // Check both with and without "district" prefix
+            return activePurchases.has(pid) ||
+                   activePurchases.has('district' + pid) ||
+                   activePurchases.has(pid.replace(/^district/, ''));
+        }
+
+        // Buy a 7-day pass
+        async function buyRegion(productId, regionName, amount) {
+            if (!currentUser) {
+                firebase.auth().signInWithPopup(googleProvider);
+                return;
+            }
+
+            try {
+                updateStatus('Creating order...');
+                const createOrder = functions.httpsCallable('createOrder');
+                const { data } = await createOrder({ productId, amount, regionName });
+
+                const options = {
+                    key: 'rzp_live_SXr1BKnoysSo9r',
+                    order_id: data.orderId,
+                    amount: data.amount,
+                    currency: data.currency || 'INR',
+                    name: 'Development Plans (GIS)',
+                    description: '7-Day Pass: ' + regionName,
+                    prefill: {
+                        email: currentUser.email,
+                        name: currentUser.displayName || ''
+                    },
+                    theme: { color: '#008577' },
+                    handler: function(response) {
+                        updateStatus('Payment successful! Activating...');
+                    },
+                    modal: {
+                        ondismiss: function() {
+                            updateStatus('Payment cancelled');
+                        }
+                    }
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.open();
+            } catch (error) {
+                console.error('Purchase error:', error);
+                updateStatus('Payment failed: ' + (error.message || 'Unknown error'));
+            }
+        }
+
+        // Global variables
+        let map;
+        let searchBox;
+        let markers = [];
+        let currentOpacity = 0.5;
+        
+        // Layer visibility and data
+        let isDPLayerVisible = true;
+        let isLayoutLayerVisible = false;
+        let isVillageLayerVisible = false;
+        let isShowingOldMaps = false;
+        let oldDPDataAvailable = false;
+        
+        // Layer data by type
+        let dpLayerData = [];
+        let layoutLayerData = [];
+        let villageLayerData = [];
+        let oldDPLayerData = [];
+        
+        // Layer tracking
+        let dpOverlays = new Map();
+        let layoutOverlays = new Map();
+        let villageOverlays = new Map();
+        let oldDPOverlays = new Map();
+        
+        // Tile loading status tracking
+        let dpTileStatus = [];
+        let layoutTileStatus = [];
+        let villageTileStatus = [];
+        let oldDPTileStatus = [];
+
+        // Generation counter -- increments on every viewport change.
+        // Stale results from old generations are discarded (like Android coroutine job cancellation).
+        let currentGeneration = 0;
+        
+        // Layer load status
+        let dpDataLoaded = false;
+        let layoutDataLoaded = false;
+        let villageDataLoaded = false;
+        let oldDPDataLoaded = false;
+        
+        // Constants from your Android app
+        const DEVELOPMENT_PLAN = "Development Plan";
+        const LAYOUT_PLAN = "Layout Plan";
+        const VILLAGE_PLAN = "Village Plans";
+        const OLD_DP_PLAN = "Old Development Plan";
+        
+        const DP_URL_DATABASE_NAME = "dpURLlink";
+        const LAYOUT_URL_DATABASE_NAME = "layoutURLlink";
+        const VILLAGE_URL_DATABASE_NAME = "villageURLlink";
+        const OLD_DP_URL_DATABASE_NAME = "oldDPPlan";
+        
+        // Map settings
+        const MAX_ZOOM_FOR_DP = 18;
+        const MIN_ZOOM_FOR_DP = 11;
+        const MAX_ZOOM_FOR_LAYOUT = 21;
+        const MIN_ZOOM_FOR_LAYOUT = 15;
+        const MAX_ZOOM_FOR_VILLAGEMAP = 18;
+        const MIN_ZOOM_FOR_VILLAGEMAP = 11;
+        const MAX_ZOOM_FOR_OLD_DP = 18;
+        const MIN_ZOOM_FOR_OLD_DP = 11;
+        
+        const amazonAWSLink = "https://s3.ap-south-1.amazonaws.com/www.mapdata.com";
+        
+        // Get reference to Firebase database
+        const database = firebase.database();
+
+        // Debounce: wait 200ms after last viewport change (matches Android's 200ms debounce)
+        let debounceTimeout = null;
+
+        function debouncedLoadTiles() {
+            if (debounceTimeout) clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                loadTilesBasedOnViewport();
+                debounceTimeout = null;
+            }, 200);
+        }
+
+        // --- Web Worker: all polygon math runs off the main thread ---
+        const workerCode = `
+            function pointInPolygon(point, polygon) {
+                let inside = false;
+                for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                    const xi = polygon[i].lng, yi = polygon[i].lat;
+                    const xj = polygon[j].lng, yj = polygon[j].lat;
+                    const intersect = ((yi > point.lat) !== (yj > point.lat)) &&
+                        (point.lng < (xj - xi) * (point.lat - yi) / (yj - yi) + xi);
+                    if (intersect) inside = !inside;
+                }
+                return inside;
+            }
+
+            function isAnyVertexInView(polygon, vp) {
+                for (let i = 0; i < polygon.length; i++) {
+                    const v = polygon[i];
+                    if (v.lat >= vp.minLat && v.lat <= vp.maxLat &&
+                        v.lng >= vp.minLng && v.lng <= vp.maxLng) return true;
+                }
+                return false;
+            }
+
+            function lineSegmentsIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
+                if (Math.max(x1,x2) < Math.min(x3,x4) || Math.max(x3,x4) < Math.min(x1,x2) ||
+                    Math.max(y1,y2) < Math.min(y3,y4) || Math.max(y3,y4) < Math.min(y1,y2)) return false;
+                const det = (x2-x1)*(y4-y3) - (x4-x3)*(y2-y1);
+                if (Math.abs(det) < 1e-10) return false;
+                const t = ((x3-x1)*(y4-y3) - (x4-x3)*(y3-y1)) / det;
+                const u = -((x2-x1)*(y3-y1) - (x2-x3)*(y2-y1)) / det;
+                return t >= 0 && t <= 1 && u >= 0 && u <= 1;
+            }
+
+            function doesPolygonIntersectBounds(polygon, vp) {
+                const bl = [
+                    { x1:vp.minLat,y1:vp.minLng,x2:vp.maxLat,y2:vp.minLng },
+                    { x1:vp.maxLat,y1:vp.minLng,x2:vp.maxLat,y2:vp.maxLng },
+                    { x1:vp.maxLat,y1:vp.maxLng,x2:vp.minLat,y2:vp.maxLng },
+                    { x1:vp.minLat,y1:vp.maxLng,x2:vp.minLat,y2:vp.minLng }
+                ];
+                for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                    const s = polygon[j], e = polygon[i];
+                    const eMinLat = s.lat < e.lat ? s.lat : e.lat;
+                    const eMaxLat = s.lat > e.lat ? s.lat : e.lat;
+                    const eMinLng = s.lng < e.lng ? s.lng : e.lng;
+                    const eMaxLng = s.lng > e.lng ? s.lng : e.lng;
+                    if (eMinLat > vp.maxLat || eMaxLat < vp.minLat ||
+                        eMinLng > vp.maxLng || eMaxLng < vp.minLng) continue;
+                    for (const b of bl) {
+                        if (lineSegmentsIntersect(s.lat,s.lng,e.lat,e.lng,b.x1,b.y1,b.x2,b.y2)) return true;
+                    }
+                }
+                return pointInPolygon({lat:(vp.minLat+vp.maxLat)/2, lng:(vp.minLng+vp.maxLng)/2}, polygon);
+            }
+
+            function shouldLoadTile(layerDef, currentZoom, centerPoint, vp, zoomLimits) {
+                const minZoom = layerDef.minZoom || zoomLimits[0];
+                const maxZoom = layerDef.maxZoom || zoomLimits[1];
+                if (currentZoom < minZoom || currentZoom > maxZoom) return false;
+                const bbox = layerDef.bbox;
+                if (bbox && (bbox.minLat > vp.maxLat || bbox.maxLat < vp.minLat ||
+                    bbox.minLng > vp.maxLng || bbox.maxLng < vp.minLng)) return false;
+                const polygon = layerDef.polygon;
+                if (!polygon) return false;
+                return pointInPolygon(centerPoint, polygon) ||
+                    isAnyVertexInView(polygon, vp) ||
+                    doesPolygonIntersectBounds(polygon, vp);
+            }
+
+            self.onmessage = function(e) {
+                const { generation, layers, currentZoom, centerPoint, vp } = e.data;
+                const results = {};
+                for (const layer of layers) {
+                    const decisions = [];
+                    for (let i = 0; i < layer.data.length; i++) {
+                        decisions.push(shouldLoadTile(layer.data[i], currentZoom, centerPoint, vp, layer.zoomLimits));
+                    }
+                    results[layer.type] = decisions;
+                }
+                self.postMessage({ generation, results });
+            };
+        `;
+        const tileWorker = new Worker(URL.createObjectURL(new Blob([workerCode], { type: 'application/javascript' })));
+
+        // Zoom limits per layer type
+        const ZOOM_LIMITS = {
+            dp: [MIN_ZOOM_FOR_DP, MAX_ZOOM_FOR_DP],
+            layout: [MIN_ZOOM_FOR_LAYOUT, MAX_ZOOM_FOR_LAYOUT],
+            village: [MIN_ZOOM_FOR_VILLAGEMAP, MAX_ZOOM_FOR_VILLAGEMAP],
+            oldDP: [MIN_ZOOM_FOR_OLD_DP, MAX_ZOOM_FOR_OLD_DP]
+        };
+
+        // Worker sends results back -- apply on main thread (fast: just show/hide overlays)
+        tileWorker.onmessage = function(e) {
+            const { generation, results } = e.data;
+
+            // CANCEL stale results: if user has zoomed/panned since, discard
+            if (generation !== currentGeneration) return;
+
+            // Apply decisions for each layer
+            if (results.dp) applyTileDecisions(results.dp, dpLayerData, dpTileStatus, dpOverlays, "dp");
+            if (results.layout) applyTileDecisions(results.layout, layoutLayerData, layoutTileStatus, layoutOverlays, "layout");
+            if (results.village) applyTileDecisions(results.village, villageLayerData, villageTileStatus, villageOverlays, "village");
+            if (results.oldDP) applyTileDecisions(results.oldDP, oldDPLayerData, oldDPTileStatus, oldDPOverlays, "oldDP");
+        };
+
+        function applyTileDecisions(decisions, layerData, tileStatus, overlayMap, layerType) {
+            // Unload first (frees HTTP connections for new tiles)
+            for (let i = 0; i < decisions.length; i++) {
+                if (!decisions[i] && tileStatus[i]) {
+                    unloadTileOverlay(layerData[i].id, overlayMap);
+                    tileStatus[i] = false;
+                }
+            }
+            // Then load
+            for (let i = 0; i < decisions.length; i++) {
+                if (decisions[i] && !tileStatus[i]) {
+                    loadTileOverlay(layerData[i], layerType, overlayMap);
+                    tileStatus[i] = true;
+                }
+            }
+        }
+        
+        // Initialize the map when the Google Maps API is loaded
+        function initMap() {
+            updateStatus("Initializing map...");
+            
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 17.6599, lng: 75.9064 },
+                zoom: 13,
+                mapTypeId: google.maps.MapTypeId.HYBRID,
+                streetViewControl: false,
+                mapTypeControl: false,
+                zoomControl: true,
+                zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
+                fullscreenControl: false
+            });
+
+            // Create the search box and link it to the UI element
+            const input = document.getElementById('search-input');
+            searchBox = new google.maps.places.SearchBox(input);
+
+            // Bias the SearchBox results towards current map's viewport
+            map.addListener('bounds_changed', function() {
+                searchBox.setBounds(map.getBounds());
+            });
+
+            // Listen for the event fired when the user selects a prediction
+            searchBox.addListener('places_changed', function() {
+                const places = searchBox.getPlaces();
+
+                if (places.length === 0) {
+                    return;
+                }
+
+                // Clear out the old markers
+                markers.forEach(function(marker) {
+                    marker.setMap(null);
+                });
+                markers = [];
+
+                // For each place, get the icon, name and location
+                const bounds = new google.maps.LatLngBounds();
+                let selectedPlace = null;
+                
+                places.forEach(function(place) {
+                    if (!place.geometry) {
+                        console.log("Returned place contains no geometry");
+                        return;
+                    }
+
+                    // Create a marker for each place
+                    const marker = new google.maps.Marker({
+                        map: map,
+                        title: place.name,
+                        position: place.geometry.location
+                    });
+
+                    markers.push(marker);
+                    selectedPlace = place;
+
+                    if (place.geometry.viewport) {
+                        // Only geocodes have viewport
+                        bounds.union(place.geometry.viewport);
+                    } else {
+                        bounds.extend(place.geometry.location);
+                    }
+                });
+                
+                // Instead of using fitBounds, which might zoom out too far,
+                // we directly set the center and zoom level
+                if (selectedPlace && selectedPlace.geometry) {
+                    map.setCenter(selectedPlace.geometry.location);
+                    map.setZoom(17); // Zoom level 17 gives good detail while limiting loaded plans
+                    updateStatus("Zoomed to location, level 17");
+                } else {
+                    // Fallback to fitBounds if needed
+                    map.fitBounds(bounds);
+                    // Force a minimum zoom level
+                    google.maps.event.addListenerOnce(map, 'bounds_changed', function() {
+                        if (map.getZoom() < 17) {
+                            map.setZoom(17);
+                            updateStatus("Adjusted zoom to level 17");
+                        }
+                    });
+                }
+            });
+
+            // Single debounced handler for all viewport changes
+            map.addListener('idle', function() {
+                const z = map.getZoom();
+                const c = map.getCenter();
+                document.getElementById('zoom-level').textContent = `Z=${z}`;
+                document.getElementById('center-coord').textContent =
+                    `${c.lat().toFixed(5)}, ${c.lng().toFixed(5)}`;
+                debouncedLoadTiles();
+            });
+            map.addListener('bounds_changed', debouncedLoadTiles);
+
+            // Initialize UI event listeners
+            initUIEvents();
+
+            // Start loading layer data
+            fetchLayerData();
+
+            // Load sidebar navigation from Firebase
+            initSidebar();
+        }
+
+        // --- Left Sidebar: Firebase menuGIS navigation ---
+        const MENU_DB_NAME = "menuGIS";
+        let menuData = []; // all items from Firebase
+        let stateList = []; // unique states for the rail
+        let sidebarHistory = []; // breadcrumb: [{level, title, items}]
+
+        function initSidebar() {
+            const railItems = document.getElementById('rail-items');
+            const sidebarPanel = document.getElementById('sidebar-panel');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            const sidebarList = document.getElementById('sidebar-list');
+            const sidebarTitle = document.getElementById('sidebar-title');
+            const sidebarSearch = document.getElementById('sidebar-search');
+
+            // Fetch menu data from Firebase
+            database.ref(MENU_DB_NAME).once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (!data) return;
+
+                menuData = [];
+                for (const key in data) {
+                    if (data.hasOwnProperty(key)) {
+                        const item = data[key];
+                        menuData.push({
+                            id: key,
+                            state: item.state || '',
+                            district: item.district || '',
+                            villagesJSON: item.villagesJSON || '',
+                            iconState: item.iconState || '',
+                            iconVillage: item.iconVillage || '',
+                            productPurchaseID: item.productPurchaseID || ''
+                        });
+                    }
+                }
+
+                // Build unique states list
+                const stateMap = new Map();
+                menuData.forEach(item => {
+                    if (!item.state) return;
+                    if (!stateMap.has(item.state)) {
+                        stateMap.set(item.state, { name: item.state, count: 0, icon: item.iconState });
+                    }
+                    // Count districts or villages
+                    if (item.district) {
+                        stateMap.get(item.state).count++;
+                    } else {
+                        // Count villages in state-level item
+                        const vCount = item.villagesJSON ? item.villagesJSON.split('\n').filter(l => l.includes('=')).length : 0;
+                        stateMap.get(item.state).count += vCount;
+                    }
+                });
+
+                stateList = Array.from(stateMap.values());
+                renderRail();
+            });
+
+            function renderRail() {
+                railItems.innerHTML = '';
+                stateList.forEach(st => {
+                    const btn = document.createElement('button');
+                    btn.className = 'rail-item';
+                    btn.innerHTML = `
+                        <div class="rail-item-icon">
+                            ${st.name.charAt(0)}
+                            ${st.count > 0 ? '<span class="rail-item-badge">' + st.count + '</span>' : ''}
+                        </div>
+                        <div class="rail-item-name">${st.name}</div>
+                    `;
+                    btn.addEventListener('click', () => openState(st.name));
+                    railItems.appendChild(btn);
+                });
+            }
+
+            function openState(stateName) {
+                const districts = menuData.filter(m => m.state === stateName && m.district);
+                const stateItem = menuData.find(m => m.state === stateName && !m.district);
+
+                if (districts.length > 0) {
+                    // Has districts -- show district list
+                    const items = districts.map(d => ({
+                        name: d.district,
+                        sub: countVillages(d.villagesJSON) + ' locations',
+                        hasChildren: true,
+                        villagesJSON: d.villagesJSON,
+                        productPurchaseID: d.productPurchaseID
+                    }));
+                    showSidebarLevel(stateName, items, 'district');
+                } else if (stateItem && stateItem.villagesJSON) {
+                    // No districts -- show villages directly
+                    showVillages(stateName, stateItem.villagesJSON);
+                }
+                openSidebar();
+            }
+
+            function showSidebarLevel(title, items, type) {
+                sidebarTitle.textContent = title;
+                sidebarSearch.value = '';
+                sidebarHistory.push({ title, items, type });
+                renderSidebarList(items, type);
+            }
+
+            function showVillages(title, villagesJSON, highlightTerm) {
+                const locations = parseVillagesJSON(villagesJSON);
+                const items = locations.map(loc => ({
+                    name: loc.name,
+                    sub: loc.lat.toFixed(4) + ', ' + loc.lng.toFixed(4),
+                    hasChildren: false,
+                    lat: loc.lat, lng: loc.lng
+                }));
+                showSidebarLevel(title, items, 'village');
+
+                // Scroll to and highlight the matched village
+                if (highlightTerm) {
+                    const q = highlightTerm.toLowerCase();
+                    const btns = sidebarList.querySelectorAll('.sidebar-list-item');
+                    btns.forEach(btn => {
+                        const name = btn.querySelector('.sidebar-list-name');
+                        if (name && name.textContent.toLowerCase().includes(q)) {
+                            btn.style.background = '#e8f5e9';
+                            btn.style.borderLeft = '3px solid #2E7D32';
+                            // Highlight the match text
+                            name.innerHTML = name.textContent.replace(
+                                new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'),
+                                '<mark style="background:#fff3cd;border-radius:2px;padding:0 2px">$1</mark>'
+                            );
+                            btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+                }
+            }
+
+            function renderSidebarList(items, type, searchTerm) {
+                sidebarList.innerHTML = '';
+                items.forEach(item => {
+                    const btn = document.createElement('button');
+                    btn.className = 'sidebar-list-item';
+
+                    // Purchase badge for districts
+                    let badge = '';
+                    if (type === 'district' && item.productPurchaseID) {
+                        if (hasPurchase(item.productPurchaseID)) {
+                            const expiry = activePurchases.get(item.productPurchaseID) ||
+                                activePurchases.get('district' + item.productPurchaseID) || 0;
+                            const daysLeft = Math.ceil((expiry - Date.now()) / (24*60*60*1000));
+                            badge = '<span style="font-size:9px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0">' + daysLeft + 'd left</span>';
+                        } else {
+                            badge = '<span style="font-size:9px;background:#FF9800;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0;cursor:pointer" class="buy-badge" data-pid="' + item.productPurchaseID + '" data-name="' + item.name + '">Buy</span>';
+                        }
+                    }
+
+                    btn.innerHTML = `
+                        <div class="sidebar-list-icon">${item.name.charAt(0)}</div>
+                        <div class="sidebar-list-text">
+                            <div class="sidebar-list-name">${item.name}</div>
+                            <div class="sidebar-list-sub">${item.sub || ''}</div>
+                        </div>
+                        ${badge}
+                        ${item.hasChildren ? '<span class="sidebar-list-arrow">&#8250;</span>' : ''}
+                    `;
+
+                    // Buy badge click (stop propagation so it doesn't drill into district)
+                    const buyBadge = btn.querySelector('.buy-badge');
+                    if (buyBadge) {
+                        buyBadge.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            buyRegion(buyBadge.dataset.pid, buyBadge.dataset.name, 99);
+                        });
+                    }
+
+                    btn.addEventListener('click', () => {
+                        if (type === 'district') {
+                            const currentQuery = sidebarSearch.value.trim();
+                            showVillages(item.name, item.villagesJSON, currentQuery || null);
+                        } else if (type === 'village') {
+                            goToLocation(item.lat, item.lng, item.name);
+                            closeSidebar();
+                        }
+                    });
+                    sidebarList.appendChild(btn);
+                });
+            }
+
+            function parseVillagesJSON(json) {
+                if (!json) return [];
+                return json.split('\n').map(line => {
+                    const parts = line.split('=');
+                    if (parts.length !== 2) return null;
+                    const name = parts[0].trim();
+                    const coords = parts[1].trim().split(',');
+                    if (coords.length < 2) return null;
+                    const lat = parseFloat(coords[0]);
+                    const lng = parseFloat(coords[1]);
+                    if (isNaN(lat) || isNaN(lng)) return null;
+                    return { name, lat, lng };
+                }).filter(Boolean);
+            }
+
+            function countVillages(json) {
+                if (!json) return 0;
+                return json.split('\n').filter(l => l.includes('=')).length;
+            }
+
+            function goToLocation(lat, lng, name) {
+                map.setCenter({ lat, lng });
+                map.setZoom(15);
+                updateStatus('Zoomed to ' + name);
+            }
+
+            function openSidebar() {
+                sidebarPanel.classList.add('open');
+                sidebarOverlay.classList.add('open');
+            }
+
+            function closeSidebar() {
+                sidebarPanel.classList.remove('open');
+                sidebarOverlay.classList.remove('open');
+                sidebarHistory = [];
+            }
+
+            // Sidebar back button
+            document.getElementById('sidebar-back').addEventListener('click', () => {
+                if (sidebarHistory.length > 1) {
+                    sidebarHistory.pop();
+                    const prev = sidebarHistory[sidebarHistory.length - 1];
+                    sidebarTitle.textContent = prev.title;
+                    sidebarSearch.value = '';
+                    renderSidebarList(prev.items, prev.type);
+                } else {
+                    closeSidebar();
+                }
+            });
+
+            // Sidebar overlay close
+            sidebarOverlay.addEventListener('click', closeSidebar);
+
+            // Hamburger opens sidebar with state list
+            document.getElementById('rail-hamburger').addEventListener('click', () => {
+                sidebarHistory = [];
+                const items = stateList.map(st => ({
+                    name: st.name,
+                    sub: st.count + ' locations',
+                    hasChildren: true,
+                    stateName: st.name
+                }));
+                showSidebarLevel('Locations', items, 'state');
+                // Override click behavior for state items
+                const btns = sidebarList.querySelectorAll('.sidebar-list-item');
+                btns.forEach((btn, i) => {
+                    btn.onclick = () => {
+                        sidebarHistory.pop(); // remove current
+                        openState(items[i].stateName);
+                    };
+                });
+                openSidebar();
+            });
+
+            // Sidebar search filter -- also searches inside villagesJSON for district-level items
+            sidebarSearch.addEventListener('input', function() {
+                const q = this.value.trim().toLowerCase();
+                const current = sidebarHistory[sidebarHistory.length - 1];
+                if (!current) return;
+
+                if (!q) {
+                    renderSidebarList(current.items, current.type);
+                    return;
+                }
+
+                if (current.type === 'district') {
+                    // Search district names AND villages inside each district
+                    const results = [];
+                    current.items.forEach(item => {
+                        if (item.name.toLowerCase().includes(q)) {
+                            results.push(item);
+                            return;
+                        }
+                        // Search villages inside this district
+                        if (item.villagesJSON) {
+                            const matchedVillages = [];
+                            item.villagesJSON.split('\n').forEach(line => {
+                                const parts = line.split('=');
+                                if (parts.length !== 2) return;
+                                const vName = parts[0].trim();
+                                if (vName.toLowerCase().includes(q)) matchedVillages.push(vName);
+                            });
+                            if (matchedVillages.length > 0) {
+                                results.push({
+                                    ...item,
+                                    sub: 'Contains: ' + matchedVillages.slice(0, 3).join(', ') +
+                                         (matchedVillages.length > 3 ? ' +' + (matchedVillages.length - 3) + ' more' : '')
+                                });
+                            }
+                        }
+                    });
+                    renderSidebarList(results, current.type);
+                } else {
+                    const filtered = current.items.filter(item =>
+                        item.name.toLowerCase().includes(q) ||
+                        (item.sub && item.sub.toLowerCase().includes(q))
+                    );
+                    renderSidebarList(filtered, current.type);
+                }
+            });
+
+            // --- Top search bar: search through all Firebase locations ---
+            const searchInput = document.getElementById('search-input');
+            const searchResultsEl = document.getElementById('search-results');
+            let searchDebounce = null;
+
+            // Use keyup (not input) -- Google Places SearchBox can suppress input events
+            searchInput.addEventListener('keyup', function() {
+                clearTimeout(searchDebounce);
+                const q = this.value.trim().toLowerCase();
+                if (q.length < 2 || menuData.length === 0) {
+                    searchResultsEl.classList.remove('open');
+                    return;
+                }
+                searchDebounce = setTimeout(() => searchMenuData(q), 150);
+            });
+
+            searchInput.addEventListener('focus', function() {
+                const q = this.value.trim().toLowerCase();
+                if (q.length >= 2 && menuData.length > 0) {
+                    searchMenuData(q);
+                }
+            });
+
+            // Close results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchResultsEl.contains(e.target) && e.target !== searchInput) {
+                    searchResultsEl.classList.remove('open');
+                }
+            });
+
+            function searchMenuData(query) {
+                const results = [];
+                const addedStates = new Set();
+                const addedDistricts = new Set();
+
+                menuData.forEach(item => {
+                    const state = item.state || '';
+                    const district = item.district || '';
+
+                    // Check state name match (deduplicate)
+                    if (state.toLowerCase().includes(query) && !addedStates.has(state)) {
+                        addedStates.add(state);
+                        results.push({
+                            name: state,
+                            path: 'State',
+                            type: 'state',
+                            item: item
+                        });
+                    }
+
+                    // Check district name match (deduplicate)
+                    if (district && district.toLowerCase().includes(query) && !addedDistricts.has(state + district)) {
+                        addedDistricts.add(state + district);
+                        results.push({
+                            name: district,
+                            path: state,
+                            type: 'district',
+                            item: item
+                        });
+                    }
+
+                    // Search through all villages/sub-locations
+                    if (item.villagesJSON) {
+                        item.villagesJSON.split('\n').forEach(line => {
+                            const parts = line.split('=');
+                            if (parts.length !== 2) return;
+                            const villageName = parts[0].trim();
+                            if (villageName.toLowerCase().includes(query)) {
+                                const coords = parts[1].trim().split(',');
+                                const lat = parseFloat(coords[0]);
+                                const lng = parseFloat(coords[1]);
+                                if (isNaN(lat) || isNaN(lng)) return;
+                                const pathParts = [state];
+                                if (district) pathParts.push(district);
+                                results.push({
+                                    name: villageName,
+                                    path: pathParts.join(' > ') + '  •  Found inside',
+                                    type: 'village',
+                                    lat: lat, lng: lng,
+                                    item: item
+                                });
+                            }
+                        });
+                    }
+                });
+
+                // Sort: villages first (most useful), then districts, then states
+                results.sort((a, b) => {
+                    const order = { village: 0, district: 1, state: 2 };
+                    return (order[a.type] || 0) - (order[b.type] || 0);
+                });
+
+                renderSearchResults(results.slice(0, 20), query);
+            }
+
+            function renderSearchResults(results, query) {
+                searchResultsEl.innerHTML = '';
+                if (results.length === 0) {
+                    searchResultsEl.classList.remove('open');
+                    return;
+                }
+
+                // Group header
+                const header = document.createElement('div');
+                header.className = 'search-result-header';
+                header.textContent = 'Locations from plans';
+                searchResultsEl.appendChild(header);
+
+                results.forEach(r => {
+                    const btn = document.createElement('button');
+                    btn.className = 'search-result-item';
+                    const highlighted = r.name.replace(
+                        new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'),
+                        '<mark>$1</mark>'
+                    );
+                    const icon = r.type === 'village' ? '📍' : r.type === 'district' ? '🏘' : '🗺';
+                    btn.innerHTML = `
+                        <div class="search-result-icon">${icon}</div>
+                        <div class="search-result-text">
+                            <div class="search-result-name">${highlighted}</div>
+                            <div class="search-result-path">${r.path}</div>
+                        </div>
+                    `;
+                    btn.addEventListener('click', () => {
+                        if (r.type === 'village' && r.lat && r.lng) {
+                            map.setCenter({ lat: r.lat, lng: r.lng });
+                            map.setZoom(15);
+                            updateStatus('Zoomed to ' + r.name);
+                        } else if (r.item) {
+                            // Open the sidebar to show this state/district
+                            if (r.type === 'district' && r.item.villagesJSON) {
+                                showVillages(r.item.district || r.item.state, r.item.villagesJSON);
+                                openSidebar();
+                            } else {
+                                openState(r.item.state);
+                            }
+                        }
+                        searchResultsEl.classList.remove('open');
+                        searchInput.value = r.name;
+                    });
+                    searchResultsEl.appendChild(btn);
+                });
+
+                searchResultsEl.classList.add('open');
+            }
+        }
+
+        function initUIEvents() {
+            // Map type control
+            document.getElementById('map-type').addEventListener('change', function() {
+                map.setMapTypeId(this.value);
+            });
+
+            // Layer panel open/close
+            const layerPanel = document.getElementById('layer-panel');
+            const layerOverlay = document.getElementById('layer-overlay');
+            document.getElementById('btn-layers').addEventListener('click', function() {
+                layerPanel.classList.add('open');
+                layerOverlay.classList.add('open');
+            });
+            function closeLayerPanel() {
+                layerPanel.classList.remove('open');
+                layerOverlay.classList.remove('open');
+            }
+            document.getElementById('layer-panel-close').addEventListener('click', closeLayerPanel);
+            layerOverlay.addEventListener('click', closeLayerPanel);
+
+            // GPS button
+            document.getElementById('btn-gps').addEventListener('click', function() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function(pos) {
+                        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                        map.setCenter(loc);
+                        map.setZoom(17);
+                        new google.maps.Marker({ map: map, position: loc, title: 'My Location' });
+                    }, function() {
+                        updateStatus("Location access denied");
+                    });
+                }
+            });
+
+            // Old Maps toggle -- switches between new DP and old DP (mutual exclusion)
+            document.getElementById('btn-old-maps').addEventListener('click', function() {
+                isShowingOldMaps = !isShowingOldMaps;
+                this.textContent = isShowingOldMaps ? 'Load New Maps' : 'Load Old Maps';
+                this.classList.toggle('active', isShowingOldMaps);
+
+                // Clear both DP tile sets
+                clearAllLayersOfType(dpOverlays);
+                clearAllLayersOfType(oldDPOverlays);
+                dpTileStatus = Array(dpLayerData.length).fill(false);
+                oldDPTileStatus = Array(oldDPLayerData.length).fill(false);
+
+                if (isDPLayerVisible) loadTilesBasedOnViewport();
+            });
+
+            // DP layer toggle -- controls whichever DP set is currently active
+            document.getElementById('dp-layer').addEventListener('change', function() {
+                isDPLayerVisible = this.checked;
+                clearAllLayersOfType(dpOverlays);
+                clearAllLayersOfType(oldDPOverlays);
+                dpTileStatus = Array(dpLayerData.length).fill(false);
+                oldDPTileStatus = Array(oldDPLayerData.length).fill(false);
+                if (isDPLayerVisible) {
+                    if (isShowingOldMaps) {
+                        if (!oldDPDataLoaded) fetchOldDPLayerData();
+                        else loadTilesBasedOnViewport();
+                    } else {
+                        if (!dpDataLoaded) fetchDPLayerData();
+                        else loadTilesBasedOnViewport();
+                    }
+                }
+            });
+
+            document.getElementById('village-layer').addEventListener('change', function() {
+                isVillageLayerVisible = this.checked;
+                clearAllLayersOfType(villageOverlays);
+                if (isVillageLayerVisible) {
+                    if (!villageDataLoaded) fetchVillageLayerData();
+                    else { villageTileStatus = Array(villageLayerData.length).fill(false); loadTilesBasedOnViewport(); }
+                }
+            });
+
+            // Sync both opacity sliders (panel + bottom bar)
+            const opacityPanel = document.getElementById('opacity-slider');
+            const opacityBottom = document.getElementById('opacity-slider-bottom');
+            const opacityValue = document.getElementById('opacity-value');
+
+            function handleOpacityChange(value) {
+                currentOpacity = value / 100;
+                opacityValue.textContent = value + '%';
+                opacityPanel.value = value;
+                opacityBottom.value = value;
+                updateOverlayOpacity(dpOverlays, currentOpacity);
+                updateOverlayOpacity(layoutOverlays, currentOpacity);
+                updateOverlayOpacity(villageOverlays, currentOpacity);
+                updateOverlayOpacity(oldDPOverlays, currentOpacity);
+            }
+            opacityPanel.addEventListener('input', function() { handleOpacityChange(this.value); });
+            opacityBottom.addEventListener('input', function() { handleOpacityChange(this.value); });
+
+            // Copy coordinates on click
+            document.getElementById('center-coord').addEventListener('click', function() {
+                if (navigator.clipboard && this.textContent !== '--') {
+                    navigator.clipboard.writeText(this.textContent);
+                    updateStatus("Coordinates copied");
+                }
+            });
+        }
+
+        function clearAllLayersOfType(overlayMap) {
+            const allOverlays = map.overlayMapTypes.getArray();
+            const overlaysToRemove = [];
+
+            overlayMap.forEach((overlay, key) => {
+                if (overlay) {
+                    overlaysToRemove.push(overlay);
+                    for (const [cacheKey, cachedOverlay] of tileCache) {
+                        if (cachedOverlay === overlay) { tileCache.delete(cacheKey); break; }
+                    }
+                }
+            });
+
+            for (let i = allOverlays.length - 1; i >= 0; i--) {
+                if (overlaysToRemove.includes(allOverlays[i])) {
+                    map.overlayMapTypes.removeAt(i);
+                }
+            }
+
+            overlayMap.clear();
+        }
+
+        function updateOverlayOpacity(overlayMap, opacity) {
+            overlayMap.forEach((overlay) => {
+                if (overlay) overlay.setOpacity(opacity);
+            });
+        }
+
+        const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+        function getCachedData(cacheKey) {
+            try {
+                const cached = localStorage.getItem(cacheKey);
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    if (Date.now() - parsed.timestamp < CACHE_TTL) return parsed.data;
+                }
+            } catch (e) { /* ignore corrupt cache */ }
+            return null;
+        }
+
+        function setCachedData(cacheKey, data) {
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
+            } catch (e) { /* localStorage full or unavailable */ }
+        }
+
+        function fetchLayerData() {
+            if (isDPLayerVisible) fetchDPLayerData();
+            // Village layer off by default -- fetched when user enables it
+            // Always fetch old DP to check availability (shows button if data exists)
+            fetchOldDPLayerData();
+        }
+
+        function applyLayerData(data, label) {
+            const processed = processLayerData(data);
+            console.log(`Loaded ${processed.length} ${label} layer definitions`);
+            return processed;
+        }
+
+        function fetchDPLayerData() {
+            const cached = getCachedData('layer_dp');
+            if (cached) {
+                dpLayerData = applyLayerData(cached, "Development Plan");
+                dpTileStatus = Array(dpLayerData.length).fill(false);
+                dpDataLoaded = true;
+                loadTilesBasedOnViewport();
+            }
+
+            database.ref(DP_URL_DATABASE_NAME).once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (!data) { dpDataLoaded = true; return; }
+                setCachedData('layer_dp', data);
+                if (!cached) {
+                    dpLayerData = applyLayerData(data, "Development Plan");
+                    dpTileStatus = Array(dpLayerData.length).fill(false);
+                    dpDataLoaded = true;
+                    loadTilesBasedOnViewport();
+                }
+            }).catch(error => console.error("Error fetching DP data:", error));
+        }
+
+        function fetchLayoutLayerData() {
+            const cached = getCachedData('layer_layout');
+            if (cached) {
+                layoutLayerData = applyLayerData(cached, "Layout Plan");
+                layoutTileStatus = Array(layoutLayerData.length).fill(false);
+                layoutDataLoaded = true;
+                loadTilesBasedOnViewport();
+            }
+
+            database.ref(LAYOUT_URL_DATABASE_NAME).once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (!data) { layoutDataLoaded = true; return; }
+                setCachedData('layer_layout', data);
+                if (!cached) {
+                    layoutLayerData = applyLayerData(data, "Layout Plan");
+                    layoutTileStatus = Array(layoutLayerData.length).fill(false);
+                    layoutDataLoaded = true;
+                    loadTilesBasedOnViewport();
+                }
+            }).catch(error => console.error("Error fetching Layout data:", error));
+        }
+
+        function fetchVillageLayerData() {
+            const cached = getCachedData('layer_village');
+            if (cached) {
+                villageLayerData = applyLayerData(cached, "Village Plan");
+                villageTileStatus = Array(villageLayerData.length).fill(false);
+                villageDataLoaded = true;
+                loadTilesBasedOnViewport();
+            }
+
+            database.ref(VILLAGE_URL_DATABASE_NAME).once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (!data) { villageDataLoaded = true; return; }
+                setCachedData('layer_village', data);
+                if (!cached) {
+                    villageLayerData = applyLayerData(data, "Village Plan");
+                    villageTileStatus = Array(villageLayerData.length).fill(false);
+                    villageDataLoaded = true;
+                    loadTilesBasedOnViewport();
+                }
+            }).catch(error => console.error("Error fetching Village data:", error));
+        }
+
+        function fetchOldDPLayerData() {
+            function onOldDPReady() {
+                if (oldDPLayerData.length === 0) return; // No old DP data -- keep button hidden
+                oldDPDataAvailable = true;
+                document.getElementById('btn-old-maps').style.display = '';
+                if (isShowingOldMaps && isDPLayerVisible) loadTilesBasedOnViewport();
+            }
+
+            const cached = getCachedData('layer_olddp');
+            if (cached) {
+                oldDPLayerData = applyLayerData(cached, "Old Development Plan");
+                oldDPTileStatus = Array(oldDPLayerData.length).fill(false);
+                oldDPDataLoaded = true;
+                onOldDPReady();
+            }
+
+            database.ref(OLD_DP_URL_DATABASE_NAME).once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (!data) {
+                    oldDPDataLoaded = true;
+                    localStorage.removeItem('layer_olddp'); // Clear stale cache
+                    oldDPLayerData = [];
+                    document.getElementById('btn-old-maps').style.display = 'none';
+                    return;
+                }
+                setCachedData('layer_olddp', data);
+                if (!cached) {
+                    oldDPLayerData = applyLayerData(data, "Old Development Plan");
+                    oldDPTileStatus = Array(oldDPLayerData.length).fill(false);
+                    oldDPDataLoaded = true;
+                    onOldDPReady();
+                }
+            }).catch(error => console.error("Error fetching Old DP data:", error));
+        }
+
+        function computeBBox(polygon) {
+            if (!polygon || polygon.length === 0) return null;
+            let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+            for (const v of polygon) {
+                if (v.lat < minLat) minLat = v.lat;
+                if (v.lat > maxLat) maxLat = v.lat;
+                if (v.lng < minLng) minLng = v.lng;
+                if (v.lng > maxLng) maxLng = v.lng;
+            }
+            return { minLat, maxLat, minLng, maxLng };
+        }
+
+        function processLayerData(data) {
+            const result = [];
+
+            for (const key in data) {
+                if (data.hasOwnProperty(key)) {
+                    const item = data[key];
+
+                    if (item && item.kml && item.link) {
+                        try {
+                            const polygon = parseKML(item.kml);
+
+                            result.push({
+                                id: key,
+                                link: item.link,
+                                kml: item.kml,
+                                polygon: polygon,
+                                bbox: computeBBox(polygon),
+                                minZoom: parseInt(item.minZoom) || 0,
+                                maxZoom: parseInt(item.maxZoom) || 22,
+                                zIndex: parseFloat(item.zIndex) || 0
+                            });
+                        } catch (error) {
+                            console.warn(`Error processing data item ${key}:`, error);
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        function parseKML(kml) {
+            if (!kml) return null;
+            
+            try {
+                // Split the KML coordinates string
+                const coordinates = kml.trim().split(" ");
+                
+                // Create polygon vertices
+                const vertices = [];
+                
+                for (const coord of coordinates) {
+                    if (coord.includes("close")) continue;
+                    
+                    const parts = coord.replace(',0', '').split(',');
+                    if (parts.length >= 2) {
+                        try {
+                            const lng = parseFloat(parts[0]);
+                            const lat = parseFloat(parts[1]);
+                            
+                            if (!isNaN(lat) && !isNaN(lng)) {
+                                vertices.push({ lat, lng });
+                            }
+                        } catch (e) {
+                            console.warn("Error parsing coordinate:", coord, e);
+                        }
+                    }
+                }
+                
+                return vertices.length > 2 ? vertices : null;
+            } catch (error) {
+                console.error("Error parsing KML:", error);
+                return null;
+            }
+        }
+
+        function loadTilesBasedOnViewport() {
+            if (!map) return;
+            const currentBounds = map.getBounds();
+            if (!currentBounds) return;
+
+            // Increment generation -- any in-flight worker results from older generations will be discarded
+            currentGeneration++;
+
+            const currentZoom = map.getZoom();
+            const center = map.getCenter();
+            const centerPoint = { lat: center.lat(), lng: center.lng() };
+            const vp = {
+                minLat: currentBounds.getSouthWest().lat(),
+                maxLat: currentBounds.getNorthEast().lat(),
+                minLng: currentBounds.getSouthWest().lng(),
+                maxLng: currentBounds.getNorthEast().lng()
+            };
+
+            // Build list of visible layers to send to worker
+            const layers = [];
+            // DP: show new OR old, never both (controlled by isShowingOldMaps toggle)
+            if (isDPLayerVisible && !isShowingOldMaps && dpDataLoaded && dpLayerData.length) {
+                layers.push({ type: 'dp', data: dpLayerData, zoomLimits: ZOOM_LIMITS.dp });
+            }
+            if (isDPLayerVisible && isShowingOldMaps && oldDPDataLoaded && oldDPLayerData.length) {
+                layers.push({ type: 'oldDP', data: oldDPLayerData, zoomLimits: ZOOM_LIMITS.oldDP });
+            }
+            if (isVillageLayerVisible && villageDataLoaded && villageLayerData.length) {
+                layers.push({ type: 'village', data: villageLayerData, zoomLimits: ZOOM_LIMITS.village });
+            }
+
+            if (layers.length === 0) return;
+
+            // Send to Web Worker -- polygon math runs in background thread
+            tileWorker.postMessage({ generation: currentGeneration, layers, currentZoom, centerPoint, vp });
+        }
+
+        // Initialize a cache for tile loading
+        const tileCache = new Map();
+        
+        function loadTileOverlay(layerDef, layerType, overlayMap) {
+            try {
+                const cacheKey = `${layerType}_${layerDef.id}`;
+                if (tileCache.has(cacheKey)) {
+                    const cachedOverlay = tileCache.get(cacheKey);
+
+                    // Re-add cached overlay to map (browser HTTP cache avoids re-downloading tiles)
+                    cachedOverlay.setOpacity(currentOpacity);
+                    map.overlayMapTypes.push(cachedOverlay);
+                    overlayMap.set(layerDef.id, cachedOverlay);
+
+                    return cachedOverlay;
+                }
+                
+                // Construct URL for this layer
+                const url = `${amazonAWSLink}${layerDef.link}{z}/{x}/{y}.png`;
+                
+                // Create custom map type
+                const customMapType = new google.maps.ImageMapType({
+                    getTileUrl: function(coord, zoom) {
+                        // Implement zoom level constraints
+                        let minZoom, maxZoom;
+                        
+                        switch (layerType) {
+                            case "dp":
+                                minZoom = layerDef.minZoom || MIN_ZOOM_FOR_DP;
+                                maxZoom = layerDef.maxZoom || MAX_ZOOM_FOR_DP;
+                                break;
+                            case "layout":
+                                minZoom = layerDef.minZoom || MIN_ZOOM_FOR_LAYOUT;
+                                maxZoom = layerDef.maxZoom || MAX_ZOOM_FOR_LAYOUT;
+                                break;
+                            case "village":
+                                minZoom = layerDef.minZoom || MIN_ZOOM_FOR_VILLAGEMAP;
+                                maxZoom = layerDef.maxZoom || MAX_ZOOM_FOR_VILLAGEMAP;
+                                break;
+                            case "oldDP":
+                                minZoom = layerDef.minZoom || MIN_ZOOM_FOR_OLD_DP;
+                                maxZoom = layerDef.maxZoom || MAX_ZOOM_FOR_OLD_DP;
+                                break;
+                            default:
+                                minZoom = 0;
+                                maxZoom = 22;
+                        }
+                        
+                        if (zoom < minZoom || zoom > maxZoom) {
+                            return null;
+                        }
+                        
+                        // Return the tile URL
+                        return url.replace("{z}", zoom).replace("{x}", coord.x).replace("{y}", coord.y);
+                    },
+                    tileSize: new google.maps.Size(256, 256),
+                    opacity: currentOpacity,
+                    name: `${layerType}_${layerDef.id}`
+                });
+                
+                // Set the zIndex
+                customMapType.zIndex = layerDef.zIndex || 0;
+                
+                // Add to map
+                map.overlayMapTypes.push(customMapType);
+                
+                // Store reference
+                overlayMap.set(layerDef.id, customMapType);
+                
+                // Add to cache
+                tileCache.set(cacheKey, customMapType);
+                
+                return customMapType;
+            } catch (error) {
+                console.error(`Error creating tile overlay for ${layerType} layer ${layerDef.id}:`, error);
+                return null;
+            }
+        }
+
+        function unloadTileOverlay(layerId, overlayMap) {
+            const overlay = overlayMap.get(layerId);
+            if (!overlay) return;
+
+            // Actually remove from map -- this cancels in-flight HTTP tile requests
+            // (frees bandwidth for new tiles at the current zoom level)
+            const allOverlays = map.overlayMapTypes.getArray();
+            const idx = allOverlays.indexOf(overlay);
+            if (idx !== -1) map.overlayMapTypes.removeAt(idx);
+
+            // Keep in overlayMap for tracking, keep in tileCache for fast re-add
+            overlayMap.delete(layerId);
+        }
+
+        function updateStatus(message) {
+            const statusElement = document.getElementById('status-indicator');
+            if (statusElement) {
+                statusElement.textContent = message;
+                clearTimeout(window.statusTimeout);
+                window.statusTimeout = setTimeout(() => {
+                    if (statusElement.textContent === message) {
+                        statusElement.textContent = 'Ready';
+                    }
+                }, 2000);
+            }
+        }
+    </script>
+    
+    <!-- Load Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC81uDKlQzf-UX469U7OIzlLsduhoflY7Q&libraries=places&callback=initMap" async defer></script>
+</body>
+</html>
