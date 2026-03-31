@@ -568,16 +568,22 @@
         }
 
         // Buy a 7-day pass
-        async function buyRegion(productId, regionName, amount) {
+        async function buyRegion(productId, regionName) {
             if (!currentUser) {
                 firebase.auth().signInWithPopup(googleProvider);
+                return;
+            }
+
+            // Check if already purchased
+            if (hasPurchase(productId)) {
+                alert('You already have an active pass for ' + regionName);
                 return;
             }
 
             try {
                 updateStatus('Creating order...');
                 const createOrder = functions.httpsCallable('createOrder');
-                const { data } = await createOrder({ productId, amount, regionName });
+                const { data } = await createOrder({ productId, regionName });
 
                 const options = {
                     key: 'rzp_live_SXr1BKnoysSo9r',
@@ -1015,11 +1021,12 @@
                     if (type === 'district' && item.productPurchaseID) {
                         if (hasPurchase(item.productPurchaseID)) {
                             const expiry = activePurchases.get(item.productPurchaseID) ||
-                                activePurchases.get('district' + item.productPurchaseID) || 0;
+                                activePurchases.get('district' + item.productPurchaseID) ||
+                                activePurchases.get(item.productPurchaseID.replace(/^district/, '')) || 0;
                             const daysLeft = Math.ceil((expiry - Date.now()) / (24*60*60*1000));
-                            badge = '<span style="font-size:9px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0">' + daysLeft + 'd left</span>';
+                            badge = '<span style="font-size:9px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0">Purchased \u00b7 ' + daysLeft + 'd left</span>';
                         } else {
-                            badge = '<span style="font-size:9px;background:#FF9800;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0;cursor:pointer" class="buy-badge" data-pid="' + item.productPurchaseID + '" data-name="' + item.name + '">Buy</span>';
+                            badge = '<span style="font-size:9px;background:#FF9800;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0;cursor:pointer" class="buy-badge" data-pid="' + item.productPurchaseID + '" data-name="' + item.name + '">Buy 7-Day Pass</span>';
                         }
                     }
 
@@ -1038,7 +1045,7 @@
                     if (buyBadge) {
                         buyBadge.addEventListener('click', (e) => {
                             e.stopPropagation();
-                            buyRegion(buyBadge.dataset.pid, buyBadge.dataset.name, 99);
+                            buyRegion(buyBadge.dataset.pid, buyBadge.dataset.name);
                         });
                     }
 
