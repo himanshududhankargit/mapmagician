@@ -163,10 +163,102 @@
             margin-left: 16px;
             transition: background 0.2s, box-shadow 0.2s;
             flex-shrink: 0;
+            cursor: pointer;
         }
         .source-link:hover {
             background: #0d47a1;
             box-shadow: 0 2px 8px rgba(21,101,192,0.3);
+        }
+        .source-link::after {
+            content: ' \2197';
+            font-size: 11px;
+        }
+        .source-url::before {
+            content: '\1F517 ';
+            font-size: 11px;
+        }
+
+        /* Redirect modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: #fff;
+            border-radius: 14px;
+            max-width: 440px;
+            width: 100%;
+            padding: 28px 24px 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            text-align: center;
+            animation: modalIn 0.2s ease-out;
+        }
+        @keyframes modalIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .modal-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+        .modal-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .modal-desc {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+        .modal-url {
+            font-size: 13px;
+            color: #1565c0;
+            background: #f0f4f8;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 12px 0 20px;
+            word-break: break-word;
+            text-align: left;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .modal-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: background 0.2s;
+        }
+        .modal-btn-cancel {
+            background: #f0f0f0;
+            color: #555;
+        }
+        .modal-btn-cancel:hover {
+            background: #e0e0e0;
+        }
+        .modal-btn-go {
+            background: #1565c0;
+            color: #fff;
+        }
+        .modal-btn-go:hover {
+            background: #0d47a1;
         }
 
         /* Loading spinner */
@@ -279,14 +371,59 @@
         <footer>
             <p>This page updates automatically from our records.</p>
             <p style="margin-top: 10px;">
-                <a href="https://www.mapmagician.in/PrivacyPolicyDevelopmentPlanGIS.html">Privacy Policy</a>
+                <a href="#" onclick="showRedirectModal('https://www.mapmagician.in/PrivacyPolicyDevelopmentPlanGIS.html'); return false;">Privacy Policy</a>
                 <span class="footer-sep">&middot;</span>
-                <a href="https://www.mapmagician.in">mapmagician.in</a>
+                <a href="#" onclick="showRedirectModal('https://www.mapmagician.in'); return false;">mapmagician.in</a>
             </p>
         </footer>
     </div>
 
+    <!-- External link redirect modal -->
+    <div class="modal-overlay" id="redirectModal">
+        <div class="modal-box">
+            <div class="modal-icon">&#x1F310;</div>
+            <div class="modal-title">You are leaving this page</div>
+            <div class="modal-desc">You are being redirected to an external government website. This link is provided for reference only.</div>
+            <div class="modal-url" id="modalUrl"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="modalCancel">Cancel</button>
+                <button class="modal-btn modal-btn-go" id="modalGo">Continue</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Redirect modal logic
+        var pendingUrl = '';
+        var modalOverlay = null;
+
+        function showRedirectModal(url) {
+            pendingUrl = url;
+            modalOverlay = document.getElementById('redirectModal');
+            document.getElementById('modalUrl').textContent = url;
+            modalOverlay.classList.add('active');
+        }
+
+        document.getElementById('modalCancel').addEventListener('click', function() {
+            modalOverlay.classList.remove('active');
+            pendingUrl = '';
+        });
+
+        document.getElementById('modalGo').addEventListener('click', function() {
+            modalOverlay.classList.remove('active');
+            if (pendingUrl) {
+                window.open(pendingUrl, '_blank', 'noopener,noreferrer');
+                pendingUrl = '';
+            }
+        });
+
+        document.getElementById('redirectModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+                pendingUrl = '';
+            }
+        });
+
         // JSONP approach - bypasses all CORS restrictions
         var SHEET_JSONP_URL = 'https://docs.google.com/spreadsheets/d/1Qx7dCCzUmQrtOMqCGk_JppKsoOIIuPs2l_AE67r_4_c/gviz/tq?tqx=responseHandler:handleSheetData&gid=1981986606';
 
@@ -342,7 +479,7 @@
                 html += '<span class="region-name">' + escapeHtml(displayName) + '</span>';
                 html += '<span class="source-url">' + escapeHtml(shortUrl) + '</span>';
                 html += '</div>';
-                html += '<a class="source-link" href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noopener noreferrer">View Source</a>';
+                html += '<a class="source-link" href="#" onclick="showRedirectModal(\'' + escapeHtml(sourceUrl).replace(/'/g, "\\'") + '\'); return false;">View Source</a>';
                 html += '</li>';
             }
 
