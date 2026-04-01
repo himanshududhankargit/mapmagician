@@ -499,6 +499,18 @@
         </div>
     </div>
 
+    <!-- Zoom restriction dialog -->
+    <div class="auth-dialog-overlay" id="zoom-restrict-overlay">
+        <div class="auth-dialog">
+            <h3 id="zoom-restrict-title">Unlock Detailed View</h3>
+            <p id="zoom-restrict-desc">Purchase a 7-Day Pass to access high-zoom detailed maps and overlays for this area.</p>
+            <button class="auth-dialog-btn" id="zoom-restrict-action" style="background:#008577">
+                Access Detailed Maps
+            </button>
+            <button class="auth-dialog-cancel" id="zoom-restrict-cancel">Not now</button>
+        </div>
+    </div>
+
     <!-- Payment loading overlay -->
     <div class="payment-loading-overlay" id="payment-loading-overlay">
         <div class="payment-spinner"></div>
@@ -718,6 +730,60 @@
         let map;
         let markers = [];
         let currentOpacity = 0.5;
+
+        // Zoom restriction
+        let districtBounds = [];     // [{productPurchaseID, districtName, minLat, maxLat, minLng, maxLng}]
+        let zoomBypassActive = false; // true when programmatic zoom should skip restriction
+        const MAX_FREE_ZOOM = 14;
+
+        function findDistrictAtCenter() {
+            if (!map || districtBounds.length === 0) return null;
+            const c = map.getCenter();
+            const lat = c.lat(), lng = c.lng();
+            for (const db of districtBounds) {
+                if (lat >= db.minLat && lat <= db.maxLat && lng >= db.minLng && lng <= db.maxLng) {
+                    return db;
+                }
+            }
+            return null;
+        }
+
+        function showZoomRestrictionDialog(district) {
+            const overlay = document.getElementById('zoom-restrict-overlay');
+            const title = document.getElementById('zoom-restrict-title');
+            const desc = document.getElementById('zoom-restrict-desc');
+            const actionBtn = document.getElementById('zoom-restrict-action');
+
+            if (district) {
+                title.textContent = 'Unlock ' + district.districtName;
+                desc.textContent = 'Purchase a 7-Day Pass for ' + district.districtName + ' to access high-zoom detailed maps and overlays.';
+            } else {
+                title.textContent = 'Unlock Detailed View';
+                desc.textContent = 'Purchase a 7-Day Pass for a district to access detailed maps. Browse districts in the sidebar.';
+            }
+
+            // Replace button to remove old listeners
+            const newBtn = actionBtn.cloneNode(true);
+            newBtn.id = 'zoom-restrict-action';
+            actionBtn.parentNode.replaceChild(newBtn, actionBtn);
+
+            newBtn.addEventListener('click', () => {
+                overlay.classList.remove('open');
+                if (district) {
+                    buyRegion(district.productPurchaseID, district.districtName);
+                } else {
+                    // Open sidebar to browse districts
+                    const firstRailItem = document.querySelector('.rail-item');
+                    if (firstRailItem) firstRailItem.click();
+                }
+            });
+
+            document.getElementById('zoom-restrict-cancel').onclick = () => {
+                overlay.classList.remove('open');
+            };
+
+            overlay.classList.add('open');
+        }
         
         // Layer visibility and data
         let isDPLayerVisible = true;
@@ -967,6 +1033,19 @@
             });
             map.addListener('bounds_changed', debouncedLoadTiles);
 
+            // Zoom restriction: prevent zooming past MAX_FREE_ZOOM for unpurchased areas
+            map.addListener('zoom_changed', function() {
+                if (zoomBypassActive) return;
+                const z = map.getZoom();
+                if (z <= MAX_FREE_ZOOM) return;
+
+                const district = findDistrictAtCenter();
+                if (district && hasPurchase(district.productPurchaseID)) return;
+
+                map.setZoom(MAX_FREE_ZOOM);
+                showZoomRestrictionDialog(district);
+            });
+
             // Initialize UI event listeners
             initUIEvents();
 
@@ -1011,6 +1090,36 @@
                         });
                     }
                 }
+
+                // Build district bounding boxes for zoom restriction
+                districtBounds = [];
+                menuData.forEach(item => {
+                    if (!item.district || !item.villagesJSON || !item.productPurchaseID) return;
+                    const lines = item.villagesJSON.split('\n');
+                    let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+                    let count = 0;
+                    lines.forEach(line => {
+                        const parts = line.split('=');
+                        if (parts.length !== 2) return;
+                        const coords = parts[1].split(',');
+                        if (coords.length !== 2) return;
+                        const lat = parseFloat(coords[0]), lng = parseFloat(coords[1]);
+                        if (isNaN(lat) || isNaN(lng)) return;
+                        if (lat < minLat) minLat = lat;
+                        if (lat > maxLat) maxLat = lat;
+                        if (lng < minLng) minLng = lng;
+                        if (lng > maxLng) maxLng = lng;
+                        count++;
+                    });
+                    if (count === 0) return;
+                    const PAD = 0.02; // ~2km padding
+                    districtBounds.push({
+                        productPurchaseID: item.productPurchaseID,
+                        districtName: item.district,
+                        minLat: minLat - PAD, maxLat: maxLat + PAD,
+                        minLng: minLng - PAD, maxLng: maxLng + PAD
+                    });
+                });
 
                 // Build unique states list
                 const stateMap = new Map();
@@ -1066,7 +1175,7 @@
                     showSidebarLevel(stateName, items, 'district');
                 } else if (stateItem && stateItem.villagesJSON) {
                     // No districts -- show villages directly
-                    showVillages(stateName, stateItem.villagesJSON);
+                    showVillages(stateName, stateItem.villagesJSON, null, stateItem.productPurchaseID);
                 }
                 openSidebar();
             }
@@ -1078,7 +1187,7 @@
                 renderSidebarList(items, type);
             }
 
-            function showVillages(title, villagesJSON, highlightTerm) {
+            function showVillages(title, villagesJSON, highlightTerm, productPurchaseID) {
                 const locations = parseVillagesJSON(villagesJSON);
                 const items = locations.map(loc => ({
                     name: loc.name,
@@ -1087,6 +1196,8 @@
                     lat: loc.lat, lng: loc.lng
                 }));
                 showSidebarLevel(title, items, 'village');
+                // Store productPurchaseID on history entry for village click handler
+                sidebarHistory[sidebarHistory.length - 1].productPurchaseID = productPurchaseID || '';
 
                 // Scroll to and highlight the matched village
                 if (highlightTerm) {
@@ -1150,9 +1261,10 @@
                     btn.addEventListener('click', () => {
                         if (type === 'district') {
                             const currentQuery = sidebarSearch.value.trim();
-                            showVillages(item.name, item.villagesJSON, currentQuery || null);
+                            showVillages(item.name, item.villagesJSON, currentQuery || null, item.productPurchaseID);
                         } else if (type === 'village') {
-                            goToLocation(item.lat, item.lng, item.name);
+                            const currentEntry = sidebarHistory[sidebarHistory.length - 1];
+                            goToLocation(item.lat, item.lng, item.name, currentEntry?.productPurchaseID);
                             closeSidebar();
                         }
                     });
@@ -1180,9 +1292,15 @@
                 return json.split('\n').filter(l => l.includes('=')).length;
             }
 
-            function goToLocation(lat, lng, name) {
+            function goToLocation(lat, lng, name, districtProductId) {
                 map.setCenter({ lat, lng });
-                map.setZoom(15);
+                if (districtProductId && hasPurchase(districtProductId)) {
+                    zoomBypassActive = true;
+                    map.setZoom(15);
+                    google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
+                } else {
+                    map.setZoom(MAX_FREE_ZOOM);
+                }
                 updateStatus('Zoomed to ' + name);
             }
 
@@ -1406,13 +1524,12 @@
                     `;
                     btn.addEventListener('click', () => {
                         if (r.type === 'village' && r.lat && r.lng) {
-                            map.setCenter({ lat: r.lat, lng: r.lng });
-                            map.setZoom(15);
-                            updateStatus('Zoomed to ' + r.name);
+                            const pid = r.item ? r.item.productPurchaseID : '';
+                            goToLocation(r.lat, r.lng, r.name, pid);
                         } else if (r.item) {
                             // Open the sidebar to show this state/district
                             if (r.type === 'district' && r.item.villagesJSON) {
-                                showVillages(r.item.district || r.item.state, r.item.villagesJSON);
+                                showVillages(r.item.district || r.item.state, r.item.villagesJSON, null, r.item.productPurchaseID);
                                 openSidebar();
                             } else {
                                 openState(r.item.state);
