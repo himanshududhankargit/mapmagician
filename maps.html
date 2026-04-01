@@ -1108,15 +1108,15 @@
             const sidebarTitle = document.getElementById('sidebar-title');
             const sidebarSearch = document.getElementById('sidebar-search');
 
-            // Fetch menu data from Firebase
-            database.ref(MENU_DB_NAME).once('value').then(snapshot => {
-                const data = snapshot.val();
-                if (!data) return;
+            // Show loading state in bottom nav bar
+            const navBarLoading = document.getElementById('bottom-nav-bar');
+            navBarLoading.innerHTML = '<span style="font-size:12px;color:#888;padding:0 16px;">Loading regions...</span>';
 
+            function processMenuData(rawData) {
                 menuData = [];
-                for (const key in data) {
-                    if (data.hasOwnProperty(key)) {
-                        const item = data[key];
+                for (const key in rawData) {
+                    if (rawData.hasOwnProperty(key)) {
+                        const item = rawData[key];
                         menuData.push({
                             id: key,
                             state: item.state || '',
@@ -1128,7 +1128,9 @@
                         });
                     }
                 }
+            }
 
+            function buildAfterMenuData() {
                 // Build district bounding boxes for zoom restriction
                 districtBounds = [];
                 menuData.forEach(item => {
@@ -1150,7 +1152,7 @@
                         count++;
                     });
                     if (count === 0) return;
-                    const PAD = 0.02; // ~2km padding
+                    const PAD = 0.02;
                     districtBounds.push({
                         productPurchaseID: item.productPurchaseID,
                         districtName: item.district,
@@ -1166,11 +1168,9 @@
                     if (!stateMap.has(item.state)) {
                         stateMap.set(item.state, { name: item.state, count: 0, icon: item.iconState });
                     }
-                    // Count districts or villages
                     if (item.district) {
                         stateMap.get(item.state).count++;
                     } else {
-                        // Count villages in state-level item
                         const vCount = item.villagesJSON ? item.villagesJSON.split('\n').filter(l => l.includes('=')).length : 0;
                         stateMap.get(item.state).count += vCount;
                     }
@@ -1178,6 +1178,21 @@
 
                 stateList = Array.from(stateMap.values());
                 renderBottomNav();
+            }
+
+            // Try loading from cache first, then fetch from Firebase
+            const cachedMenu = getCachedData('menu_regions');
+            if (cachedMenu) {
+                processMenuData(cachedMenu);
+                buildAfterMenuData();
+            }
+            // Always fetch fresh data from Firebase (updates cache + refreshes if stale)
+            database.ref(MENU_DB_NAME).once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (!data) return;
+                setCachedData('menu_regions', data);
+                processMenuData(data);
+                buildAfterMenuData();
             });
 
             function renderBottomNav() {
