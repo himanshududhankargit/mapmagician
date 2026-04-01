@@ -29,26 +29,34 @@
         html, body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; overflow: hidden; height: 100%; width: 100%; position: fixed; touch-action: manipulation; }
         #map { height: 100vh; width: 100%; touch-action: auto; }
 
-        /* Top search row */
+        /* Top search row (Google Maps style pill) */
         .top-search-row {
-            position: absolute; top: 4px; left: 64px; right: 8px;
-            height: 40px; display: flex; gap: 8px; z-index: 1000;
+            position: absolute; top: 8px; left: 8px; right: 8px;
+            height: 48px; display: flex; align-items: center; gap: 8px; z-index: 1000;
+            background: #fff; border-radius: 24px; padding: 0 8px 0 16px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
         #search-input {
             flex: 1; height: 40px; border: none; outline: none;
-            border-radius: 20px; padding: 0 16px; font-size: 14px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3); background: #fff;
+            border-radius: 0; padding: 0 8px; font-size: 14px;
+            background: transparent;
         }
         #map-type {
-            height: 40px; border: none; border-radius: 20px;
-            padding: 0 12px; font-size: 12px; background: #fff;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer;
-            outline: none; -webkit-appearance: none; appearance: none;
+            height: 32px; border: 1px solid #e0e0e0; border-radius: 16px;
+            padding: 0 10px; font-size: 11px; background: #f5f5f5;
+            cursor: pointer; outline: none; -webkit-appearance: none; appearance: none;
         }
+        .profile-btn {
+            width: 36px; height: 36px; border-radius: 50%; border: none;
+            background: #e3f2fd; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; font-size: 14px; font-weight: 700; color: #1976D2;
+            flex-shrink: 0; overflow: hidden;
+        }
+        .profile-btn img { width: 36px; height: 36px; border-radius: 50%; }
 
         /* Horizontal toolbar buttons */
         .toolbar-scroll {
-            position: absolute; top: 48px; left: 56px; right: 0;
+            position: absolute; top: 60px; left: 8px; right: 0;
             z-index: 1000; overflow-x: auto; overflow-y: hidden;
             white-space: nowrap; padding: 4px 8px;
             -webkit-overflow-scrolling: touch;
@@ -89,7 +97,7 @@
         .fab-stack {
             position: absolute; right: 8px; z-index: 1000;
             display: flex; flex-direction: column; gap: 8px;
-            bottom: 140px;
+            bottom: 88px;
         }
         .fab {
             width: 48px; height: 48px; border-radius: 50%;
@@ -158,61 +166,43 @@
         }
         .layer-overlay.open { display: block; }
 
-        /* Compact bottom dock (centered, Mac-style) */
-        .compact-bottom-bar {
-            position: absolute; bottom: 8px;
-            left: 50%; transform: translateX(-50%);
-            background: rgba(255,255,255,0.92); border-radius: 20px;
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            z-index: 1000; padding: 6px 16px;
-            display: flex; align-items: center; gap: 12px;
-            max-width: 520px; width: auto;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        /* Bottom navigation bar (Google Maps style tabs) */
+        .bottom-nav-bar {
+            position: absolute; bottom: 24px; left: 0; right: 0;
+            height: 52px; background: #fff; box-shadow: 0 -1px 4px rgba(0,0,0,0.12);
+            display: flex; align-items: center; overflow-x: auto; overflow-y: hidden;
+            white-space: nowrap; -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; z-index: 1000; padding: 0 8px;
         }
-        #opacity-slider {
-            width: 120px; height: 4px; -webkit-appearance: none; appearance: none;
-            background: rgba(255,255,255,0.3); border-radius: 2px; outline: none;
-            flex-shrink: 0;
+        .bottom-nav-bar::-webkit-scrollbar { display: none; }
+        .nav-tab {
+            display: inline-flex; flex-direction: column; align-items: center;
+            justify-content: center; min-width: 64px; height: 52px; padding: 0 10px;
+            border: none; background: none; cursor: pointer; font-size: 10px; color: #555;
+            border-top: 2px solid transparent; flex-shrink: 0;
         }
-        #opacity-slider::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 16px; height: 16px;
-            border-radius: 50%; background: #fff; cursor: pointer;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        .nav-tab:hover { color: #008577; background: #f5f5f5; }
+        .nav-tab.active { color: #008577; border-top-color: #008577; font-weight: 600; }
+        .nav-tab-icon {
+            width: 28px; height: 28px; border-radius: 6px;
+            background: #e8f5e9; display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; color: #2E7D32; margin-bottom: 2px;
         }
-        #opacity-slider::-moz-range-thumb {
-            width: 16px; height: 16px; border-radius: 50%;
-            background: #fff; cursor: pointer; border: none;
+        /* Info strip below nav bar */
+        .info-strip {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 24px;
+            background: rgba(255,255,255,0.95); display: flex; align-items: center;
+            justify-content: center; gap: 8px; z-index: 1000; font-size: 10px; color: #555;
+            border-top: 1px solid rgba(0,0,0,0.08); padding: 0 8px;
         }
-        .dock-divider {
-            width: 1px; height: 18px; background: rgba(0,0,0,0.12);
-            flex-shrink: 0;
-        }
-        .coord-chip {
-            background: rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.12);
-            border-radius: 12px; padding: 2px 10px; font-size: 10px;
-            color: #333; white-space: nowrap; cursor: pointer;
-        }
-        .coord-chip:hover { background: rgba(0,0,0,0.1); }
-        #opacity-slider-bottom {
-            width: 120px; height: 4px; -webkit-appearance: none; appearance: none;
-            background: #ddd; border-radius: 2px; outline: none;
-            flex-shrink: 0;
-        }
-        #opacity-slider-bottom::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 16px; height: 16px;
-            border-radius: 50%; background: #008577; cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-        #opacity-slider-bottom::-moz-range-thumb {
-            width: 16px; height: 16px; border-radius: 50%;
-            background: #008577; cursor: pointer; border: none;
-        }
+        .info-strip .dock-divider { width: 1px; height: 14px; background: rgba(0,0,0,0.12); }
+        .coord-chip { font-size: 10px; color: #333; white-space: nowrap; cursor: pointer; }
         #status-indicator { font-size: 10px; color: #555; white-space: nowrap; }
         #zoom-level { font-size: 10px; color: #555; white-space: nowrap; }
 
         /* Custom search results dropdown (above Google Places pac-container) */
         .search-results {
-            position: absolute; top: 44px; left: 64px; right: 8px;
+            position: absolute; top: 60px; left: 8px; right: 8px;
             max-height: 320px; overflow-y: auto; z-index: 99999;
             background: #fff; border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.25);
@@ -243,48 +233,6 @@
             padding: 6px 14px; font-size: 10px; font-weight: 600;
             color: #008577; text-transform: uppercase; letter-spacing: 0.5px;
             background: #f9f9f9; border-bottom: 1px solid #eee;
-        }
-
-        /* Left sidebar rail (Google Maps style) */
-        .left-rail {
-            position: absolute; top: 0; left: 0; width: 56px;
-            height: 100%; background: #fff; z-index: 1500;
-            box-shadow: 2px 0 6px rgba(0,0,0,0.15);
-            display: flex; flex-direction: column;
-            overflow-y: auto; overflow-x: hidden;
-            scrollbar-width: none;
-        }
-        .left-rail::-webkit-scrollbar { display: none; }
-        .rail-hamburger {
-            width: 56px; height: 48px; border: none; background: none;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; border-bottom: 1px solid #eee;
-        }
-        .rail-hamburger svg { width: 22px; height: 22px; stroke: #333; }
-        .rail-item {
-            display: flex; flex-direction: column; align-items: center;
-            padding: 8px 4px; cursor: pointer; border: none; background: none;
-            border-bottom: 1px solid #f0f0f0; flex-shrink: 0;
-            transition: background 0.15s;
-        }
-        .rail-item:hover { background: #f0f0f0; }
-        .rail-item-icon {
-            width: 36px; height: 36px; border-radius: 8px;
-            background: #e8f5e9; display: flex; align-items: center;
-            justify-content: center; font-size: 16px; font-weight: 700;
-            color: #2E7D32; position: relative;
-        }
-        .rail-item-badge {
-            position: absolute; top: -4px; right: -4px;
-            background: #fff; border: 1px solid #ccc; border-radius: 8px;
-            font-size: 9px; padding: 0 4px; line-height: 16px;
-            color: #333; font-weight: 600;
-        }
-        .rail-item-name {
-            font-size: 9px; color: #333; margin-top: 2px;
-            text-align: center; line-height: 1.1;
-            max-width: 52px; overflow: hidden;
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
         }
 
         /* Expanded sidebar panel */
@@ -386,25 +334,6 @@
 <body>
     <div id="map"></div>
 
-    <!-- Left sidebar rail (Google Maps style) -->
-    <div class="left-rail" id="left-rail">
-        <button class="rail-hamburger" id="rail-hamburger" title="Menu">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-                <line x1="3" y1="6" x2="21" y2="6"/>
-                <line x1="3" y1="12" x2="21" y2="12"/>
-                <line x1="3" y1="18" x2="21" y2="18"/>
-            </svg>
-        </button>
-        <div id="rail-items"></div>
-        <!-- Auth button at bottom of rail -->
-        <div style="margin-top:auto;border-top:1px solid #eee;">
-            <button class="rail-item" id="rail-auth" title="Sign in">
-                <div class="rail-item-icon" style="background:#e3f2fd;color:#1976D2;border-radius:50%;font-size:14px;" id="rail-auth-icon">G</div>
-                <div class="rail-item-name" id="rail-auth-name">Sign in</div>
-            </button>
-        </div>
-    </div>
-
     <!-- Expanded sidebar panel -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
     <div class="sidebar-panel" id="sidebar-panel">
@@ -428,6 +357,9 @@
             <option value="roadmap">Roadmap</option>
             <option value="terrain">Terrain</option>
         </select>
+        <button class="profile-btn" id="profile-btn" title="Sign in">
+            <span id="profile-btn-icon">G</span>
+        </button>
     </div>
 
     <!-- Custom search results (Firebase locations) -->
@@ -497,9 +429,11 @@
     </div>
 
     <!-- Bottom dock (Mac-style, centered) -->
-    <div class="compact-bottom-bar">
-        <input type="range" id="opacity-slider-bottom" min="0" max="100" value="50">
-        <div class="dock-divider"></div>
+    <!-- Bottom navigation bar: scrollable region tabs -->
+    <div class="bottom-nav-bar" id="bottom-nav-bar"></div>
+
+    <!-- Info strip: coords, zoom, status, region status -->
+    <div class="info-strip">
         <span class="coord-chip" id="center-coord">--</span>
         <div class="dock-divider"></div>
         <span id="zoom-level">Z=13</span>
@@ -599,25 +533,24 @@
         // Auth state listener
         firebase.auth().onAuthStateChanged(user => {
             currentUser = user;
-            const authIcon = document.getElementById('rail-auth-icon');
-            const authName = document.getElementById('rail-auth-name');
+            const profileBtn = document.getElementById('profile-btn');
+            const profileIcon = document.getElementById('profile-btn-icon');
 
             if (user) {
-                // Show user avatar
+                // Show user avatar in search bar
                 if (user.photoURL) {
-                    authIcon.textContent = '';
+                    profileIcon.textContent = '';
                     const avatarImg = document.createElement('img');
                     avatarImg.src = user.photoURL;
-                    avatarImg.style.cssText = 'width:36px;height:36px;border-radius:50%;';
                     avatarImg.referrerPolicy = 'no-referrer';
-                    authIcon.appendChild(avatarImg);
-                    authIcon.style.background = 'none';
+                    profileIcon.appendChild(avatarImg);
+                    profileBtn.style.background = 'none';
                 } else {
-                    authIcon.textContent = user.displayName ? user.displayName.charAt(0) : 'U';
-                    authIcon.style.background = '#e8f5e9';
-                    authIcon.style.color = '#2E7D32';
+                    profileIcon.textContent = user.displayName ? user.displayName.charAt(0) : 'U';
+                    profileBtn.style.background = '#e8f5e9';
+                    profileBtn.style.color = '#2E7D32';
                 }
-                authName.textContent = (user.displayName || 'Account').split(' ')[0];
+                profileBtn.title = user.displayName || user.email;
                 loadPurchaseStatus(user.email);
 
                 // Resume pending purchase after sign-in
@@ -627,16 +560,16 @@
                     setTimeout(() => buyRegion(productId, regionName), 500);
                 }
             } else {
-                authIcon.textContent = 'G';
-                authIcon.style.background = '#e3f2fd';
-                authIcon.style.color = '#1976D2';
-                authName.textContent = 'Sign in';
+                profileIcon.textContent = 'G';
+                profileBtn.style.background = '#e3f2fd';
+                profileBtn.style.color = '#1976D2';
+                profileBtn.title = 'Sign in';
                 activePurchases.clear();
             }
         });
 
-        // Auth button click
-        document.getElementById('rail-auth').addEventListener('click', () => {
+        // Profile button click (sign in / sign out)
+        document.getElementById('profile-btn').addEventListener('click', () => {
             if (currentUser) {
                 if (confirm('Sign out of ' + currentUser.email + '?')) {
                     firebase.auth().signOut();
@@ -831,8 +764,8 @@
                 if (district) {
                     buyRegion(district.productPurchaseID, district.districtName);
                 } else {
-                    const firstRailItem = document.querySelector('.rail-item');
-                    if (firstRailItem) firstRailItem.click();
+                    const firstNavTab = document.querySelector('.nav-tab');
+                    if (firstNavTab) firstNavTab.click();
                 }
             });
 
@@ -1151,7 +1084,6 @@
         let sidebarHistory = []; // breadcrumb: [{level, title, items}]
 
         function initSidebar() {
-            const railItems = document.getElementById('rail-items');
             const sidebarPanel = document.getElementById('sidebar-panel');
             const sidebarOverlay = document.getElementById('sidebar-overlay');
             const sidebarList = document.getElementById('sidebar-list');
@@ -1227,23 +1159,26 @@
                 });
 
                 stateList = Array.from(stateMap.values());
-                renderRail();
+                renderBottomNav();
             });
 
-            function renderRail() {
-                railItems.innerHTML = '';
+            function renderBottomNav() {
+                const navBar = document.getElementById('bottom-nav-bar');
+                navBar.innerHTML = '';
                 stateList.forEach(st => {
                     const btn = document.createElement('button');
-                    btn.className = 'rail-item';
+                    btn.className = 'nav-tab';
+                    btn.dataset.state = st.name;
                     btn.innerHTML = `
-                        <div class="rail-item-icon">
-                            ${st.name.charAt(0)}
-                            ${st.count > 0 ? '<span class="rail-item-badge">' + st.count + '</span>' : ''}
-                        </div>
-                        <div class="rail-item-name">${st.name}</div>
+                        <div class="nav-tab-icon">${st.name.charAt(0)}</div>
+                        <span>${st.name}</span>
                     `;
-                    btn.addEventListener('click', () => openState(st.name));
-                    railItems.appendChild(btn);
+                    btn.addEventListener('click', () => {
+                        navBar.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        openState(st.name);
+                    });
+                    navBar.appendChild(btn);
                 });
             }
 
@@ -1419,26 +1354,6 @@
             // Sidebar overlay close
             sidebarOverlay.addEventListener('click', closeSidebar);
 
-            // Hamburger opens sidebar with state list
-            document.getElementById('rail-hamburger').addEventListener('click', () => {
-                sidebarHistory = [];
-                const items = stateList.map(st => ({
-                    name: st.name,
-                    sub: st.count + ' locations',
-                    hasChildren: true,
-                    stateName: st.name
-                }));
-                showSidebarLevel('Locations', items, 'state');
-                // Override click behavior for state items
-                const btns = sidebarList.querySelectorAll('.sidebar-list-item');
-                btns.forEach((btn, i) => {
-                    btn.onclick = () => {
-                        sidebarHistory.pop(); // remove current
-                        openState(items[i].stateName);
-                    };
-                });
-                openSidebar();
-            });
 
             // Sidebar search filter -- also searches inside villagesJSON for district-level items
             sidebarSearch.addEventListener('input', function() {
@@ -1717,23 +1632,18 @@
                 }
             });
 
-            // Sync both opacity sliders (panel + bottom bar)
+            // Opacity slider (layer panel only)
             const opacityPanel = document.getElementById('opacity-slider');
-            const opacityBottom = document.getElementById('opacity-slider-bottom');
             const opacityValue = document.getElementById('opacity-value');
 
-            function handleOpacityChange(value) {
-                currentOpacity = value / 100;
-                opacityValue.textContent = value + '%';
-                opacityPanel.value = value;
-                opacityBottom.value = value;
+            opacityPanel.addEventListener('input', function() {
+                currentOpacity = this.value / 100;
+                opacityValue.textContent = this.value + '%';
                 updateOverlayOpacity(dpOverlays, currentOpacity);
                 updateOverlayOpacity(layoutOverlays, currentOpacity);
                 updateOverlayOpacity(villageOverlays, currentOpacity);
                 updateOverlayOpacity(oldDPOverlays, currentOpacity);
-            }
-            opacityPanel.addEventListener('input', function() { handleOpacityChange(this.value); });
-            opacityBottom.addEventListener('input', function() { handleOpacityChange(this.value); });
+            });
 
             // Copy coordinates on click
             document.getElementById('center-coord').addEventListener('click', function() {
