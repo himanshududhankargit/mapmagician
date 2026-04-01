@@ -753,10 +753,13 @@
                 for (const tile of dpLayerData) {
                     if (tile.polygon && pointInPolygon(center, tile.polygon)) {
                         // Tile polygon contains crosshair — look up district name in menuGIS
-                        // Try tile.id directly, then link path segments
-                        let district = findDistrictByPurchaseId(tile.id);
+                        // Try productPurchaseID first (from Firebase dpURLlink data)
+                        let district = findDistrictByPurchaseId(tile.productPurchaseID);
                         if (district) return district;
-                        // Try link path parts (e.g. "/mumbai/dp" → try "mumbai", "dp")
+                        // Fallback: try tile.id (Firebase key)
+                        district = findDistrictByPurchaseId(tile.id);
+                        if (district) return district;
+                        // Fallback: try link path parts (e.g. "/mumbai/dp" → try "mumbai", "dp")
                         if (tile.link) {
                             const parts = tile.link.replace(/^\/|\/$/g, '').split('/');
                             for (const part of parts) {
@@ -764,9 +767,7 @@
                                 if (district) return district;
                             }
                         }
-                        // Debug: log what we see so we can fix the matching
-                        console.log('[RegionDetect] Tile hit but no menuGIS match. tile.id:', tile.id, 'tile.link:', tile.link);
-                        console.log('[RegionDetect] menuGIS productPurchaseIDs:', menuData.filter(m => m.productPurchaseID).map(m => m.productPurchaseID));
+                        console.log('[RegionDetect] Tile hit but no menuGIS match. tile.id:', tile.id, 'tile.productPurchaseID:', tile.productPurchaseID);
                     }
                 }
             }
@@ -1966,7 +1967,8 @@
                                 bbox: computeBBox(polygon),
                                 minZoom: parseInt(item.minZoom) || 0,
                                 maxZoom: parseInt(item.maxZoom) || 22,
-                                zIndex: parseFloat(item.zIndex) || 0
+                                zIndex: parseFloat(item.zIndex) || 0,
+                                productPurchaseID: item.productPurchaseID || ''
                             });
                         } catch (error) {
                             console.warn(`Error processing data item ${key}:`, error);
