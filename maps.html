@@ -748,15 +748,24 @@
             if (dpLayerData.length > 0) {
                 for (const tile of dpLayerData) {
                     if (tile.polygon && pointInPolygon(center, tile.polygon)) {
-                        // Crosshair is inside this tile polygon
-                        // Look up tile.id as productPurchaseID in menuData to get district name
-                        const district = findDistrictByPurchaseId(tile.id);
+                        console.log('[RegionDetect] Crosshair inside tile:', tile.id, '| link:', tile.link);
+                        // Try matching tile.id to menuData productPurchaseID
+                        let district = findDistrictByPurchaseId(tile.id);
                         if (district) return district;
+                        // Try matching the link path as an identifier
+                        if (tile.link) {
+                            const linkParts = tile.link.replace(/^\/|\/$/g, '').split('/');
+                            for (const part of linkParts) {
+                                district = findDistrictByPurchaseId(part);
+                                if (district) return district;
+                            }
+                        }
+                        // Log available menuData IDs for debugging
+                        console.log('[RegionDetect] No menuData match. Available productPurchaseIDs:', menuData.filter(m => m.productPurchaseID).map(m => m.productPurchaseID));
                     }
                 }
             }
 
-            // No tile polygon match — no region detected
             return null;
         }
 
@@ -767,8 +776,10 @@
             for (const item of menuData) {
                 if (!item.productPurchaseID) continue;
                 const itemPid = item.productPurchaseID.toLowerCase().replace(/gst$/, '');
+                // Flexible matching: exact, with/without "district" prefix, partial contains
                 if (itemPid === pid || itemPid === 'district' + pid || 'district' + itemPid === pid ||
-                    itemPid.replace(/^district/, '') === pid.replace(/^district/, '')) {
+                    itemPid.replace(/^district/, '') === pid.replace(/^district/, '') ||
+                    pid.includes(itemPid) || itemPid.includes(pid)) {
                     return {
                         productPurchaseID: item.productPurchaseID,
                         districtName: item.district || item.state
