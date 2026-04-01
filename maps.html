@@ -726,20 +726,54 @@
         let lastRestrictedDistrict = null; // remember district for unlock button
         const MAX_FREE_ZOOM = 14;
 
-        function findDistrictAtCenter() {
-            if (!map || districtBounds.length === 0) return null;
-            const c = map.getCenter();
-            const lat = c.lat(), lng = c.lng();
+        // Point-in-polygon test (ray casting) — used on main thread for region detection
+        function pointInPolygon(point, polygon) {
+            let inside = false;
+            for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                const xi = polygon[i].lng, yi = polygon[i].lat;
+                const xj = polygon[j].lng, yj = polygon[j].lat;
+                const intersect = ((yi > point.lat) !== (yj > point.lat)) &&
+                    (point.lng < (xj - xi) * (point.lat - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
 
-            // Check if center crosshair falls inside any district bounding box
-            // Try exact match first, then find closest if none
+        function findDistrictAtCenter() {
+            if (!map) return null;
+            const c = map.getCenter();
+            const center = { lat: c.lat(), lng: c.lng() };
+
+            // Primary: use precise tile polygon boundaries from Firebase dpLayerData
+            if (dpLayerData.length > 0) {
+                for (const tile of dpLayerData) {
+                    if (tile.polygon && pointInPolygon(center, tile.polygon)) {
+                        // Found a tile polygon containing the crosshair
+                        // Match to a district in districtBounds for purchase info
+                        const district = matchTileToDistrict(center);
+                        if (district) return district;
+                        // If no menuData district match, use tile id as region name
+                        return {
+                            productPurchaseID: tile.id,
+                            districtName: tile.id.replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+                        };
+                    }
+                }
+            }
+
+            // Fallback: village-point bounding box approach
+            return matchTileToDistrict(center);
+        }
+
+        // Find which menuData district the center point belongs to (bounding box check)
+        function matchTileToDistrict(center) {
             let closest = null;
             let closestDist = Infinity;
             for (const db of districtBounds) {
-                if (lat >= db.minLat && lat <= db.maxLat && lng >= db.minLng && lng <= db.maxLng) {
-                    // Center is inside this district — pick closest center
-                    const dLat = lat - (db.minLat + db.maxLat) / 2;
-                    const dLng = lng - (db.minLng + db.maxLng) / 2;
+                if (center.lat >= db.minLat && center.lat <= db.maxLat &&
+                    center.lng >= db.minLng && center.lng <= db.maxLng) {
+                    const dLat = center.lat - (db.minLat + db.maxLat) / 2;
+                    const dLng = center.lng - (db.minLng + db.maxLng) / 2;
                     const dist = dLat * dLat + dLng * dLng;
                     if (dist < closestDist) {
                         closestDist = dist;
@@ -1164,7 +1198,7 @@
                         count++;
                     });
                     if (count === 0) return;
-                    const PAD = 0.08; // ~9km padding to cover full district area beyond village points
+                    const PAD = 0.03; // ~3km padding (tile polygons handle precise detection)
                     districtBounds.push({
                         productPurchaseID: item.productPurchaseID,
                         districtName: item.district,
