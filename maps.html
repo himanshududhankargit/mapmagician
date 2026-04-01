@@ -527,6 +527,7 @@
         let currentUser = null;
         const activePurchases = new Map(); // productId → expiry timestamp
         let cachedIdToken = null; // Firebase ID token for tile proxy auth
+        let cachedAccessToken = ''; // Signed access token from getPurchaseStatus
         let pendingPurchase = null; // { productId, regionName } — set when buy clicked before login
 
         // Auth dialog button handlers
@@ -572,14 +573,6 @@
                 profileBtn.title = user.displayName || user.email;
                 loadPurchaseStatus(user.email);
 
-                // Cache ID token for tile proxy auth (refresh every 50 min)
-                user.getIdToken().then(t => { cachedIdToken = t; });
-                if (!window._tokenRefreshInterval) {
-                    window._tokenRefreshInterval = setInterval(() => {
-                        if (currentUser) currentUser.getIdToken(true).then(t => { cachedIdToken = t; });
-                    }, 50 * 60 * 1000);
-                }
-
                 // Resume pending purchase after sign-in
                 if (pendingPurchase) {
                     const { productId, regionName } = pendingPurchase;
@@ -618,9 +611,10 @@
                 const getPurchaseStatus = functions.httpsCallable('getPurchaseStatus');
                 const { data } = await getPurchaseStatus();
                 activePurchases.clear();
-                Object.entries(data).forEach(([productId, expiry]) => {
+                Object.entries(data.purchases || {}).forEach(([productId, expiry]) => {
                     activePurchases.set(productId, expiry);
                 });
+                cachedAccessToken = data.accessToken || '';
                 refreshSidebarIfOpen();
                 checkAndReenableMap();
                 lastCheckedRegionId = null;
@@ -2110,8 +2104,8 @@
                         }
 
                         // Route through Cloud Function proxy (S3 URL hidden server-side)
-                        const tokenParam = cachedIdToken ? `&token=${cachedIdToken}` : '';
-                        return `${tileProxyUrl}?link=${tileLink}&pid=${tilePid}&z=${zoom}&x=${coord.x}&y=${coord.y}${tokenParam}`;
+                        const atParam = cachedAccessToken ? `&at=${encodeURIComponent(cachedAccessToken)}` : '';
+                        return `${tileProxyUrl}?link=${tileLink}&pid=${tilePid}&z=${zoom}&x=${coord.x}&y=${coord.y}${atParam}`;
                     },
                     tileSize: new google.maps.Size(256, 256),
                     opacity: currentOpacity,
