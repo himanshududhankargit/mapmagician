@@ -526,6 +526,7 @@
         const functions = firebase.app().functions('us-central1');
         let currentUser = null;
         const activePurchases = new Map(); // productId → expiry timestamp
+        let cachedIdToken = null; // Firebase ID token for tile proxy auth
         let pendingPurchase = null; // { productId, regionName } — set when buy clicked before login
 
         // Auth dialog button handlers
@@ -571,6 +572,14 @@
                 profileBtn.title = user.displayName || user.email;
                 loadPurchaseStatus(user.email);
 
+                // Cache ID token for tile proxy auth (refresh every 50 min)
+                user.getIdToken().then(t => { cachedIdToken = t; });
+                if (!window._tokenRefreshInterval) {
+                    window._tokenRefreshInterval = setInterval(() => {
+                        if (currentUser) currentUser.getIdToken(true).then(t => { cachedIdToken = t; });
+                    }, 50 * 60 * 1000);
+                }
+
                 // Resume pending purchase after sign-in
                 if (pendingPurchase) {
                     const { productId, regionName } = pendingPurchase;
@@ -583,6 +592,7 @@
                 profileBtn.style.color = '#1976D2';
                 profileBtn.title = 'Sign in';
                 activePurchases.clear();
+                cachedIdToken = null;
             }
         });
 
@@ -978,7 +988,7 @@
         const MAX_ZOOM_FOR_OLD_DP = 18;
         const MIN_ZOOM_FOR_OLD_DP = 11;
         
-        const amazonAWSLink = "https://s3.ap-south-1.amazonaws.com/www.mapdata.com";
+        const tileProxyUrl = "https://us-central1-sodium-hour-256110.cloudfunctions.net/serveTile";
         
         // Get reference to Firebase database
         const database = firebase.database();
@@ -2069,15 +2079,15 @@
                     return cachedOverlay;
                 }
                 
-                // Construct URL for this layer
-                const url = `${amazonAWSLink}${layerDef.link}{z}/{x}/{y}.png`;
-                
-                // Create custom map type
+                // Create custom map type — all tiles routed through Cloud Function proxy
+                const tileLink = encodeURIComponent(layerDef.link);
+                const tilePid = encodeURIComponent(layerDef.productPurchaseID || '');
+
                 const customMapType = new google.maps.ImageMapType({
                     getTileUrl: function(coord, zoom) {
                         // Implement zoom level constraints
                         let minZoom, maxZoom;
-                        
+
                         switch (layerType) {
                             case "dp":
                                 minZoom = layerDef.minZoom || MIN_ZOOM_FOR_DP;
@@ -2099,13 +2109,14 @@
                                 minZoom = 0;
                                 maxZoom = 22;
                         }
-                        
+
                         if (zoom < minZoom || zoom > maxZoom) {
                             return null;
                         }
-                        
-                        // Return the tile URL
-                        return url.replace("{z}", zoom).replace("{x}", coord.x).replace("{y}", coord.y);
+
+                        // Route through Cloud Function proxy (S3 URL hidden server-side)
+                        const tokenParam = cachedIdToken ? `&token=${cachedIdToken}` : '';
+                        return `${tileProxyUrl}?link=${tileLink}&pid=${tilePid}&z=${zoom}&x=${coord.x}&y=${coord.y}${tokenParam}`;
                     },
                     tileSize: new google.maps.Size(256, 256),
                     opacity: currentOpacity,
