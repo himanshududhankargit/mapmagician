@@ -5,9 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Development Plans (GIS)</title>
     <!--
-    SECURITY: Before publishing, you MUST:
-    1. Restrict your Google Maps API key to your domain's HTTP referrer in Google Cloud Console
-    2. Set Firebase Realtime Database rules to: {"rules": {".read": true, ".write": false}}
+    SECURITY NOTES – Firebase & API Keys
+    =====================================
+    1. The Firebase API key below is a PUBLIC project identifier, NOT a secret.
+       It is safe to include in client-side code. Firebase API keys do not grant
+       data access — security is enforced by:
+       - Firebase Security Rules (Realtime Database / Firestore / Storage)
+       - Authorized domains (Firebase Console → Authentication → Settings)
+       - API key restrictions (Google Cloud Console → Credentials)
+
+    2. BEFORE PUBLISHING, you MUST:
+       a. Restrict the Google Maps API key to your domain's HTTP referrer
+          (Google Cloud Console → APIs & Services → Credentials)
+       b. Restrict the Firebase API key to your domain's HTTP referrer
+          (same location in Google Cloud Console)
+       c. Set Firebase Realtime Database rules to restrict write access:
+          {"rules": {".read": true, ".write": "auth != null"}}
+       d. Configure authorized domains in Firebase Authentication settings
+          to only allow sign-in from your production domain(s)
     -->
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -493,7 +508,12 @@
             if (user) {
                 // Show user avatar
                 if (user.photoURL) {
-                    authIcon.innerHTML = '<img src="' + user.photoURL + '" style="width:36px;height:36px;border-radius:50%;">';
+                    authIcon.textContent = '';
+                    const avatarImg = document.createElement('img');
+                    avatarImg.src = user.photoURL;
+                    avatarImg.style.cssText = 'width:36px;height:36px;border-radius:50%;';
+                    avatarImg.referrerPolicy = 'no-referrer';
+                    authIcon.appendChild(avatarImg);
                     authIcon.style.background = 'none';
                 } else {
                     authIcon.textContent = user.displayName ? user.displayName.charAt(0) : 'U';
@@ -522,8 +542,10 @@
                 firebase.auth().signInWithPopup(googleProvider).then(result => {
                     alert('Signed in as ' + result.user.email);
                 }).catch(err => {
-                    alert('Login failed: ' + err.code + ' - ' + err.message);
                     console.error('Login failed:', err);
+                    if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+                        alert('Sign-in could not be completed. Please try again.');
+                    }
                 });
             }
         });
