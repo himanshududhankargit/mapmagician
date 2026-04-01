@@ -405,6 +405,15 @@
                 <line x1="18" y1="12" x2="22" y2="12"/>
             </svg>
         </button>
+        <!-- Fullscreen button -->
+        <button class="fab" id="btn-fullscreen" title="Fullscreen">
+            <svg id="fullscreen-icon" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
+                <polyline points="15,3 21,3 21,9"/>
+                <polyline points="9,21 3,21 3,15"/>
+                <polyline points="21,15 21,21 15,21"/>
+                <polyline points="3,9 3,3 9,3"/>
+            </svg>
+        </button>
     </div>
 
     <!-- Layer panel overlay -->
@@ -787,12 +796,26 @@
                         name: currentUser.displayName || ''
                     },
                     theme: { color: '#008577' },
-                    handler: function(response) {
+                    handler: async function(response) {
                         updateStatus('Payment successful! Activating...');
-                        // Poll purchase status after payment (webhook writes to DB)
-                        setTimeout(() => fetchPurchaseStatus(true), 2000);
-                        setTimeout(() => fetchPurchaseStatus(true), 5000);
-                        setTimeout(() => fetchPurchaseStatus(true), 10000);
+                        try {
+                            // Instantly verify and activate — no webhook wait
+                            const confirmPayment = functions.httpsCallable('confirmPayment');
+                            await confirmPayment({
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_signature: response.razorpay_signature,
+                                productId: productId,
+                                regionName: regionName
+                            });
+                            await fetchPurchaseStatus(true);
+                            updateStatus('Region activated!');
+                        } catch (e) {
+                            console.error('Confirm payment error:', e);
+                            // Fallback: wait for webhook
+                            setTimeout(() => fetchPurchaseStatus(true), 3000);
+                            setTimeout(() => fetchPurchaseStatus(true), 8000);
+                        }
                     },
                     modal: {
                         ondismiss: function() {
@@ -1802,17 +1825,57 @@
             document.getElementById('layer-panel-close').addEventListener('click', closeLayerPanel);
             layerOverlay.addEventListener('click', closeLayerPanel);
 
-            // GPS button
-            document.getElementById('btn-gps').addEventListener('click', function() {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(function(pos) {
-                        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            // GPS button — real-time tracking toggle
+            let gpsWatchId = null;
+            let gpsMarker = null;
+            const gpsBtn = document.getElementById('btn-gps');
+
+            gpsBtn.addEventListener('click', function() {
+                if (!navigator.geolocation) { updateStatus("Geolocation not supported"); return; }
+
+                if (gpsWatchId !== null) {
+                    // Stop tracking
+                    navigator.geolocation.clearWatch(gpsWatchId);
+                    gpsWatchId = null;
+                    if (gpsMarker) { gpsMarker.setMap(null); gpsMarker = null; }
+                    gpsBtn.style.background = '#fff';
+                    updateStatus("GPS tracking stopped");
+                    return;
+                }
+
+                // Start tracking
+                gpsBtn.style.background = '#e8f5e9';
+                updateStatus("Locating...");
+                gpsWatchId = navigator.geolocation.watchPosition(function(pos) {
+                    const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    if (!gpsMarker) {
+                        gpsMarker = new google.maps.Marker({ map: map, position: loc, title: 'My Location' });
                         map.setCenter(loc);
                         map.setZoom(MAX_FREE_ZOOM);
-                        new google.maps.Marker({ map: map, position: loc, title: 'My Location' });
-                    }, function() {
-                        updateStatus("Location access denied");
-                    });
+                    } else {
+                        gpsMarker.setPosition(loc);
+                    }
+                }, function() {
+                    updateStatus("Location access denied");
+                    gpsWatchId = null;
+                    gpsBtn.style.background = '#fff';
+                }, { enableHighAccuracy: true });
+            });
+
+            // Fullscreen button
+            document.getElementById('btn-fullscreen').addEventListener('click', function() {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                } else {
+                    document.documentElement.requestFullscreen();
+                }
+            });
+            document.addEventListener('fullscreenchange', function() {
+                const icon = document.getElementById('fullscreen-icon');
+                if (document.fullscreenElement) {
+                    icon.innerHTML = '<polyline points="4,14 4,20 10,20"/><polyline points="20,10 20,4 14,4"/><polyline points="14,20 20,20 20,14"/><polyline points="10,4 4,4 4,10"/>';
+                } else {
+                    icon.innerHTML = '<polyline points="15,3 21,3 21,9"/><polyline points="9,21 3,21 3,15"/><polyline points="21,15 21,21 15,21"/><polyline points="3,9 3,3 9,3"/>';
                 }
             });
 
