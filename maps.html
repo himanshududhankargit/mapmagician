@@ -97,7 +97,7 @@
         .fab-stack {
             position: absolute; right: 8px; z-index: 1000;
             display: flex; flex-direction: column; gap: 8px;
-            bottom: 88px;
+            bottom: 112px;
         }
         .fab {
             width: 48px; height: 48px; border-radius: 50%;
@@ -168,7 +168,7 @@
 
         /* Bottom navigation bar (Google Maps style tabs) */
         .bottom-nav-bar {
-            position: absolute; bottom: 24px; left: 0; right: 0;
+            position: absolute; bottom: 52px; left: 0; right: 0;
             height: 52px; background: #fff; box-shadow: 0 -1px 4px rgba(0,0,0,0.12);
             display: flex; align-items: center; overflow-x: auto; overflow-y: hidden;
             white-space: nowrap; -webkit-overflow-scrolling: touch;
@@ -177,16 +177,19 @@
         .bottom-nav-bar::-webkit-scrollbar { display: none; }
         .nav-tab {
             display: inline-flex; flex-direction: column; align-items: center;
-            justify-content: center; min-width: 64px; height: 52px; padding: 0 10px;
+            justify-content: center; flex: 1; min-width: 0; height: 52px; padding: 0 4px;
             border: none; background: none; cursor: pointer; font-size: 10px; color: #555;
-            border-top: 2px solid transparent; flex-shrink: 0;
+            border-top: 2px solid transparent; overflow: hidden;
         }
         .nav-tab:hover { color: #008577; background: #f5f5f5; }
         .nav-tab.active { color: #008577; border-top-color: #008577; font-weight: 600; }
         .nav-tab-icon {
             width: 28px; height: 28px; border-radius: 6px;
             background: #e8f5e9; display: flex; align-items: center; justify-content: center;
-            font-size: 13px; font-weight: 700; color: #2E7D32; margin-bottom: 2px;
+            font-size: 13px; font-weight: 700; color: #2E7D32; margin-bottom: 2px; flex-shrink: 0;
+        }
+        .nav-tab-name {
+            max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         /* Info strip below nav bar */
         .info-strip {
@@ -195,10 +198,20 @@
             justify-content: center; gap: 8px; z-index: 1000; font-size: 10px; color: #555;
             border-top: 1px solid rgba(0,0,0,0.08); padding: 0 8px;
         }
-        .info-strip .dock-divider { width: 1px; height: 14px; background: rgba(0,0,0,0.12); }
+        .info-strip .dock-divider { width: 1px; height: 14px; background: rgba(0,0,0,0.12); flex-shrink: 0; }
         .coord-chip { font-size: 10px; color: #333; white-space: nowrap; cursor: pointer; }
-        #status-indicator { font-size: 10px; color: #555; white-space: nowrap; }
         #zoom-level { font-size: 10px; color: #555; white-space: nowrap; }
+        /* Opacity slider strip */
+        .opacity-strip {
+            position: absolute; bottom: 24px; left: 0; right: 0; height: 28px;
+            background: rgba(255,255,255,0.95); display: flex; align-items: center;
+            justify-content: center; gap: 8px; z-index: 1000; padding: 0 16px;
+            border-top: 1px solid rgba(0,0,0,0.06);
+        }
+        .opacity-strip-slider { flex: 1; max-width: 300px; height: 3px; -webkit-appearance: none; appearance: none; background: #ddd; border-radius: 2px; outline: none; }
+        .opacity-strip-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #008577; cursor: pointer; }
+        .opacity-strip-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #008577; cursor: pointer; border: none; }
+        .opacity-strip-label { font-size: 10px; color: #555; min-width: 28px; text-align: center; }
 
         /* Custom search results dropdown (above Google Places pac-container) */
         .search-results {
@@ -276,7 +289,7 @@
         .zoom-dialog-support:hover { background:#3949AB; }
 
         /* Bottom bar region status */
-        .region-status { font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600; white-space:nowrap; }
+        .region-status { font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px; flex-shrink:1; }
         .region-status.subscribed { background:#E8F5E9; color:#2E7D32; }
         .region-status.not-subscribed { background:#FFEBEE; color:#C62828; }
 
@@ -432,16 +445,21 @@
     <!-- Bottom navigation bar: scrollable region tabs -->
     <div class="bottom-nav-bar" id="bottom-nav-bar"></div>
 
-    <!-- Info strip: coords, zoom, status, region status -->
+    <!-- Opacity slider strip between nav bar and info strip -->
+    <div class="opacity-strip">
+        <input type="range" class="opacity-strip-slider" id="info-opacity-slider" min="0" max="100" value="50">
+        <span class="opacity-strip-label" id="opacity-strip-label">50%</span>
+    </div>
+
+    <!-- Info strip: coords, zoom, region status -->
     <div class="info-strip">
         <span class="coord-chip" id="center-coord">--</span>
         <div class="dock-divider"></div>
         <span id="zoom-level">Z=13</span>
         <div class="dock-divider"></div>
-        <span id="status-indicator">Ready</span>
-        <div class="dock-divider"></div>
         <span class="region-status" id="region-status" style="display:none"></span>
     </div>
+    <span id="status-indicator" style="display:none">Ready</span>
 
     <!-- Sign-in required dialog -->
     <div class="auth-dialog-overlay" id="auth-dialog-overlay">
@@ -1171,7 +1189,7 @@
                     btn.dataset.state = st.name;
                     btn.innerHTML = `
                         <div class="nav-tab-icon">${st.name.charAt(0)}</div>
-                        <span>${st.name}</span>
+                        <span class="nav-tab-name">${st.name}</span>
                     `;
                     btn.addEventListener('click', () => {
                         navBar.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
@@ -1632,18 +1650,25 @@
                 }
             });
 
-            // Opacity slider (layer panel only)
+            // Sync opacity sliders (layer panel + info strip)
             const opacityPanel = document.getElementById('opacity-slider');
+            const opacityInfo = document.getElementById('info-opacity-slider');
             const opacityValue = document.getElementById('opacity-value');
+            const opacityLabel = document.getElementById('opacity-strip-label');
 
-            opacityPanel.addEventListener('input', function() {
-                currentOpacity = this.value / 100;
-                opacityValue.textContent = this.value + '%';
+            function applyOpacity(value) {
+                currentOpacity = value / 100;
+                opacityValue.textContent = value + '%';
+                opacityLabel.textContent = value + '%';
+                opacityPanel.value = value;
+                opacityInfo.value = value;
                 updateOverlayOpacity(dpOverlays, currentOpacity);
                 updateOverlayOpacity(layoutOverlays, currentOpacity);
                 updateOverlayOpacity(villageOverlays, currentOpacity);
                 updateOverlayOpacity(oldDPOverlays, currentOpacity);
-            });
+            }
+            opacityPanel.addEventListener('input', function() { applyOpacity(this.value); });
+            opacityInfo.addEventListener('input', function() { applyOpacity(this.value); });
 
             // Copy coordinates on click
             document.getElementById('center-coord').addEventListener('click', function() {
