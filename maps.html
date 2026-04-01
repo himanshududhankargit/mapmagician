@@ -532,7 +532,7 @@
         function loadPurchaseStatus(email) {
             const emailKey = email.replace(/\./g, ',');
 
-            // Listen for 7-day passes
+            // Listen for 7-day passes -- re-render sidebar when purchases change
             database.ref('GISAPPOneTimePurchase/' + emailKey).on('value', snapshot => {
                 activePurchases.clear();
                 const purchases = snapshot.val() || {};
@@ -541,6 +541,7 @@
                         activePurchases.set(productId, expiry);
                     }
                 });
+                refreshSidebarIfOpen();
             });
 
             // Also check subscription overrides
@@ -554,8 +555,12 @@
                         }
                     }
                 });
+                refreshSidebarIfOpen();
             });
         }
+
+        // Placeholder -- set by initSidebar once sidebar is ready
+        var refreshSidebarIfOpen = function() {};
 
         // Check if a product is purchased
         function hasPurchase(productId) {
@@ -1328,6 +1333,14 @@
 
                 searchResultsEl.classList.add('open');
             }
+
+            // Wire up real-time sidebar refresh for purchase updates
+            refreshSidebarIfOpen = function() {
+                if (sidebarHistory.length > 0 && sidebarPanel.classList.contains('open')) {
+                    const current = sidebarHistory[sidebarHistory.length - 1];
+                    renderSidebarList(current.items, current.type);
+                }
+            };
         }
 
         function initUIEvents() {
