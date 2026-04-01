@@ -26,8 +26,8 @@
     -->
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; overflow: hidden; height: 100%; width: 100%; position: fixed; touch-action: none; }
-        #map { height: 100vh; width: 100%; touch-action: manipulation; }
+        html, body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; overflow: hidden; height: 100%; width: 100%; position: fixed; touch-action: manipulation; }
+        #map { height: 100vh; width: 100%; touch-action: auto; }
 
         /* Top search row */
         .top-search-row {
@@ -311,6 +311,33 @@
         .auth-dialog-btn:hover { background:#3367D6; }
         .auth-dialog-cancel { display:block; margin:12px auto 0; background:none; border:none; color:#888; font-size:13px; cursor:pointer; }
 
+        /* Zoom restriction dialog */
+        .zoom-dialog-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:3000; display:none; align-items:center; justify-content:center; }
+        .zoom-dialog-overlay.open { display:flex; }
+        .zoom-dialog { background:#fff; border-radius:16px; padding:28px 24px; max-width:380px; width:92%; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.25); }
+        .zoom-dialog h3 { margin:0 0 10px; font-size:20px; color:#212121; font-weight:700; }
+        .zoom-dialog-desc { margin:0 0 16px; font-size:14px; color:#666; line-height:1.5; }
+        .zoom-dialog-region { background:#e0e0e0; color:#333; padding:10px 16px; border-radius:8px; font-size:14px; font-weight:600; margin-bottom:20px; }
+        .zoom-dialog-buttons { display:flex; gap:12px; justify-content:center; margin-bottom:14px; }
+        .zoom-dialog-btn { padding:12px 28px; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; flex:1; max-width:160px; }
+        .zoom-btn-access { background:#4CAF50; color:#fff; }
+        .zoom-btn-access:hover { background:#43A047; }
+        .zoom-btn-dismiss { background:#f44336; color:#fff; }
+        .zoom-btn-dismiss:hover { background:#e53935; }
+        .zoom-dialog-support { display:block; margin:0 auto; padding:8px 20px; border:none; border-radius:8px; background:#3F51B5; color:#fff; font-size:13px; font-weight:500; cursor:pointer; }
+        .zoom-dialog-support:hover { background:#3949AB; }
+
+        /* Map disabled overlay */
+        .map-disabled-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:2900; display:none; align-items:center; justify-content:center; }
+        .map-disabled-overlay.open { display:flex; }
+        .map-disabled-msg { background:rgba(255,255,255,0.95); border-radius:12px; padding:20px 28px; text-align:center; box-shadow:0 4px 16px rgba(0,0,0,0.2); }
+        .map-disabled-msg p { margin:0 0 12px; font-size:15px; color:#333; font-weight:500; }
+
+        /* Bottom bar region status */
+        .region-status { font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600; white-space:nowrap; }
+        .region-status.subscribed { background:#E8F5E9; color:#2E7D32; }
+        .region-status.not-subscribed { background:#FFEBEE; color:#C62828; }
+
         /* Payment loading overlay */
         .payment-loading-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(255,255,255,0.95); z-index:3000; display:none; align-items:center; justify-content:center; flex-direction:column; }
         .payment-loading-overlay.open { display:flex; }
@@ -484,6 +511,8 @@
         <span id="zoom-level">Z=13</span>
         <div class="dock-divider"></div>
         <span id="status-indicator">Ready</span>
+        <div class="dock-divider"></div>
+        <span class="region-status" id="region-status" style="display:none"></span>
     </div>
 
     <!-- Sign-in required dialog -->
@@ -500,14 +529,24 @@
     </div>
 
     <!-- Zoom restriction dialog -->
-    <div class="auth-dialog-overlay" id="zoom-restrict-overlay">
-        <div class="auth-dialog">
-            <h3 id="zoom-restrict-title">Unlock Detailed View</h3>
-            <p id="zoom-restrict-desc">Purchase a 7-Day Pass to access high-zoom detailed maps and overlays for this area.</p>
-            <button class="auth-dialog-btn" id="zoom-restrict-action" style="background:#008577">
-                Access Detailed Maps
-            </button>
-            <button class="auth-dialog-cancel" id="zoom-restrict-cancel">Not now</button>
+    <div class="zoom-dialog-overlay" id="zoom-restrict-overlay">
+        <div class="zoom-dialog">
+            <h3 id="zoom-restrict-title">Subscribe to Region</h3>
+            <p class="zoom-dialog-desc" id="zoom-restrict-desc">Unlock exclusive premium maps for this region. Choose your preferred access method.</p>
+            <div class="zoom-dialog-region" id="zoom-restrict-region">Region: --</div>
+            <div class="zoom-dialog-buttons">
+                <button class="zoom-dialog-btn zoom-btn-access" id="zoom-restrict-action">Access Region</button>
+                <button class="zoom-dialog-btn zoom-btn-dismiss" id="zoom-restrict-cancel">Dismiss</button>
+            </div>
+            <button class="zoom-dialog-support" id="zoom-restrict-support">Contact Support</button>
+        </div>
+    </div>
+
+    <!-- Map disabled overlay (shown after dismiss) -->
+    <div class="map-disabled-overlay" id="map-disabled-overlay">
+        <div class="map-disabled-msg">
+            <p>Map interaction disabled</p>
+            <button class="zoom-dialog-btn zoom-btn-access" id="map-disabled-unlock">Unlock Region</button>
         </div>
     </div>
 
@@ -635,6 +674,7 @@
                     }
                 });
                 refreshSidebarIfOpen();
+                checkAndReenableMap();
             });
 
             // Also check subscription overrides
@@ -649,11 +689,22 @@
                     }
                 });
                 refreshSidebarIfOpen();
+                checkAndReenableMap();
             });
         }
 
         // Placeholder -- set by initSidebar once sidebar is ready
         var refreshSidebarIfOpen = function() {};
+
+        // Re-enable map if current district becomes purchased
+        function checkAndReenableMap() {
+            if (!mapInteractionDisabled) return;
+            const district = findDistrictAtCenter();
+            if (district && hasPurchase(district.productPurchaseID)) {
+                enableMapInteraction();
+                updateRegionStatus();
+            }
+        }
 
         // Check if a product is purchased
         function hasPurchase(productId) {
@@ -734,6 +785,8 @@
         // Zoom restriction
         let districtBounds = [];     // [{productPurchaseID, districtName, minLat, maxLat, minLng, maxLng}]
         let zoomBypassActive = false; // true when programmatic zoom should skip restriction
+        let mapInteractionDisabled = false;
+        let lastRestrictedDistrict = null; // remember district for unlock button
         const MAX_FREE_ZOOM = 14;
 
         function findDistrictAtCenter() {
@@ -748,18 +801,36 @@
             return null;
         }
 
+        function disableMapInteraction() {
+            mapInteractionDisabled = true;
+            map.setOptions({ draggable: false, scrollwheel: false, disableDoubleClickZoom: true, zoomControl: false, gestureHandling: 'none' });
+            document.getElementById('map-disabled-overlay').classList.add('open');
+        }
+
+        function enableMapInteraction() {
+            mapInteractionDisabled = false;
+            map.setOptions({ draggable: true, scrollwheel: true, disableDoubleClickZoom: false, zoomControl: true, gestureHandling: 'greedy' });
+            document.getElementById('map-disabled-overlay').classList.remove('open');
+        }
+
         function showZoomRestrictionDialog(district) {
             const overlay = document.getElementById('zoom-restrict-overlay');
             const title = document.getElementById('zoom-restrict-title');
             const desc = document.getElementById('zoom-restrict-desc');
+            const regionInfo = document.getElementById('zoom-restrict-region');
             const actionBtn = document.getElementById('zoom-restrict-action');
 
+            lastRestrictedDistrict = district;
+
             if (district) {
-                title.textContent = 'Unlock ' + district.districtName;
-                desc.textContent = 'Purchase a 7-Day Pass for ' + district.districtName + ' to access high-zoom detailed maps and overlays.';
+                title.textContent = 'Subscribe to ' + district.districtName + ' Region';
+                desc.textContent = 'Unlock exclusive premium maps for ' + district.districtName + ' Region. Choose your preferred access method.';
+                regionInfo.textContent = 'Region: ' + district.districtName + ' Region';
+                regionInfo.style.display = 'block';
             } else {
-                title.textContent = 'Unlock Detailed View';
-                desc.textContent = 'Purchase a 7-Day Pass for a district to access detailed maps. Browse districts in the sidebar.';
+                title.textContent = 'Subscribe to Region';
+                desc.textContent = 'Unlock exclusive premium maps. Browse districts in the sidebar to choose a region.';
+                regionInfo.style.display = 'none';
             }
 
             // Replace button to remove old listeners
@@ -772,7 +843,6 @@
                 if (district) {
                     buyRegion(district.productPurchaseID, district.districtName);
                 } else {
-                    // Open sidebar to browse districts
                     const firstRailItem = document.querySelector('.rail-item');
                     if (firstRailItem) firstRailItem.click();
                 }
@@ -780,11 +850,53 @@
 
             document.getElementById('zoom-restrict-cancel').onclick = () => {
                 overlay.classList.remove('open');
+                // Snap back to max free zoom and disable map
+                zoomBypassActive = true;
+                map.setZoom(MAX_FREE_ZOOM);
+                google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
+                disableMapInteraction();
+            };
+
+            document.getElementById('zoom-restrict-support').onclick = () => {
+                window.open('mailto:support@mapmagician.in?subject=Map Access Support&body=Region: ' + (district ? district.districtName : 'Unknown'), '_blank');
             };
 
             overlay.classList.add('open');
         }
+
+        // Map disabled overlay unlock button
+        document.addEventListener('DOMContentLoaded', () => {
+            const unlockBtn = document.getElementById('map-disabled-unlock');
+            if (unlockBtn) {
+                unlockBtn.addEventListener('click', () => {
+                    enableMapInteraction();
+                    if (lastRestrictedDistrict) {
+                        buyRegion(lastRestrictedDistrict.productPurchaseID, lastRestrictedDistrict.districtName);
+                    } else {
+                        const firstRailItem = document.querySelector('.rail-item');
+                        if (firstRailItem) firstRailItem.click();
+                    }
+                });
+            }
+        });
         
+        function updateRegionStatus() {
+            const el = document.getElementById('region-status');
+            const district = findDistrictAtCenter();
+            if (district) {
+                el.style.display = 'inline';
+                if (hasPurchase(district.productPurchaseID)) {
+                    el.className = 'region-status subscribed';
+                    el.textContent = district.districtName + ' - Subscribed';
+                } else {
+                    el.className = 'region-status not-subscribed';
+                    el.textContent = district.districtName + ' - Not Subscribed';
+                }
+            } else {
+                el.style.display = 'none';
+            }
+        }
+
         // Layer visibility and data
         let isDPLayerVisible = true;
         let isLayoutLayerVisible = false;
@@ -992,7 +1104,8 @@
                 mapTypeControl: false,
                 zoomControl: true,
                 zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
-                fullscreenControl: false
+                fullscreenControl: false,
+                gestureHandling: 'greedy'
             });
 
             // Places Autocomplete (New API)
@@ -1030,19 +1143,21 @@
                 document.getElementById('center-coord').textContent =
                     `${c.lat().toFixed(5)}, ${c.lng().toFixed(5)}`;
                 debouncedLoadTiles();
+                // Update region subscription status in bottom bar
+                updateRegionStatus();
             });
             map.addListener('bounds_changed', debouncedLoadTiles);
 
-            // Zoom restriction: prevent zooming past MAX_FREE_ZOOM for unpurchased areas
+            // Zoom restriction: show dialog when zooming past MAX_FREE_ZOOM for unpurchased areas
             map.addListener('zoom_changed', function() {
-                if (zoomBypassActive) return;
+                if (zoomBypassActive || mapInteractionDisabled) return;
                 const z = map.getZoom();
                 if (z <= MAX_FREE_ZOOM) return;
 
                 const district = findDistrictAtCenter();
                 if (district && hasPurchase(district.productPurchaseID)) return;
 
-                map.setZoom(MAX_FREE_ZOOM);
+                // Don't snap zoom here — dialog dismiss will snap back to 14 and disable map
                 showZoomRestrictionDialog(district);
             });
 
