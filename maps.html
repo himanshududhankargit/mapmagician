@@ -720,7 +720,7 @@
         let currentOpacity = 0.5;
 
         // Zoom restriction
-        let districtBounds = [];     // [{productPurchaseID, districtName, minLat, maxLat, minLng, maxLng}]
+        // Region detection now uses tile polygon boundaries from dpLayerData
         let zoomBypassActive = false; // true when programmatic zoom should skip restriction
         let mapInteractionDisabled = false;
         let lastRestrictedDistrict = null; // remember district for unlock button
@@ -744,44 +744,38 @@
             const c = map.getCenter();
             const center = { lat: c.lat(), lng: c.lng() };
 
-            // Primary: use precise tile polygon boundaries from Firebase dpLayerData
+            // Use precise tile polygon boundaries from Firebase dpLayerData
             if (dpLayerData.length > 0) {
                 for (const tile of dpLayerData) {
                     if (tile.polygon && pointInPolygon(center, tile.polygon)) {
-                        // Found a tile polygon containing the crosshair
-                        // Match to a district in districtBounds for purchase info
-                        const district = matchTileToDistrict(center);
+                        // Crosshair is inside this tile polygon
+                        // Look up tile.id as productPurchaseID in menuData to get district name
+                        const district = findDistrictByPurchaseId(tile.id);
                         if (district) return district;
-                        // If no menuData district match, use tile id as region name
-                        return {
-                            productPurchaseID: tile.id,
-                            districtName: tile.id.replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-                        };
                     }
                 }
             }
 
-            // Fallback: village-point bounding box approach
-            return matchTileToDistrict(center);
+            // No tile polygon match — no region detected
+            return null;
         }
 
-        // Find which menuData district the center point belongs to (bounding box check)
-        function matchTileToDistrict(center) {
-            let closest = null;
-            let closestDist = Infinity;
-            for (const db of districtBounds) {
-                if (center.lat >= db.minLat && center.lat <= db.maxLat &&
-                    center.lng >= db.minLng && center.lng <= db.maxLng) {
-                    const dLat = center.lat - (db.minLat + db.maxLat) / 2;
-                    const dLng = center.lng - (db.minLng + db.maxLng) / 2;
-                    const dist = dLat * dLat + dLng * dLng;
-                    if (dist < closestDist) {
-                        closestDist = dist;
-                        closest = db;
-                    }
+        // Look up a productPurchaseID in menuData to get district name and purchase info
+        function findDistrictByPurchaseId(purchaseId) {
+            if (!purchaseId) return null;
+            const pid = purchaseId.toLowerCase().replace(/gst$/, '');
+            for (const item of menuData) {
+                if (!item.productPurchaseID) continue;
+                const itemPid = item.productPurchaseID.toLowerCase().replace(/gst$/, '');
+                if (itemPid === pid || itemPid === 'district' + pid || 'district' + itemPid === pid ||
+                    itemPid.replace(/^district/, '') === pid.replace(/^district/, '')) {
+                    return {
+                        productPurchaseID: item.productPurchaseID,
+                        districtName: item.district || item.state
+                    };
                 }
             }
-            return closest;
+            return null;
         }
 
         function disableMapInteraction() {
@@ -1177,36 +1171,6 @@
             }
 
             function buildAfterMenuData() {
-                // Build district bounding boxes for zoom restriction
-                districtBounds = [];
-                menuData.forEach(item => {
-                    if (!item.district || !item.villagesJSON || !item.productPurchaseID) return;
-                    const lines = item.villagesJSON.split('\n');
-                    let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
-                    let count = 0;
-                    lines.forEach(line => {
-                        const parts = line.split('=');
-                        if (parts.length !== 2) return;
-                        const coords = parts[1].split(',');
-                        if (coords.length !== 2) return;
-                        const lat = parseFloat(coords[0]), lng = parseFloat(coords[1]);
-                        if (isNaN(lat) || isNaN(lng)) return;
-                        if (lat < minLat) minLat = lat;
-                        if (lat > maxLat) maxLat = lat;
-                        if (lng < minLng) minLng = lng;
-                        if (lng > maxLng) maxLng = lng;
-                        count++;
-                    });
-                    if (count === 0) return;
-                    const PAD = 0.03; // ~3km padding (tile polygons handle precise detection)
-                    districtBounds.push({
-                        productPurchaseID: item.productPurchaseID,
-                        districtName: item.district,
-                        minLat: minLat - PAD, maxLat: maxLat + PAD,
-                        minLng: minLng - PAD, maxLng: maxLng + PAD
-                    });
-                });
-
                 // Build unique states list
                 const stateMap = new Map();
                 menuData.forEach(item => {
