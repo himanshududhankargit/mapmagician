@@ -474,6 +474,32 @@
         </div>
     </div>
 
+    <!-- Sign-out confirmation dialog -->
+    <div class="auth-dialog-overlay" id="signout-dialog-overlay">
+        <div class="auth-dialog">
+            <h3>Sign Out</h3>
+            <p id="signout-dialog-email" style="font-weight:600;color:#333;margin-bottom:16px;word-break:break-all;"></p>
+            <p style="margin-bottom:20px;font-size:13px;">You will lose access to purchased regions until you sign in again.</p>
+            <button class="auth-dialog-btn" id="signout-dialog-confirm" style="background:#f44336;">Sign Out</button>
+            <button class="auth-dialog-cancel" id="signout-dialog-cancel">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Support form dialog -->
+    <div class="auth-dialog-overlay" id="support-dialog-overlay">
+        <div class="auth-dialog" style="max-width:400px;text-align:left;">
+            <h3 style="text-align:center;margin-bottom:16px;">Contact Support</h3>
+            <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Your Email</label>
+            <input type="text" id="support-email" readonly style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#333;background:#f5f5f5;margin-bottom:12px;box-sizing:border-box;">
+            <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Region</label>
+            <input type="text" id="support-region" readonly style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#333;background:#f5f5f5;margin-bottom:12px;box-sizing:border-box;">
+            <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Your Message</label>
+            <textarea id="support-message" rows="4" placeholder="Describe your issue..." style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;resize:vertical;margin-bottom:16px;box-sizing:border-box;font-family:inherit;"></textarea>
+            <button class="auth-dialog-btn" id="support-send-btn" style="width:100%;justify-content:center;margin-bottom:0;">Send Message</button>
+            <button class="auth-dialog-cancel" id="support-cancel-btn">Cancel</button>
+        </div>
+    </div>
+
     <!-- Zoom restriction dialog -->
     <div class="zoom-dialog-overlay" id="zoom-restrict-overlay">
         <div class="zoom-dialog">
@@ -592,12 +618,18 @@
         // Profile button click (sign in / sign out)
         document.getElementById('profile-btn').addEventListener('click', () => {
             if (currentUser) {
-                if (confirm('Sign out of ' + currentUser.email + '?')) {
-                    firebase.auth().signOut();
-                }
+                document.getElementById('signout-dialog-email').textContent = currentUser.email;
+                document.getElementById('signout-dialog-overlay').classList.add('open');
             } else {
                 triggerGoogleSignIn();
             }
+        });
+        document.getElementById('signout-dialog-confirm').addEventListener('click', () => {
+            document.getElementById('signout-dialog-overlay').classList.remove('open');
+            firebase.auth().signOut();
+        });
+        document.getElementById('signout-dialog-cancel').addEventListener('click', () => {
+            document.getElementById('signout-dialog-overlay').classList.remove('open');
         });
 
         // Load purchase status via Cloud Function (DB paths hidden server-side)
@@ -622,6 +654,48 @@
                 console.error('Failed to fetch purchase status:', e);
             }
         }
+
+        // --- Support form ---
+        function openSupportForm(district) {
+            document.getElementById('support-email').value = currentUser ? currentUser.email : '';
+            document.getElementById('support-region').value = district ? district.districtName : (findDistrictAtCenter()?.districtName || 'General');
+            document.getElementById('support-message').value = '';
+            document.getElementById('support-send-btn').disabled = false;
+            document.getElementById('support-send-btn').textContent = 'Send Message';
+            document.getElementById('support-dialog-overlay').classList.add('open');
+        }
+
+        document.getElementById('support-send-btn').addEventListener('click', async () => {
+            const msg = document.getElementById('support-message').value.trim();
+            if (!msg) { alert('Please enter a message.'); return; }
+            const btn = document.getElementById('support-send-btn');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            const district = findDistrictAtCenter();
+            try {
+                const sendSupportRequest = functions.httpsCallable('sendSupportRequest');
+                await sendSupportRequest({
+                    message: msg,
+                    region: document.getElementById('support-region').value,
+                    regionPid: district ? district.productPurchaseID : '',
+                    zoom: map ? map.getZoom() : 0,
+                    userAgent: navigator.userAgent
+                });
+                btn.textContent = 'Sent!';
+                setTimeout(() => {
+                    document.getElementById('support-dialog-overlay').classList.remove('open');
+                }, 1500);
+            } catch (e) {
+                btn.disabled = false;
+                btn.textContent = 'Send Message';
+                alert('Failed to send: ' + (e.message || 'Please try again.'));
+            }
+        });
+
+        document.getElementById('support-cancel-btn').addEventListener('click', () => {
+            document.getElementById('support-dialog-overlay').classList.remove('open');
+        });
 
         // Placeholder -- set by initSidebar once sidebar is ready
         var refreshSidebarIfOpen = function() {};
@@ -856,7 +930,13 @@
             };
 
             document.getElementById('zoom-restrict-support').onclick = () => {
-                window.open('mailto:support@mapmagician.in?subject=Map Access Support&body=Region: ' + (district ? district.districtName : 'Unknown'), '_blank');
+                if (!currentUser) {
+                    pendingPurchase = null;
+                    document.getElementById('auth-dialog-desc').textContent = 'Please sign in to contact support.';
+                    document.getElementById('auth-dialog-overlay').classList.add('open');
+                    return;
+                }
+                openSupportForm(district);
             };
 
             overlay.classList.add('open');
