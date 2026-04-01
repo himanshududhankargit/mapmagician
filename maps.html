@@ -513,8 +513,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
     <!-- Razorpay checkout -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <!-- Google Identity Services for One Tap sign-in -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <!-- Firebase initialization must come after the Firebase scripts have loaded -->
     <script>
@@ -551,60 +549,14 @@
             pendingPurchase = null;
         });
 
-        // Google One Tap credential callback
-        function handleGoogleCredential(response) {
-            const credential = firebase.auth.GoogleAuthProvider.credential(response.credential);
-            firebase.auth().signInWithCredential(credential)
-                .then(result => {
-                    console.log('Signed in as', result.user.email);
-                })
-                .catch(err => {
-                    console.error('signInWithCredential failed:', err);
-                    alert('Sign-in could not be completed. Please try again.');
-                });
-        }
-
-        // Initialize Google One Tap
-        function initGoogleOneTap() {
-            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-                google.accounts.id.initialize({
-                    client_id: '427608700943-38q1go9upeku395agjom6d8e46nv4oov.apps.googleusercontent.com',
-                    callback: handleGoogleCredential,
-                    auto_select: true,
-                    cancel_on_tap_outside: true
-                });
-            }
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initGoogleOneTap);
-        } else {
-            initGoogleOneTap();
-        }
-        window.addEventListener('load', initGoogleOneTap);
-
-        // Trigger sign-in: One Tap first, popup fallback
+        // Trigger sign-in via Firebase popup (works on all domains without extra OAuth config)
         function triggerGoogleSignIn() {
-            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-                google.accounts.id.prompt((notification) => {
-                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                        console.warn('One Tap not available:', notification.getNotDisplayedReason?.() || notification.getSkippedReason?.());
-                        firebase.auth().signInWithPopup(googleProvider).catch(err => {
-                            console.error('Popup fallback failed:', err);
-                            if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-                                alert('Sign-in could not be completed. Please try again.');
-                            }
-                        });
-                    }
-                });
-            } else {
-                firebase.auth().signInWithPopup(googleProvider).catch(err => {
-                    console.error('Login failed:', err);
-                    if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-                        alert('Sign-in could not be completed. Please try again.');
-                    }
-                });
-            }
+            firebase.auth().signInWithPopup(googleProvider).catch(err => {
+                console.error('Login failed:', err);
+                if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+                    alert('Sign-in could not be completed. Please try again.');
+                }
+            });
         }
 
         // Auth state listener
