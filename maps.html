@@ -637,8 +637,15 @@
             fetchPurchaseStatus();
         }
 
-        async function fetchPurchaseStatus() {
+        let lastFetchTime = 0;
+        const FETCH_COOLDOWN_MS = 30000; // Don't re-fetch within 30 seconds
+
+        async function fetchPurchaseStatus(force) {
             if (!currentUser) return;
+            const now = Date.now();
+            if (!force && now - lastFetchTime < FETCH_COOLDOWN_MS) return; // skip if recently fetched
+            lastFetchTime = now;
+
             try {
                 const getPurchaseStatus = functions.httpsCallable('getPurchaseStatus');
                 const { data } = await getPurchaseStatus();
@@ -656,13 +663,29 @@
         }
 
         // --- Support form ---
-        function openSupportForm(district) {
+        let supportReturnToPaywall = false;
+        let supportPaywallDistrict = null;
+
+        function openSupportForm(district, returnToPaywall) {
+            supportReturnToPaywall = !!returnToPaywall;
+            supportPaywallDistrict = district;
             document.getElementById('support-email').value = currentUser ? currentUser.email : '';
             document.getElementById('support-region').value = district ? district.districtName : (findDistrictAtCenter()?.districtName || 'General');
             document.getElementById('support-message').value = '';
             document.getElementById('support-send-btn').disabled = false;
             document.getElementById('support-send-btn').textContent = 'Send Message';
             document.getElementById('support-dialog-overlay').classList.add('open');
+        }
+
+        function closeSupportForm() {
+            document.getElementById('support-dialog-overlay').classList.remove('open');
+            if (supportReturnToPaywall && supportPaywallDistrict) {
+                showZoomRestrictionDialog(supportPaywallDistrict);
+            } else if (supportReturnToPaywall) {
+                enableMapInteraction();
+            }
+            supportReturnToPaywall = false;
+            supportPaywallDistrict = null;
         }
 
         document.getElementById('support-send-btn').addEventListener('click', async () => {
@@ -683,8 +706,11 @@
                     userAgent: navigator.userAgent
                 });
                 btn.textContent = 'Sent!';
+                supportReturnToPaywall = false;
+                supportPaywallDistrict = null;
                 setTimeout(() => {
                     document.getElementById('support-dialog-overlay').classList.remove('open');
+                    enableMapInteraction();
                 }, 1500);
             } catch (e) {
                 btn.disabled = false;
@@ -694,7 +720,7 @@
         });
 
         document.getElementById('support-cancel-btn').addEventListener('click', () => {
-            document.getElementById('support-dialog-overlay').classList.remove('open');
+            closeSupportForm();
         });
 
         // Placeholder -- set by initSidebar once sidebar is ready
@@ -764,9 +790,9 @@
                     handler: function(response) {
                         updateStatus('Payment successful! Activating...');
                         // Poll purchase status after payment (webhook writes to DB)
-                        setTimeout(fetchPurchaseStatus, 2000);
-                        setTimeout(fetchPurchaseStatus, 5000);
-                        setTimeout(fetchPurchaseStatus, 10000);
+                        setTimeout(() => fetchPurchaseStatus(true), 2000);
+                        setTimeout(() => fetchPurchaseStatus(true), 5000);
+                        setTimeout(() => fetchPurchaseStatus(true), 10000);
                     },
                     modal: {
                         ondismiss: function() {
@@ -936,7 +962,9 @@
                     document.getElementById('auth-dialog-overlay').classList.add('open');
                     return;
                 }
-                openSupportForm(district);
+                // Hide purchase dialog, show support form
+                overlay.classList.remove('open');
+                openSupportForm(district, true);
             };
 
             overlay.classList.add('open');
