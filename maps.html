@@ -914,6 +914,9 @@
                 return;
             }
 
+            // Only show paywall when zoomed past free level
+            if (map && map.getZoom() <= MAX_FREE_ZOOM) return;
+
             // Unsubscribed region — show dialog if not dismissed for this region
             if (bannerDismissedForRegion !== regionId) {
                 dialogTriggeredByRegionEntry = true;
