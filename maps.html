@@ -481,7 +481,7 @@
             <p class="zoom-dialog-desc" id="zoom-restrict-desc">Unlock exclusive premium maps for this region. Choose your preferred access method.</p>
             <div class="zoom-dialog-region" id="zoom-restrict-region">Region: --</div>
             <div class="zoom-dialog-buttons">
-                <button class="zoom-dialog-btn zoom-btn-access" id="zoom-restrict-action">Access Region</button>
+                <button class="zoom-dialog-btn zoom-btn-access" id="zoom-restrict-action">Get 7-Day Pass</button>
                 <button class="zoom-dialog-btn zoom-btn-dismiss" id="zoom-restrict-cancel">Dismiss</button>
             </div>
             <button class="zoom-dialog-support" id="zoom-restrict-support">Contact Support</button>
@@ -811,13 +811,13 @@
             lastRestrictedDistrict = district;
 
             if (district) {
-                title.textContent = 'Subscribe to ' + district.districtName + ' Region';
-                desc.textContent = 'Unlock exclusive premium maps for ' + district.districtName + ' Region. Choose your preferred access method.';
+                title.textContent = 'Unlock ' + district.districtName + ' Region';
+                desc.textContent = 'Get a 7-Day Pass to access high-resolution development plan maps for ' + district.districtName + ' Region.';
                 regionInfo.textContent = 'Region: ' + district.districtName;
                 regionInfo.style.display = 'block';
             } else {
-                title.textContent = 'Subscribe to Region';
-                desc.textContent = 'Unlock exclusive premium maps. Browse districts in the sidebar to choose a region.';
+                title.textContent = 'Unlock Premium Maps';
+                desc.textContent = 'Get a 7-Day Pass to access high-resolution development plan maps. Browse districts in the sidebar to choose a region.';
                 regionInfo.style.display = 'none';
             }
 
