@@ -1155,7 +1155,7 @@
                 markers.push(marker);
 
                 map.setCenter(place.geometry.location);
-                map.setZoom(17);
+                map.setZoom(MAX_FREE_ZOOM);
                 updateStatus('Zoomed to ' + place.name);
             });
 
@@ -1695,7 +1695,7 @@
                     navigator.geolocation.getCurrentPosition(function(pos) {
                         const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                         map.setCenter(loc);
-                        map.setZoom(17);
+                        map.setZoom(MAX_FREE_ZOOM);
                         new google.maps.Marker({ map: map, position: loc, title: 'My Location' });
                     }, function() {
                         updateStatus("Location access denied");
