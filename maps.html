@@ -809,6 +809,14 @@
                                 regionName: regionName
                             });
                             await fetchPurchaseStatus(true);
+                            // Clear and reload tiles so they use the new access token
+                            clearAllLayersOfType(dpOverlays);
+                            dpTileStatus = Array(dpLayerData.length).fill(false);
+                            clearAllLayersOfType(layoutOverlays);
+                            layoutTileStatus = Array(layoutLayerData.length).fill(false);
+                            loadTilesBasedOnViewport();
+                            enableMapInteraction();
+                            document.getElementById('zoom-restrict-overlay').classList.remove('open');
                             updateStatus('Region activated!');
                         } catch (e) {
                             console.error('Confirm payment error:', e);
