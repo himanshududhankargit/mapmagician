@@ -744,24 +744,25 @@
             const c = map.getCenter();
             const center = { lat: c.lat(), lng: c.lng() };
 
-            // Use precise tile polygon boundaries from Firebase dpLayerData
+            // Use tile polygon boundaries from dpLayerData, then look up district name via menuGIS
             if (dpLayerData.length > 0) {
                 for (const tile of dpLayerData) {
                     if (tile.polygon && pointInPolygon(center, tile.polygon)) {
-                        console.log('[RegionDetect] Crosshair inside tile:', tile.id, '| link:', tile.link);
-                        // Try matching tile.id to menuData productPurchaseID
+                        // Tile polygon contains crosshair — look up district name in menuGIS
+                        // Try tile.id directly, then link path segments
                         let district = findDistrictByPurchaseId(tile.id);
                         if (district) return district;
-                        // Try matching the link path as an identifier
+                        // Try link path parts (e.g. "/mumbai/dp" → try "mumbai", "dp")
                         if (tile.link) {
-                            const linkParts = tile.link.replace(/^\/|\/$/g, '').split('/');
-                            for (const part of linkParts) {
+                            const parts = tile.link.replace(/^\/|\/$/g, '').split('/');
+                            for (const part of parts) {
                                 district = findDistrictByPurchaseId(part);
                                 if (district) return district;
                             }
                         }
-                        // Log available menuData IDs for debugging
-                        console.log('[RegionDetect] No menuData match. Available productPurchaseIDs:', menuData.filter(m => m.productPurchaseID).map(m => m.productPurchaseID));
+                        // Debug: log what we see so we can fix the matching
+                        console.log('[RegionDetect] Tile hit but no menuGIS match. tile.id:', tile.id, 'tile.link:', tile.link);
+                        console.log('[RegionDetect] menuGIS productPurchaseIDs:', menuData.filter(m => m.productPurchaseID).map(m => m.productPurchaseID));
                     }
                 }
             }
