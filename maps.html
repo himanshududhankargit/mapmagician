@@ -1828,6 +1828,8 @@
             // Village layer off by default -- fetched when user enables it
             // Always fetch old DP to check availability (shows button if data exists)
             fetchOldDPLayerData();
+            // Load oldDPPlanGIS region list to check button visibility
+            loadOldDPGISRegions();
         }
 
         function applyLayerData(data, label) {
@@ -1902,17 +1904,37 @@
             }).catch(error => console.error("Error fetching Village data:", error));
         }
 
-        // Check if any old DP polygon contains the map center — show/hide button accordingly
+        // Show "Load Old Maps" only when crosshair is inside an oldDPPlanGIS polygon
+        let oldDPGISPolygons = []; // parsed polygons from oldDPPlanGIS
+        let oldDPGISLoaded = false;
+
+        function loadOldDPGISRegions() {
+            database.ref('oldDPPlanGIS').once('value').then(snapshot => {
+                const data = snapshot.val() || {};
+                for (const key in data) {
+                    const item = data[key];
+                    if (item && item.kml) {
+                        try {
+                            const polygon = parseKML(item.kml);
+                            if (polygon) oldDPGISPolygons.push(polygon);
+                        } catch (e) { /* skip bad entries */ }
+                    }
+                }
+                oldDPGISLoaded = true;
+                updateOldMapsButtonVisibility();
+            });
+        }
+
         function updateOldMapsButtonVisibility() {
             const btn = document.getElementById('btn-old-maps');
-            if (!oldDPDataLoaded || oldDPLayerData.length === 0) {
+            if (!oldDPGISLoaded || oldDPGISPolygons.length === 0) {
                 btn.style.display = 'none';
                 return;
             }
             if (!map) return;
             const c = map.getCenter();
             const center = { lat: c.lat(), lng: c.lng() };
-            const hasOldDP = oldDPLayerData.some(tile => tile.polygon && pointInPolygon(center, tile.polygon));
+            const hasOldDP = oldDPGISPolygons.some(polygon => pointInPolygon(center, polygon));
             btn.style.display = hasOldDP ? '' : 'none';
         }
 
