@@ -1169,6 +1169,8 @@
                 debouncedLoadTiles();
                 // Update region subscription status in bottom bar
                 updateRegionStatus();
+                // Show/hide old maps button based on current region
+                updateOldMapsButtonVisibility();
             });
             map.addListener('bounds_changed', debouncedLoadTiles);
 
@@ -1900,11 +1902,25 @@
             }).catch(error => console.error("Error fetching Village data:", error));
         }
 
+        // Check if any old DP polygon contains the map center — show/hide button accordingly
+        function updateOldMapsButtonVisibility() {
+            const btn = document.getElementById('btn-old-maps');
+            if (!oldDPDataLoaded || oldDPLayerData.length === 0) {
+                btn.style.display = 'none';
+                return;
+            }
+            if (!map) return;
+            const c = map.getCenter();
+            const center = { lat: c.lat(), lng: c.lng() };
+            const hasOldDP = oldDPLayerData.some(tile => tile.polygon && pointInPolygon(center, tile.polygon));
+            btn.style.display = hasOldDP ? '' : 'none';
+        }
+
         function fetchOldDPLayerData() {
             function onOldDPReady() {
-                if (oldDPLayerData.length === 0) return; // No old DP data -- keep button hidden
+                if (oldDPLayerData.length === 0) return;
                 oldDPDataAvailable = true;
-                document.getElementById('btn-old-maps').style.display = '';
+                updateOldMapsButtonVisibility();
                 if (isShowingOldMaps && isDPLayerVisible) loadTilesBasedOnViewport();
             }
 
@@ -1922,7 +1938,7 @@
                     oldDPDataLoaded = true;
                     localStorage.removeItem('layer_olddp'); // Clear stale cache
                     oldDPLayerData = [];
-                    document.getElementById('btn-old-maps').style.display = 'none';
+                    updateOldMapsButtonVisibility();
                     return;
                 }
                 setCachedData('layer_olddp', data);
