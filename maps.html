@@ -327,12 +327,6 @@
         .zoom-dialog-support { display:block; margin:0 auto; padding:8px 20px; border:none; border-radius:8px; background:#3F51B5; color:#fff; font-size:13px; font-weight:500; cursor:pointer; }
         .zoom-dialog-support:hover { background:#3949AB; }
 
-        /* Map disabled overlay */
-        .map-disabled-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:2900; display:none; align-items:center; justify-content:center; }
-        .map-disabled-overlay.open { display:flex; }
-        .map-disabled-msg { background:rgba(255,255,255,0.95); border-radius:12px; padding:20px 28px; text-align:center; box-shadow:0 4px 16px rgba(0,0,0,0.2); }
-        .map-disabled-msg p { margin:0 0 12px; font-size:15px; color:#333; font-weight:500; }
-
         /* Bottom bar region status */
         .region-status { font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600; white-space:nowrap; }
         .region-status.subscribed { background:#E8F5E9; color:#2E7D32; }
@@ -542,14 +536,6 @@
         </div>
     </div>
 
-    <!-- Map disabled overlay (shown after dismiss) -->
-    <div class="map-disabled-overlay" id="map-disabled-overlay">
-        <div class="map-disabled-msg">
-            <p>Map interaction disabled</p>
-            <button class="zoom-dialog-btn zoom-btn-access" id="map-disabled-unlock">Unlock Region</button>
-        </div>
-    </div>
-
     <!-- Payment loading overlay -->
     <div class="payment-loading-overlay" id="payment-loading-overlay">
         <div class="payment-spinner"></div>
@@ -698,10 +684,10 @@
 
         // Re-enable map if current district becomes purchased
         function checkAndReenableMap() {
-            if (!mapInteractionDisabled) return;
             const district = findDistrictAtCenter();
             if (district && hasPurchase(district.productPurchaseID)) {
                 enableMapInteraction();
+                document.getElementById('zoom-restrict-overlay').classList.remove('open');
                 updateRegionStatus();
             }
         }
@@ -803,14 +789,12 @@
 
         function disableMapInteraction() {
             mapInteractionDisabled = true;
-            map.setOptions({ draggable: false, scrollwheel: false, disableDoubleClickZoom: true, zoomControl: false, gestureHandling: 'none' });
-            document.getElementById('map-disabled-overlay').classList.add('open');
+            if (map) map.setOptions({ draggable: false, scrollwheel: false, disableDoubleClickZoom: true, zoomControl: false, gestureHandling: 'none' });
         }
 
         function enableMapInteraction() {
             mapInteractionDisabled = false;
-            map.setOptions({ draggable: true, scrollwheel: true, disableDoubleClickZoom: false, zoomControl: true, gestureHandling: 'greedy' });
-            document.getElementById('map-disabled-overlay').classList.remove('open');
+            if (map) map.setOptions({ draggable: true, scrollwheel: true, disableDoubleClickZoom: false, zoomControl: true, gestureHandling: 'greedy' });
         }
 
         function showZoomRestrictionDialog(district) {
@@ -825,13 +809,16 @@
             if (district) {
                 title.textContent = 'Subscribe to ' + district.districtName + ' Region';
                 desc.textContent = 'Unlock exclusive premium maps for ' + district.districtName + ' Region. Choose your preferred access method.';
-                regionInfo.textContent = 'Region: ' + district.districtName + ' Region';
+                regionInfo.textContent = 'Region: ' + district.districtName;
                 regionInfo.style.display = 'block';
             } else {
                 title.textContent = 'Subscribe to Region';
                 desc.textContent = 'Unlock exclusive premium maps. Browse districts in the sidebar to choose a region.';
                 regionInfo.style.display = 'none';
             }
+
+            // Disable map interaction while dialog is visible
+            disableMapInteraction();
 
             // Replace button to remove old listeners
             const newBtn = actionBtn.cloneNode(true);
@@ -840,6 +827,7 @@
 
             newBtn.addEventListener('click', () => {
                 overlay.classList.remove('open');
+                enableMapInteraction();
                 if (district) {
                     buyRegion(district.productPurchaseID, district.districtName);
                 } else {
@@ -850,11 +838,12 @@
 
             document.getElementById('zoom-restrict-cancel').onclick = () => {
                 overlay.classList.remove('open');
-                // Snap back to max free zoom and disable map
+                // Snap back to max free zoom, keep map disabled
                 zoomBypassActive = true;
                 map.setZoom(MAX_FREE_ZOOM);
                 google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
-                disableMapInteraction();
+                // Re-enable map so user can pan at zoom 14
+                enableMapInteraction();
             };
 
             document.getElementById('zoom-restrict-support').onclick = () => {
@@ -863,22 +852,6 @@
 
             overlay.classList.add('open');
         }
-
-        // Map disabled overlay unlock button
-        document.addEventListener('DOMContentLoaded', () => {
-            const unlockBtn = document.getElementById('map-disabled-unlock');
-            if (unlockBtn) {
-                unlockBtn.addEventListener('click', () => {
-                    enableMapInteraction();
-                    if (lastRestrictedDistrict) {
-                        buyRegion(lastRestrictedDistrict.productPurchaseID, lastRestrictedDistrict.districtName);
-                    } else {
-                        const firstRailItem = document.querySelector('.rail-item');
-                        if (firstRailItem) firstRailItem.click();
-                    }
-                });
-            }
-        });
         
         function updateRegionStatus() {
             const el = document.getElementById('region-status');
