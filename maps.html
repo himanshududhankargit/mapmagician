@@ -730,11 +730,38 @@
             if (!map || districtBounds.length === 0) return null;
             const c = map.getCenter();
             const lat = c.lat(), lng = c.lng();
+
+            // First: exact center match
             for (const db of districtBounds) {
                 if (lat >= db.minLat && lat <= db.maxLat && lng >= db.minLng && lng <= db.maxLng) {
                     return db;
                 }
             }
+
+            // Second: check if viewport overlaps any district
+            const bounds = map.getBounds();
+            if (bounds) {
+                const ne = bounds.getNorthEast();
+                const sw = bounds.getSouthWest();
+                let closest = null;
+                let closestDist = Infinity;
+                for (const db of districtBounds) {
+                    // Check if map viewport and district bounding box overlap
+                    if (sw.lat() <= db.maxLat && ne.lat() >= db.minLat &&
+                        sw.lng() <= db.maxLng && ne.lng() >= db.minLng) {
+                        // Overlaps — pick the one whose center is closest to map center
+                        const dLat = lat - (db.minLat + db.maxLat) / 2;
+                        const dLng = lng - (db.minLng + db.maxLng) / 2;
+                        const dist = dLat * dLat + dLng * dLng;
+                        if (dist < closestDist) {
+                            closestDist = dist;
+                            closest = db;
+                        }
+                    }
+                }
+                if (closest) return closest;
+            }
+
             return null;
         }
 
