@@ -607,38 +607,26 @@
             }
         });
 
-        // Load purchase status from Firebase
+        // Load purchase status via Cloud Function (DB paths hidden server-side)
         function loadPurchaseStatus(email) {
-            const emailKey = email.replace(/\./g, ',');
+            fetchPurchaseStatus();
+        }
 
-            // Listen for 7-day passes -- re-render sidebar when purchases change
-            database.ref('GISAPPOneTimePurchase/' + emailKey).on('value', snapshot => {
+        async function fetchPurchaseStatus() {
+            if (!currentUser) return;
+            try {
+                const getPurchaseStatus = functions.httpsCallable('getPurchaseStatus');
+                const { data } = await getPurchaseStatus();
                 activePurchases.clear();
-                const purchases = snapshot.val() || {};
-                Object.entries(purchases).forEach(([productId, expiry]) => {
-                    if (expiry > Date.now()) {
-                        activePurchases.set(productId, expiry);
-                    }
+                Object.entries(data).forEach(([productId, expiry]) => {
+                    activePurchases.set(productId, expiry);
                 });
                 refreshSidebarIfOpen();
                 checkAndReenableMap();
-                lastCheckedRegionId = null; // re-evaluate region after purchase change
-            });
-
-            // Also check subscription overrides
-            database.ref('overrideGISMaharashtra/' + emailKey + '/districts').on('value', snapshot => {
-                const overrides = snapshot.val() || {};
-                Object.entries(overrides).forEach(([productId, data]) => {
-                    if (data && data.expiry) {
-                        const exp = new Date(data.expiry).getTime();
-                        if (exp > Date.now()) {
-                            activePurchases.set(productId, exp);
-                        }
-                    }
-                });
-                refreshSidebarIfOpen();
-                checkAndReenableMap();
-            });
+                lastCheckedRegionId = null;
+            } catch (e) {
+                console.error('Failed to fetch purchase status:', e);
+            }
         }
 
         // Placeholder -- set by initSidebar once sidebar is ready
@@ -707,6 +695,10 @@
                     theme: { color: '#008577' },
                     handler: function(response) {
                         updateStatus('Payment successful! Activating...');
+                        // Poll purchase status after payment (webhook writes to DB)
+                        setTimeout(fetchPurchaseStatus, 2000);
+                        setTimeout(fetchPurchaseStatus, 5000);
+                        setTimeout(fetchPurchaseStatus, 10000);
                     },
                     modal: {
                         ondismiss: function() {
@@ -904,6 +896,9 @@
             if (regionId === lastCheckedRegionId) return;
             lastCheckedRegionId = regionId;
             bannerDismissedForRegion = null; // reset dismiss on region change
+
+            // Poll purchase status on region change
+            if (currentUser) fetchPurchaseStatus();
 
             const overlay = document.getElementById('zoom-restrict-overlay');
 
