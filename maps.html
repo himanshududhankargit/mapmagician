@@ -731,38 +731,23 @@
             const c = map.getCenter();
             const lat = c.lat(), lng = c.lng();
 
-            // First: exact center match
+            // Check if center crosshair falls inside any district bounding box
+            // Try exact match first, then find closest if none
+            let closest = null;
+            let closestDist = Infinity;
             for (const db of districtBounds) {
                 if (lat >= db.minLat && lat <= db.maxLat && lng >= db.minLng && lng <= db.maxLng) {
-                    return db;
-                }
-            }
-
-            // Second: check if viewport overlaps any district
-            const bounds = map.getBounds();
-            if (bounds) {
-                const ne = bounds.getNorthEast();
-                const sw = bounds.getSouthWest();
-                let closest = null;
-                let closestDist = Infinity;
-                for (const db of districtBounds) {
-                    // Check if map viewport and district bounding box overlap
-                    if (sw.lat() <= db.maxLat && ne.lat() >= db.minLat &&
-                        sw.lng() <= db.maxLng && ne.lng() >= db.minLng) {
-                        // Overlaps — pick the one whose center is closest to map center
-                        const dLat = lat - (db.minLat + db.maxLat) / 2;
-                        const dLng = lng - (db.minLng + db.maxLng) / 2;
-                        const dist = dLat * dLat + dLng * dLng;
-                        if (dist < closestDist) {
-                            closestDist = dist;
-                            closest = db;
-                        }
+                    // Center is inside this district — pick closest center
+                    const dLat = lat - (db.minLat + db.maxLat) / 2;
+                    const dLng = lng - (db.minLng + db.maxLng) / 2;
+                    const dist = dLat * dLat + dLng * dLng;
+                    if (dist < closestDist) {
+                        closestDist = dist;
+                        closest = db;
                     }
                 }
-                if (closest) return closest;
             }
-
-            return null;
+            return closest;
         }
 
         function disableMapInteraction() {
@@ -1179,7 +1164,7 @@
                         count++;
                     });
                     if (count === 0) return;
-                    const PAD = 0.02;
+                    const PAD = 0.08; // ~9km padding to cover full district area beyond village points
                     districtBounds.push({
                         productPurchaseID: item.productPurchaseID,
                         districtName: item.district,
