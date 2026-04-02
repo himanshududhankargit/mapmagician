@@ -577,12 +577,7 @@
         let cachedAccessToken = ''; // Signed access token from getPurchaseStatus
         let pendingPurchase = null; // { productId, regionName } — set when buy clicked before login
 
-        // Sign in anonymously on page load (for free tile access via CloudFront cookies)
-        if (!firebase.auth().currentUser) {
-            firebase.auth().signInAnonymously().catch(err => {
-                console.error('Anonymous sign-in failed:', err);
-            });
-        }
+        // Anonymous sign-in is handled in onAuthStateChanged (after session restoration)
 
         // Auth dialog button handlers
         document.getElementById('auth-dialog-signin').addEventListener('click', () => {
