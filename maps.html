@@ -1048,13 +1048,8 @@
                 return;
             }
 
-            // Unpurchased region — lock zoom at 14 and show purchase dialog
+            // Unpurchased region — lock zoom at 14
             map.setOptions({ maxZoom: MAX_FREE_ZOOM });
-
-            if (bannerDismissedForRegion !== regionId) {
-                dialogTriggeredByRegionEntry = true;
-                showZoomRestrictionDialog(district);
-            }
         }
 
         // Layer visibility and data
@@ -1296,7 +1291,23 @@
                 checkRegionOnMove();
             });
 
-            // Zoom is hard-locked via maxZoom in checkRegionOnMove() — no zoom_changed handler needed
+            // Show purchase dialog when user hits zoom 14 in unpurchased region, hide when they zoom out
+            map.addListener('zoom_changed', function() {
+                if (zoomBypassActive || mapInteractionDisabled) return;
+                const z = map.getZoom();
+                const overlay = document.getElementById('zoom-restrict-overlay');
+                const district = findDistrictAtCenter();
+
+                if (z >= MAX_FREE_ZOOM && district && !hasPurchase(district.productPurchaseID)) {
+                    // At zoom limit in unpurchased region — show dialog
+                    dialogTriggeredByRegionEntry = true;
+                    showZoomRestrictionDialog(district);
+                } else if (z < MAX_FREE_ZOOM && overlay.classList.contains('open')) {
+                    // Zoomed out — auto-dismiss dialog
+                    overlay.classList.remove('open');
+                    enableMapInteraction();
+                }
+            });
 
             // Initialize UI event listeners
             initUIEvents();
