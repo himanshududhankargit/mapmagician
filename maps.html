@@ -817,6 +817,8 @@
                             loadTilesBasedOnViewport();
                             enableMapInteraction();
                             document.getElementById('zoom-restrict-overlay').classList.remove('open');
+                            map.setOptions({ maxZoom: 21 }); // unlock zoom after purchase
+                            lastCheckedRegionId = null; // force re-evaluate
                             updateStatus('Region activated!');
                         } catch (e) {
                             console.error('Confirm payment error:', e);
@@ -973,17 +975,8 @@
 
             document.getElementById('zoom-restrict-cancel').onclick = () => {
                 overlay.classList.remove('open');
-                if (dialogTriggeredByRegionEntry) {
-                    // Region-entry trigger: just close dialog, don't change zoom
-                    bannerDismissedForRegion = lastCheckedRegionId;
-                    enableMapInteraction();
-                } else {
-                    // Zoom trigger: snap back to max free zoom
-                    zoomBypassActive = true;
-                    map.setZoom(MAX_FREE_ZOOM);
-                    google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
-                    enableMapInteraction();
-                }
+                bannerDismissedForRegion = lastCheckedRegionId;
+                enableMapInteraction();
             };
 
             document.getElementById('zoom-restrict-support').onclick = () => {
@@ -1018,7 +1011,7 @@
             }
         }
 
-        // Region detection on camera move — mirrors Android's checkRegionSubscriptionOnDrag()
+        // Region detection on camera move — locks/unlocks zoom based on purchase status
         function checkRegionOnMove() {
             if (zoomBypassActive || mapInteractionDisabled) return;
 
@@ -1028,7 +1021,7 @@
             // Skip if still in same region
             if (regionId === lastCheckedRegionId) return;
             lastCheckedRegionId = regionId;
-            bannerDismissedForRegion = null; // reset dismiss on region change
+            bannerDismissedForRegion = null;
 
             // Poll purchase status on region change
             if (currentUser) fetchPurchaseStatus();
@@ -1036,7 +1029,8 @@
             const overlay = document.getElementById('zoom-restrict-overlay');
 
             if (!district) {
-                // Not in any region — dismiss dialog if open from region entry
+                // Not in any region — lock zoom, dismiss dialog
+                map.setOptions({ maxZoom: MAX_FREE_ZOOM });
                 if (dialogTriggeredByRegionEntry && overlay.classList.contains('open')) {
                     overlay.classList.remove('open');
                     enableMapInteraction();
@@ -1045,7 +1039,8 @@
             }
 
             if (hasPurchase(district.productPurchaseID)) {
-                // Purchased region — dismiss dialog if open from region entry
+                // Purchased region — unlock zoom, dismiss dialog
+                map.setOptions({ maxZoom: 21 });
                 if (dialogTriggeredByRegionEntry && overlay.classList.contains('open')) {
                     overlay.classList.remove('open');
                     enableMapInteraction();
@@ -1053,10 +1048,9 @@
                 return;
             }
 
-            // Only show paywall when zoomed past free level
-            if (map && map.getZoom() <= MAX_FREE_ZOOM) return;
+            // Unpurchased region — lock zoom at 14 and show purchase dialog
+            map.setOptions({ maxZoom: MAX_FREE_ZOOM });
 
-            // Unsubscribed region — show dialog if not dismissed for this region
             if (bannerDismissedForRegion !== regionId) {
                 dialogTriggeredByRegionEntry = true;
                 showZoomRestrictionDialog(district);
@@ -1302,28 +1296,7 @@
                 checkRegionOnMove();
             });
 
-            // Zoom restriction: show dialog when zooming past MAX_FREE_ZOOM for unpurchased areas
-            map.addListener('zoom_changed', function() {
-                if (zoomBypassActive || mapInteractionDisabled) return;
-                const z = map.getZoom();
-                if (z <= MAX_FREE_ZOOM) return;
-
-                const district = findDistrictAtCenter();
-                if (district && hasPurchase(district.productPurchaseID)) return;
-
-                if (!district) {
-                    // No map data at this location — snap back quietly
-                    zoomBypassActive = true;
-                    map.setZoom(MAX_FREE_ZOOM);
-                    google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
-                    updateStatus('No map data available at this location');
-                    return;
-                }
-
-                // Zoom trigger — dismiss should snap zoom back to 14
-                dialogTriggeredByRegionEntry = false;
-                showZoomRestrictionDialog(district);
-            });
+            // Zoom is hard-locked via maxZoom in checkRegionOnMove() — no zoom_changed handler needed
 
             // Initialize UI event listeners
             initUIEvents();
