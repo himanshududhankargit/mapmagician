@@ -383,6 +383,34 @@
             font-weight: 600; white-space: nowrap; pointer-events: none;
             box-shadow: 0 1px 3px rgba(0,0,0,0.25);
         }
+        /* Vertex handle popup (move + delete) */
+        .vertex-handle-container {
+            position: absolute; transform: translate(-50%, -100%);
+            display: flex; align-items: center; gap: 6px;
+            pointer-events: auto; padding-bottom: 14px;
+            animation: vtx-pop 0.15s ease-out;
+        }
+        @keyframes vtx-pop {
+            from { opacity: 0; transform: translate(-50%, -100%) scale(0.5); }
+            to   { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+        }
+        .vertex-move-handle {
+            width: 40px; height: 40px; background: #FF5722;
+            border: 2px solid #fff; border-radius: 50%; cursor: grab;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+            user-select: none; touch-action: none;
+        }
+        .vertex-move-handle:active { cursor: grabbing; background: #E64A19; }
+        .vertex-move-handle svg { width: 22px; height: 22px; }
+        .vertex-del-btn {
+            width: 30px; height: 30px; background: #fff;
+            border: 2px solid #D32F2F; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            color: #D32F2F; font-size: 18px; font-weight: 700; line-height: 1;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .vertex-del-btn:active { background: #FFEBEE; }
     </style>
 </head>
 <body>
@@ -1009,6 +1037,8 @@
         let selectedMeasureId = null;     // Currently selected saved measurement
         let measureDeleteIW = null;       // InfoWindow for delete button
         let MeasureLabelOverlay = null;   // Class, assigned in initMap after API loads
+        let VertexHandleOverlay = null;   // Class, assigned in initMap after API loads
+        let activeVertexHandle = null;    // Current visible vertex handle overlay
 
         // Haversine distance in meters
         function haversineDistance(p1, p2) {
@@ -1065,10 +1095,86 @@
             return { lat: (p1.lat + p2.lat) / 2, lng: (p1.lng + p2.lng) / 2 };
         }
 
+        // ===== Vertex Handle (move + delete popup) =====
+
+        function showVertexHandle(marker, callbacks) {
+            // callbacks: { onMove(latLng), onMoveEnd(), onDelete() }
+            hideVertexHandle();
+            activeVertexHandle = new VertexHandleOverlay(marker, callbacks, map);
+            // Highlight the vertex
+            marker.setIcon({
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10, fillColor: '#FF5722', fillOpacity: 1,
+                strokeColor: '#fff', strokeWeight: 3
+            });
+            activeVertexHandle._origIcon = marker.getIcon();
+        }
+
+        function hideVertexHandle() {
+            if (!activeVertexHandle) return;
+            // Restore vertex icon
+            const m = activeVertexHandle._marker;
+            if (m && m.getMap()) {
+                const isSaved = activeVertexHandle._isSaved;
+                const color = isSaved ? '#008577' : '#FF6D00';
+                m.setIcon({
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: isSaved ? 7 : 8, fillColor: color, fillOpacity: 1,
+                    strokeColor: '#fff', strokeWeight: 2
+                });
+            }
+            activeVertexHandle.setMap(null);
+            activeVertexHandle = null;
+        }
+
+        function deleteInProgressVertex(idx) {
+            hideVertexHandle();
+            if (measurePoints.length <= 1) {
+                // If only 1 point, just remove it
+                measurePoints.splice(idx, 1);
+                const removed = measureMarkers.splice(idx, 1);
+                removed.forEach(m => m.setMap(null));
+            } else {
+                measurePoints.splice(idx, 1);
+                const removed = measureMarkers.splice(idx, 1);
+                removed.forEach(m => m.setMap(null));
+            }
+            // Reindex remaining markers
+            measureMarkers.forEach(function(m, i) { m._ptIndex = i; });
+            updateMeasureVisuals();
+        }
+
+        function deleteSavedVertex(measId, idx) {
+            hideVertexHandle();
+            const m = savedMeasurements.find(function(x) { return x.id === measId; });
+            if (!m) return;
+            const minPts = m.type === 'area' ? 3 : 2;
+            if (m.points.length <= minPts) {
+                // Too few points — delete entire measurement
+                deleteMeasurement(measId);
+                return;
+            }
+            m.points.splice(idx, 1);
+            // Remove old overlays and re-render
+            const ov = savedMeasureOverlays.find(function(o) { return o.id === measId; });
+            if (ov) {
+                ov.shapes.forEach(function(s) { s.setMap(null); });
+                ov.markers.forEach(function(mk) { mk.setMap(null); });
+                ov.labels.forEach(function(l) { l.setMap(null); });
+            }
+            savedMeasureOverlays = savedMeasureOverlays.filter(function(o) { return o.id !== measId; });
+            renderSavedMeasurement(m);
+            try {
+                localStorage.setItem('gis_measurements', JSON.stringify(savedMeasurements));
+            } catch (e) { /* ignore */ }
+            updateStatus('Vertex removed');
+        }
+
         // ===== Core Measurement Functions =====
 
         function startMeasureMode(mode) {
             if (measureMode) stopMeasureMode(false);
+            hideVertexHandle();
             deselectMeasurement();
             measureMode = mode;
             measurePoints = [];
@@ -1102,7 +1208,7 @@
             measurePoints.push(pt);
             const idx = measurePoints.length - 1;
 
-            // Create draggable vertex marker
+            // Create vertex marker (tap to show handle)
             const marker = new google.maps.Marker({
                 position: event.latLng,
                 map: map,
@@ -1111,15 +1217,21 @@
                     scale: 8, fillColor: '#FF6D00', fillOpacity: 1,
                     strokeColor: '#fff', strokeWeight: 2
                 },
-                zIndex: 1000,
-                draggable: true,
-                clickable: true
+                zIndex: 1000, clickable: true
             });
             marker._ptIndex = idx;
-            marker.addListener('drag', function() {
-                const pos = marker.getPosition();
-                measurePoints[marker._ptIndex] = { lat: pos.lat(), lng: pos.lng() };
-                updateMeasureVisuals();
+            marker.addListener('click', function() {
+                showVertexHandle(marker, {
+                    isSaved: false,
+                    onMove: function(latLng) {
+                        measurePoints[marker._ptIndex] = { lat: latLng.lat(), lng: latLng.lng() };
+                        updateMeasureVisuals();
+                    },
+                    onMoveEnd: function() {},
+                    onDelete: function() {
+                        deleteInProgressVertex(marker._ptIndex);
+                    }
+                });
             });
             measureMarkers.push(marker);
             updateMeasureVisuals();
@@ -1207,6 +1319,7 @@
 
         function stopMeasureMode(save) {
             if (!measureMode) return;
+            hideVertexHandle();
 
             // Remove click listener
             if (measureClickListener) {
@@ -1276,7 +1389,7 @@
             // Build shapes and labels
             rebuildSavedShapesAndLabels(m, overlays, color);
 
-            // Draggable vertex markers
+            // Vertex markers (tap to show move handle + delete)
             m.points.forEach(function(p, idx) {
                 const marker = new google.maps.Marker({
                     position: { lat: p.lat, lng: p.lng }, map: map,
@@ -1285,26 +1398,30 @@
                         scale: 7, fillColor: color, fillOpacity: 1,
                         strokeColor: '#fff', strokeWeight: 2
                     },
-                    zIndex: 1000, draggable: true, clickable: true,
-                    cursor: 'grab'
+                    zIndex: 1000, clickable: true, cursor: 'pointer'
                 });
                 marker._ptIndex = idx;
                 marker._measId = m.id;
-                marker.addListener('drag', function() {
-                    const pos = marker.getPosition();
-                    m.points[idx] = { lat: pos.lat(), lng: pos.lng() };
-                    // Rebuild shapes and labels live
-                    overlays.shapes.forEach(s => s.setMap(null));
-                    overlays.labels.forEach(l => l.setMap(null));
-                    overlays.shapes = [];
-                    overlays.labels = [];
-                    rebuildSavedShapesAndLabels(m, overlays, color);
-                });
-                marker.addListener('dragend', function() {
-                    // Persist updated points
-                    try {
-                        localStorage.setItem('gis_measurements', JSON.stringify(savedMeasurements));
-                    } catch (e) { /* ignore */ }
+                marker.addListener('click', function() {
+                    showVertexHandle(marker, {
+                        isSaved: true,
+                        onMove: function(latLng) {
+                            m.points[idx] = { lat: latLng.lat(), lng: latLng.lng() };
+                            overlays.shapes.forEach(function(s) { s.setMap(null); });
+                            overlays.labels.forEach(function(l) { l.setMap(null); });
+                            overlays.shapes = [];
+                            overlays.labels = [];
+                            rebuildSavedShapesAndLabels(m, overlays, color);
+                        },
+                        onMoveEnd: function() {
+                            try {
+                                localStorage.setItem('gis_measurements', JSON.stringify(savedMeasurements));
+                            } catch (e) { /* ignore */ }
+                        },
+                        onDelete: function() {
+                            deleteSavedVertex(m.id, idx);
+                        }
+                    });
                 });
                 overlays.markers.push(marker);
             });
@@ -1974,6 +2091,113 @@
                     if (!proj) return;
                     const pos = proj.fromLatLngToDivPixel(this._position);
                     if (pos && this._div) {
+                        this._div.style.left = pos.x + 'px';
+                        this._div.style.top = pos.y + 'px';
+                    }
+                }
+                onRemove() {
+                    if (this._div && this._div.parentNode) {
+                        this._div.parentNode.removeChild(this._div);
+                        this._div = null;
+                    }
+                }
+            };
+
+            // Define VertexHandleOverlay (move handle + delete button above a vertex)
+            VertexHandleOverlay = class extends google.maps.OverlayView {
+                constructor(marker, callbacks, mapInstance) {
+                    super();
+                    this._marker = marker;
+                    this._callbacks = callbacks;
+                    this._isSaved = callbacks.isSaved;
+                    this._div = null;
+                    this._dragging = false;
+                    this.setMap(mapInstance);
+                }
+                onAdd() {
+                    const self = this;
+                    this._div = document.createElement('div');
+                    this._div.className = 'vertex-handle-container';
+
+                    // Move handle (orange circle with cross arrows SVG)
+                    const moveBtn = document.createElement('div');
+                    moveBtn.className = 'vertex-move-handle';
+                    moveBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/><polyline points="8,7 12,3 16,7"/><polyline points="8,17 12,21 16,17"/><polyline points="7,8 3,12 7,16"/><polyline points="17,8 21,12 17,16"/></svg>';
+
+                    // Delete button (red × circle)
+                    const delBtn = document.createElement('div');
+                    delBtn.className = 'vertex-del-btn';
+                    delBtn.textContent = '\u00D7';
+                    delBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        self._callbacks.onDelete();
+                    });
+                    delBtn.addEventListener('touchend', function(e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        self._callbacks.onDelete();
+                    });
+
+                    this._div.appendChild(moveBtn);
+                    this._div.appendChild(delBtn);
+
+                    // --- Drag handling on move handle ---
+                    let startX, startY, startLatLng;
+
+                    const onDragStart = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        self._dragging = true;
+                        const touch = e.touches ? e.touches[0] : e;
+                        startX = touch.clientX;
+                        startY = touch.clientY;
+                        startLatLng = self._marker.getPosition();
+                        map.setOptions({ gestureHandling: 'none' });
+                        moveBtn.style.background = '#E64A19';
+                        document.addEventListener('mousemove', onDragMove);
+                        document.addEventListener('mouseup', onDragEnd);
+                        document.addEventListener('touchmove', onDragMove, { passive: false });
+                        document.addEventListener('touchend', onDragEnd);
+                    };
+
+                    const onDragMove = function(e) {
+                        if (!self._dragging) return;
+                        e.preventDefault();
+                        const touch = e.touches ? e.touches[0] : e;
+                        const dx = touch.clientX - startX;
+                        const dy = touch.clientY - startY;
+                        const proj = self.getProjection();
+                        if (!proj) return;
+                        const startPx = proj.fromLatLngToDivPixel(startLatLng);
+                        const newPx = new google.maps.Point(startPx.x + dx, startPx.y + dy);
+                        const newLatLng = proj.fromDivPixelToLatLng(newPx);
+                        self._marker.setPosition(newLatLng);
+                        self._callbacks.onMove(newLatLng);
+                        self.draw();
+                    };
+
+                    const onDragEnd = function() {
+                        if (!self._dragging) return;
+                        self._dragging = false;
+                        map.setOptions({ gestureHandling: 'greedy' });
+                        moveBtn.style.background = '#FF5722';
+                        document.removeEventListener('mousemove', onDragMove);
+                        document.removeEventListener('mouseup', onDragEnd);
+                        document.removeEventListener('touchmove', onDragMove);
+                        document.removeEventListener('touchend', onDragEnd);
+                        self._callbacks.onMoveEnd();
+                    };
+
+                    moveBtn.addEventListener('mousedown', onDragStart);
+                    moveBtn.addEventListener('touchstart', onDragStart, { passive: false });
+
+                    this.getPanes().floatPane.appendChild(this._div);
+                }
+                draw() {
+                    const proj = this.getProjection();
+                    if (!proj || !this._div) return;
+                    const pos = proj.fromLatLngToDivPixel(this._marker.getPosition());
+                    if (pos) {
                         this._div.style.left = pos.x + 'px';
                         this._div.style.top = pos.y + 'px';
                     }
@@ -2683,8 +2907,11 @@
                 if (measureMode === 'area') updateMeasureVisuals();
             });
 
-            // Deselect saved measurement when clicking empty map
+            // Deselect saved measurement / hide vertex handle when clicking empty map
             map.addListener('click', function() {
+                if (activeVertexHandle && !measureMode) {
+                    hideVertexHandle();
+                }
                 if (selectedMeasureId !== null && !measureMode) {
                     deselectMeasurement();
                 }
