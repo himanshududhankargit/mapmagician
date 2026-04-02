@@ -607,6 +607,7 @@
                 }
                 profileBtn.title = user.displayName || user.email;
                 loadPurchaseStatus(user.email);
+                fetchCloudFrontCookies();
 
                 // Resume pending purchase after sign-in
                 if (pendingPurchase) {
@@ -623,6 +624,24 @@
                 cachedIdToken = null;
             }
         });
+
+        // Fetch CloudFront signed cookies after login
+        async function fetchCloudFrontCookies() {
+            try {
+                const getCloudFrontCookies = functions.httpsCallable('getCloudFrontCookies');
+                const result = await getCloudFrontCookies();
+                const data = result.data;
+                const expires = new Date(data.expiresAt).toUTCString();
+
+                document.cookie = `CloudFront-Policy=${data['CloudFront-Policy']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
+                document.cookie = `CloudFront-Signature=${data['CloudFront-Signature']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
+                document.cookie = `CloudFront-Key-Pair-Id=${data['CloudFront-Key-Pair-Id']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
+
+                console.log('CloudFront cookies set, expires:', expires);
+            } catch (err) {
+                console.error('Failed to fetch CloudFront cookies:', err);
+            }
+        }
 
         // Profile button click (sign in / sign out)
         document.getElementById('profile-btn').addEventListener('click', () => {
@@ -1111,6 +1130,7 @@
         const MIN_ZOOM_FOR_OLD_DP = 11;
         
         const tileProxyUrl = "https://us-central1-sodium-hour-256110.cloudfunctions.net/serveTile";
+        const tileBaseUrl = "https://tiles.mapmagician.in";
         
         // Get reference to Firebase database
         const database = firebase.database();
@@ -2331,13 +2351,10 @@
                             return null;
                         }
 
-                        // Route through Cloud Function proxy (S3 URL hidden server-side)
-                        // Only include access token for premium tiles (zoom > 14) — keeps free tile URLs stable for browser caching
-                        if (zoom > MAX_FREE_ZOOM) {
-                            const atParam = cachedAccessToken ? `&at=${encodeURIComponent(cachedAccessToken)}` : '';
-                            return `${tileProxyUrl}?link=${tileLink}&pid=${tilePid}&z=${zoom}&x=${coord.x}&y=${coord.y}${atParam}`;
-                        }
-                        return `${tileProxyUrl}?link=${tileLink}&z=${zoom}&x=${coord.x}&y=${coord.y}`;
+                        // Load tiles directly from CloudFront (signed cookies handle auth)
+                        const decodedLink = decodeURIComponent(tileLink);
+                        const linkPath = decodedLink.endsWith('/') ? decodedLink : decodedLink + '/';
+                        return `${tileBaseUrl}${linkPath}${zoom}/${coord.x}/${coord.y}.png`;
                     },
                     tileSize: new google.maps.Size(256, 256),
                     opacity: currentOpacity,
