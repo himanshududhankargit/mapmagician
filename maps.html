@@ -223,7 +223,7 @@
         }
         .search-results.open { display: block; }
         /* Push Google Places dropdown below ours */
-        .pac-container { z-index: 99998 !important; }
+        .pac-container { display: none !important; }
         .search-result-item {
             display: flex; align-items: center; gap: 10px;
             padding: 10px 14px; cursor: pointer; border: none;
@@ -1275,32 +1275,8 @@
             });
 
             // Places Autocomplete (New API)
-            const input = document.getElementById('search-input');
-            const autocomplete = new google.maps.places.Autocomplete(input, {
-                fields: ['geometry', 'name'],
-                types: ['geocode', 'establishment'],
-                componentRestrictions: { country: 'in' }
-            });
-            autocomplete.bindTo('bounds', map);
-
-            autocomplete.addListener('place_changed', function() {
-                const place = autocomplete.getPlace();
-                if (!place.geometry) return;
-
-                markers.forEach(m => m.setMap(null));
-                markers = [];
-
-                const marker = new google.maps.Marker({
-                    map: map,
-                    title: place.name,
-                    position: place.geometry.location
-                });
-                markers.push(marker);
-
-                map.setCenter(place.geometry.location);
-                map.setZoom(MAX_FREE_ZOOM);
-                updateStatus('Zoomed to ' + place.name);
-            });
+            // Google Places — only used on-demand (not per keystroke) to save costs
+            const placesService = new google.maps.places.PlacesService(map);
 
             // Single debounced handler for all viewport changes
             map.addListener('idle', function() {
@@ -1766,52 +1742,88 @@
 
             function renderSearchResults(results, query) {
                 searchResultsEl.innerHTML = '';
-                if (results.length === 0) {
-                    searchResultsEl.classList.remove('open');
-                    return;
+
+                if (results.length > 0) {
+                    const header = document.createElement('div');
+                    header.className = 'search-result-header';
+                    header.textContent = 'Locations from plans';
+                    searchResultsEl.appendChild(header);
+
+                    results.forEach(r => {
+                        const btn = document.createElement('button');
+                        btn.className = 'search-result-item';
+                        const highlighted = r.name.replace(
+                            new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'),
+                            '<mark>$1</mark>'
+                        );
+                        const icon = r.type === 'village' ? '📍' : r.type === 'district' ? '🏘' : '🗺';
+                        btn.innerHTML = `
+                            <div class="search-result-icon">${icon}</div>
+                            <div class="search-result-text">
+                                <div class="search-result-name">${highlighted}</div>
+                                <div class="search-result-path">${r.path}</div>
+                            </div>
+                        `;
+                        btn.addEventListener('click', () => {
+                            if (r.type === 'village' && r.lat && r.lng) {
+                                const pid = r.item ? r.item.productPurchaseID : '';
+                                goToLocation(r.lat, r.lng, r.name, pid);
+                            } else if (r.item) {
+                                if (r.type === 'district' && r.item.villagesJSON) {
+                                    showVillages(r.item.district || r.item.state, r.item.villagesJSON, null, r.item.productPurchaseID);
+                                    openSidebar();
+                                } else {
+                                    openState(r.item.state);
+                                }
+                            }
+                            searchResultsEl.classList.remove('open');
+                            searchInput.value = r.name;
+                        });
+                        searchResultsEl.appendChild(btn);
+                    });
                 }
 
-                // Group header
-                const header = document.createElement('div');
-                header.className = 'search-result-header';
-                header.textContent = 'Locations from plans';
-                searchResultsEl.appendChild(header);
-
-                results.forEach(r => {
-                    const btn = document.createElement('button');
-                    btn.className = 'search-result-item';
-                    const highlighted = r.name.replace(
-                        new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'),
-                        '<mark>$1</mark>'
-                    );
-                    const icon = r.type === 'village' ? '📍' : r.type === 'district' ? '🏘' : '🗺';
-                    btn.innerHTML = `
-                        <div class="search-result-icon">${icon}</div>
-                        <div class="search-result-text">
-                            <div class="search-result-name">${highlighted}</div>
-                            <div class="search-result-path">${r.path}</div>
-                        </div>
-                    `;
-                    btn.addEventListener('click', () => {
-                        if (r.type === 'village' && r.lat && r.lng) {
-                            const pid = r.item ? r.item.productPurchaseID : '';
-                            goToLocation(r.lat, r.lng, r.name, pid);
-                        } else if (r.item) {
-                            // Open the sidebar to show this state/district
-                            if (r.type === 'district' && r.item.villagesJSON) {
-                                showVillages(r.item.district || r.item.state, r.item.villagesJSON, null, r.item.productPurchaseID);
-                                openSidebar();
-                            } else {
-                                openState(r.item.state);
-                            }
-                        }
-                        searchResultsEl.classList.remove('open');
-                        searchInput.value = r.name;
-                    });
-                    searchResultsEl.appendChild(btn);
+                // Always show "Search on Google Maps" fallback at the bottom
+                const fallback = document.createElement('button');
+                fallback.className = 'search-result-item';
+                fallback.style.borderTop = '1px solid #eee';
+                fallback.innerHTML = `
+                    <div class="search-result-icon">🔍</div>
+                    <div class="search-result-text">
+                        <div class="search-result-name">Search "<strong>${query}</strong>" on Google Maps</div>
+                        <div class="search-result-path">${results.length === 0 ? 'No saved locations found' : 'Can\'t find your place?'}</div>
+                    </div>
+                `;
+                fallback.addEventListener('click', () => {
+                    searchResultsEl.classList.remove('open');
+                    searchGooglePlaces(query);
                 });
-
+                searchResultsEl.appendChild(fallback);
                 searchResultsEl.classList.add('open');
+            }
+
+            function searchGooglePlaces(query) {
+                updateStatus('Searching Google Maps...');
+                placesService.findPlaceFromQuery({
+                    query: query + ' India',
+                    fields: ['geometry', 'name']
+                }, function(results, status) {
+                    if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+                        const place = results[0];
+                        markers.forEach(m => m.setMap(null));
+                        markers = [];
+                        const marker = new google.maps.Marker({
+                            map: map, title: place.name, position: place.geometry.location
+                        });
+                        markers.push(marker);
+                        map.setCenter(place.geometry.location);
+                        map.setZoom(MAX_FREE_ZOOM);
+                        searchInput.value = place.name;
+                        updateStatus('Found: ' + place.name);
+                    } else {
+                        updateStatus('No results found for "' + query + '"');
+                    }
+                });
             }
 
             // Wire up real-time sidebar refresh for purchase updates
