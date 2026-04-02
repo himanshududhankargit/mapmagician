@@ -345,6 +345,44 @@
             font-size: 11px; color: #757575; margin-top: 1px;
         }
         .sidebar-list-arrow { color: #999; font-size: 16px; flex-shrink: 0; }
+
+        /* Measurement toolbar */
+        .measure-toolbar {
+            position: absolute; bottom: 104px; left: 8px; right: 8px;
+            height: 44px; display: none; align-items: center; gap: 6px;
+            z-index: 1001; background: #fff; border-radius: 22px;
+            padding: 0 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .measure-toolbar.active { display: flex; }
+        .measure-btn {
+            height: 30px; line-height: 30px; padding: 0 12px;
+            border-radius: 15px; border: none; font-size: 11px;
+            font-weight: 600; cursor: pointer; white-space: nowrap;
+            background: #f0f0f0; color: #333;
+        }
+        .measure-btn:disabled { opacity: 0.4; cursor: default; }
+        .measure-btn-done { background: #008577; color: #fff; }
+        .measure-btn-cancel { background: #f44336; color: #fff; }
+        .measure-unit-select {
+            height: 30px; border: 1px solid #e0e0e0; border-radius: 15px;
+            padding: 0 8px; font-size: 11px; background: #f5f5f5;
+            cursor: pointer; outline: none; -webkit-appearance: none; appearance: none;
+        }
+        .measure-info {
+            position: absolute; bottom: 156px; left: 50%;
+            transform: translateX(-50%); background: rgba(0,0,0,0.75);
+            color: #fff; padding: 8px 18px; border-radius: 20px;
+            font-size: 13px; font-weight: 600; z-index: 1001;
+            pointer-events: none; white-space: nowrap; display: none;
+        }
+        .measure-info.active { display: block; }
+        .measure-label {
+            position: absolute; transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.92); color: #333;
+            padding: 2px 6px; border-radius: 4px; font-size: 11px;
+            font-weight: 600; white-space: nowrap; pointer-events: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+        }
     </style>
 </head>
 <body>
@@ -366,7 +404,7 @@
 
     <!-- Top search row -->
     <div class="top-search-row">
-        <input id="search-input" type="text" placeholder="Search Place...">
+        <input id="search-input" type="search" placeholder="Search Place..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
         <select id="map-type">
             <option value="hybrid">Hybrid</option>
             <option value="satellite">Satellite</option>
@@ -387,6 +425,26 @@
         <button class="pill-btn" id="btn-measure-area">Measure Area</button>
         <button class="pill-btn" id="btn-measure-length">Measure Length</button>
     </div>
+
+    <!-- Measurement toolbar (shown during measure mode) -->
+    <div class="measure-toolbar" id="measure-toolbar">
+        <span id="measure-status" style="font-size:11px;color:#555;white-space:nowrap;">Tap to place points</span>
+        <select id="measure-unit-length" class="measure-unit-select">
+            <option value="m">Meters</option>
+            <option value="ft">Feet</option>
+            <option value="km">Km</option>
+        </select>
+        <select id="measure-unit-area" class="measure-unit-select" style="display:none;">
+            <option value="sqm">Sq m</option>
+            <option value="hectare">Hectare</option>
+            <option value="acre">Acre</option>
+        </select>
+        <div style="flex:1;"></div>
+        <button class="measure-btn" id="measure-undo">Undo</button>
+        <button class="measure-btn measure-btn-done" id="measure-done" disabled>Done</button>
+        <button class="measure-btn measure-btn-cancel" id="measure-cancel">Cancel</button>
+    </div>
+    <div class="measure-info" id="measure-info"></div>
 
     <!-- Right-side floating action buttons -->
     <div class="fab-stack">
@@ -938,6 +996,412 @@
         let dialogTriggeredByRegionEntry = false; // distinguish region-entry vs zoom triggers
         const MAX_FREE_ZOOM = 14;
 
+        // ===== Measurement State =====
+        let measureMode = null;           // null | 'length' | 'area'
+        let measurePoints = [];           // Array of {lat, lng}
+        let measureMarkers = [];          // google.maps.Marker for vertex dots
+        let measurePolyline = null;       // google.maps.Polyline (length mode)
+        let measurePolygon = null;        // google.maps.Polygon (area mode)
+        let measureLabels = [];           // MeasureLabelOverlay instances
+        let measureClickListener = null;  // google.maps.MapsEventListener
+        let savedMeasurements = [];       // Persisted measurement objects
+        let savedMeasureOverlays = [];    // {id, shapes:[], markers:[], labels:[]}
+        let selectedMeasureId = null;     // Currently selected saved measurement
+        let measureDeleteIW = null;       // InfoWindow for delete button
+        let MeasureLabelOverlay = null;   // Class, assigned in initMap after API loads
+
+        // Haversine distance in meters
+        function haversineDistance(p1, p2) {
+            const R = 6371000;
+            const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+            const dLng = (p2.lng - p1.lng) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+                      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        // Spherical polygon area in square meters
+        function sphericalPolygonArea(points) {
+            const R = 6371000;
+            const rad = Math.PI / 180;
+            const n = points.length;
+            if (n < 3) return 0;
+            let sum = 0;
+            for (let i = 0; i < n; i++) {
+                const p1 = points[i];
+                const p2 = points[(i + 1) % n];
+                sum += (p2.lng - p1.lng) * rad *
+                       (2 + Math.sin(p1.lat * rad) + Math.sin(p2.lat * rad));
+            }
+            return Math.abs(sum * R * R / 2);
+        }
+
+        function formatDistance(meters, unit) {
+            switch (unit) {
+                case 'ft': return (meters * 3.28084).toFixed(1) + ' ft';
+                case 'km': return (meters / 1000).toFixed(3) + ' km';
+                default:   return meters.toFixed(1) + ' m';
+            }
+        }
+
+        function formatArea(sqMeters, unit) {
+            switch (unit) {
+                case 'hectare': return (sqMeters / 10000).toFixed(3) + ' ha';
+                case 'acre':    return (sqMeters / 4046.856).toFixed(3) + ' ac';
+                default:        return sqMeters.toFixed(1) + ' sq m';
+            }
+        }
+
+        function getTotalDistance(points) {
+            let total = 0;
+            for (let i = 0; i < points.length - 1; i++) {
+                total += haversineDistance(points[i], points[i + 1]);
+            }
+            return total;
+        }
+
+        function getMidpoint(p1, p2) {
+            return { lat: (p1.lat + p2.lat) / 2, lng: (p1.lng + p2.lng) / 2 };
+        }
+
+        // ===== Core Measurement Functions =====
+
+        function startMeasureMode(mode) {
+            if (measureMode) stopMeasureMode(false);
+            deselectMeasurement();
+            measureMode = mode;
+            measurePoints = [];
+            measureMarkers = [];
+            measureLabels = [];
+            measurePolyline = null;
+            measurePolygon = null;
+
+            // Activate pill button
+            document.getElementById('btn-measure-length').classList.toggle('active', mode === 'length');
+            document.getElementById('btn-measure-area').classList.toggle('active', mode === 'area');
+
+            // Show toolbar
+            document.getElementById('measure-toolbar').classList.add('active');
+            document.getElementById('measure-info').classList.add('active');
+            document.getElementById('measure-info').textContent = mode === 'length' ? '0 m' : '0 sq m';
+            document.getElementById('measure-status').textContent = 'Tap to place points';
+            document.getElementById('measure-done').disabled = true;
+
+            // Show correct unit selector
+            document.getElementById('measure-unit-length').style.display = mode === 'length' ? '' : 'none';
+            document.getElementById('measure-unit-area').style.display = mode === 'area' ? '' : 'none';
+
+            // Map interaction
+            map.setOptions({ disableDoubleClickZoom: true, draggableCursor: 'crosshair' });
+            measureClickListener = map.addListener('click', onMeasureClick);
+        }
+
+        function onMeasureClick(event) {
+            const pt = { lat: event.latLng.lat(), lng: event.latLng.lng() };
+            measurePoints.push(pt);
+
+            // Create vertex marker
+            const marker = new google.maps.Marker({
+                position: event.latLng,
+                map: map,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 7, fillColor: '#FF6D00', fillOpacity: 1,
+                    strokeColor: '#fff', strokeWeight: 2
+                },
+                zIndex: 1000,
+                clickable: false
+            });
+            measureMarkers.push(marker);
+            updateMeasureVisuals();
+        }
+
+        function updateMeasureVisuals() {
+            const pts = measurePoints;
+            const isArea = measureMode === 'area';
+            const unitEl = isArea
+                ? document.getElementById('measure-unit-area')
+                : document.getElementById('measure-unit-length');
+            const unit = unitEl.value;
+
+            // Remove old polyline/polygon
+            if (measurePolyline) { measurePolyline.setMap(null); measurePolyline = null; }
+            if (measurePolygon) { measurePolygon.setMap(null); measurePolygon = null; }
+
+            // Remove old labels
+            measureLabels.forEach(l => l.setMap(null));
+            measureLabels = [];
+
+            if (pts.length >= 2) {
+                const path = pts.map(p => ({ lat: p.lat, lng: p.lng }));
+
+                if (isArea && pts.length >= 3) {
+                    measurePolygon = new google.maps.Polygon({
+                        paths: path, map: map,
+                        strokeColor: '#FF6D00', strokeOpacity: 1, strokeWeight: 3,
+                        fillColor: '#FF6D00', fillOpacity: 0.15, zIndex: 999, clickable: false
+                    });
+                } else {
+                    measurePolyline = new google.maps.Polyline({
+                        path: path, map: map,
+                        strokeColor: '#FF6D00', strokeOpacity: 1, strokeWeight: 3,
+                        zIndex: 999, clickable: false
+                    });
+                }
+
+                // Segment labels
+                const segCount = isArea && pts.length >= 3 ? pts.length : pts.length - 1;
+                for (let i = 0; i < segCount; i++) {
+                    const p1 = pts[i];
+                    const p2 = pts[(i + 1) % pts.length];
+                    const dist = haversineDistance(p1, p2);
+                    const mid = getMidpoint(p1, p2);
+                    const text = isArea ? formatDistance(dist, 'm') : formatDistance(dist, unit);
+                    const lbl = new MeasureLabelOverlay(
+                        new google.maps.LatLng(mid.lat, mid.lng), text, map
+                    );
+                    measureLabels.push(lbl);
+                }
+            }
+
+            // Update info display
+            const infoEl = document.getElementById('measure-info');
+            if (isArea) {
+                if (pts.length >= 3) {
+                    infoEl.textContent = formatArea(sphericalPolygonArea(pts), unit);
+                } else {
+                    infoEl.textContent = '0 sq m';
+                }
+            } else {
+                infoEl.textContent = formatDistance(getTotalDistance(pts), unit);
+            }
+
+            // Update status text
+            const statusEl = document.getElementById('measure-status');
+            if (pts.length === 0) statusEl.textContent = 'Tap to place points';
+            else if (pts.length === 1) statusEl.textContent = 'Tap next point';
+            else statusEl.textContent = pts.length + ' points';
+
+            // Enable/disable done button
+            const minPts = isArea ? 3 : 2;
+            document.getElementById('measure-done').disabled = pts.length < minPts;
+        }
+
+        function clearMeasureOverlays() {
+            measureMarkers.forEach(m => m.setMap(null));
+            measureMarkers = [];
+            if (measurePolyline) { measurePolyline.setMap(null); measurePolyline = null; }
+            if (measurePolygon) { measurePolygon.setMap(null); measurePolygon = null; }
+            measureLabels.forEach(l => l.setMap(null));
+            measureLabels = [];
+        }
+
+        function stopMeasureMode(save) {
+            if (!measureMode) return;
+
+            // Remove click listener
+            if (measureClickListener) {
+                google.maps.event.removeListener(measureClickListener);
+                measureClickListener = null;
+            }
+
+            // Save if requested
+            if (save) {
+                const minPts = measureMode === 'area' ? 3 : 2;
+                if (measurePoints.length >= minPts) {
+                    saveMeasurement();
+                }
+            }
+
+            // Clear in-progress overlays
+            clearMeasureOverlays();
+
+            // Reset map options
+            map.setOptions({ disableDoubleClickZoom: false, draggableCursor: null });
+
+            // Hide UI
+            document.getElementById('measure-toolbar').classList.remove('active');
+            document.getElementById('measure-info').classList.remove('active');
+            document.getElementById('btn-measure-length').classList.remove('active');
+            document.getElementById('btn-measure-area').classList.remove('active');
+
+            measureMode = null;
+            measurePoints = [];
+        }
+
+        // ===== Persistence =====
+
+        function saveMeasurement() {
+            const unitEl = measureMode === 'area'
+                ? document.getElementById('measure-unit-area')
+                : document.getElementById('measure-unit-length');
+            const m = {
+                id: Date.now(),
+                type: measureMode,
+                points: measurePoints.map(p => ({ lat: p.lat, lng: p.lng })),
+                unit: unitEl.value
+            };
+            savedMeasurements.push(m);
+            try {
+                localStorage.setItem('gis_measurements', JSON.stringify(savedMeasurements));
+            } catch (e) { /* localStorage full */ }
+            renderSavedMeasurement(m);
+            updateStatus('Measurement saved');
+        }
+
+        function loadSavedMeasurements() {
+            try {
+                const json = localStorage.getItem('gis_measurements');
+                if (!json) return;
+                savedMeasurements = JSON.parse(json);
+                savedMeasurements.forEach(m => renderSavedMeasurement(m));
+            } catch (e) {
+                savedMeasurements = [];
+            }
+        }
+
+        function renderSavedMeasurement(m) {
+            const color = '#008577';
+            const overlays = { id: m.id, shapes: [], markers: [], labels: [] };
+            const path = m.points.map(p => ({ lat: p.lat, lng: p.lng }));
+
+            if (m.type === 'area' && m.points.length >= 3) {
+                const polygon = new google.maps.Polygon({
+                    paths: path, map: map,
+                    strokeColor: color, strokeOpacity: 1, strokeWeight: 3,
+                    fillColor: color, fillOpacity: 0.15, zIndex: 998, clickable: true
+                });
+                polygon.addListener('click', function(e) { selectMeasurement(m.id, e.latLng); });
+                overlays.shapes.push(polygon);
+
+                // Segment labels for all edges including closing edge
+                for (let i = 0; i < m.points.length; i++) {
+                    const p1 = m.points[i];
+                    const p2 = m.points[(i + 1) % m.points.length];
+                    const dist = haversineDistance(p1, p2);
+                    const mid = getMidpoint(p1, p2);
+                    const lbl = new MeasureLabelOverlay(
+                        new google.maps.LatLng(mid.lat, mid.lng),
+                        formatDistance(dist, 'm'), map
+                    );
+                    overlays.labels.push(lbl);
+                }
+
+                // Area label at centroid
+                const centroid = { lat: 0, lng: 0 };
+                m.points.forEach(p => { centroid.lat += p.lat; centroid.lng += p.lng; });
+                centroid.lat /= m.points.length;
+                centroid.lng /= m.points.length;
+                const areaLabel = new MeasureLabelOverlay(
+                    new google.maps.LatLng(centroid.lat, centroid.lng),
+                    formatArea(sphericalPolygonArea(m.points), m.unit), map
+                );
+                overlays.labels.push(areaLabel);
+            } else if (m.type === 'length' && m.points.length >= 2) {
+                const polyline = new google.maps.Polyline({
+                    path: path, map: map,
+                    strokeColor: color, strokeOpacity: 1, strokeWeight: 3,
+                    zIndex: 998, clickable: true
+                });
+                polyline.addListener('click', function(e) { selectMeasurement(m.id, e.latLng); });
+                overlays.shapes.push(polyline);
+
+                // Segment labels
+                for (let i = 0; i < m.points.length - 1; i++) {
+                    const p1 = m.points[i];
+                    const p2 = m.points[i + 1];
+                    const dist = haversineDistance(p1, p2);
+                    const mid = getMidpoint(p1, p2);
+                    const lbl = new MeasureLabelOverlay(
+                        new google.maps.LatLng(mid.lat, mid.lng),
+                        formatDistance(dist, m.unit), map
+                    );
+                    overlays.labels.push(lbl);
+                }
+
+                // Total distance label at last point
+                const totalDist = getTotalDistance(m.points);
+                const lastPt = m.points[m.points.length - 1];
+                const totalLabel = new MeasureLabelOverlay(
+                    new google.maps.LatLng(lastPt.lat, lastPt.lng),
+                    'Total: ' + formatDistance(totalDist, m.unit), map
+                );
+                overlays.labels.push(totalLabel);
+            }
+
+            // Small vertex dots
+            m.points.forEach(p => {
+                const marker = new google.maps.Marker({
+                    position: { lat: p.lat, lng: p.lng }, map: map,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 5, fillColor: color, fillOpacity: 1,
+                        strokeColor: '#fff', strokeWeight: 1.5
+                    },
+                    zIndex: 999, clickable: false
+                });
+                overlays.markers.push(marker);
+            });
+
+            savedMeasureOverlays.push(overlays);
+        }
+
+        function selectMeasurement(id, latLng) {
+            // If already selected, deselect
+            if (selectedMeasureId === id) { deselectMeasurement(); return; }
+            deselectMeasurement();
+            selectedMeasureId = id;
+
+            // Highlight the shape
+            const ov = savedMeasureOverlays.find(o => o.id === id);
+            if (ov) {
+                ov.shapes.forEach(s => s.setOptions({ strokeWeight: 6 }));
+            }
+
+            // Show delete InfoWindow
+            if (measureDeleteIW) measureDeleteIW.close();
+            measureDeleteIW = new google.maps.InfoWindow({
+                content: '<button id="meas-del-btn" style="background:#f44336;color:#fff;border:none;border-radius:4px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600;">Delete</button>',
+                position: latLng, disableAutoPan: true
+            });
+            measureDeleteIW.open(map);
+            google.maps.event.addListenerOnce(measureDeleteIW, 'domready', function() {
+                document.getElementById('meas-del-btn').addEventListener('click', function() {
+                    deleteMeasurement(id);
+                });
+            });
+            google.maps.event.addListenerOnce(measureDeleteIW, 'closeclick', function() {
+                deselectMeasurement();
+            });
+        }
+
+        function deselectMeasurement() {
+            if (selectedMeasureId !== null) {
+                const ov = savedMeasureOverlays.find(o => o.id === selectedMeasureId);
+                if (ov) ov.shapes.forEach(s => s.setOptions({ strokeWeight: 3 }));
+            }
+            selectedMeasureId = null;
+            if (measureDeleteIW) { measureDeleteIW.close(); measureDeleteIW = null; }
+        }
+
+        function deleteMeasurement(id) {
+            // Remove overlays from map
+            const ov = savedMeasureOverlays.find(o => o.id === id);
+            if (ov) {
+                ov.shapes.forEach(s => s.setMap(null));
+                ov.markers.forEach(m => m.setMap(null));
+                ov.labels.forEach(l => l.setMap(null));
+            }
+            savedMeasureOverlays = savedMeasureOverlays.filter(o => o.id !== id);
+            savedMeasurements = savedMeasurements.filter(m => m.id !== id);
+            try {
+                localStorage.setItem('gis_measurements', JSON.stringify(savedMeasurements));
+            } catch (e) { /* ignore */ }
+            deselectMeasurement();
+            updateStatus('Measurement deleted');
+        }
+
         // Point-in-polygon test (ray casting) — used on main thread for region detection
         function pointInPolygon(point, polygon) {
             let inside = false;
@@ -1456,6 +1920,41 @@
                     enableMapInteraction();
                 }
             });
+
+            // Define MeasureLabelOverlay (needs google.maps.OverlayView which loads with the API)
+            MeasureLabelOverlay = class extends google.maps.OverlayView {
+                constructor(position, text, mapInstance) {
+                    super();
+                    this._position = position;
+                    this._text = text;
+                    this._div = null;
+                    this.setMap(mapInstance);
+                }
+                onAdd() {
+                    this._div = document.createElement('div');
+                    this._div.className = 'measure-label';
+                    this._div.textContent = this._text;
+                    this.getPanes().overlayLayer.appendChild(this._div);
+                }
+                draw() {
+                    const proj = this.getProjection();
+                    if (!proj) return;
+                    const pos = proj.fromLatLngToDivPixel(this._position);
+                    if (pos && this._div) {
+                        this._div.style.left = pos.x + 'px';
+                        this._div.style.top = pos.y + 'px';
+                    }
+                }
+                onRemove() {
+                    if (this._div && this._div.parentNode) {
+                        this._div.parentNode.removeChild(this._div);
+                        this._div = null;
+                    }
+                }
+            };
+
+            // Load saved measurements from localStorage
+            loadSavedMeasurements();
 
             // Initialize UI event listeners
             initUIEvents();
@@ -2117,6 +2616,44 @@
                 if (navigator.clipboard && this.textContent !== '--') {
                     navigator.clipboard.writeText(this.textContent);
                     updateStatus("Coordinates copied");
+                }
+            });
+
+            // ===== Measurement event listeners =====
+            document.getElementById('btn-measure-length').addEventListener('click', function() {
+                if (measureMode === 'length') { stopMeasureMode(false); return; }
+                startMeasureMode('length');
+            });
+            document.getElementById('btn-measure-area').addEventListener('click', function() {
+                if (measureMode === 'area') { stopMeasureMode(false); return; }
+                startMeasureMode('area');
+            });
+            document.getElementById('measure-undo').addEventListener('click', function() {
+                if (measurePoints.length === 0) return;
+                measurePoints.pop();
+                const last = measureMarkers.pop();
+                if (last) last.setMap(null);
+                updateMeasureVisuals();
+            });
+            document.getElementById('measure-done').addEventListener('click', function() {
+                const minPts = measureMode === 'area' ? 3 : 2;
+                if (measurePoints.length < minPts) return;
+                stopMeasureMode(true);
+            });
+            document.getElementById('measure-cancel').addEventListener('click', function() {
+                stopMeasureMode(false);
+            });
+            document.getElementById('measure-unit-length').addEventListener('change', function() {
+                if (measureMode === 'length') updateMeasureVisuals();
+            });
+            document.getElementById('measure-unit-area').addEventListener('change', function() {
+                if (measureMode === 'area') updateMeasureVisuals();
+            });
+
+            // Deselect saved measurement when clicking empty map
+            map.addListener('click', function() {
+                if (selectedMeasureId !== null && !measureMode) {
+                    deselectMeasurement();
                 }
             });
         }
