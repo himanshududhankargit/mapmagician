@@ -1208,7 +1208,7 @@
             measurePoints.push(pt);
             const idx = measurePoints.length - 1;
 
-            // Create vertex marker (tap to show handle)
+            // Create vertex marker (draggable + tap to show handle)
             const marker = new google.maps.Marker({
                 position: event.latLng,
                 map: map,
@@ -1217,9 +1217,14 @@
                     scale: 8, fillColor: '#FF6D00', fillOpacity: 1,
                     strokeColor: '#fff', strokeWeight: 2
                 },
-                zIndex: 1000, clickable: true
+                zIndex: 1000, clickable: true, draggable: true
             });
             marker._ptIndex = idx;
+            marker.addListener('drag', function() {
+                measurePoints[marker._ptIndex] = { lat: marker.getPosition().lat(), lng: marker.getPosition().lng() };
+                updateMeasureVisuals();
+                if (activeVertexHandle && activeVertexHandle._marker === marker) activeVertexHandle.draw();
+            });
             marker.addListener('click', function() {
                 showVertexHandle(marker, {
                     isSaved: false,
@@ -1389,7 +1394,7 @@
             // Build shapes and labels
             rebuildSavedShapesAndLabels(m, overlays, color);
 
-            // Vertex markers (tap to show move handle + delete)
+            // Vertex markers (draggable + tap to show move handle + delete)
             m.points.forEach(function(p, idx) {
                 const marker = new google.maps.Marker({
                     position: { lat: p.lat, lng: p.lng }, map: map,
@@ -1398,10 +1403,24 @@
                         scale: 7, fillColor: color, fillOpacity: 1,
                         strokeColor: '#fff', strokeWeight: 2
                     },
-                    zIndex: 1000, clickable: true, cursor: 'pointer'
+                    zIndex: 1000, clickable: true, draggable: true, cursor: 'grab'
                 });
                 marker._ptIndex = idx;
                 marker._measId = m.id;
+                marker.addListener('drag', function() {
+                    m.points[idx] = { lat: marker.getPosition().lat(), lng: marker.getPosition().lng() };
+                    overlays.shapes.forEach(function(s) { s.setMap(null); });
+                    overlays.labels.forEach(function(l) { l.setMap(null); });
+                    overlays.shapes = [];
+                    overlays.labels = [];
+                    rebuildSavedShapesAndLabels(m, overlays, color);
+                    if (activeVertexHandle && activeVertexHandle._marker === marker) activeVertexHandle.draw();
+                });
+                marker.addListener('dragend', function() {
+                    try {
+                        localStorage.setItem('gis_measurements', JSON.stringify(savedMeasurements));
+                    } catch (e) { /* ignore */ }
+                });
                 marker.addListener('click', function() {
                     showVertexHandle(marker, {
                         isSaved: true,
