@@ -681,7 +681,9 @@
                 document.getElementById('signout-dialog-email').textContent = currentUser.email;
                 document.getElementById('signout-dialog-overlay').classList.add('open');
             } else {
-                triggerGoogleSignIn();
+                document.getElementById('auth-dialog-desc').textContent =
+                    'Sign in with your Google account to access premium maps, save purchases, and sync across devices.';
+                document.getElementById('auth-dialog-overlay').classList.add('open');
             }
         });
         document.getElementById('signout-dialog-confirm').addEventListener('click', () => {
@@ -1056,7 +1058,7 @@
             const supportBtn = document.getElementById('zoom-restrict-support');
 
             title.textContent = 'No Map Data Available';
-            desc.textContent = 'There are no development plan maps available for this area. Try navigating to a city or town to explore available maps.';
+            desc.textContent = 'There are no development plan maps available for this area. Browse available regions to explore maps.';
             regionInfo.style.display = 'none';
             supportBtn.style.display = 'none';
 
@@ -1064,8 +1066,8 @@
 
             const newBtn = actionBtn.cloneNode(true);
             newBtn.id = 'zoom-restrict-action';
-            newBtn.textContent = 'OK';
-            newBtn.className = 'zoom-dialog-btn zoom-btn-dismiss';
+            newBtn.textContent = 'Browse Available Regions';
+            newBtn.className = 'zoom-dialog-btn zoom-btn-access';
             actionBtn.parentNode.replaceChild(newBtn, actionBtn);
 
             newBtn.addEventListener('click', () => {
@@ -1075,6 +1077,7 @@
                 zoomBypassActive = true;
                 map.setZoom(MAX_FREE_ZOOM - 1);
                 google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
+                openSidebar();
             });
 
             document.getElementById('zoom-restrict-cancel').onclick = () => {
