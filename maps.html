@@ -265,12 +265,13 @@
         /* Login-required dialog */
         .auth-dialog-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:3000; display:none; align-items:center; justify-content:center; }
         .auth-dialog-overlay.open { display:flex; }
-        .auth-dialog { background:#fff; border-radius:16px; padding:28px 24px; max-width:340px; width:90%; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.2); }
-        .auth-dialog h3 { margin:0 0 8px; font-size:18px; color:#212121; }
-        .auth-dialog p { margin:0 0 20px; font-size:14px; color:#555; line-height:1.5; }
-        .auth-dialog-btn { display:inline-flex; align-items:center; gap:8px; padding:10px 24px; border:none; border-radius:8px; background:#4285F4; color:#fff; font-size:14px; font-weight:600; cursor:pointer; }
-        .auth-dialog-btn:hover { background:#3367D6; }
-        .auth-dialog-cancel { display:block; margin:12px auto 0; background:none; border:none; color:#888; font-size:13px; cursor:pointer; }
+        .auth-dialog { background:#fff; border-radius:28px; padding:40px 32px 32px; max-width:380px; width:90%; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.12),0 8px 24px rgba(0,0,0,0.14); font-family:'Google Sans','Segoe UI',Roboto,Arial,sans-serif; }
+        .auth-dialog h3 { margin:0 0 8px; font-size:24px; color:#202124; font-weight:400; }
+        .auth-dialog p { margin:0 0 28px; font-size:14px; color:#5f6368; line-height:1.6; }
+        .auth-dialog-btn { display:inline-flex; align-items:center; gap:12px; padding:0 24px; height:44px; border:1px solid #dadce0; border-radius:22px; background:#fff; color:#3c4043; font-size:14px; font-weight:500; cursor:pointer; font-family:'Google Sans','Segoe UI',Roboto,Arial,sans-serif; transition:background 0.2s,box-shadow 0.2s; }
+        .auth-dialog-btn:hover { background:#f7f8f8; box-shadow:0 1px 3px rgba(60,64,67,0.3); }
+        .auth-dialog-cancel { display:block; margin:20px auto 0; background:none; border:none; color:#1a73e8; font-size:14px; font-weight:500; cursor:pointer; font-family:'Google Sans','Segoe UI',Roboto,Arial,sans-serif; }
+        .auth-dialog-cancel:hover { color:#174ea6; background:rgba(26,115,232,0.04); border-radius:4px; padding:4px 8px; }
 
         /* Zoom restriction dialog */
         .zoom-dialog-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:3000; display:none; align-items:center; justify-content:center; }
@@ -473,13 +474,21 @@
     <!-- Sign-in required dialog -->
     <div class="auth-dialog-overlay" id="auth-dialog-overlay">
         <div class="auth-dialog">
-            <h3>Sign in to Purchase</h3>
-            <p id="auth-dialog-desc">A 7-Day Pass requires you to sign in with your Google account to complete the payment.</p>
+            <svg width="75" height="24" viewBox="0 0 272 92" style="margin-bottom:20px">
+                <path fill="#4285F4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+                <path fill="#EA4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+                <path fill="#FBBC05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/>
+                <path fill="#4285F4" d="M225 3v65h-9.5V3h9.5z"/>
+                <path fill="#34A853" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/>
+                <path fill="#EA4335" d="M35.29 41.19V32H67.25C67.59 33.68 67.77 35.69 67.77 37.86c0 8.32-2.27 18.59-9.57 25.91C51.51 70.93 43.11 75 32.39 75c-17.71 0-32.6-14.44-32.6-32.16S14.68 10.69 32.39 10.69c9.83 0 16.85 3.86 22.09 8.9l-6.21 6.21c-3.78-3.53-8.91-6.29-15.88-6.29-12.97 0-23.1 10.46-23.1 23.44s10.13 23.44 23.1 23.44c8.4 0 13.19-3.38 16.26-6.45 2.49-2.49 4.12-6.04 4.76-10.91H35.29z"/>
+            </svg>
+            <h3>Sign in</h3>
+            <p id="auth-dialog-desc">Use your Google Account to continue with the purchase</p>
             <button class="auth-dialog-btn" id="auth-dialog-signin">
                 <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59A14.5 14.5 0 019.5 24c0-1.59.28-3.14.76-4.59l-7.98-6.19A23.99 23.99 0 000 24c0 3.77.87 7.35 2.56 10.78l7.97-6.19z"/><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-                Sign in with Google
+                Continue with Google
             </button>
-            <button class="auth-dialog-cancel" id="auth-dialog-cancel">Cancel</button>
+            <button class="auth-dialog-cancel" id="auth-dialog-cancel">Not now</button>
         </div>
     </div>
 
@@ -565,6 +574,13 @@
         let cachedAccessToken = ''; // Signed access token from getPurchaseStatus
         let pendingPurchase = null; // { productId, regionName } — set when buy clicked before login
 
+        // Sign in anonymously on page load (for free tile access via CloudFront cookies)
+        if (!firebase.auth().currentUser) {
+            firebase.auth().signInAnonymously().catch(err => {
+                console.error('Anonymous sign-in failed:', err);
+            });
+        }
+
         // Auth dialog button handlers
         document.getElementById('auth-dialog-signin').addEventListener('click', () => {
             document.getElementById('auth-dialog-overlay').classList.remove('open');
@@ -606,7 +622,7 @@
                     profileBtn.style.color = '#2E7D32';
                 }
                 profileBtn.title = user.displayName || user.email;
-                loadPurchaseStatus(user.email);
+                if (user.email) loadPurchaseStatus(user.email);
                 fetchCloudFrontCookies();
 
                 // Resume pending purchase after sign-in
@@ -622,6 +638,16 @@
                 profileBtn.title = 'Sign in';
                 activePurchases.clear();
                 cachedIdToken = null;
+
+                // Clear CloudFront cookies on sign-out
+                document.cookie = 'CloudFront-Policy=; domain=.mapmagician.in; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                document.cookie = 'CloudFront-Signature=; domain=.mapmagician.in; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                document.cookie = 'CloudFront-Key-Pair-Id=; domain=.mapmagician.in; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+
+                // Sign in anonymously for free tile access
+                firebase.auth().signInAnonymously().catch(err => {
+                    console.error('Anonymous sign-in failed:', err);
+                });
             }
         });
 
@@ -1018,7 +1044,49 @@
 
             overlay.classList.add('open');
         }
-        
+
+        function showNoDataDialog() {
+            const overlay = document.getElementById('zoom-restrict-overlay');
+            const title = document.getElementById('zoom-restrict-title');
+            const desc = document.getElementById('zoom-restrict-desc');
+            const regionInfo = document.getElementById('zoom-restrict-region');
+            const actionBtn = document.getElementById('zoom-restrict-action');
+            const supportBtn = document.getElementById('zoom-restrict-support');
+
+            title.textContent = 'No Map Data Available';
+            desc.textContent = 'There are no development plan maps available for this area. Try navigating to a city or town to explore available maps.';
+            regionInfo.style.display = 'none';
+            supportBtn.style.display = 'none';
+
+            disableMapInteraction();
+
+            const newBtn = actionBtn.cloneNode(true);
+            newBtn.id = 'zoom-restrict-action';
+            newBtn.textContent = 'OK';
+            newBtn.className = 'zoom-dialog-btn zoom-btn-dismiss';
+            actionBtn.parentNode.replaceChild(newBtn, actionBtn);
+
+            newBtn.addEventListener('click', () => {
+                overlay.classList.remove('open');
+                enableMapInteraction();
+                supportBtn.style.display = '';
+                zoomBypassActive = true;
+                map.setZoom(MAX_FREE_ZOOM - 1);
+                google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
+            });
+
+            document.getElementById('zoom-restrict-cancel').onclick = () => {
+                overlay.classList.remove('open');
+                enableMapInteraction();
+                supportBtn.style.display = '';
+                zoomBypassActive = true;
+                map.setZoom(MAX_FREE_ZOOM - 1);
+                google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
+            };
+
+            overlay.classList.add('open');
+        }
+
         function updateRegionStatus() {
             const el = document.getElementById('region-status');
             const district = findDistrictAtCenter();
@@ -1286,7 +1354,8 @@
                 zoomControl: true,
                 zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
                 fullscreenControl: false,
-                gestureHandling: 'greedy'
+                gestureHandling: 'greedy',
+                maxZoom: MAX_FREE_ZOOM
             });
 
             // Places Autocomplete (New API)
@@ -1324,8 +1393,12 @@
                 const overlay = document.getElementById('zoom-restrict-overlay');
                 const district = findDistrictAtCenter();
 
-                if (z >= MAX_FREE_ZOOM && district && !hasPurchase(district.productPurchaseID)) {
-                    // At zoom limit in unpurchased region — show dialog
+                if (z >= MAX_FREE_ZOOM && !district) {
+                    // At zoom limit but no tile data here — show "no data" message
+                    dialogTriggeredByRegionEntry = true;
+                    showNoDataDialog();
+                } else if (z >= MAX_FREE_ZOOM && district && !hasPurchase(district.productPurchaseID)) {
+                    // At zoom limit in unpurchased region — show purchase dialog
                     dialogTriggeredByRegionEntry = true;
                     showZoomRestrictionDialog(district);
                 } else if (z < MAX_FREE_ZOOM && overlay.classList.contains('open')) {
