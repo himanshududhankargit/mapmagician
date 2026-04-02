@@ -722,7 +722,7 @@
         const FETCH_COOLDOWN_MS = 30000; // Don't re-fetch within 30 seconds
 
         async function fetchPurchaseStatus(force) {
-            if (!currentUser) return;
+            if (!currentUser || currentUser.isAnonymous) return;
             const now = Date.now();
             if (!force && now - lastFetchTime < FETCH_COOLDOWN_MS) return; // skip if recently fetched
             lastFetchTime = now;
@@ -810,6 +810,7 @@
 
         // Re-enable map if current district becomes purchased
         function checkAndReenableMap() {
+            if (!currentUser || currentUser.isAnonymous) return;
             const district = findDistrictAtCenter();
             if (district && hasPurchase(district.productPurchaseID)) {
                 map.setOptions({ maxZoom: 21 });
@@ -1162,8 +1163,8 @@
             lastCheckedRegionId = regionId;
             bannerDismissedForRegion = null;
 
-            // Poll purchase status on region change
-            if (currentUser) fetchPurchaseStatus();
+            // Poll purchase status on region change (only for Google-signed-in users)
+            if (currentUser && !currentUser.isAnonymous) fetchPurchaseStatus();
 
             const overlay = document.getElementById('zoom-restrict-overlay');
 
