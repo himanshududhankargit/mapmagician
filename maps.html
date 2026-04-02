@@ -1089,8 +1089,9 @@
                 map.setZoom(MAX_FREE_ZOOM - 1);
                 google.maps.event.addListenerOnce(map, 'idle', () => {
                     zoomBypassActive = false;
-                    document.getElementById('sidebar-panel').classList.add('open');
-                    document.getElementById('sidebar-overlay').classList.add('open');
+                    // Click the first state tab to populate sidebar, then open it
+                    const firstTab = document.querySelector('.nav-tab');
+                    if (firstTab) firstTab.click();
                 });
             });
 
