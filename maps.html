@@ -738,6 +738,7 @@
                 refreshSidebarIfOpen();
                 checkAndReenableMap();
                 lastCheckedRegionId = null;
+                checkRegionOnMove();
             } catch (e) {
                 console.error('Failed to fetch purchase status:', e);
             }
@@ -811,9 +812,11 @@
         function checkAndReenableMap() {
             const district = findDistrictAtCenter();
             if (district && hasPurchase(district.productPurchaseID)) {
+                map.setOptions({ maxZoom: 21 });
                 enableMapInteraction();
                 document.getElementById('zoom-restrict-overlay').classList.remove('open');
                 updateRegionStatus();
+                showUnlockToast(district.districtName);
             }
         }
 
@@ -838,9 +841,10 @@
                 return;
             }
 
-            // Check if already purchased
+            // Already purchased — unlock zoom and show toast
             if (hasPurchase(productId)) {
-                alert('You already have an active pass for ' + regionName);
+                map.setOptions({ maxZoom: 21 });
+                showUnlockToast(regionName);
                 return;
             }
 
