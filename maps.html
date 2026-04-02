@@ -1100,18 +1100,26 @@
         function onMeasureClick(event) {
             const pt = { lat: event.latLng.lat(), lng: event.latLng.lng() };
             measurePoints.push(pt);
+            const idx = measurePoints.length - 1;
 
-            // Create vertex marker
+            // Create draggable vertex marker
             const marker = new google.maps.Marker({
                 position: event.latLng,
                 map: map,
                 icon: {
                     path: google.maps.SymbolPath.CIRCLE,
-                    scale: 7, fillColor: '#FF6D00', fillOpacity: 1,
+                    scale: 8, fillColor: '#FF6D00', fillOpacity: 1,
                     strokeColor: '#fff', strokeWeight: 2
                 },
                 zIndex: 1000,
-                clickable: false
+                draggable: true,
+                clickable: true
+            });
+            marker._ptIndex = idx;
+            marker.addListener('drag', function() {
+                const pos = marker.getPosition();
+                measurePoints[marker._ptIndex] = { lat: pos.lat(), lng: pos.lng() };
+                updateMeasureVisuals();
             });
             measureMarkers.push(marker);
             updateMeasureVisuals();
@@ -1264,6 +1272,47 @@
         function renderSavedMeasurement(m) {
             const color = '#008577';
             const overlays = { id: m.id, shapes: [], markers: [], labels: [] };
+
+            // Build shapes and labels
+            rebuildSavedShapesAndLabels(m, overlays, color);
+
+            // Draggable vertex markers
+            m.points.forEach(function(p, idx) {
+                const marker = new google.maps.Marker({
+                    position: { lat: p.lat, lng: p.lng }, map: map,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 7, fillColor: color, fillOpacity: 1,
+                        strokeColor: '#fff', strokeWeight: 2
+                    },
+                    zIndex: 1000, draggable: true, clickable: true,
+                    cursor: 'grab'
+                });
+                marker._ptIndex = idx;
+                marker._measId = m.id;
+                marker.addListener('drag', function() {
+                    const pos = marker.getPosition();
+                    m.points[idx] = { lat: pos.lat(), lng: pos.lng() };
+                    // Rebuild shapes and labels live
+                    overlays.shapes.forEach(s => s.setMap(null));
+                    overlays.labels.forEach(l => l.setMap(null));
+                    overlays.shapes = [];
+                    overlays.labels = [];
+                    rebuildSavedShapesAndLabels(m, overlays, color);
+                });
+                marker.addListener('dragend', function() {
+                    // Persist updated points
+                    try {
+                        localStorage.setItem('gis_measurements', JSON.stringify(savedMeasurements));
+                    } catch (e) { /* ignore */ }
+                });
+                overlays.markers.push(marker);
+            });
+
+            savedMeasureOverlays.push(overlays);
+        }
+
+        function rebuildSavedShapesAndLabels(m, overlays, color) {
             const path = m.points.map(p => ({ lat: p.lat, lng: p.lng }));
 
             if (m.type === 'area' && m.points.length >= 3) {
@@ -1275,7 +1324,7 @@
                 polygon.addListener('click', function(e) { selectMeasurement(m.id, e.latLng); });
                 overlays.shapes.push(polygon);
 
-                // Segment labels for all edges including closing edge
+                // Segment labels for all edges
                 for (let i = 0; i < m.points.length; i++) {
                     const p1 = m.points[i];
                     const p2 = m.points[(i + 1) % m.points.length];
@@ -1329,22 +1378,6 @@
                 );
                 overlays.labels.push(totalLabel);
             }
-
-            // Small vertex dots
-            m.points.forEach(p => {
-                const marker = new google.maps.Marker({
-                    position: { lat: p.lat, lng: p.lng }, map: map,
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 5, fillColor: color, fillOpacity: 1,
-                        strokeColor: '#fff', strokeWeight: 1.5
-                    },
-                    zIndex: 999, clickable: false
-                });
-                overlays.markers.push(marker);
-            });
-
-            savedMeasureOverlays.push(overlays);
         }
 
         function selectMeasurement(id, latLng) {
@@ -1934,7 +1967,7 @@
                     this._div = document.createElement('div');
                     this._div.className = 'measure-label';
                     this._div.textContent = this._text;
-                    this.getPanes().overlayLayer.appendChild(this._div);
+                    this.getPanes().floatPane.appendChild(this._div);
                 }
                 draw() {
                     const proj = this.getProjection();
