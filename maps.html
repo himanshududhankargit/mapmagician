@@ -987,14 +987,14 @@
             };
 
             document.getElementById('zoom-restrict-support').onclick = () => {
+                // Hide purchase dialog first
+                overlay.classList.remove('open');
                 if (!currentUser) {
                     pendingPurchase = null;
                     document.getElementById('auth-dialog-desc').textContent = 'Please sign in to contact support.';
                     document.getElementById('auth-dialog-overlay').classList.add('open');
                     return;
                 }
-                // Hide purchase dialog, show support form
-                overlay.classList.remove('open');
                 openSupportForm(district, true);
             };
 
@@ -1278,7 +1278,8 @@
             const input = document.getElementById('search-input');
             const autocomplete = new google.maps.places.Autocomplete(input, {
                 fields: ['geometry', 'name'],
-                types: ['geocode', 'establishment']
+                types: ['geocode', 'establishment'],
+                componentRestrictions: { country: 'in' }
             });
             autocomplete.bindTo('bounds', map);
 
@@ -1333,6 +1334,15 @@
 
                 const district = findDistrictAtCenter();
                 if (district && hasPurchase(district.productPurchaseID)) return;
+
+                if (!district) {
+                    // No map data at this location — snap back quietly
+                    zoomBypassActive = true;
+                    map.setZoom(MAX_FREE_ZOOM);
+                    google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
+                    updateStatus('No map data available at this location');
+                    return;
+                }
 
                 // Zoom trigger — dismiss should snap zoom back to 14
                 dialogTriggeredByRegionEntry = false;
