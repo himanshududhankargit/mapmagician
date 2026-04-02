@@ -653,7 +653,8 @@
             }
         });
 
-        // Fetch CloudFront signed cookies after login
+        // Fetch CloudFront signed cookies after login, with auto-refresh
+        let cfCookieRefreshTimer = null;
         async function fetchCloudFrontCookies() {
             try {
                 const getCloudFrontCookies = functions.httpsCallable('getCloudFrontCookies');
@@ -666,6 +667,16 @@
                 document.cookie = `CloudFront-Key-Pair-Id=${data['CloudFront-Key-Pair-Id']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
 
                 console.log('CloudFront cookies set, expires:', expires);
+
+                // Auto-refresh 1 hour before expiry
+                if (cfCookieRefreshTimer) clearTimeout(cfCookieRefreshTimer);
+                const refreshIn = data.expiresAt - Date.now() - 3600000; // 1 hour before
+                if (refreshIn > 0) {
+                    cfCookieRefreshTimer = setTimeout(() => {
+                        console.log('Auto-refreshing CloudFront cookies');
+                        fetchCloudFrontCookies();
+                    }, refreshIn);
+                }
             } catch (err) {
                 if (err.code === 'permission-denied') {
                     console.log('No active purchase — tile access restricted');
@@ -1077,7 +1088,8 @@
                 zoomBypassActive = true;
                 map.setZoom(MAX_FREE_ZOOM - 1);
                 google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
-                openSidebar();
+                document.getElementById('sidebar-panel').classList.add('open');
+                document.getElementById('sidebar-overlay').classList.add('open');
             });
 
             document.getElementById('zoom-restrict-cancel').onclick = () => {
