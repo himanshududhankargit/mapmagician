@@ -474,16 +474,11 @@
     <!-- Sign-in required dialog -->
     <div class="auth-dialog-overlay" id="auth-dialog-overlay">
         <div class="auth-dialog">
-            <svg width="75" height="24" viewBox="0 0 272 92" style="margin-bottom:20px">
-                <path fill="#4285F4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
-                <path fill="#EA4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
-                <path fill="#FBBC05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/>
-                <path fill="#4285F4" d="M225 3v65h-9.5V3h9.5z"/>
-                <path fill="#34A853" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/>
-                <path fill="#EA4335" d="M35.29 41.19V32H67.25C67.59 33.68 67.77 35.69 67.77 37.86c0 8.32-2.27 18.59-9.57 25.91C51.51 70.93 43.11 75 32.39 75c-17.71 0-32.6-14.44-32.6-32.16S14.68 10.69 32.39 10.69c9.83 0 16.85 3.86 22.09 8.9l-6.21 6.21c-3.78-3.53-8.91-6.29-15.88-6.29-12.97 0-23.1 10.46-23.1 23.44s10.13 23.44 23.1 23.44c8.4 0 13.19-3.38 16.26-6.45 2.49-2.49 4.12-6.04 4.76-10.91H35.29z"/>
-            </svg>
-            <h3>Sign in</h3>
-            <p id="auth-dialog-desc">Use your Google Account to continue with the purchase</p>
+            <div style="width:48px;height:48px;margin:0 auto 20px;background:#f0f4ff;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#1a73e8"/></svg>
+            </div>
+            <h3>Sign in required</h3>
+            <p id="auth-dialog-desc">Sign in with your Google account to complete the purchase.</p>
             <button class="auth-dialog-btn" id="auth-dialog-signin">
                 <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59A14.5 14.5 0 019.5 24c0-1.59.28-3.14.76-4.59l-7.98-6.19A23.99 23.99 0 000 24c0 3.77.87 7.35 2.56 10.78l7.97-6.19z"/><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
                 Continue with Google
@@ -607,8 +602,8 @@
             const profileBtn = document.getElementById('profile-btn');
             const profileIcon = document.getElementById('profile-btn-icon');
 
-            if (user) {
-                // Show user avatar in search bar
+            if (user && !user.isAnonymous) {
+                // Google-signed-in user — show avatar, load purchases
                 if (user.photoURL) {
                     profileIcon.textContent = '';
                     const avatarImg = document.createElement('img');
@@ -631,6 +626,13 @@
                     pendingPurchase = null;
                     setTimeout(() => buyRegion(productId, regionName), 500);
                 }
+            } else if (user && user.isAnonymous) {
+                // Anonymous user — only fetch cookies for tile access, show as not logged in
+                fetchCloudFrontCookies();
+                profileIcon.textContent = 'G';
+                profileBtn.style.background = '#e3f2fd';
+                profileBtn.style.color = '#1976D2';
+                profileBtn.title = 'Sign in';
             } else {
                 profileIcon.textContent = 'G';
                 profileBtn.style.background = '#e3f2fd';
@@ -675,7 +677,7 @@
 
         // Profile button click (sign in / sign out)
         document.getElementById('profile-btn').addEventListener('click', () => {
-            if (currentUser) {
+            if (currentUser && !currentUser.isAnonymous) {
                 document.getElementById('signout-dialog-email').textContent = currentUser.email;
                 document.getElementById('signout-dialog-overlay').classList.add('open');
             } else {
@@ -806,11 +808,11 @@
 
         // Buy a 7-day pass
         async function buyRegion(productId, regionName) {
-            if (!currentUser) {
+            if (!currentUser || currentUser.isAnonymous) {
                 // Show login dialog — store purchase intent so we can resume after sign-in
                 pendingPurchase = { productId, regionName };
                 document.getElementById('auth-dialog-desc').textContent =
-                    'The 7-Day Pass for ' + regionName + ' requires you to sign in with your Google account to complete the payment.';
+                    'Sign in with your Google account to purchase the 7-Day Pass for ' + regionName + '.';
                 document.getElementById('auth-dialog-overlay').classList.add('open');
                 return;
             }
