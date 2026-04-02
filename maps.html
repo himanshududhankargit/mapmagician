@@ -880,7 +880,7 @@
         let lastCheckedRegionId = null; // cache to skip re-processing same region
         let bannerDismissedForRegion = null; // track dismissed region to avoid re-showing
         let dialogTriggeredByRegionEntry = false; // distinguish region-entry vs zoom triggers
-        const MAX_FREE_ZOOM = 22; // TODO: revert to 14 after testing
+        const MAX_FREE_ZOOM = 14;
 
         // Point-in-polygon test (ray casting) — used on main thread for region detection
         function pointInPolygon(point, polygon) {
