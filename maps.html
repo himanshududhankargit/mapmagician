@@ -916,7 +916,14 @@
             } catch (error) {
                 loadingOverlay.classList.remove('open');
                 console.error('Purchase error:', error);
-                alert('Payment error: ' + (error.message || error.code || JSON.stringify(error)));
+                if (error.code === 'already-exists') {
+                    // Already purchased — just unlock the region
+                    await fetchPurchaseStatus(true);
+                    map.setOptions({ maxZoom: 21 });
+                    showUnlockToast(regionName);
+                } else {
+                    alert('Payment error: ' + (error.message || error.code || JSON.stringify(error)));
+                }
                 updateStatus('Payment failed');
             }
         }
