@@ -628,7 +628,7 @@
     <script>
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
-        const functions = firebase.app().functions('us-central1');
+        const functions = firebase.app().functions('asia-south1');
         let currentUser = null;
         const activePurchases = new Map(); // productId → expiry timestamp
         let cachedIdToken = null; // Firebase ID token for tile proxy auth
