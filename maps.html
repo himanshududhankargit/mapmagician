@@ -101,7 +101,7 @@
         .fab-stack {
             position: absolute; right: 8px; z-index: 1000;
             display: flex; flex-direction: column; gap: 8px;
-            bottom: 72px;
+            bottom: 90px;
         }
         .fab {
             width: 48px; height: 48px; border-radius: 50%;
@@ -180,9 +180,9 @@
             justify-content: center; padding: 6px 12px; gap: 6px;
         }
         .bottom-bar-left {
-            display: flex; align-items: center; gap: 6px;
+            display: flex; align-items: center; gap: 6px; order: -1;
         }
-        .bottom-bar-center { order: -1; width: 100%; text-align: center; }
+        .bottom-bar-center { order: -1; text-align: center; }
         .bottom-bar-right {
             display: flex; align-items: center; gap: 6px;
             font-size: 10px; color: #555;
@@ -193,16 +193,19 @@
         /* Wide: single row — opacity left, button center, coords right */
         @media (min-width: 700px) {
             .bottom-bar { flex-wrap: nowrap; padding: 8px 16px; }
-            .bottom-bar-left { flex: 1; min-width: 0; }
+            .bottom-bar-left { flex: 1; min-width: 0; order: 0; }
             .bottom-bar-center { order: 0; width: auto; flex-shrink: 0; }
             .bottom-bar-right { flex: 1; min-width: 0; justify-content: flex-end; }
+            .opacity-strip-slider { max-width: 200px; }
+            .nav-regions-btn { height: 36px; padding: 0 20px; font-size: 13px; gap: 8px; }
+            .fab-stack { bottom: 52px; }
         }
         .nav-regions-btn {
-            display: inline-flex; align-items: center; gap: 8px;
-            height: 36px; padding: 0 20px; border: none; border-radius: 18px;
-            background: #008577; color: #fff; font-size: 13px; font-weight: 600;
+            display: inline-flex; align-items: center; gap: 6px;
+            height: 34px; padding: 0 14px; border: none; border-radius: 17px;
+            background: #008577; color: #fff; font-size: 12px; font-weight: 600;
             cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-            transition: background 0.2s;
+            transition: background 0.2s; white-space: nowrap;
         }
         .nav-regions-btn:hover { background: #00695C; }
         .nav-regions-btn svg { flex-shrink: 0; }
@@ -277,7 +280,7 @@
             .region-grid { grid-template-columns: repeat(4, 1fr); max-width: 950px; }
         }
         /* Info strip below nav bar */
-        .opacity-strip-slider { flex: 1; max-width: 200px; height: 3px; -webkit-appearance: none; appearance: none; background: #ddd; border-radius: 2px; outline: none; }
+        .opacity-strip-slider { flex: 1; max-width: 120px; height: 3px; -webkit-appearance: none; appearance: none; background: #ddd; border-radius: 2px; outline: none; }
         .opacity-strip-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #008577; cursor: pointer; }
         .opacity-strip-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #008577; cursor: pointer; border: none; }
         .opacity-strip-label { font-size: 10px; color: #555; min-width: 28px; text-align: center; }
@@ -646,7 +649,7 @@
         <div class="bottom-bar-center">
             <button class="nav-regions-btn" id="btn-access-regions">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" fill="#fff"/></svg>
-                View Available Regions
+                Browse Regions
             </button>
         </div>
         <div class="bottom-bar-right">
