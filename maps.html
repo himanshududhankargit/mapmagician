@@ -411,6 +411,11 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
         .vertex-del-btn:active { background: #FFEBEE; }
+        /* GPS button states */
+        .fab.gps-following { background: #4285F4 !important; }
+        .fab.gps-following svg { stroke: #fff; }
+        .fab.gps-tracking { background: #E3F2FD !important; }
+        .fab.gps-tracking svg { stroke: #4285F4; }
     </style>
 </head>
 <body>
@@ -2785,41 +2790,128 @@
             document.getElementById('layer-panel-close').addEventListener('click', closeLayerPanel);
             layerOverlay.addEventListener('click', closeLayerPanel);
 
-            // GPS button — real-time tracking toggle
+            // GPS button — continuous location tracking (3-state: off → following → tracking → off)
             let gpsWatchId = null;
             let gpsMarker = null;
+            let gpsAccuracyCircle = null;
+            let gpsHeadingMarker = null;
+            let gpsFollowing = false;   // true = auto-center map on updates
+            let gpsPanListener = null;  // listener to detect user pan
             const gpsBtn = document.getElementById('btn-gps');
+
+            function setGpsButtonState(state) {
+                gpsBtn.classList.remove('gps-following', 'gps-tracking');
+                if (state === 'following') gpsBtn.classList.add('gps-following');
+                else if (state === 'tracking') gpsBtn.classList.add('gps-tracking');
+            }
+
+            function stopGpsTracking() {
+                if (gpsWatchId !== null) {
+                    navigator.geolocation.clearWatch(gpsWatchId);
+                    gpsWatchId = null;
+                }
+                if (gpsMarker) { gpsMarker.setMap(null); gpsMarker = null; }
+                if (gpsAccuracyCircle) { gpsAccuracyCircle.setMap(null); gpsAccuracyCircle = null; }
+                if (gpsHeadingMarker) { gpsHeadingMarker.setMap(null); gpsHeadingMarker = null; }
+                if (gpsPanListener) { google.maps.event.removeListener(gpsPanListener); gpsPanListener = null; }
+                gpsFollowing = false;
+                setGpsButtonState('off');
+            }
+
+            function startGpsTracking() {
+                gpsFollowing = true;
+                setGpsButtonState('following');
+                updateStatus("Locating...");
+
+                // Detect user pan to switch from following → tracking
+                gpsPanListener = map.addListener('dragstart', function() {
+                    if (gpsWatchId !== null && gpsFollowing) {
+                        gpsFollowing = false;
+                        setGpsButtonState('tracking');
+                    }
+                });
+
+                gpsWatchId = navigator.geolocation.watchPosition(function(pos) {
+                    const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    const accuracy = pos.coords.accuracy;
+                    const heading = pos.coords.heading;
+
+                    if (!gpsMarker) {
+                        // First fix — create blue dot + accuracy circle
+                        gpsMarker = new google.maps.Marker({
+                            position: loc, map: map,
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 8,
+                                fillColor: '#4285F4', fillOpacity: 1,
+                                strokeColor: '#fff', strokeWeight: 3
+                            },
+                            zIndex: 2000, clickable: false,
+                            title: 'My Location'
+                        });
+                        gpsAccuracyCircle = new google.maps.Circle({
+                            map: map, center: loc,
+                            radius: accuracy,
+                            fillColor: '#4285F4', fillOpacity: 0.1,
+                            strokeColor: '#4285F4', strokeOpacity: 0.25, strokeWeight: 1,
+                            clickable: false, zIndex: 1
+                        });
+                        map.setCenter(loc);
+                        if (map.getZoom() < 16) map.setZoom(17);
+                        updateStatus("Location found");
+                    } else {
+                        gpsMarker.setPosition(loc);
+                        gpsAccuracyCircle.setCenter(loc);
+                        gpsAccuracyCircle.setRadius(accuracy);
+                    }
+
+                    // Heading indicator (cone/arrow)
+                    if (heading !== null && !isNaN(heading) && heading >= 0) {
+                        if (!gpsHeadingMarker) {
+                            gpsHeadingMarker = new google.maps.Marker({
+                                position: loc, map: map,
+                                icon: {
+                                    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                                    scale: 5,
+                                    fillColor: '#4285F4', fillOpacity: 0.7,
+                                    strokeColor: '#fff', strokeWeight: 1,
+                                    rotation: heading,
+                                    anchor: new google.maps.Point(0, 5)
+                                },
+                                zIndex: 1999, clickable: false
+                            });
+                        } else {
+                            gpsHeadingMarker.setPosition(loc);
+                            const icon = gpsHeadingMarker.getIcon();
+                            icon.rotation = heading;
+                            gpsHeadingMarker.setIcon(icon);
+                        }
+                    }
+
+                    if (gpsFollowing) map.setCenter(loc);
+
+                }, function(err) {
+                    updateStatus("Location access denied");
+                    stopGpsTracking();
+                }, { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 });
+            }
 
             gpsBtn.addEventListener('click', function() {
                 if (!navigator.geolocation) { updateStatus("Geolocation not supported"); return; }
 
-                if (gpsWatchId !== null) {
-                    // Stop tracking
-                    navigator.geolocation.clearWatch(gpsWatchId);
-                    gpsWatchId = null;
-                    if (gpsMarker) { gpsMarker.setMap(null); gpsMarker = null; }
-                    gpsBtn.style.background = '#fff';
+                if (gpsWatchId !== null && gpsFollowing) {
+                    // Following → switch to tracking only
+                    gpsFollowing = false;
+                    setGpsButtonState('tracking');
+                    updateStatus("Tracking location");
+                } else if (gpsWatchId !== null && !gpsFollowing) {
+                    // Tracking → stop
+                    stopGpsTracking();
                     updateStatus("GPS tracking stopped");
-                    return;
+                } else {
+                    // Off → start following
+                    startGpsTracking();
                 }
-
-                // Start tracking
-                gpsBtn.style.background = '#e8f5e9';
-                updateStatus("Locating...");
-                gpsWatchId = navigator.geolocation.watchPosition(function(pos) {
-                    const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                    if (!gpsMarker) {
-                        gpsMarker = new google.maps.Marker({ map: map, position: loc, title: 'My Location' });
-                        map.setCenter(loc);
-                        map.setZoom(MAX_FREE_ZOOM);
-                    } else {
-                        gpsMarker.setPosition(loc);
-                    }
-                }, function() {
-                    updateStatus("Location access denied");
-                    gpsWatchId = null;
-                    gpsBtn.style.background = '#fff';
-                }, { enableHighAccuracy: true });
             });
 
             // Fullscreen button
