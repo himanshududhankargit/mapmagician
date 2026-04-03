@@ -1330,6 +1330,7 @@
         let mapInteractionDisabled = false;
         let lastRestrictedDistrict = null; // remember district for unlock button
         let lastCheckedRegionId = null; // cache to skip re-processing same region
+        let lastToastedRegionId = null; // prevent repeated toasts when tiles oscillate
         let bannerDismissedForRegion = null; // track dismissed region to avoid re-showing
         let dialogTriggeredByRegionEntry = false; // distinguish region-entry vs zoom triggers
         const MAX_FREE_ZOOM = 14;
@@ -2231,11 +2232,15 @@
                     overlay.classList.remove('open');
                     enableMapInteraction();
                 }
-                if (regionChanged) showUnlockToast(district.districtName);
+                if (regionChanged && regionId !== lastToastedRegionId) {
+                    lastToastedRegionId = regionId;
+                    showUnlockToast(district.districtName);
+                }
                 return;
             }
 
             // Unpurchased region — always enforce zoom lock
+            lastToastedRegionId = null;
             map.setOptions({ maxZoom: MAX_FREE_ZOOM });
         }
 
