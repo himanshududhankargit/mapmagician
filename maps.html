@@ -2989,10 +2989,21 @@
                 setGpsButtonState('off');
             }
 
+            let gpsToastTimer = null;
+            function showGpsToast(text, color) {
+                const toast = document.getElementById('unlock-toast');
+                const icon = toast.querySelector('svg');
+                document.getElementById('unlock-toast-text').textContent = text;
+                toast.style.background = color || '#2E7D32';
+                toast.classList.add('show');
+                if (gpsToastTimer) clearTimeout(gpsToastTimer);
+                gpsToastTimer = setTimeout(function() { toast.classList.remove('show'); }, 3000);
+            }
+
             function startGpsTracking() {
                 gpsFollowing = true;
                 setGpsButtonState('following');
-                updateStatus("Locating...");
+                showGpsToast('Locating...', '#1976D2');
 
                 // Detect user pan to switch from following → tracking
                 gpsPanListener = map.addListener('dragstart', function() {
@@ -3028,8 +3039,15 @@
                             clickable: false, zIndex: 1
                         });
                         map.setCenter(loc);
-                        if (map.getZoom() < 16) map.setZoom(17);
-                        updateStatus("Location found");
+                        // Only zoom in if user has a purchase for this area; free users stay at MAX_FREE_ZOOM
+                        var gpsDistrict = findDistrictAtCenter();
+                        var hasAccess = gpsDistrict && hasPurchase(gpsDistrict.productPurchaseID);
+                        if (hasAccess) {
+                            if (map.getZoom() < 16) map.setZoom(17);
+                        } else {
+                            if (map.getZoom() < MAX_FREE_ZOOM) map.setZoom(MAX_FREE_ZOOM);
+                        }
+                        showGpsToast('Location found', '#2E7D32');
                     } else {
                         gpsMarker.setPosition(loc);
                         gpsAccuracyCircle.setCenter(loc);
@@ -3062,7 +3080,7 @@
                     if (gpsFollowing) map.setCenter(loc);
 
                 }, function(err) {
-                    updateStatus("Location access denied");
+                    showGpsToast('Location access denied', '#C62828');
                     stopGpsTracking();
                 }, { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 });
             }
@@ -3074,11 +3092,11 @@
                     // Following → switch to tracking only
                     gpsFollowing = false;
                     setGpsButtonState('tracking');
-                    updateStatus("Tracking location");
+                    showGpsToast('Tracking location', '#1565C0');
                 } else if (gpsWatchId !== null && !gpsFollowing) {
                     // Tracking → stop
                     stopGpsTracking();
-                    updateStatus("GPS tracking stopped");
+                    showGpsToast('GPS tracking stopped', '#555');
                 } else {
                     // Off → start following
                     startGpsTracking();
