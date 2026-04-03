@@ -842,7 +842,7 @@
         googleProvider.setCustomParameters({ prompt: 'select_account' });
         const functions = firebase.app().functions('asia-south1');
         let currentUser = null;
-        const activePurchases = new Map(); // productId → expiry timestamp
+        const activePurchases = new Map(); // productId → { expiry, plan }
         const cachedPricing = new Map();   // productId → price (pre-fetched at startup)
         let cachedIdToken = null; // Firebase ID token for tile proxy auth
         let cachedAccessToken = ''; // Signed access token from getPurchaseStatus
@@ -1076,8 +1076,13 @@
                 const getPurchaseStatus = functions.httpsCallable('getPurchaseStatus');
                 const { data } = await getPurchaseStatus();
                 activePurchases.clear();
-                Object.entries(data.purchases || {}).forEach(([productId, expiry]) => {
-                    activePurchases.set(productId, expiry);
+                Object.entries(data.purchases || {}).forEach(([productId, val]) => {
+                    // Handle both old format (number) and new format ({expiry, plan})
+                    if (typeof val === 'object' && val) {
+                        activePurchases.set(productId, { expiry: val.expiry, plan: val.plan || '' });
+                    } else {
+                        activePurchases.set(productId, { expiry: val, plan: '' });
+                    }
                 });
                 cachedAccessToken = data.accessToken || '';
                 refreshSidebarIfOpen();
@@ -1180,6 +1185,26 @@
             return activePurchases.has(pid) ||
                    activePurchases.has('district' + pid) ||
                    activePurchases.has(pid.replace(/^district/, ''));
+        }
+
+        // Get plan type for a purchased product
+        function getPurchasePlan(productId) {
+            if (!productId) return '';
+            const pid = productId.toLowerCase().replace(/gst$/, '');
+            const entry = activePurchases.get(pid) ||
+                          activePurchases.get('district' + pid) ||
+                          activePurchases.get(pid.replace(/^district/, ''));
+            return entry ? (entry.plan || '') : '';
+        }
+
+        // Get expiry for a purchased product
+        function getPurchaseExpiry(productId) {
+            if (!productId) return 0;
+            const pid = productId.toLowerCase().replace(/gst$/, '');
+            const entry = activePurchases.get(pid) ||
+                          activePurchases.get('district' + pid) ||
+                          activePurchases.get(pid.replace(/^district/, ''));
+            return entry ? (entry.expiry || 0) : 0;
         }
 
         // Buy a 7-day pass
@@ -2139,8 +2164,12 @@
             if (district) {
                 el.style.display = 'inline';
                 if (hasPurchase(district.productPurchaseID)) {
+                    const plan = getPurchasePlan(district.productPurchaseID);
+                    const planLabel = plan === 'professional' ? ' · Mobile + Web' :
+                                     plan === 'web' ? ' · Web Only' :
+                                     plan === 'override' ? ' · Override' : '';
                     el.className = 'region-status subscribed';
-                    el.textContent = district.districtName + ' - Subscribed';
+                    el.textContent = district.districtName + ' - Active' + planLabel;
                 } else {
                     el.className = 'region-status not-subscribed';
                     el.textContent = district.districtName + ' - Not Subscribed';
@@ -2795,11 +2824,11 @@
                     if (type === 'district' && item.productPurchaseID) {
                         if (hasPurchase(item.productPurchaseID)) {
                             isPurchased = true;
-                            var exp = activePurchases.get(item.productPurchaseID) ||
-                                activePurchases.get('district' + item.productPurchaseID) ||
-                                activePurchases.get(item.productPurchaseID.replace(/^district/, '')) || 0;
+                            var exp = getPurchaseExpiry(item.productPurchaseID);
+                            var plan = getPurchasePlan(item.productPurchaseID);
                             var days = Math.ceil((exp - Date.now()) / 86400000);
-                            badgeHtml = '<div class="region-card-badge purchased">7 Day Pass - ' + days + 'd left</div>';
+                            var planTag = plan === 'professional' ? 'Pro' : plan === 'web' ? 'Web' : plan === 'override' ? 'Override' : '7 Day';
+                            badgeHtml = '<div class="region-card-badge purchased">' + planTag + ' Pass - ' + days + 'd left</div>';
                             card.classList.add('has-purchase');
                         } else {
                             badgeHtml = '<div class="region-card-badge buy" data-pid="' + item.productPurchaseID + '" data-name="' + item.name + '">Buy</div>';
@@ -3021,11 +3050,11 @@
                     let badge = '';
                     if (type === 'district' && item.productPurchaseID) {
                         if (hasPurchase(item.productPurchaseID)) {
-                            const expiry = activePurchases.get(item.productPurchaseID) ||
-                                activePurchases.get('district' + item.productPurchaseID) ||
-                                activePurchases.get(item.productPurchaseID.replace(/^district/, '')) || 0;
+                            const expiry = getPurchaseExpiry(item.productPurchaseID);
+                            const plan = getPurchasePlan(item.productPurchaseID);
                             const daysLeft = Math.ceil((expiry - Date.now()) / (24*60*60*1000));
-                            badge = '<span style="font-size:9px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0">Purchased \u00b7 ' + daysLeft + 'd left</span>';
+                            const planTag = plan === 'professional' ? 'Pro' : plan === 'web' ? 'Web' : plan === 'override' ? 'Override' : '7 Day';
+                            badge = '<span style="font-size:9px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0">' + planTag + ' \u00b7 ' + daysLeft + 'd left</span>';
                         } else {
                             badge = '<span style="font-size:9px;background:#FF9800;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0;cursor:pointer" class="buy-badge" data-pid="' + item.productPurchaseID + '" data-name="' + item.name + '">Buy 7-Day Pass</span>';
                         }
