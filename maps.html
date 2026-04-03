@@ -286,8 +286,8 @@
         .zoom-dialog-region { background:#E0F2F1; color:#00695C; padding:10px 16px; border-radius:8px; font-size:14px; font-weight:600; margin-bottom:16px; text-align:center; }
         .zoom-dialog-buttons { display:flex; gap:12px; justify-content:center; margin-bottom:14px; }
         .zoom-dialog-btn { padding:12px 28px; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
-        .zoom-btn-access { background:#4CAF50; color:#fff; }
-        .zoom-btn-access:hover { background:#43A047; }
+        .zoom-btn-access { background:#00796B; color:#fff; }
+        .zoom-btn-access:hover { background:#00695C; }
         .zoom-btn-dismiss { background:#f44336; color:#fff; }
         .zoom-btn-dismiss:hover { background:#e53935; }
         .zoom-dialog-support { display:block; margin:0 auto; padding:8px 20px; border:none; border-radius:8px; background:#3F51B5; color:#fff; font-size:13px; font-weight:500; cursor:pointer; }
@@ -633,49 +633,61 @@
         </div>
     </div>
 
-    <!-- Zoom restriction dialog -->
+    <!-- Zoom restriction / purchase dialog -->
     <div class="zoom-dialog-overlay" id="zoom-restrict-overlay">
-        <div class="zoom-dialog" style="max-width:400px;text-align:left;padding:0;overflow:hidden;">
-            <!-- Header -->
-            <div style="background:linear-gradient(135deg,#008577,#00695C);padding:20px 24px;text-align:center;color:#fff;">
-                <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;opacity:0.85;margin-bottom:4px;">Web Access Plan</div>
-                <h3 id="zoom-restrict-title" style="margin:0;font-size:20px;color:#fff;font-weight:700;">Unlock Region</h3>
+        <div class="zoom-dialog" style="max-width:420px;text-align:left;padding:0;overflow:hidden;">
+            <!-- Header with icon -->
+            <div style="background:linear-gradient(135deg,#00796B,#004D40);padding:28px 24px 22px;text-align:center;color:#fff;position:relative;">
+                <div style="width:52px;height:52px;background:rgba(255,255,255,0.15);border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1 15l-4-4 1.41-1.41L11 14.17l6.59-6.59L19 9l-8 8z" fill="#fff"/></svg>
+                </div>
+                <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;opacity:0.7;margin-bottom:6px;">Web Access Plan</div>
+                <h3 id="zoom-restrict-title" style="margin:0;font-size:22px;color:#fff;font-weight:700;letter-spacing:-0.3px;">Unlock Region</h3>
             </div>
             <!-- Body -->
-            <div style="padding:20px 24px;">
-                <div id="zoom-restrict-region" style="background:#E0F2F1;color:#00695C;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:600;margin-bottom:16px;text-align:center;">Region: --</div>
-                <p class="zoom-dialog-desc" id="zoom-restrict-desc" style="margin:0 0 16px;font-size:13px;color:#555;line-height:1.6;">Access high-resolution maps and tools directly in your browser.</p>
-                <!-- Price -->
-                <div id="zoom-restrict-price" style="text-align:center;margin-bottom:16px;">
-                    <span style="font-size:28px;font-weight:800;color:#212121;" id="zoom-price-amount">₹199</span>
+            <div style="padding:22px 24px 0;">
+                <!-- Region badge -->
+                <div id="zoom-restrict-region" style="background:#E0F2F1;color:#00695C;padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;margin-bottom:14px;text-align:center;border:1px solid #B2DFDB;">Region: --</div>
+                <!-- Description -->
+                <p class="zoom-dialog-desc" id="zoom-restrict-desc" style="margin:0 0 18px;font-size:13px;color:#666;line-height:1.6;text-align:center;">Access high-resolution maps and tools directly in your browser.</p>
+                <!-- Price card -->
+                <div id="zoom-restrict-price" style="background:#FAFAFA;border:1px solid #E0E0E0;border-radius:12px;padding:16px;text-align:center;margin-bottom:18px;">
+                    <span style="font-size:32px;font-weight:800;color:#212121;letter-spacing:-1px;" id="zoom-price-amount">&#8377;199</span>
                     <span style="font-size:13px;color:#888;font-weight:500;"> / 7 days</span>
+                    <div style="font-size:11px;color:#999;margin-top:4px;">One-time payment, no auto-renewal</div>
                 </div>
-                <!-- Features -->
-                <div style="margin-bottom:18px;font-size:13px;color:#444;line-height:2;">
-                    <div>&#10004;&#xFE0E; Full access on web browser</div>
-                    <div>&#10004;&#xFE0E; High zoom map viewing</div>
-                    <div>&#10004;&#xFE0E; Region-specific detailed plans</div>
-                    <div>&#10004;&#xFE0E; Optimized for desktop</div>
+                <!-- Features grid -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-bottom:20px;font-size:12px;color:#444;">
+                    <div style="display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Web browser access</div>
+                    <div style="display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>High zoom maps</div>
+                    <div style="display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Detailed plans</div>
+                    <div style="display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Desktop optimized</div>
                 </div>
-                <!-- Buttons -->
-                <button class="zoom-dialog-btn zoom-btn-access" id="zoom-restrict-action" style="width:100%;max-width:none;padding:14px;font-size:15px;border-radius:10px;margin-bottom:10px;">Unlock Web Access</button>
-                <button id="zoom-restrict-cancel" style="width:100%;padding:10px;border:none;background:none;color:#999;font-size:13px;font-weight:500;cursor:pointer;">Dismiss</button>
+                <!-- CTA button -->
+                <button class="zoom-dialog-btn zoom-btn-access" id="zoom-restrict-action" style="width:100%;max-width:none;padding:15px;font-size:15px;border-radius:12px;margin-bottom:8px;background:#00796B;letter-spacing:0.3px;box-shadow:0 2px 8px rgba(0,121,107,0.3);transition:background 0.2s;">Continue to Payment</button>
+                <button id="zoom-restrict-cancel" style="width:100%;padding:10px;border:none;background:none;color:#aaa;font-size:13px;font-weight:500;cursor:pointer;">Not now</button>
+            </div>
+            <!-- Divider -->
+            <div style="height:1px;background:#f0f0f0;margin:10px 24px 0;"></div>
+            <!-- Info cards row -->
+            <div style="padding:16px 24px;display:flex;gap:10px;">
                 <!-- Web-only note -->
-                <div style="background:#FFF8E1;border-radius:8px;padding:10px 14px;margin-top:12px;font-size:11px;color:#795548;line-height:1.5;">
-                    <strong>Web only</strong> — This plan provides access on web browsers only. Mobile + web access is available via the Pro plan in the Android app.
+                <div style="flex:1;background:#FFF8E1;border-radius:10px;padding:12px;font-size:11px;color:#795548;line-height:1.5;border:1px solid #FFE0B2;">
+                    <div style="font-weight:700;margin-bottom:3px;font-size:11px;color:#E65100;">Web only</div>
+                    This plan is for web browsers. Mobile access needs the Pro plan.
                 </div>
-                <!-- Play Store link -->
-                <div style="text-align:center;margin-top:14px;padding-top:14px;border-top:1px solid #f0f0f0;">
-                    <div style="font-size:11px;color:#888;margin-bottom:6px;">Need access on mobile as well?</div>
-                    <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#008577;font-weight:600;text-decoration:none;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#008577"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
-                        Get Pro Plan on Google Play
+                <!-- Play Store card -->
+                <div style="flex:1;background:#E8F5E9;border-radius:10px;padding:12px;font-size:11px;color:#2E7D32;line-height:1.5;border:1px solid #C8E6C9;">
+                    <div style="font-weight:700;margin-bottom:3px;font-size:11px;">Mobile + Web</div>
+                    <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;color:#1B5E20;font-weight:600;text-decoration:none;margin-top:2px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#1B5E20"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
+                        Google Play
                     </a>
                 </div>
             </div>
             <!-- Support -->
-            <div style="padding:0 24px 16px;text-align:center;">
-                <button class="zoom-dialog-support" id="zoom-restrict-support">Contact Support</button>
+            <div style="padding:0 24px 18px;text-align:center;">
+                <button class="zoom-dialog-support" id="zoom-restrict-support" style="background:none;color:#999;font-size:12px;border:none;cursor:pointer;font-weight:500;padding:4px 0;">Need help? Contact Support</button>
             </div>
         </div>
     </div>
@@ -1163,6 +1175,16 @@
                     }
                 };
 
+                if (typeof Razorpay === 'undefined') {
+                    // Razorpay script not loaded — try loading it dynamically
+                    await new Promise(function(resolve, reject) {
+                        const s = document.createElement('script');
+                        s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                        s.onload = resolve;
+                        s.onerror = function() { reject(new Error('Could not load payment gateway. Please check your internet connection or disable ad blocker.')); };
+                        document.head.appendChild(s);
+                    });
+                }
                 const rzp = new Razorpay(options);
                 rzp.open();
             } catch (error) {
@@ -1889,9 +1911,9 @@
             lastRestrictedDistrict = district;
 
             // Restore button + support to purchase style (may have been changed by showNoDataDialog)
-            actionBtn.textContent = 'Unlock Web Access';
+            actionBtn.textContent = 'Continue to Payment';
             actionBtn.className = 'zoom-dialog-btn zoom-btn-access';
-            actionBtn.style.cssText = 'width:100%;max-width:none;padding:14px;font-size:15px;border-radius:10px;margin-bottom:10px;';
+            actionBtn.style.cssText = 'width:100%;max-width:none;padding:15px;font-size:15px;border-radius:12px;margin-bottom:8px;background:#00796B;letter-spacing:0.3px;box-shadow:0 2px 8px rgba(0,121,107,0.3);';
             document.getElementById('zoom-restrict-support').style.display = '';
             document.getElementById('zoom-restrict-price').style.display = '';
 
