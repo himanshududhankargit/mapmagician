@@ -2734,36 +2734,20 @@
             function renderRegionGrid(items, type) {
                 regionGrid.innerHTML = '';
 
-                // Villages: list on mobile, grid on wide screens
+                // Villages: horizontal list rows (icon left, name + coords right)
                 if (type === 'village') {
-                    var isWide = window.innerWidth >= 600;
-                    regionGrid.style.gridTemplateColumns = isWide ? '' : '1fr';
-                    regionGrid.style.maxWidth = isWide ? '' : '500px';
+                    regionGrid.style.gridTemplateColumns = '1fr';
+                    regionGrid.style.maxWidth = '500px';
                     var highlightTerm = regionHistory[regionHistory.length - 1].highlightTerm || '';
                     items.forEach(function(item) {
                         var isHighlighted = highlightTerm && item.name.toLowerCase().includes(highlightTerm.toLowerCase());
                         var el = document.createElement('div');
-
-                        if (isWide) {
-                            // Desktop: card grid
-                            el.className = 'region-card';
-                            el.style.textAlign = 'center';
-                            if (isHighlighted) el.style.border = '2px solid #4CAF50';
-                            el.innerHTML =
-                                '<div style="width:100%;height:48px;display:flex;align-items:center;justify-content:center;background:#e8f5e9;font-size:18px;font-weight:700;color:#2E7D32;">' + item.name.charAt(0) + '</div>' +
-                                '<div class="region-card-body">' +
-                                '<div class="region-card-name">' + item.name + '</div>' +
-                                '<div style="font-size:9px;color:#999;margin-top:2px;">' + (item.sub || '') + '</div></div>';
-                        } else {
-                            // Mobile: list rows
-                            el.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 14px;background:#fff;border-radius:10px;cursor:pointer;border:2px solid ' + (isHighlighted ? '#4CAF50' : '#e8e8e8') + ';';
-                            el.innerHTML =
-                                '<div style="width:36px;height:36px;border-radius:8px;background:#e8f5e9;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#2E7D32;flex-shrink:0;">' + item.name.charAt(0) + '</div>' +
-                                '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;color:#212121;">' + item.name + '</div>' +
-                                '<div style="font-size:10px;color:#888;margin-top:1px;">' + (item.sub || '') + '</div></div>';
-                        }
-
-                        el.style.cursor = 'pointer';
+                        el.style.cssText = 'display:flex;align-items:center;gap:12px;padding:11px 14px;background:#fff;border-radius:10px;cursor:pointer;border:1px solid ' + (isHighlighted ? '#4CAF50' : '#eee') + ';' + (isHighlighted ? 'background:#E8F5E9;' : '');
+                        el.innerHTML =
+                            '<div style="width:38px;height:38px;border-radius:10px;background:#e8f5e9;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#2E7D32;flex-shrink:0;">' + item.name.charAt(0) + '</div>' +
+                            '<div style="flex:1;min-width:0;">' +
+                            '<div style="font-size:13px;font-weight:600;color:#212121;">' + item.name + '</div>' +
+                            '<div style="font-size:10px;color:#999;margin-top:2px;">' + (item.sub || '') + '</div></div>';
                         el.addEventListener('click', function() {
                             var currentEntry = regionHistory[regionHistory.length - 1];
                             goToLocation(item.lat, item.lng, item.name, currentEntry.productPurchaseID || '');
