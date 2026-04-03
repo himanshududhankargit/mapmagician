@@ -2096,17 +2096,18 @@
             newBtn.id = 'zoom-restrict-action';
             newBtn.textContent = 'Browse Available Regions';
             newBtn.className = 'zoom-dialog-btn zoom-btn-access';
+            newBtn.style.cssText = 'width:100%;max-width:none;padding:14px;font-size:15px;border-radius:12px;margin-bottom:8px;cursor:pointer;';
             actionBtn.parentNode.replaceChild(newBtn, actionBtn);
 
-            newBtn.addEventListener('click', () => {
+            newBtn.onclick = function() {
                 overlay.classList.remove('open');
                 enableMapInteraction();
                 supportBtn.style.display = '';
                 zoomBypassActive = true;
                 map.setZoom(MAX_FREE_ZOOM - 1);
-                google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
+                google.maps.event.addListenerOnce(map, 'idle', function() { zoomBypassActive = false; });
                 openRegionsBrowser();
-            });
+            };
 
             document.getElementById('zoom-restrict-cancel').onclick = () => {
                 overlay.classList.remove('open');
