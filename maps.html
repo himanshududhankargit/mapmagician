@@ -415,6 +415,28 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
         .vertex-del-btn:active { background: #FFEBEE; }
+        /* Magnifier loupe for vertex dragging */
+        .magnifier {
+            position: fixed; width: 120px; height: 120px;
+            border-radius: 50%; overflow: hidden;
+            border: 3px solid #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+            pointer-events: none; z-index: 9999; display: none;
+        }
+        .magnifier-map { width: 100%; height: 100%; }
+        .magnifier-crosshair-h {
+            position: absolute; top: 50%; left: 0; right: 0;
+            height: 1px; background: #F44336; pointer-events: none;
+        }
+        .magnifier-crosshair-v {
+            position: absolute; left: 50%; top: 0; bottom: 0;
+            width: 1px; background: #F44336; pointer-events: none;
+        }
+        .magnifier-dot {
+            position: absolute; top: 50%; left: 50%;
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #F44336; transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
         /* GPS button states */
         .fab.gps-following { background: #4285F4 !important; }
         .fab.gps-following svg { stroke: #fff; }
@@ -636,6 +658,14 @@
     <div class="unlock-toast" id="unlock-toast">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="#fff"/></svg>
         <span id="unlock-toast-text">Region unlocked</span>
+    </div>
+
+    <!-- Magnifier loupe for vertex dragging -->
+    <div class="magnifier" id="magnifier">
+        <div class="magnifier-map" id="magnifier-map"></div>
+        <div class="magnifier-crosshair-h"></div>
+        <div class="magnifier-crosshair-v"></div>
+        <div class="magnifier-dot"></div>
     </div>
 
     <!-- Session expired dialog -->
@@ -1126,6 +1156,55 @@
         let MeasureLabelOverlay = null;   // Class, assigned in initMap after API loads
         let VertexHandleOverlay = null;   // Class, assigned in initMap after API loads
         let activeVertexHandle = null;    // Current visible vertex handle overlay
+        let magnifierMap = null;          // Secondary map for magnifier loupe
+        let magnifierVisible = false;
+        let projHelper = null;            // OverlayView for lat/lng → screen pixel conversion
+
+        function showMagnifier(latLng) {
+            if (!magnifierMap) {
+                magnifierMap = new google.maps.Map(document.getElementById('magnifier-map'), {
+                    center: latLng,
+                    zoom: Math.min(map.getZoom() + 3, 21),
+                    mapTypeId: map.getMapTypeId(),
+                    disableDefaultUI: true,
+                    gestureHandling: 'none',
+                    keyboardShortcuts: false
+                });
+            }
+            magnifierMap.setMapTypeId(map.getMapTypeId());
+            magnifierMap.setZoom(Math.min(map.getZoom() + 3, 21));
+            magnifierMap.setCenter(latLng);
+            document.getElementById('magnifier').style.display = 'block';
+            magnifierVisible = true;
+            positionMagnifier(latLng);
+        }
+
+        function moveMagnifier(latLng) {
+            if (!magnifierVisible || !magnifierMap) return;
+            magnifierMap.setCenter(latLng);
+            positionMagnifier(latLng);
+        }
+
+        function positionMagnifier(latLng) {
+            if (!projHelper || !projHelper.getProjection()) return;
+            const containerPx = projHelper.getProjection().fromLatLngToContainerPixel(latLng);
+            if (!containerPx) return;
+            const mapRect = map.getDiv().getBoundingClientRect();
+            const sx = mapRect.left + containerPx.x;
+            const sy = mapRect.top + containerPx.y;
+            const mag = document.getElementById('magnifier');
+            const magW = 120;
+            // Position above the touch point; if too close to top, show below
+            let top = sy - magW - 30;
+            if (top < 0) top = sy + 30;
+            mag.style.left = (sx - magW / 2) + 'px';
+            mag.style.top = top + 'px';
+        }
+
+        function hideMagnifier() {
+            document.getElementById('magnifier').style.display = 'none';
+            magnifierVisible = false;
+        }
 
         // Haversine distance in meters
         function haversineDistance(p1, p2) {
@@ -1307,10 +1386,17 @@
                 zIndex: 1000, clickable: true, draggable: true
             });
             marker._ptIndex = idx;
+            marker.addListener('dragstart', function() {
+                showMagnifier(marker.getPosition());
+            });
             marker.addListener('drag', function() {
                 measurePoints[marker._ptIndex] = { lat: marker.getPosition().lat(), lng: marker.getPosition().lng() };
                 updateMeasureVisuals();
+                moveMagnifier(marker.getPosition());
                 if (activeVertexHandle && activeVertexHandle._marker === marker) activeVertexHandle.draw();
+            });
+            marker.addListener('dragend', function() {
+                hideMagnifier();
             });
             marker.addListener('click', function() {
                 showVertexHandle(marker, {
@@ -1494,6 +1580,9 @@
                 });
                 marker._ptIndex = idx;
                 marker._measId = m.id;
+                marker.addListener('dragstart', function() {
+                    showMagnifier(marker.getPosition());
+                });
                 marker.addListener('drag', function() {
                     m.points[idx] = { lat: marker.getPosition().lat(), lng: marker.getPosition().lng() };
                     overlays.shapes.forEach(function(s) { s.setMap(null); });
@@ -1501,9 +1590,11 @@
                     overlays.shapes = [];
                     overlays.labels = [];
                     rebuildSavedShapesAndLabels(m, overlays, color);
+                    moveMagnifier(marker.getPosition());
                     if (activeVertexHandle && activeVertexHandle._marker === marker) activeVertexHandle.draw();
                 });
                 marker.addListener('dragend', function() {
+                    hideMagnifier();
                     try {
                         localStorage.setItem('gis_measurements', JSON.stringify(savedMeasurements));
                     } catch (e) { /* ignore */ }
@@ -2177,6 +2268,11 @@
                 }
             });
 
+            // Projection helper for converting LatLng to screen pixels (magnifier)
+            projHelper = new google.maps.OverlayView();
+            projHelper.draw = function() {};
+            projHelper.setMap(map);
+
             // Define MeasureLabelOverlay (needs google.maps.OverlayView which loads with the API)
             MeasureLabelOverlay = class extends google.maps.OverlayView {
                 constructor(position, text, mapInstance) {
@@ -2260,6 +2356,7 @@
                         startLatLng = self._marker.getPosition();
                         map.setOptions({ gestureHandling: 'none' });
                         moveBtn.style.background = '#E64A19';
+                        showMagnifier(startLatLng);
                         document.addEventListener('mousemove', onDragMove);
                         document.addEventListener('mouseup', onDragEnd);
                         document.addEventListener('touchmove', onDragMove, { passive: false });
@@ -2280,6 +2377,7 @@
                         self._marker.setPosition(newLatLng);
                         self._callbacks.onMove(newLatLng);
                         self.draw();
+                        moveMagnifier(newLatLng);
                     };
 
                     const onDragEnd = function() {
@@ -2287,6 +2385,7 @@
                         self._dragging = false;
                         map.setOptions({ gestureHandling: 'greedy' });
                         moveBtn.style.background = '#FF5722';
+                        hideMagnifier();
                         document.removeEventListener('mousemove', onDragMove);
                         document.removeEventListener('mouseup', onDragEnd);
                         document.removeEventListener('touchmove', onDragMove);
