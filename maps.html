@@ -3039,10 +3039,8 @@
                             clickable: false, zIndex: 1
                         });
                         map.setCenter(loc);
-                        // Only zoom in if user has a purchase for this area; free users stay at MAX_FREE_ZOOM
-                        var gpsDistrict = findDistrictAtCenter();
-                        var hasAccess = gpsDistrict && hasPurchase(gpsDistrict.productPurchaseID);
-                        if (hasAccess) {
+                        // Free users (no purchases): stay at MAX_FREE_ZOOM; premium: zoom to 17
+                        if (activePurchases.size > 0) {
                             if (map.getZoom() < 16) map.setZoom(17);
                         } else {
                             if (map.getZoom() < MAX_FREE_ZOOM) map.setZoom(MAX_FREE_ZOOM);
