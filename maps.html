@@ -1086,9 +1086,13 @@
                 });
                 cachedAccessToken = data.accessToken || '';
                 refreshSidebarIfOpen();
-                checkAndReenableMap();
-                lastCheckedRegionId = null;
-                checkRegionOnMove();
+                // Only re-enable map and force re-check after an actual purchase (force=true),
+                // not on routine region-change polls which would cause spurious unlock toasts
+                if (force) {
+                    checkAndReenableMap();
+                    lastCheckedRegionId = null;
+                    checkRegionOnMove();
+                }
             } catch (e) {
                 console.error('Failed to fetch purchase status:', e);
             }
@@ -2199,6 +2203,8 @@
                 bannerDismissedForRegion = null;
                 // Poll purchase status on region change (only for Google-signed-in users)
                 if (currentUser && !currentUser.isAnonymous) fetchPurchaseStatus();
+                // Update bottom bar immediately on region change so it stays in sync
+                updateRegionStatus();
             }
 
             const overlay = document.getElementById('zoom-restrict-overlay');
