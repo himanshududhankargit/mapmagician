@@ -47,10 +47,14 @@
             cursor: pointer; outline: none; -webkit-appearance: none; appearance: none;
         }
         .profile-btn {
-            width: 36px; height: 36px; border-radius: 50%; border: none;
+            height: 36px; border-radius: 18px; border: none;
             background: #e3f2fd; cursor: pointer; display: flex; align-items: center;
-            justify-content: center; font-size: 14px; font-weight: 700; color: #1976D2;
-            flex-shrink: 0; overflow: hidden;
+            justify-content: center; font-size: 12px; font-weight: 600; color: #1976D2;
+            flex-shrink: 0; overflow: hidden; padding: 0 12px; gap: 6px;
+            white-space: nowrap; transition: all 0.2s;
+        }
+        .profile-btn.signed-in {
+            width: 36px; height: 36px; padding: 0; border-radius: 50%;
         }
         .profile-btn img { width: 36px; height: 36px; border-radius: 50%; }
 
@@ -445,7 +449,8 @@
             <option value="terrain">Terrain</option>
         </select>
         <button class="profile-btn" id="profile-btn" title="Sign in">
-            <span id="profile-btn-icon">G</span>
+            <svg id="profile-btn-svg" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#1976D2"/></svg>
+            <span id="profile-btn-icon">Sign In</span>
         </button>
     </div>
 
@@ -633,6 +638,18 @@
         <span id="unlock-toast-text">Region unlocked</span>
     </div>
 
+    <!-- Session expired dialog -->
+    <div class="auth-dialog-overlay" id="session-expired-overlay">
+        <div class="auth-dialog">
+            <div style="width:48px;height:48px;margin:0 auto 20px;background:#FFF3E0;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#E65100"/></svg>
+            </div>
+            <h3>Session Expired</h3>
+            <p>This account is now active on another device. You've been signed out.</p>
+            <button class="auth-dialog-btn" id="session-expired-ok" style="width:100%;justify-content:center;">OK</button>
+        </div>
+    </div>
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -668,6 +685,8 @@
         let cachedAccessToken = ''; // Signed access token from getPurchaseStatus
         let pendingPurchase = null; // { productId, regionName } — set when buy clicked before login
         let pendingSupportOpen = null; // {district, returnToPaywall} — set when support clicked before login
+        let currentSessionId = null;  // Single-session enforcement
+        let sessionListenerRef = null; // Firebase .on() ref for session changes
 
         // Anonymous sign-in is handled in onAuthStateChanged (after session restoration)
 
@@ -698,8 +717,12 @@
             const profileBtn = document.getElementById('profile-btn');
             const profileIcon = document.getElementById('profile-btn-icon');
 
+            const profileSvg = document.getElementById('profile-btn-svg');
+
             if (user && !user.isAnonymous) {
-                // Google-signed-in user — show avatar, load purchases
+                // Google-signed-in user — show avatar or initial
+                profileBtn.classList.add('signed-in');
+                profileSvg.style.display = 'none';
                 if (user.photoURL) {
                     profileIcon.textContent = '';
                     const avatarImg = document.createElement('img');
@@ -711,10 +734,12 @@
                     profileIcon.textContent = user.displayName ? user.displayName.charAt(0) : 'U';
                     profileBtn.style.background = '#e8f5e9';
                     profileBtn.style.color = '#2E7D32';
+                    profileIcon.style.fontSize = '14px';
                 }
                 profileBtn.title = user.displayName || user.email;
                 if (user.email) loadPurchaseStatus(user.email);
                 fetchCloudFrontCookies();
+                if (user.email) registerSession(user.email);
 
                 // Resume pending purchase after sign-in
                 if (pendingPurchase) {
@@ -731,17 +756,22 @@
             } else if (user && user.isAnonymous) {
                 // Anonymous user — only fetch cookies for tile access, show as not logged in
                 fetchCloudFrontCookies();
-                profileIcon.textContent = 'G';
+                profileBtn.classList.remove('signed-in');
+                profileSvg.style.display = '';
+                profileIcon.textContent = 'Sign In';
                 profileBtn.style.background = '#e3f2fd';
                 profileBtn.style.color = '#1976D2';
                 profileBtn.title = 'Sign in';
             } else {
-                profileIcon.textContent = 'G';
+                profileBtn.classList.remove('signed-in');
+                profileSvg.style.display = '';
+                profileIcon.textContent = 'Sign In';
                 profileBtn.style.background = '#e3f2fd';
                 profileBtn.style.color = '#1976D2';
                 profileBtn.title = 'Sign in';
                 activePurchases.clear();
                 cachedIdToken = null;
+                clearSession();
 
                 // Clear CloudFront cookies on sign-out
                 document.cookie = 'CloudFront-Policy=; domain=.mapmagician.in; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
@@ -805,6 +835,44 @@
         });
         document.getElementById('signout-dialog-cancel').addEventListener('click', () => {
             document.getElementById('signout-dialog-overlay').classList.remove('open');
+        });
+
+        // --- Single-session enforcement ---
+        function registerSession(email) {
+            const emailKey = email.replace(/\./g, ',');
+            currentSessionId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : (Date.now() + '-' + Math.random().toString(36).slice(2));
+            const ref = firebase.database().ref('GISWebActiveSessions/' + emailKey);
+            ref.set(currentSessionId);
+
+            // Detach previous listener if any
+            if (sessionListenerRef) sessionListenerRef.off();
+            sessionListenerRef = ref;
+
+            ref.on('value', function(snap) {
+                const val = snap.val();
+                if (val && val !== currentSessionId && currentUser && !currentUser.isAnonymous) {
+                    // Another session superseded this one
+                    ref.off();
+                    sessionListenerRef = null;
+                    showSessionExpiredDialog();
+                }
+            });
+        }
+
+        function clearSession() {
+            if (sessionListenerRef) { sessionListenerRef.off(); sessionListenerRef = null; }
+            currentSessionId = null;
+        }
+
+        function showSessionExpiredDialog() {
+            document.getElementById('session-expired-overlay').classList.add('open');
+        }
+
+        document.getElementById('session-expired-ok').addEventListener('click', function() {
+            document.getElementById('session-expired-overlay').classList.remove('open');
+            firebase.auth().signOut();
         });
 
         // Load purchase status via Cloud Function (DB paths hidden server-side)
