@@ -2491,11 +2491,13 @@
                 const district = findDistrictAtCenter();
 
                 if (z >= MAX_FREE_ZOOM && !district) {
-                    // At zoom limit but no tile data here — show "no data" message
+                    // At zoom limit but no tile data here — lock zoom and show "no data" message
+                    map.setOptions({ maxZoom: MAX_FREE_ZOOM });
                     dialogTriggeredByRegionEntry = true;
                     showNoDataDialog();
                 } else if (z >= MAX_FREE_ZOOM && district && !hasPurchase(district.productPurchaseID)) {
-                    // At zoom limit in unpurchased region — show purchase dialog
+                    // At zoom limit in unpurchased region — lock zoom and show purchase dialog
+                    map.setOptions({ maxZoom: MAX_FREE_ZOOM });
                     dialogTriggeredByRegionEntry = true;
                     showZoomRestrictionDialog(district);
                 } else if (z < MAX_FREE_ZOOM && overlay.classList.contains('open')) {
