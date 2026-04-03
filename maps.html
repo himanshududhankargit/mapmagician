@@ -2013,10 +2013,27 @@
                 regionInfo.style.display = 'none';
             }
 
-            // Display price instantly from pre-fetched cache
+            // Display price from pre-fetched cache, or show loading if not ready
             var pid = district ? district.productPurchaseID : 'default';
-            var price = cachedPricing.get(pid) || cachedPricing.get('default') || 199;
-            priceEl.textContent = '\u20B9' + price;
+            var price = cachedPricing.get(pid) || cachedPricing.get('default') || null;
+            if (price) {
+                priceEl.textContent = '\u20B9' + price;
+                priceEl.style.fontSize = '';
+            } else {
+                priceEl.textContent = 'Loading...';
+                priceEl.style.fontSize = '16px';
+                // Retry when pricing loads
+                var priceCheck = setInterval(function() {
+                    var p = cachedPricing.get(pid) || cachedPricing.get('default');
+                    if (p) {
+                        priceEl.textContent = '\u20B9' + p;
+                        priceEl.style.fontSize = '';
+                        clearInterval(priceCheck);
+                    }
+                }, 500);
+                // Stop checking after 10s
+                setTimeout(function() { clearInterval(priceCheck); }, 10000);
+            }
 
             // Disable map interaction while dialog is visible
             disableMapInteraction();
@@ -3072,7 +3089,7 @@
                     map.setZoom(15);
                     google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
                 } else {
-                    map.setZoom(MAX_FREE_ZOOM);
+                    map.setZoom(MAX_FREE_ZOOM - 1);
                 }
                 updateStatus('Zoomed to ' + name);
             }
