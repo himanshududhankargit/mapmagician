@@ -662,6 +662,7 @@
         let cachedIdToken = null; // Firebase ID token for tile proxy auth
         let cachedAccessToken = ''; // Signed access token from getPurchaseStatus
         let pendingPurchase = null; // { productId, regionName } — set when buy clicked before login
+        let pendingSupportOpen = null; // {district, returnToPaywall} — set when support clicked before login
 
         // Anonymous sign-in is handled in onAuthStateChanged (after session restoration)
 
@@ -673,6 +674,7 @@
         document.getElementById('auth-dialog-cancel').addEventListener('click', () => {
             document.getElementById('auth-dialog-overlay').classList.remove('open');
             pendingPurchase = null;
+            pendingSupportOpen = null;
         });
 
         // Trigger sign-in via Firebase popup (works on all domains without extra OAuth config)
@@ -714,6 +716,12 @@
                     const { productId, regionName } = pendingPurchase;
                     pendingPurchase = null;
                     setTimeout(() => buyRegion(productId, regionName), 500);
+                }
+                // Resume pending support form after sign-in
+                if (pendingSupportOpen) {
+                    const { district, returnToPaywall } = pendingSupportOpen;
+                    pendingSupportOpen = null;
+                    setTimeout(() => openSupportForm(district, returnToPaywall), 500);
                 }
             } else if (user && user.isAnonymous) {
                 // Anonymous user — only fetch cookies for tile access, show as not logged in
@@ -830,6 +838,12 @@
         let supportPaywallDistrict = null;
 
         function openSupportForm(district, returnToPaywall) {
+            if (!currentUser || currentUser.isAnonymous) {
+                pendingSupportOpen = { district: district, returnToPaywall: !!returnToPaywall };
+                document.getElementById('auth-dialog-desc').textContent = 'Please sign in to contact support.';
+                document.getElementById('auth-dialog-overlay').classList.add('open');
+                return;
+            }
             supportReturnToPaywall = !!returnToPaywall;
             supportPaywallDistrict = district;
             document.getElementById('support-email').value = currentUser ? currentUser.email : '';
