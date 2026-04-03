@@ -1163,6 +1163,7 @@
 
         // Placeholder -- set by initSidebar once sidebar is ready
         var refreshSidebarIfOpen = function() {};
+        var openRegionsBrowser = function() {};
 
         // Re-enable map if current district becomes purchased
         function checkAndReenableMap() {
@@ -1174,6 +1175,8 @@
                 document.getElementById('zoom-restrict-overlay').classList.remove('open');
                 updateRegionStatus();
                 showUnlockToast(district.districtName);
+            } else {
+                map.setOptions({ maxZoom: MAX_FREE_ZOOM });
             }
         }
 
@@ -1956,27 +1959,37 @@
             const center = { lat: c.lat(), lng: c.lng() };
 
             // Use tile polygon boundaries from dpLayerData, then look up district name via menuGIS
+            // When multiple tiles overlap at boundaries, prefer the smallest (most specific) tile
             if (dpLayerData.length > 0) {
+                let bestMatch = null;
+                let bestArea = Infinity;
                 for (const tile of dpLayerData) {
                     if (tile.polygon && pointInPolygon(center, tile.polygon)) {
-                        // Tile polygon contains crosshair — look up district name in menuGIS
+                        const area = tile.bbox
+                            ? (tile.bbox.maxLat - tile.bbox.minLat) * (tile.bbox.maxLng - tile.bbox.minLng)
+                            : Infinity;
+                        if (area >= bestArea) continue;
                         // Try productPurchaseID first (from Firebase dpURLlink data)
                         let district = findDistrictByPurchaseId(tile.productPurchaseID);
-                        if (district) return district;
                         // Fallback: try tile.id (Firebase key)
-                        district = findDistrictByPurchaseId(tile.id);
-                        if (district) return district;
+                        if (!district) district = findDistrictByPurchaseId(tile.id);
                         // Fallback: try link path parts (e.g. "/mumbai/dp" → try "mumbai", "dp")
-                        if (tile.link) {
+                        if (!district && tile.link) {
                             const parts = tile.link.replace(/^\/|\/$/g, '').split('/');
                             for (const part of parts) {
                                 district = findDistrictByPurchaseId(part);
-                                if (district) return district;
+                                if (district) break;
                             }
                         }
-                        console.log('[RegionDetect] Tile hit but no menuGIS match. tile.id:', tile.id, 'tile.productPurchaseID:', tile.productPurchaseID);
+                        if (district) {
+                            bestMatch = district;
+                            bestArea = area;
+                        } else {
+                            console.log('[RegionDetect] Tile hit but no menuGIS match. tile.id:', tile.id, 'tile.productPurchaseID:', tile.productPurchaseID);
+                        }
                     }
                 }
+                if (bestMatch) return bestMatch;
             }
 
             return null;
@@ -1986,13 +1999,13 @@
         function findDistrictByPurchaseId(purchaseId) {
             if (!purchaseId) return null;
             const pid = purchaseId.toLowerCase().replace(/gst$/, '');
+            const pidNoPrefix = pid.replace(/^district/, '');
             for (const item of menuData) {
                 if (!item.productPurchaseID) continue;
                 const itemPid = item.productPurchaseID.toLowerCase().replace(/gst$/, '');
-                // Flexible matching: exact, with/without "district" prefix, partial contains
-                if (itemPid === pid || itemPid === 'district' + pid || 'district' + itemPid === pid ||
-                    itemPid.replace(/^district/, '') === pid.replace(/^district/, '') ||
-                    pid.includes(itemPid) || itemPid.includes(pid)) {
+                const itemPidNoPrefix = itemPid.replace(/^district/, '');
+                // Strict matching: exact, or equal after stripping "district" prefix from both
+                if (itemPid === pid || itemPidNoPrefix === pidNoPrefix) {
                     return {
                         productPurchaseID: item.productPurchaseID,
                         districtName: item.district || item.state
@@ -2177,6 +2190,7 @@
             } else {
                 el.style.display = 'none';
             }
+            return district;
         }
 
         // Region detection on camera move — locks/unlocks zoom based on purchase status
@@ -2186,20 +2200,20 @@
             const district = findDistrictAtCenter();
             const regionId = district ? district.productPurchaseID : null;
 
-            // Skip if still in same region
-            if (regionId === lastCheckedRegionId) return;
-            lastCheckedRegionId = regionId;
-            bannerDismissedForRegion = null;
-
-            // Poll purchase status on region change (only for Google-signed-in users)
-            if (currentUser && !currentUser.isAnonymous) fetchPurchaseStatus();
+            const regionChanged = (regionId !== lastCheckedRegionId);
+            if (regionChanged) {
+                lastCheckedRegionId = regionId;
+                bannerDismissedForRegion = null;
+                // Poll purchase status on region change (only for Google-signed-in users)
+                if (currentUser && !currentUser.isAnonymous) fetchPurchaseStatus();
+            }
 
             const overlay = document.getElementById('zoom-restrict-overlay');
 
             if (!district) {
                 // Not in any region — lock zoom, dismiss dialog
                 map.setOptions({ maxZoom: MAX_FREE_ZOOM });
-                if (dialogTriggeredByRegionEntry && overlay.classList.contains('open')) {
+                if (regionChanged && dialogTriggeredByRegionEntry && overlay.classList.contains('open')) {
                     overlay.classList.remove('open');
                     enableMapInteraction();
                 }
@@ -2209,15 +2223,15 @@
             if (hasPurchase(district.productPurchaseID)) {
                 // Purchased region — unlock zoom, dismiss dialog, show confirmation
                 map.setOptions({ maxZoom: 21 });
-                if (dialogTriggeredByRegionEntry && overlay.classList.contains('open')) {
+                if (regionChanged && dialogTriggeredByRegionEntry && overlay.classList.contains('open')) {
                     overlay.classList.remove('open');
                     enableMapInteraction();
                 }
-                showUnlockToast(district.districtName);
+                if (regionChanged) showUnlockToast(district.districtName);
                 return;
             }
 
-            // Unpurchased region — lock zoom at 14
+            // Unpurchased region — always enforce zoom lock
             map.setOptions({ maxZoom: MAX_FREE_ZOOM });
         }
 
@@ -2446,7 +2460,15 @@
                     `${c.lat().toFixed(5)}, ${c.lng().toFixed(5)}`;
                 debouncedLoadTiles();
                 // Update region subscription status in bottom bar
-                updateRegionStatus();
+                const district = updateRegionStatus();
+                // Enforce correct zoom restriction on idle (catches any gap from throttled center_changed)
+                if (!zoomBypassActive && !mapInteractionDisabled) {
+                    if (district && hasPurchase(district.productPurchaseID)) {
+                        map.setOptions({ maxZoom: 21 });
+                    } else {
+                        map.setOptions({ maxZoom: MAX_FREE_ZOOM });
+                    }
+                }
                 // Show/hide old maps button based on current region
                 updateOldMapsButtonVisibility();
             });
@@ -2733,7 +2755,7 @@
             let regionHistory = []; // [{title, items, type}]
             const ICON_BASE = 'https://tiles.mapmagician.in/dpplans/0imagesGIS/';
 
-            function openRegionsBrowser() {
+            openRegionsBrowser = function() {
                 regionHistory = [];
                 var items = stateList.map(function(st) {
                     var districtCount = menuData.filter(function(m) { return m.state === st.name && m.district; }).length;
@@ -2748,7 +2770,7 @@
                 });
                 pushRegionLevel('All Regions', items, 'state');
                 regionBrowser.classList.add('open');
-            }
+            };
 
             var regionBrowserClosing = false;
             function closeRegionBrowser() {
