@@ -173,27 +173,85 @@
         /* Bottom navigation bar (Google Maps style tabs) */
         .bottom-nav-bar {
             position: absolute; bottom: 52px; left: 0; right: 0;
-            height: 52px; background: #fff; box-shadow: 0 -1px 4px rgba(0,0,0,0.12);
-            display: flex; align-items: center; overflow-x: auto; overflow-y: hidden;
-            white-space: nowrap; -webkit-overflow-scrolling: touch;
-            scrollbar-width: none; z-index: 1000; padding: 0 8px;
+            height: 48px; background: #fff; box-shadow: 0 -1px 4px rgba(0,0,0,0.12);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000; padding: 0 12px; gap: 8px;
         }
-        .bottom-nav-bar::-webkit-scrollbar { display: none; }
-        .nav-tab {
-            display: inline-flex; flex-direction: column; align-items: center;
-            justify-content: center; flex: 1; min-width: 0; height: 52px; padding: 0 4px;
-            border: none; background: none; cursor: pointer; font-size: 10px; color: #555;
-            border-top: 2px solid transparent; overflow: hidden;
+        .nav-regions-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            height: 36px; padding: 0 20px; border: none; border-radius: 18px;
+            background: #008577; color: #fff; font-size: 13px; font-weight: 600;
+            cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            transition: background 0.2s;
         }
-        .nav-tab:hover { color: #008577; background: #f5f5f5; }
-        .nav-tab.active { color: #008577; border-top-color: #008577; font-weight: 600; }
-        .nav-tab-icon {
-            width: 28px; height: 28px; border-radius: 6px;
-            background: #e8f5e9; display: flex; align-items: center; justify-content: center;
-            font-size: 13px; font-weight: 700; color: #2E7D32; margin-bottom: 2px; flex-shrink: 0;
+        .nav-regions-btn:hover { background: #00695C; }
+        .nav-regions-btn svg { flex-shrink: 0; }
+
+        /* Fullscreen region browser */
+        .region-browser {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #f5f5f5; z-index: 3500;
+            display: none; flex-direction: column;
         }
-        .nav-tab-name {
-            max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        .region-browser.open { display: flex; }
+        .region-browser-header {
+            background: #fff; padding: 12px 16px; display: flex; align-items: center;
+            gap: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); flex-shrink: 0; z-index: 1;
+        }
+        .region-browser-back {
+            width: 36px; height: 36px; border: none; background: none; cursor: pointer;
+            font-size: 22px; color: #333; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center;
+        }
+        .region-browser-back:hover { background: #f0f0f0; }
+        .region-browser-title { font-size: 18px; font-weight: 700; color: #212121; flex: 1; }
+        .region-browser-search {
+            margin: 0 16px; padding: 10px 14px; border: 1px solid #e0e0e0;
+            border-radius: 24px; font-size: 13px; outline: none; background: #fff;
+            flex-shrink: 0;
+        }
+        .region-browser-search:focus { border-color: #008577; }
+        .region-browser-body {
+            flex: 1; overflow-y: auto; padding: 16px;
+            display: flex; justify-content: center;
+        }
+        .region-grid {
+            display: grid; grid-template-columns: repeat(2, 140px);
+            gap: 14px; align-content: start;
+        }
+        .region-card {
+            background: #fff; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.1); cursor: pointer;
+            position: relative; transition: transform 0.12s, box-shadow 0.12s;
+        }
+        .region-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .region-card:active { transform: scale(0.97); }
+        .region-card-img {
+            width: 100%; height: 90px; object-fit: cover; display: block; background: #e8f5e9;
+        }
+        .region-card-placeholder {
+            width: 100%; height: 90px; display: flex; align-items: center; justify-content: center;
+            background: #e8f5e9; font-size: 32px; font-weight: 800; color: #2E7D32;
+        }
+        .region-card-body { padding: 8px 10px 10px; }
+        .region-card-name {
+            font-size: 12px; font-weight: 600; color: #212121; line-height: 1.3;
+            overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+            -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        }
+        .region-card-sub { font-size: 10px; color: #999; margin-top: 3px; }
+        .region-card-badge {
+            position: absolute; top: 6px; right: 6px; font-size: 8px; font-weight: 700;
+            color: #fff; padding: 2px 7px; border-radius: 8px; letter-spacing: 0.3px;
+        }
+        .region-card-badge.purchased { background: #4CAF50; }
+        .region-card-badge.buy { background: #FF9800; cursor: pointer; }
+        @media (min-width: 500px) {
+            .region-grid { grid-template-columns: repeat(3, 150px); }
+        }
+        @media (min-width: 768px) {
+            .region-grid { grid-template-columns: repeat(4, 160px); gap: 16px; }
+            .region-card-img, .region-card-placeholder { height: 110px; }
         }
         /* Info strip below nav bar */
         .info-strip {
@@ -571,9 +629,13 @@
         </div>
     </div>
 
-    <!-- Bottom dock (Mac-style, centered) -->
-    <!-- Bottom navigation bar: scrollable region tabs -->
-    <div class="bottom-nav-bar" id="bottom-nav-bar"></div>
+    <!-- Bottom navigation bar -->
+    <div class="bottom-nav-bar" id="bottom-nav-bar">
+        <button class="nav-regions-btn" id="btn-access-regions">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" fill="#fff"/></svg>
+            Access Regions
+        </button>
+    </div>
 
     <!-- Opacity slider strip between nav bar and info strip -->
     <div class="opacity-strip">
@@ -659,7 +721,7 @@
                             <div style="font-size:11px;color:#888;">to Region</div>
                         </div>
                     </div>
-                    <div style="font-size:11px;color:#999;margin-top:8px;">One-time payment, no auto-renewal</div>
+                    <div style="font-size:11px;color:#999;margin-top:8px;">Flexible access — no recurring charges</div>
                 </div>
                 <!-- Features grid -->
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-bottom:20px;font-size:12px;color:#444;">
@@ -709,6 +771,19 @@
     <div class="unlock-toast" id="unlock-toast">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="#fff"/></svg>
         <span id="unlock-toast-text">Region unlocked</span>
+    </div>
+
+    <!-- Fullscreen region browser -->
+    <div class="region-browser" id="region-browser">
+        <div class="region-browser-header">
+            <button class="region-browser-back" id="region-browser-back">&larr;</button>
+            <span class="region-browser-title" id="region-browser-title">All Regions</span>
+            <button class="region-browser-back" id="region-browser-close" style="font-size:24px;">&times;</button>
+        </div>
+        <input type="search" class="region-browser-search" id="region-browser-search" placeholder="Search regions..." autocomplete="off">
+        <div class="region-browser-body">
+            <div class="region-grid" id="region-grid"></div>
+        </div>
     </div>
 
     <!-- Magnifier loupe for vertex dragging -->
@@ -1954,8 +2029,7 @@
                 if (district) {
                     buyRegion(district.productPurchaseID, district.districtName);
                 } else {
-                    const firstNavTab = document.querySelector('.nav-tab');
-                    if (firstNavTab) firstNavTab.click();
+                    openRegionsBrowser();
                 }
             });
 
@@ -2012,9 +2086,7 @@
                 map.setZoom(MAX_FREE_ZOOM - 1);
                 google.maps.event.addListenerOnce(map, 'idle', () => {
                     zoomBypassActive = false;
-                    // Click the first state tab to populate sidebar, then open it
-                    const firstTab = document.querySelector('.nav-tab');
-                    if (firstTab) firstTab.click();
+                    openRegionsBrowser();
                 });
             });
 
@@ -2540,9 +2612,7 @@
             const sidebarTitle = document.getElementById('sidebar-title');
             const sidebarSearch = document.getElementById('sidebar-search');
 
-            // Show loading state in bottom nav bar
-            const navBarLoading = document.getElementById('bottom-nav-bar');
-            navBarLoading.innerHTML = '<span style="font-size:12px;color:#888;padding:0 16px;">Loading regions...</span>';
+            // The "Access Regions" button is static in HTML; regions data loads in background
 
             function processMenuData(rawData) {
                 menuData = [];
@@ -2598,24 +2668,184 @@
             });
 
             function renderBottomNav() {
-                const navBar = document.getElementById('bottom-nav-bar');
-                navBar.innerHTML = '';
-                stateList.forEach(st => {
-                    const btn = document.createElement('button');
-                    btn.className = 'nav-tab';
-                    btn.dataset.state = st.name;
-                    btn.innerHTML = `
-                        <div class="nav-tab-icon">${st.name.charAt(0)}</div>
-                        <span class="nav-tab-name">${st.name}</span>
-                    `;
-                    btn.addEventListener('click', () => {
-                        navBar.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        openState(st.name);
-                    });
-                    navBar.appendChild(btn);
+                // Wire up the "Access Regions" button to open states list in sidebar
+                document.getElementById('btn-access-regions').addEventListener('click', function() {
+                    openRegionsBrowser();
                 });
             }
+
+            // ===== Fullscreen Region Browser =====
+            const regionBrowser = document.getElementById('region-browser');
+            const regionGrid = document.getElementById('region-grid');
+            const regionTitle = document.getElementById('region-browser-title');
+            const regionSearch = document.getElementById('region-browser-search');
+            let regionHistory = []; // [{title, items, type}]
+            const ICON_BASE = 'https://tiles.mapmagician.in/dpplans/0imagesGIS/';
+
+            function openRegionsBrowser() {
+                regionHistory = [];
+                var items = stateList.map(function(st) {
+                    var districtCount = menuData.filter(function(m) { return m.state === st.name && m.district; }).length;
+                    var locationCount = 0;
+                    menuData.filter(function(m) { return m.state === st.name; }).forEach(function(m) {
+                        locationCount += countVillages(m.villagesJSON);
+                    });
+                    var sub = districtCount > 0
+                        ? districtCount + ' districts'
+                        : locationCount + ' locations';
+                    return { name: st.name, sub: sub, icon: st.icon, hasChildren: true };
+                });
+                pushRegionLevel('All Regions', items, 'state');
+                regionBrowser.classList.add('open');
+            }
+
+            function closeRegionBrowser() {
+                regionBrowser.classList.remove('open');
+                regionHistory = [];
+            }
+
+            function pushRegionLevel(title, items, type) {
+                regionHistory.push({ title: title, items: items, type: type });
+                regionTitle.textContent = title;
+                regionSearch.value = '';
+                renderRegionGrid(items, type);
+            }
+
+            function popRegionLevel() {
+                if (regionHistory.length <= 1) { closeRegionBrowser(); return; }
+                regionHistory.pop();
+                var prev = regionHistory[regionHistory.length - 1];
+                regionTitle.textContent = prev.title;
+                regionSearch.value = '';
+                renderRegionGrid(prev.items, prev.type);
+            }
+
+            function renderRegionGrid(items, type) {
+                regionGrid.innerHTML = '';
+
+                // For villages, render a list instead of grid
+                if (type === 'village') {
+                    regionGrid.style.gridTemplateColumns = '1fr';
+                    regionGrid.style.maxWidth = '400px';
+                    items.forEach(function(item) {
+                        var el = document.createElement('button');
+                        el.className = 'sidebar-list-item';
+                        el.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 16px;border:none;background:#fff;width:100%;text-align:left;cursor:pointer;border-radius:10px;margin-bottom:2px;box-shadow:0 1px 3px rgba(0,0,0,0.06);';
+                        el.innerHTML = '<div style="width:36px;height:36px;border-radius:8px;background:#e8f5e9;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#2E7D32;flex-shrink:0;">' + item.name.charAt(0) + '</div>' +
+                            '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;color:#212121;">' + item.name + '</div>' +
+                            '<div style="font-size:11px;color:#888;margin-top:1px;">' + (item.sub || '') + '</div></div>';
+                        el.addEventListener('click', function() {
+                            var currentEntry = regionHistory[regionHistory.length - 1];
+                            goToLocation(item.lat, item.lng, item.name, currentEntry.productPurchaseID || '');
+                            closeRegionBrowser();
+                        });
+                        regionGrid.appendChild(el);
+                    });
+                    return;
+                }
+
+                // Grid for states / districts
+                regionGrid.style.gridTemplateColumns = '';
+                regionGrid.style.maxWidth = '';
+                items.forEach(function(item) {
+                    var card = document.createElement('div');
+                    card.className = 'region-card';
+
+                    // Badge
+                    var badgeHtml = '';
+                    if (type === 'district' && item.productPurchaseID) {
+                        if (hasPurchase(item.productPurchaseID)) {
+                            var exp = activePurchases.get(item.productPurchaseID) ||
+                                activePurchases.get('district' + item.productPurchaseID) ||
+                                activePurchases.get(item.productPurchaseID.replace(/^district/, '')) || 0;
+                            var days = Math.ceil((exp - Date.now()) / 86400000);
+                            badgeHtml = '<div class="region-card-badge purchased">' + days + 'd left</div>';
+                        } else {
+                            badgeHtml = '<div class="region-card-badge buy" data-pid="' + item.productPurchaseID + '" data-name="' + item.name + '">Buy</div>';
+                        }
+                    }
+
+                    // Icon
+                    var iconName = item.icon || '';
+                    var imgHtml = iconName
+                        ? '<img class="region-card-img" src="' + ICON_BASE + iconName + '.png" onerror="this.outerHTML=\'<div class=region-card-placeholder>' + item.name.charAt(0) + '</div>\'">'
+                        : '<div class="region-card-placeholder">' + item.name.charAt(0) + '</div>';
+
+                    card.innerHTML = imgHtml + badgeHtml +
+                        '<div class="region-card-body">' +
+                        '<div class="region-card-name">' + item.name + '</div>' +
+                        '<div class="region-card-sub">' + (item.sub || '') + '</div></div>';
+
+                    // Buy badge click
+                    var buyBadge = card.querySelector('.region-card-badge.buy');
+                    if (buyBadge) {
+                        buyBadge.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            buyRegion(buyBadge.dataset.pid, buyBadge.dataset.name);
+                        });
+                    }
+
+                    // Card click
+                    card.addEventListener('click', function() {
+                        if (type === 'state') {
+                            openStateInBrowser(item.name);
+                        } else if (type === 'district') {
+                            openDistrictVillages(item.name, item.villagesJSON, item.productPurchaseID);
+                        }
+                    });
+
+                    regionGrid.appendChild(card);
+                });
+            }
+
+            function openStateInBrowser(stateName) {
+                var districts = menuData.filter(function(m) { return m.state === stateName && m.district; });
+                var stateItem = menuData.find(function(m) { return m.state === stateName && !m.district; });
+
+                if (districts.length > 0) {
+                    var items = districts.map(function(d) {
+                        return {
+                            name: d.district,
+                            sub: countVillages(d.villagesJSON) + ' locations',
+                            icon: d.iconVillage,
+                            hasChildren: true,
+                            villagesJSON: d.villagesJSON,
+                            productPurchaseID: d.productPurchaseID
+                        };
+                    });
+                    pushRegionLevel(stateName, items, 'district');
+                } else if (stateItem && stateItem.villagesJSON) {
+                    openDistrictVillages(stateName, stateItem.villagesJSON, stateItem.productPurchaseID);
+                }
+            }
+
+            function openDistrictVillages(title, villagesJSON, productPurchaseID) {
+                var locations = parseVillagesJSON(villagesJSON);
+                var items = locations.map(function(loc) {
+                    return { name: loc.name, sub: loc.lat.toFixed(4) + ', ' + loc.lng.toFixed(4), lat: loc.lat, lng: loc.lng };
+                });
+                var level = { title: title, items: items, type: 'village', productPurchaseID: productPurchaseID || '' };
+                regionHistory.push(level);
+                regionTitle.textContent = title;
+                regionSearch.value = '';
+                renderRegionGrid(items, 'village');
+            }
+
+            // Browser controls
+            document.getElementById('region-browser-back').addEventListener('click', popRegionLevel);
+            document.getElementById('region-browser-close').addEventListener('click', closeRegionBrowser);
+
+            // Search in browser
+            regionSearch.addEventListener('input', function() {
+                var q = this.value.trim().toLowerCase();
+                var current = regionHistory[regionHistory.length - 1];
+                if (!current) return;
+                if (!q) { renderRegionGrid(current.items, current.type); return; }
+                var filtered = current.items.filter(function(item) {
+                    return item.name.toLowerCase().includes(q) || (item.sub && item.sub.toLowerCase().includes(q));
+                });
+                renderRegionGrid(filtered, current.type);
+            });
 
             function openState(stateName) {
                 const districts = menuData.filter(m => m.state === stateName && m.district);
@@ -2717,7 +2947,9 @@
                     }
 
                     btn.addEventListener('click', () => {
-                        if (type === 'district') {
+                        if (type === 'state') {
+                            openState(item.name);
+                        } else if (type === 'district') {
                             const currentQuery = sidebarSearch.value.trim();
                             showVillages(item.name, item.villagesJSON, currentQuery || null, item.productPurchaseID);
                         } else if (type === 'village') {
@@ -2801,7 +3033,11 @@
                     return;
                 }
 
-                if (current.type === 'district') {
+                if (current.type === 'state') {
+                    // Search state names
+                    const filtered = current.items.filter(item => item.name.toLowerCase().includes(q));
+                    renderSidebarList(filtered, current.type);
+                } else if (current.type === 'district') {
                     // Search district names AND villages inside each district
                     const results = [];
                     current.items.forEach(item => {
