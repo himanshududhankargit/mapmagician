@@ -1929,23 +1929,23 @@
             }
 
             // Fetch and display price from Firebase
-            priceEl.textContent = '₹...';
-            const pid = district ? district.productPurchaseID : 'default';
+            priceEl.textContent = 'Loading...';
+            priceEl.style.fontSize = '18px';
+            var pid = district ? district.productPurchaseID : 'default';
             firebase.database().ref('GISPricingMapMagician/' + pid).once('value').then(function(snap) {
-                var price = snap.val();
-                if (!price) {
-                    return firebase.database().ref('GISPricingMapMagician/default').once('value');
+                return snap.val();
+            }).then(function(price) {
+                if (!price || price <= 0) {
+                    // Fallback to default pricing
+                    return firebase.database().ref('GISPricingMapMagician/default').once('value').then(function(s) { return s.val(); });
                 }
-                return { val: function() { return price; } };
-            }).then(function(snap) {
-                var price = typeof snap === 'object' && snap.val ? snap.val() : snap;
-                if (price && price > 0) {
-                    priceEl.textContent = '₹' + price;
-                } else {
-                    priceEl.textContent = '₹199';
-                }
+                return price;
+            }).then(function(price) {
+                priceEl.style.fontSize = '32px';
+                priceEl.textContent = (price && price > 0) ? ('\u20B9' + price) : '\u20B9199';
             }).catch(function() {
-                priceEl.textContent = '₹199';
+                priceEl.style.fontSize = '32px';
+                priceEl.textContent = '\u20B9199';
             });
 
             // Disable map interaction while dialog is visible
