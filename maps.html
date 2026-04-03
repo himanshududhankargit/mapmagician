@@ -2996,6 +2996,7 @@
                 });
                 var level = { title: title, items: items, type: 'village', productPurchaseID: productPurchaseID || '', highlightTerm: highlightTerm || '' };
                 regionHistory.push(level);
+                history.pushState({ regionBrowser: true, depth: regionHistory.length }, '');
                 regionTitle.textContent = title;
                 regionSearch.value = '';
                 renderRegionGrid(items, 'village');
