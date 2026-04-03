@@ -757,6 +757,7 @@
         const functions = firebase.app().functions('asia-south1');
         let currentUser = null;
         const activePurchases = new Map(); // productId → expiry timestamp
+        const cachedPricing = new Map();   // productId → price (pre-fetched at startup)
         let cachedIdToken = null; // Firebase ID token for tile proxy auth
         let cachedAccessToken = ''; // Signed access token from getPurchaseStatus
         let pendingPurchase = null; // { productId, regionName } — set when buy clicked before login
@@ -1928,25 +1929,10 @@
                 regionInfo.style.display = 'none';
             }
 
-            // Fetch and display price from Firebase
-            priceEl.textContent = 'Loading...';
-            priceEl.style.fontSize = '18px';
+            // Display price instantly from pre-fetched cache
             var pid = district ? district.productPurchaseID : 'default';
-            firebase.database().ref('GISPricingMapMagician/' + pid).once('value').then(function(snap) {
-                return snap.val();
-            }).then(function(price) {
-                if (!price || price <= 0) {
-                    // Fallback to default pricing
-                    return firebase.database().ref('GISPricingMapMagician/default').once('value').then(function(s) { return s.val(); });
-                }
-                return price;
-            }).then(function(price) {
-                priceEl.style.fontSize = '32px';
-                priceEl.textContent = (price && price > 0) ? ('\u20B9' + price) : '\u20B9199';
-            }).catch(function() {
-                priceEl.style.fontSize = '32px';
-                priceEl.textContent = '\u20B9199';
-            });
+            var price = cachedPricing.get(pid) || cachedPricing.get('default') || 199;
+            priceEl.textContent = '\u20B9' + price;
 
             // Disable map interaction while dialog is visible
             disableMapInteraction();
@@ -2520,6 +2506,12 @@
 
             // Initialize UI event listeners
             initUIEvents();
+
+            // Pre-fetch all pricing so purchase dialog opens instantly
+            firebase.database().ref('GISPricingMapMagician').once('value').then(function(snap) {
+                var data = snap.val() || {};
+                Object.entries(data).forEach(function(e) { cachedPricing.set(e[0], e[1]); });
+            });
 
             // Start loading layer data
             fetchLayerData();
