@@ -2270,6 +2270,15 @@
                 }
             }
 
+            // Keep reference position fresh while staying in the same region,
+            // so the zoom-distance guard above always compares against a recent position.
+            // Without this, cumulative zoom drift defeats the guard for small polygons.
+            if (!regionChanged) {
+                const c = map.getCenter();
+                lastRegionCenterLat = c.lat();
+                lastRegionCenterLng = c.lng();
+            }
+
             if (regionChanged) {
                 lastCheckedRegionId = regionId;
                 bannerDismissedForRegion = null;
