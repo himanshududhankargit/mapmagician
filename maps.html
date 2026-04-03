@@ -280,12 +280,12 @@
         /* Zoom restriction dialog */
         .zoom-dialog-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:3000; display:none; align-items:center; justify-content:center; }
         .zoom-dialog-overlay.open { display:flex; }
-        .zoom-dialog { background:#fff; border-radius:16px; padding:28px 24px; max-width:380px; width:92%; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.25); }
+        .zoom-dialog { background:#fff; border-radius:16px; max-width:400px; width:92%; box-shadow:0 8px 32px rgba(0,0,0,0.25); overflow:hidden; }
         .zoom-dialog h3 { margin:0 0 10px; font-size:20px; color:#212121; font-weight:700; }
-        .zoom-dialog-desc { margin:0 0 16px; font-size:14px; color:#666; line-height:1.5; }
-        .zoom-dialog-region { background:#e0e0e0; color:#333; padding:10px 16px; border-radius:8px; font-size:14px; font-weight:600; margin-bottom:20px; }
+        .zoom-dialog-desc { margin:0 0 16px; font-size:13px; color:#555; line-height:1.6; }
+        .zoom-dialog-region { background:#E0F2F1; color:#00695C; padding:10px 16px; border-radius:8px; font-size:14px; font-weight:600; margin-bottom:16px; text-align:center; }
         .zoom-dialog-buttons { display:flex; gap:12px; justify-content:center; margin-bottom:14px; }
-        .zoom-dialog-btn { padding:12px 28px; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; flex:1; max-width:160px; }
+        .zoom-dialog-btn { padding:12px 28px; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
         .zoom-btn-access { background:#4CAF50; color:#fff; }
         .zoom-btn-access:hover { background:#43A047; }
         .zoom-btn-dismiss { background:#f44336; color:#fff; }
@@ -635,15 +635,48 @@
 
     <!-- Zoom restriction dialog -->
     <div class="zoom-dialog-overlay" id="zoom-restrict-overlay">
-        <div class="zoom-dialog">
-            <h3 id="zoom-restrict-title">Subscribe to Region</h3>
-            <p class="zoom-dialog-desc" id="zoom-restrict-desc">Unlock exclusive premium maps for this region. Choose your preferred access method.</p>
-            <div class="zoom-dialog-region" id="zoom-restrict-region">Region: --</div>
-            <div class="zoom-dialog-buttons">
-                <button class="zoom-dialog-btn zoom-btn-access" id="zoom-restrict-action">Get 7-Day Pass</button>
-                <button class="zoom-dialog-btn zoom-btn-dismiss" id="zoom-restrict-cancel">Dismiss</button>
+        <div class="zoom-dialog" style="max-width:400px;text-align:left;padding:0;overflow:hidden;">
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,#008577,#00695C);padding:20px 24px;text-align:center;color:#fff;">
+                <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;opacity:0.85;margin-bottom:4px;">Web Access Plan</div>
+                <h3 id="zoom-restrict-title" style="margin:0;font-size:20px;color:#fff;font-weight:700;">Unlock Region</h3>
             </div>
-            <button class="zoom-dialog-support" id="zoom-restrict-support">Contact Support</button>
+            <!-- Body -->
+            <div style="padding:20px 24px;">
+                <div id="zoom-restrict-region" style="background:#E0F2F1;color:#00695C;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:600;margin-bottom:16px;text-align:center;">Region: --</div>
+                <p class="zoom-dialog-desc" id="zoom-restrict-desc" style="margin:0 0 16px;font-size:13px;color:#555;line-height:1.6;">Access high-resolution maps and tools directly in your browser.</p>
+                <!-- Price -->
+                <div id="zoom-restrict-price" style="text-align:center;margin-bottom:16px;">
+                    <span style="font-size:28px;font-weight:800;color:#212121;" id="zoom-price-amount">₹199</span>
+                    <span style="font-size:13px;color:#888;font-weight:500;"> / 7 days</span>
+                </div>
+                <!-- Features -->
+                <div style="margin-bottom:18px;font-size:13px;color:#444;line-height:2;">
+                    <div>&#10004;&#xFE0E; Full access on web browser</div>
+                    <div>&#10004;&#xFE0E; High zoom map viewing</div>
+                    <div>&#10004;&#xFE0E; Region-specific detailed plans</div>
+                    <div>&#10004;&#xFE0E; Optimized for desktop</div>
+                </div>
+                <!-- Buttons -->
+                <button class="zoom-dialog-btn zoom-btn-access" id="zoom-restrict-action" style="width:100%;max-width:none;padding:14px;font-size:15px;border-radius:10px;margin-bottom:10px;">Unlock Web Access</button>
+                <button id="zoom-restrict-cancel" style="width:100%;padding:10px;border:none;background:none;color:#999;font-size:13px;font-weight:500;cursor:pointer;">Dismiss</button>
+                <!-- Web-only note -->
+                <div style="background:#FFF8E1;border-radius:8px;padding:10px 14px;margin-top:12px;font-size:11px;color:#795548;line-height:1.5;">
+                    <strong>Web only</strong> — This plan provides access on web browsers only. Mobile + web access is available via the Pro plan in the Android app.
+                </div>
+                <!-- Play Store link -->
+                <div style="text-align:center;margin-top:14px;padding-top:14px;border-top:1px solid #f0f0f0;">
+                    <div style="font-size:11px;color:#888;margin-bottom:6px;">Need access on mobile as well?</div>
+                    <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#008577;font-weight:600;text-decoration:none;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#008577"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
+                        Get Pro Plan on Google Play
+                    </a>
+                </div>
+            </div>
+            <!-- Support -->
+            <div style="padding:0 24px 16px;text-align:center;">
+                <button class="zoom-dialog-support" id="zoom-restrict-support">Contact Support</button>
+            </div>
         </div>
     </div>
 
@@ -1834,24 +1867,47 @@
             const desc = document.getElementById('zoom-restrict-desc');
             const regionInfo = document.getElementById('zoom-restrict-region');
             const actionBtn = document.getElementById('zoom-restrict-action');
+            const priceEl = document.getElementById('zoom-price-amount');
 
             lastRestrictedDistrict = district;
 
-            // Restore button to purchase style (may have been changed by showNoDataDialog)
-            actionBtn.textContent = 'Get 7-Day Pass';
+            // Restore button + support to purchase style (may have been changed by showNoDataDialog)
+            actionBtn.textContent = 'Unlock Web Access';
             actionBtn.className = 'zoom-dialog-btn zoom-btn-access';
+            actionBtn.style.cssText = 'width:100%;max-width:none;padding:14px;font-size:15px;border-radius:10px;margin-bottom:10px;';
             document.getElementById('zoom-restrict-support').style.display = '';
+            document.getElementById('zoom-restrict-price').style.display = '';
 
             if (district) {
-                title.textContent = 'Unlock ' + district.districtName + ' Region';
-                desc.textContent = 'Get a 7-Day Pass to access high-resolution development plan maps for ' + district.districtName + ' Region.';
-                regionInfo.textContent = 'Region: ' + district.districtName;
+                title.textContent = 'Unlock ' + district.districtName;
+                desc.textContent = 'Access high-resolution development plan maps for ' + district.districtName + ' directly in your browser.';
+                regionInfo.textContent = district.districtName + ' Region';
                 regionInfo.style.display = 'block';
             } else {
                 title.textContent = 'Unlock Premium Maps';
-                desc.textContent = 'Get a 7-Day Pass to access high-resolution development plan maps. Browse districts in the sidebar to choose a region.';
+                desc.textContent = 'Access high-resolution development plan maps directly in your browser.';
                 regionInfo.style.display = 'none';
             }
+
+            // Fetch and display price from Firebase
+            priceEl.textContent = '₹...';
+            const pid = district ? district.productPurchaseID : 'default';
+            firebase.database().ref('GISPricingMapMagician/' + pid).once('value').then(function(snap) {
+                var price = snap.val();
+                if (!price) {
+                    return firebase.database().ref('GISPricingMapMagician/default').once('value');
+                }
+                return { val: function() { return price; } };
+            }).then(function(snap) {
+                var price = typeof snap === 'object' && snap.val ? snap.val() : snap;
+                if (price && price > 0) {
+                    priceEl.textContent = '₹' + price;
+                } else {
+                    priceEl.textContent = '₹199';
+                }
+            }).catch(function() {
+                priceEl.textContent = '₹199';
+            });
 
             // Disable map interaction while dialog is visible
             disableMapInteraction();
@@ -1907,6 +1963,7 @@
             desc.textContent = 'There are no development plan maps available for this area. Browse available regions to explore maps.';
             regionInfo.style.display = 'none';
             supportBtn.style.display = 'none';
+            document.getElementById('zoom-restrict-price').style.display = 'none';
 
             disableMapInteraction();
 
