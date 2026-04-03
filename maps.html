@@ -1306,9 +1306,11 @@
                 loadingOverlay.classList.remove('open');
                 console.error('Purchase error:', error);
                 if (error.code === 'already-exists') {
-                    // Already purchased — just unlock the region
+                    // Already purchased — unlock the region and close paywall
                     await fetchPurchaseStatus(true);
                     map.setOptions({ maxZoom: 21 });
+                    enableMapInteraction();
+                    document.getElementById('zoom-restrict-overlay').classList.remove('open');
                     showUnlockToast(regionName);
                 } else {
                     alert('Payment error: ' + (error.message || error.code || JSON.stringify(error)));
@@ -3142,14 +3144,14 @@
             }
 
             function goToLocation(lat, lng, name, districtProductId) {
+                zoomBypassActive = true;
                 map.setCenter({ lat, lng });
                 if (districtProductId && hasPurchase(districtProductId)) {
-                    zoomBypassActive = true;
                     map.setZoom(15);
-                    google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
                 } else {
                     map.setZoom(MAX_FREE_ZOOM - 1);
                 }
+                google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
                 updateStatus('Zoomed to ' + name);
             }
 
