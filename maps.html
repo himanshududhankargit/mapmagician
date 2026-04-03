@@ -874,20 +874,23 @@
                 ? crypto.randomUUID()
                 : (Date.now() + '-' + Math.random().toString(36).slice(2));
             const ref = firebase.database().ref('GISWebActiveSessions/' + emailKey);
-            ref.set(currentSessionId);
 
             // Detach previous listener if any
             if (sessionListenerRef) sessionListenerRef.off();
             sessionListenerRef = ref;
 
-            ref.on('value', function(snap) {
-                const val = snap.val();
-                if (val && val !== currentSessionId && currentUser && !currentUser.isAnonymous) {
-                    // Another session superseded this one
-                    ref.off();
-                    sessionListenerRef = null;
-                    showSessionExpiredDialog();
-                }
+            // Write our sessionId FIRST, then listen for changes
+            // This prevents the listener from firing with the old value before set() completes
+            ref.set(currentSessionId).then(function() {
+                ref.on('value', function(snap) {
+                    const val = snap.val();
+                    if (val && val !== currentSessionId && currentUser && !currentUser.isAnonymous) {
+                        // Another session superseded this one
+                        ref.off();
+                        sessionListenerRef = null;
+                        showSessionExpiredDialog();
+                    }
+                });
             });
         }
 
