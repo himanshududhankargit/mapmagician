@@ -653,7 +653,7 @@
                 <!-- Price card -->
                 <div id="zoom-restrict-price" style="background:#FAFAFA;border:1px solid #E0E0E0;border-radius:12px;padding:16px;text-align:center;margin-bottom:18px;">
                     <span style="font-size:32px;font-weight:800;color:#212121;letter-spacing:-1px;" id="zoom-price-amount">&#8377;199</span>
-                    <span style="font-size:13px;color:#888;font-weight:500;"> / 7 days</span>
+                    <span style="display:inline-block;background:#E0F2F1;color:#00796B;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;margin-left:8px;vertical-align:middle;">7 DAYS</span>
                     <div style="font-size:11px;color:#999;margin-top:4px;">One-time payment, no auto-renewal</div>
                 </div>
                 <!-- Features grid -->
@@ -2508,7 +2508,8 @@
             initUIEvents();
 
             // Pre-fetch all pricing so purchase dialog opens instantly
-            firebase.database().ref('GISPricingMapMagician').once('value').then(function(snap) {
+            firebase.database().ref('GISPricingMapMagician').on('value', function(snap) {
+                cachedPricing.clear();
                 var data = snap.val() || {};
                 Object.entries(data).forEach(function(e) { cachedPricing.set(e[0], e[1]); });
             });
