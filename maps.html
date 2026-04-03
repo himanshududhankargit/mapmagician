@@ -1221,13 +1221,6 @@
                 return;
             }
 
-            // Already purchased — unlock zoom and show toast
-            if (hasPurchase(productId)) {
-                map.setOptions({ maxZoom: 21 });
-                showUnlockToast(regionName);
-                return;
-            }
-
             // Show loading overlay
             const loadingOverlay = document.getElementById('payment-loading-overlay');
             document.getElementById('payment-loading-sub').textContent = '7-Day Pass: ' + regionName;
