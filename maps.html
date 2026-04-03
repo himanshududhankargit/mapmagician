@@ -101,7 +101,7 @@
         .fab-stack {
             position: absolute; right: 8px; z-index: 1000;
             display: flex; flex-direction: column; gap: 8px;
-            bottom: 112px;
+            bottom: 72px;
         }
         .fab {
             width: 48px; height: 48px; border-radius: 50%;
@@ -171,11 +171,31 @@
         .layer-overlay.open { display: block; }
 
         /* Bottom navigation bar (Google Maps style tabs) */
-        .bottom-nav-bar {
-            position: absolute; bottom: 52px; left: 0; right: 0;
-            height: 48px; background: #fff; box-shadow: 0 -1px 4px rgba(0,0,0,0.12);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 1000; padding: 0 12px; gap: 8px;
+        /* Unified bottom bar */
+        .bottom-bar {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(255,255,255,0.97); z-index: 1000;
+            box-shadow: 0 -1px 4px rgba(0,0,0,0.1);
+            display: flex; flex-wrap: wrap; align-items: center;
+            justify-content: center; padding: 6px 12px; gap: 6px;
+        }
+        .bottom-bar-left {
+            display: flex; align-items: center; gap: 6px;
+        }
+        .bottom-bar-center { order: -1; width: 100%; text-align: center; }
+        .bottom-bar-right {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 10px; color: #555;
+        }
+        .bottom-bar-right .dock-divider { width: 1px; height: 14px; background: rgba(0,0,0,0.12); }
+        .coord-chip { font-size: 10px; color: #333; white-space: nowrap; cursor: pointer; }
+        #zoom-level { font-size: 10px; color: #555; white-space: nowrap; }
+        /* Wide: single row — opacity left, button center, coords right */
+        @media (min-width: 700px) {
+            .bottom-bar { flex-wrap: nowrap; padding: 8px 16px; }
+            .bottom-bar-left { flex: 1; min-width: 0; }
+            .bottom-bar-center { order: 0; width: auto; flex-shrink: 0; }
+            .bottom-bar-right { flex: 1; min-width: 0; justify-content: flex-end; }
         }
         .nav-regions-btn {
             display: inline-flex; align-items: center; gap: 8px;
@@ -257,23 +277,7 @@
             .region-grid { grid-template-columns: repeat(4, 1fr); max-width: 950px; }
         }
         /* Info strip below nav bar */
-        .info-strip {
-            position: absolute; bottom: 0; left: 0; right: 0; height: 24px;
-            background: rgba(255,255,255,0.95); display: flex; align-items: center;
-            justify-content: center; gap: 8px; z-index: 1000; font-size: 10px; color: #555;
-            border-top: 1px solid rgba(0,0,0,0.08); padding: 0 8px;
-        }
-        .info-strip .dock-divider { width: 1px; height: 14px; background: rgba(0,0,0,0.12); flex-shrink: 0; }
-        .coord-chip { font-size: 10px; color: #333; white-space: nowrap; cursor: pointer; }
-        #zoom-level { font-size: 10px; color: #555; white-space: nowrap; }
-        /* Opacity slider strip */
-        .opacity-strip {
-            position: absolute; bottom: 24px; left: 0; right: 0; height: 28px;
-            background: rgba(255,255,255,0.95); display: flex; align-items: center;
-            justify-content: center; gap: 8px; z-index: 1000; padding: 0 16px;
-            border-top: 1px solid rgba(0,0,0,0.06);
-        }
-        .opacity-strip-slider { flex: 1; max-width: 300px; height: 3px; -webkit-appearance: none; appearance: none; background: #ddd; border-radius: 2px; outline: none; }
+        .opacity-strip-slider { flex: 1; max-width: 200px; height: 3px; -webkit-appearance: none; appearance: none; background: #ddd; border-radius: 2px; outline: none; }
         .opacity-strip-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #008577; cursor: pointer; }
         .opacity-strip-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #008577; cursor: pointer; border: none; }
         .opacity-strip-label { font-size: 10px; color: #555; min-width: 28px; text-align: center; }
@@ -413,7 +417,7 @@
 
         /* Measurement toolbar */
         .measure-toolbar {
-            position: absolute; bottom: 104px; left: 8px; right: 8px;
+            position: absolute; bottom: 64px; left: 8px; right: 8px;
             height: 44px; display: none; align-items: center; gap: 6px;
             z-index: 1001; background: #fff; border-radius: 22px;
             padding: 0 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
@@ -434,7 +438,7 @@
             cursor: pointer; outline: none; -webkit-appearance: none; appearance: none;
         }
         .measure-info {
-            position: absolute; bottom: 156px; left: 50%;
+            position: absolute; bottom: 116px; left: 50%;
             transform: translateX(-50%); background: rgba(0,0,0,0.75);
             color: #fff; padding: 8px 18px; border-radius: 20px;
             font-size: 13px; font-weight: 600; z-index: 1001;
@@ -633,26 +637,24 @@
     </div>
 
     <!-- Bottom navigation bar -->
-    <div class="bottom-nav-bar" id="bottom-nav-bar">
-        <button class="nav-regions-btn" id="btn-access-regions">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" fill="#fff"/></svg>
-            View Available Regions
-        </button>
-    </div>
-
-    <!-- Opacity slider strip between nav bar and info strip -->
-    <div class="opacity-strip">
-        <input type="range" class="opacity-strip-slider" id="info-opacity-slider" min="0" max="100" value="50">
-        <span class="opacity-strip-label" id="opacity-strip-label">50%</span>
-    </div>
-
-    <!-- Info strip: coords, zoom, region status -->
-    <div class="info-strip">
-        <span class="coord-chip" id="center-coord">--</span>
-        <div class="dock-divider"></div>
-        <span id="zoom-level">Z=13</span>
-        <div class="dock-divider"></div>
-        <span class="region-status" id="region-status" style="display:none"></span>
+    <!-- Unified bottom bar -->
+    <div class="bottom-bar" id="bottom-bar">
+        <div class="bottom-bar-left">
+            <input type="range" class="opacity-strip-slider" id="info-opacity-slider" min="0" max="100" value="50">
+            <span class="opacity-strip-label" id="opacity-strip-label">50%</span>
+        </div>
+        <div class="bottom-bar-center">
+            <button class="nav-regions-btn" id="btn-access-regions">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" fill="#fff"/></svg>
+                View Available Regions
+            </button>
+        </div>
+        <div class="bottom-bar-right">
+            <span class="coord-chip" id="center-coord">--</span>
+            <div class="dock-divider"></div>
+            <span id="zoom-level">Z=13</span>
+            <span class="region-status" id="region-status" style="display:none"></span>
+        </div>
     </div>
     <span id="status-indicator" style="display:none">Ready</span>
 
@@ -2092,6 +2094,7 @@
 
             disableMapInteraction();
 
+            // Replace button to strip old listeners
             const newBtn = actionBtn.cloneNode(true);
             newBtn.id = 'zoom-restrict-action';
             newBtn.textContent = 'Browse Available Regions';
@@ -2099,7 +2102,7 @@
             newBtn.style.cssText = 'width:100%;max-width:none;padding:14px;font-size:15px;border-radius:12px;margin-bottom:8px;cursor:pointer;';
             actionBtn.parentNode.replaceChild(newBtn, actionBtn);
 
-            newBtn.onclick = function() {
+            newBtn.addEventListener('click', function() {
                 overlay.classList.remove('open');
                 enableMapInteraction();
                 supportBtn.style.display = '';
@@ -2107,15 +2110,15 @@
                 map.setZoom(MAX_FREE_ZOOM - 1);
                 google.maps.event.addListenerOnce(map, 'idle', function() { zoomBypassActive = false; });
                 openRegionsBrowser();
-            };
+            });
 
-            document.getElementById('zoom-restrict-cancel').onclick = () => {
+            document.getElementById('zoom-restrict-cancel').onclick = function() {
                 overlay.classList.remove('open');
                 enableMapInteraction();
                 supportBtn.style.display = '';
                 zoomBypassActive = true;
                 map.setZoom(MAX_FREE_ZOOM - 1);
-                google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
+                google.maps.event.addListenerOnce(map, 'idle', function() { zoomBypassActive = false; });
             };
 
             overlay.classList.add('open');
