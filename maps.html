@@ -1187,33 +1187,41 @@
             }
         }
 
+        // Find matching entry in activePurchases with prefix-matching fallback
+        function findPurchaseEntry(productId) {
+            if (!productId) return null;
+            const pid = productId.toLowerCase().replace(/gst$/, '');
+            const pidNoPrefix = pid.replace(/^district/, '');
+            // Fast path: exact checks with/without "district" prefix
+            const exact = activePurchases.get(pid) ||
+                          activePurchases.get('district' + pid) ||
+                          activePurchases.get(pidNoPrefix);
+            if (exact) return exact;
+            // Fallback: prefix matching for mismatched naming conventions
+            for (const [key, val] of activePurchases.entries()) {
+                const keyNoPrefix = key.toLowerCase().replace(/gst$/, '').replace(/^district/, '');
+                if (pidNoPrefix.length >= 3 && keyNoPrefix.length >= 3 &&
+                    (keyNoPrefix.startsWith(pidNoPrefix) || pidNoPrefix.startsWith(keyNoPrefix))) {
+                    return val;
+                }
+            }
+            return null;
+        }
+
         // Check if a product is purchased
         function hasPurchase(productId) {
-            if (!productId) return false;
-            const pid = productId.toLowerCase().replace(/gst$/, '');
-            // Check both with and without "district" prefix
-            return activePurchases.has(pid) ||
-                   activePurchases.has('district' + pid) ||
-                   activePurchases.has(pid.replace(/^district/, ''));
+            return findPurchaseEntry(productId) !== null;
         }
 
         // Get plan type for a purchased product
         function getPurchasePlan(productId) {
-            if (!productId) return '';
-            const pid = productId.toLowerCase().replace(/gst$/, '');
-            const entry = activePurchases.get(pid) ||
-                          activePurchases.get('district' + pid) ||
-                          activePurchases.get(pid.replace(/^district/, ''));
+            const entry = findPurchaseEntry(productId);
             return entry ? (entry.plan || '') : '';
         }
 
         // Get expiry for a purchased product
         function getPurchaseExpiry(productId) {
-            if (!productId) return 0;
-            const pid = productId.toLowerCase().replace(/gst$/, '');
-            const entry = activePurchases.get(pid) ||
-                          activePurchases.get('district' + pid) ||
-                          activePurchases.get(pid.replace(/^district/, ''));
+            const entry = findPurchaseEntry(productId);
             return entry ? (entry.expiry || 0) : 0;
         }
 
@@ -2003,19 +2011,36 @@
             if (!purchaseId) return null;
             const pid = purchaseId.toLowerCase().replace(/gst$/, '');
             const pidNoPrefix = pid.replace(/^district/, '');
+
+            // Pass 1: Strict matching (exact or prefix-stripped equality)
             for (const item of menuData) {
                 if (!item.productPurchaseID) continue;
                 const itemPid = item.productPurchaseID.toLowerCase().replace(/gst$/, '');
                 const itemPidNoPrefix = itemPid.replace(/^district/, '');
-                // Strict matching: exact, or equal after stripping "district" prefix from both
                 if (itemPid === pid || itemPidNoPrefix === pidNoPrefix) {
-                    return {
-                        productPurchaseID: item.productPurchaseID,
-                        districtName: item.district || item.state
-                    };
+                    return { productPurchaseID: item.productPurchaseID, districtName: item.district || item.state };
                 }
             }
-            return null;
+
+            // Pass 2: Prefix matching fallback (handles naming variations like
+            // tile "aurangabad" vs menuData "districtaurangabadchhatrapatisamhajinagar")
+            // Picks best match (smallest length difference) to avoid false positives
+            let bestMatch = null;
+            let bestDiff = Infinity;
+            for (const item of menuData) {
+                if (!item.productPurchaseID) continue;
+                const itemPid = item.productPurchaseID.toLowerCase().replace(/gst$/, '');
+                const itemPidNoPrefix = itemPid.replace(/^district/, '');
+                if (pidNoPrefix.length >= 3 && itemPidNoPrefix.length >= 3 &&
+                    (itemPidNoPrefix.startsWith(pidNoPrefix) || pidNoPrefix.startsWith(itemPidNoPrefix))) {
+                    const diff = Math.abs(itemPidNoPrefix.length - pidNoPrefix.length);
+                    if (diff < bestDiff) {
+                        bestDiff = diff;
+                        bestMatch = { productPurchaseID: item.productPurchaseID, districtName: item.district || item.state };
+                    }
+                }
+            }
+            return bestMatch;
         }
 
         function disableMapInteraction() {
@@ -2203,6 +2228,11 @@
             const district = findDistrictAtCenter();
             const regionId = district ? district.productPurchaseID : null;
 
+            // When no tiles are loaded at center (null), don't treat as a region change —
+            // tiles may just be loading/unloading during zoom. Keep previous zoom state.
+            // The zoom_changed and idle handlers catch genuine no-data areas.
+            if (!district) return;
+
             const regionChanged = (regionId !== lastCheckedRegionId);
             if (regionChanged) {
                 lastCheckedRegionId = regionId;
@@ -2214,16 +2244,6 @@
             }
 
             const overlay = document.getElementById('zoom-restrict-overlay');
-
-            if (!district) {
-                // Not in any region — lock zoom, dismiss dialog
-                map.setOptions({ maxZoom: MAX_FREE_ZOOM });
-                if (regionChanged && dialogTriggeredByRegionEntry && overlay.classList.contains('open')) {
-                    overlay.classList.remove('open');
-                    enableMapInteraction();
-                }
-                return;
-            }
 
             if (hasPurchase(district.productPurchaseID)) {
                 // Purchased region — unlock zoom, dismiss dialog, show confirmation
