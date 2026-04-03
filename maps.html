@@ -683,7 +683,7 @@
     <!-- Payment loading overlay -->
     <div class="payment-loading-overlay" id="payment-loading-overlay">
         <div class="payment-spinner"></div>
-        <div class="payment-loading-text">Preparing your payment...</div>
+        <div class="payment-loading-text" id="payment-loading-text">Preparing your payment...</div>
         <div class="payment-loading-sub" id="payment-loading-sub">7-Day Pass</div>
     </div>
 
@@ -801,22 +801,39 @@
                     profileIcon.style.fontSize = '14px';
                 }
                 profileBtn.title = user.displayName || user.email;
-                if (user.email) loadPurchaseStatus(user.email);
                 fetchCloudFrontCookies();
                 if (user.email) registerSession(user.email);
 
-                // Resume pending purchase after sign-in
-                if (pendingPurchase) {
-                    const { productId, regionName } = pendingPurchase;
-                    pendingPurchase = null;
-                    setTimeout(() => buyRegion(productId, regionName), 500);
-                }
-                // Resume pending support form after sign-in
-                if (pendingSupportOpen) {
-                    const { district, returnToPaywall } = pendingSupportOpen;
-                    pendingSupportOpen = null;
-                    setTimeout(() => openSupportForm(district, returnToPaywall), 500);
-                }
+                // Show loading while fetching purchase data
+                const authLoadingOverlay = document.getElementById('payment-loading-overlay');
+                document.getElementById('payment-loading-text').textContent = 'Loading your account...';
+                document.getElementById('payment-loading-sub').textContent = user.email || '';
+                authLoadingOverlay.classList.add('open');
+
+                // Wait for purchases to load, THEN resume pending actions
+                fetchPurchaseStatus(true).then(function() {
+                    authLoadingOverlay.classList.remove('open');
+                    // Reset overlay text for future payment use
+                    document.getElementById('payment-loading-text').textContent = 'Preparing your payment...';
+                    document.getElementById('payment-loading-sub').textContent = '7-Day Pass';
+
+                    // Resume pending purchase after purchases are loaded
+                    if (pendingPurchase) {
+                        const pp = pendingPurchase;
+                        pendingPurchase = null;
+                        buyRegion(pp.productId, pp.regionName);
+                    }
+                    // Resume pending support form
+                    if (pendingSupportOpen) {
+                        const ps = pendingSupportOpen;
+                        pendingSupportOpen = null;
+                        openSupportForm(ps.district, ps.returnToPaywall);
+                    }
+                }).catch(function() {
+                    authLoadingOverlay.classList.remove('open');
+                    document.getElementById('payment-loading-text').textContent = 'Preparing your payment...';
+                    document.getElementById('payment-loading-sub').textContent = '7-Day Pass';
+                });
             } else if (user && user.isAnonymous) {
                 // Anonymous user — only fetch cookies for tile access, show as not logged in
                 fetchCloudFrontCookies();
