@@ -708,6 +708,7 @@
     <script>
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
+        googleProvider.setCustomParameters({ prompt: 'select_account' });
         const functions = firebase.app().functions('asia-south1');
         let currentUser = null;
         const activePurchases = new Map(); // productId → expiry timestamp
