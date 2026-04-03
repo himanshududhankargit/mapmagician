@@ -1094,6 +1094,8 @@
                 if (force) {
                     checkAndReenableMap();
                     lastCheckedRegionId = null;
+                    stickyTile = null;
+                    stickyDistrict = null;
                     checkRegionOnMove();
                 }
             } catch (e) {
@@ -1283,6 +1285,8 @@
                             document.getElementById('zoom-restrict-overlay').classList.remove('open');
                             map.setOptions({ maxZoom: 21 }); // unlock zoom after purchase
                             lastCheckedRegionId = null; // force re-evaluate
+                            stickyTile = null;
+                            stickyDistrict = null;
                             updateStatus('Region activated!');
                         } catch (e) {
                             console.error('Confirm payment error:', e);
@@ -1339,6 +1343,8 @@
         let lastRestrictedDistrict = null; // remember district for unlock button
         let lastCheckedRegionId = null; // cache to skip re-processing same region
         let lastToastedRegionId = null; // prevent repeated toasts when tiles oscillate
+        let stickyTile = null;          // last detected tile — prevents false region switches during zoom
+        let stickyDistrict = null;      // district result paired with stickyTile
         let lastRegionCenterLat = 0;   // center when region was last detected
         let lastRegionCenterLng = 0;   // used to distinguish zoom from pan
         let bannerDismissedForRegion = null; // track dismissed region to avoid re-showing
@@ -1971,11 +1977,18 @@
             const c = map.getCenter();
             const center = { lat: c.lat(), lng: c.lng() };
 
+            // Sticky: if center is still within the previously detected tile, keep it.
+            // Prevents false region switches from overlapping larger tile polygons during zoom drift.
+            if (stickyTile && stickyTile.polygon && pointInPolygon(center, stickyTile.polygon)) {
+                return stickyDistrict;
+            }
+
             // Use tile polygon boundaries from dpLayerData, then look up district name via menuGIS
             // When multiple tiles overlap at boundaries, prefer the smallest (most specific) tile
             if (dpLayerData.length > 0) {
                 let bestMatch = null;
                 let bestArea = Infinity;
+                let bestTile = null;
                 for (const tile of dpLayerData) {
                     if (tile.polygon && pointInPolygon(center, tile.polygon)) {
                         const area = tile.bbox
@@ -1997,14 +2010,21 @@
                         if (district) {
                             bestMatch = district;
                             bestArea = area;
+                            bestTile = tile;
                         } else {
                             console.log('[RegionDetect] Tile hit but no menuGIS match. tile.id:', tile.id, 'tile.productPurchaseID:', tile.productPurchaseID);
                         }
                     }
                 }
-                if (bestMatch) return bestMatch;
+                if (bestMatch) {
+                    stickyTile = bestTile;
+                    stickyDistrict = bestMatch;
+                    return bestMatch;
+                }
             }
 
+            stickyTile = null;
+            stickyDistrict = null;
             return null;
         }
 
@@ -3825,6 +3845,8 @@
             if (cached) {
                 dpLayerData = applyLayerData(cached, "Development Plan");
                 dpTileStatus = Array(dpLayerData.length).fill(false);
+                stickyTile = null;
+                stickyDistrict = null;
                 dpDataLoaded = true;
                 loadTilesBasedOnViewport();
             }
@@ -3836,6 +3858,8 @@
                 if (!cached) {
                     dpLayerData = applyLayerData(data, "Development Plan");
                     dpTileStatus = Array(dpLayerData.length).fill(false);
+                    stickyTile = null;
+                    stickyDistrict = null;
                     dpDataLoaded = true;
                     loadTilesBasedOnViewport();
                 }
