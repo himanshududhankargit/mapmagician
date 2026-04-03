@@ -1339,6 +1339,8 @@
         let lastRestrictedDistrict = null; // remember district for unlock button
         let lastCheckedRegionId = null; // cache to skip re-processing same region
         let lastToastedRegionId = null; // prevent repeated toasts when tiles oscillate
+        let lastRegionCenterLat = 0;   // center when region was last detected
+        let lastRegionCenterLng = 0;   // used to distinguish zoom from pan
         let bannerDismissedForRegion = null; // track dismissed region to avoid re-showing
         let dialogTriggeredByRegionEntry = false; // distinguish region-entry vs zoom triggers
         const MAX_FREE_ZOOM = 14;
@@ -2230,13 +2232,30 @@
 
             // When no tiles are loaded at center (null), don't treat as a region change —
             // tiles may just be loading/unloading during zoom. Keep previous zoom state.
-            // The zoom_changed and idle handlers catch genuine no-data areas.
             if (!district) return;
 
             const regionChanged = (regionId !== lastCheckedRegionId);
+
+            // If the region appears to have changed, verify the center actually moved (panning).
+            // During zoom-only, tiles load/unload causing false region changes
+            // (e.g., small region's tile unloads, larger purchased tile takes over).
+            if (regionChanged && lastCheckedRegionId !== null) {
+                const c = map.getCenter();
+                const dl = Math.abs(c.lat() - lastRegionCenterLat);
+                const dn = Math.abs(c.lng() - lastRegionCenterLng);
+                if (dl < 0.005 && dn < 0.005) {
+                    // Center barely moved (~500m) — this is a zoom, not a pan.
+                    // Don't switch regions based on tile loading artifacts.
+                    return;
+                }
+            }
+
             if (regionChanged) {
                 lastCheckedRegionId = regionId;
                 bannerDismissedForRegion = null;
+                const c = map.getCenter();
+                lastRegionCenterLat = c.lat();
+                lastRegionCenterLng = c.lng();
                 // Poll purchase status on region change (only for Google-signed-in users)
                 if (currentUser && !currentUser.isAnonymous) fetchPurchaseStatus();
                 // Update bottom bar immediately on region change so it stays in sync
@@ -2489,15 +2508,7 @@
                     `${c.lat().toFixed(5)}, ${c.lng().toFixed(5)}`;
                 debouncedLoadTiles();
                 // Update region subscription status in bottom bar
-                const district = updateRegionStatus();
-                // Enforce correct zoom restriction on idle (catches any gap from throttled center_changed)
-                if (!zoomBypassActive && !mapInteractionDisabled) {
-                    if (district && hasPurchase(district.productPurchaseID)) {
-                        map.setOptions({ maxZoom: 21 });
-                    } else {
-                        map.setOptions({ maxZoom: MAX_FREE_ZOOM });
-                    }
-                }
+                updateRegionStatus();
                 // Show/hide old maps button based on current region
                 updateOldMapsButtonVisibility();
             });
