@@ -1211,14 +1211,21 @@
                           activePurchases.get(pidNoPrefix);
             if (exact) return exact;
             // Fallback: prefix matching for mismatched naming conventions
+            // Cap length difference to avoid false positives (e.g. "pune" matching "punekarjat")
+            let bestFallback = null;
+            let bestFallbackDiff = Infinity;
             for (const [key, val] of activePurchases.entries()) {
                 const keyNoPrefix = key.toLowerCase().replace(/gst$/, '').replace(/^district/, '');
                 if (pidNoPrefix.length >= 3 && keyNoPrefix.length >= 3 &&
                     (keyNoPrefix.startsWith(pidNoPrefix) || pidNoPrefix.startsWith(keyNoPrefix))) {
-                    return val;
+                    const diff = Math.abs(keyNoPrefix.length - pidNoPrefix.length);
+                    if (diff <= 5 && diff < bestFallbackDiff) {
+                        bestFallbackDiff = diff;
+                        bestFallback = val;
+                    }
                 }
             }
-            return null;
+            return bestFallback;
         }
 
         // Check if a product is purchased
@@ -2014,19 +2021,24 @@
             const c = map.getCenter();
             const center = { lat: c.lat(), lng: c.lng() };
 
-            // Sticky: if center is still within the previously detected tile, keep it.
-            // Prevents false region switches from overlapping larger tile polygons during zoom drift.
-            if (stickyTile && stickyTile.polygon && pointInPolygon(center, stickyTile.polygon)) {
-                return stickyDistrict;
-            }
-
             // Use tile polygon boundaries from dpLayerData, then look up district name via menuGIS
             // When multiple tiles overlap at boundaries, prefer the smallest (most specific) tile
             if (dpLayerData.length > 0) {
+                // Seed with sticky tile (if it still contains center) to prevent
+                // false switches to LARGER polygons during zoom drift.
+                // Smaller (more specific) polygons will still override below.
                 let bestMatch = null;
                 let bestArea = Infinity;
                 let bestTile = null;
+                if (stickyTile && stickyTile.polygon && pointInPolygon(center, stickyTile.polygon)) {
+                    bestMatch = stickyDistrict;
+                    bestArea = stickyTile.bbox
+                        ? (stickyTile.bbox.maxLat - stickyTile.bbox.minLat) * (stickyTile.bbox.maxLng - stickyTile.bbox.minLng)
+                        : Infinity;
+                    bestTile = stickyTile;
+                }
                 for (const tile of dpLayerData) {
+                    if (tile === bestTile) continue; // skip sticky tile, already seeded
                     if (tile.polygon && pointInPolygon(center, tile.polygon)) {
                         const area = tile.bbox
                             ? (tile.bbox.maxLat - tile.bbox.minLat) * (tile.bbox.maxLng - tile.bbox.minLng)
@@ -2093,7 +2105,7 @@
                 if (pidNoPrefix.length >= 3 && itemPidNoPrefix.length >= 3 &&
                     (itemPidNoPrefix.startsWith(pidNoPrefix) || pidNoPrefix.startsWith(itemPidNoPrefix))) {
                     const diff = Math.abs(itemPidNoPrefix.length - pidNoPrefix.length);
-                    if (diff < bestDiff) {
+                    if (diff <= 10 && diff < bestDiff) {
                         bestDiff = diff;
                         bestMatch = { productPurchaseID: item.productPurchaseID, districtName: item.district || item.state };
                     }
