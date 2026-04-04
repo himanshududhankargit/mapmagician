@@ -182,10 +182,112 @@
             color: var(--primary-color);
         }
 
+        /* Live Map Showcase */
+        .map-showcase {
+            position: relative;
+            width: 100%;
+            height: 570px; /* 70px nav + 500px map */
+            background: #111827;
+        }
+        .map-showcase iframe {
+            position: absolute;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 70px);
+            border: none;
+            display: block;
+        }
+        .map-showcase-overlay {
+            position: absolute;
+            top: 70px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 40%, rgba(17,24,39,0.7) 80%, rgba(17,24,39,0.95) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 36px;
+            cursor: pointer;
+            z-index: 10;
+            transition: background 0.3s;
+        }
+        .map-showcase-overlay:hover {
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.03) 40%, rgba(17,24,39,0.6) 80%, rgba(17,24,39,0.9) 100%);
+        }
+        .map-showcase-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.9);
+            color: #fff;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        .map-showcase-badge .pulse-dot {
+            width: 8px; height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.7); }
+        }
+        .map-showcase-text {
+            color: rgba(255,255,255,0.92);
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+        }
+        .map-showcase-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            padding: 14px 32px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            box-shadow: 0 4px 20px rgba(37,99,235,0.4);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .map-showcase-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(37,99,235,0.5);
+        }
+        .map-showcase-skeleton {
+            position: absolute;
+            top: 70px; left: 0; right: 0; bottom: 0;
+            background: #111827;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+        }
+        .map-showcase-skeleton .loader {
+            width: 36px; height: 36px;
+            border: 3px solid rgba(255,255,255,0.15);
+            border-top-color: rgba(255,255,255,0.7);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         /* Hero Section */
         .hero {
             background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(226, 232, 240, 0.95) 100%);
-            padding: 120px 0 60px;
+            padding: 60px 0 60px;
             color: var(--text-dark);
             position: relative;
         }
@@ -840,8 +942,15 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+            .map-showcase { height: 410px; /* 60px nav + 350px map */ }
+            .map-showcase iframe { top: 60px; height: calc(100% - 60px); }
+            .map-showcase-overlay { top: 60px; padding-bottom: 24px; }
+            .map-showcase-skeleton { top: 60px; }
+            .map-showcase-text { font-size: 0.92rem; padding: 0 1rem; text-align: center; }
+            .map-showcase-cta { padding: 12px 24px; font-size: 0.9rem; }
+
             .hero {
-                padding: 100px 0 40px;
+                padding: 40px 0 40px;
             }
 
             .hero-logo {
@@ -1035,6 +1144,41 @@
             </div>
         </div>
     </nav>
+
+    <!-- Live Map Showcase -->
+    <section class="map-showcase" id="map-showcase">
+        <div class="map-showcase-skeleton" id="mapSkeleton">
+            <div style="text-align:center;color:rgba(255,255,255,0.5);">
+                <div class="loader"></div>
+                <div style="font-size:0.9rem;">Loading Map Preview...</div>
+            </div>
+        </div>
+        <iframe
+            src="maps.html?lat=19.076&lng=72.877&zoom=13&embed=1"
+            title="Development Plans GIS - Live Preview"
+            loading="eager"
+            allow="accelerometer; autoplay; encrypted-media; gyroscope"
+        ></iframe>
+        <div class="map-showcase-overlay" onclick="window.open('maps.html?lat=19.076&lng=72.877&zoom=13', '_blank')">
+            <span class="map-showcase-badge">
+                <span class="pulse-dot"></span>
+                LIVE
+            </span>
+            <span class="map-showcase-text">Development Plans for 157+ Regions Across India</span>
+            <a href="maps.html?lat=19.076&lng=72.877&zoom=13"
+               target="_blank"
+               rel="noopener"
+               class="map-showcase-cta"
+               onclick="event.stopPropagation()">
+                Open Interactive Map
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+            </a>
+        </div>
+    </section>
 
     <!-- Fullscreen Modal -->
     <div class="fullscreen-modal" id="fullscreenModal">
@@ -1957,6 +2101,15 @@
         document.getElementById('lpmScreenshots')?.addEventListener('scroll', updateScrollButtons);
         window.addEventListener('load', updateScrollButtons);
         window.addEventListener('resize', updateScrollButtons);
+
+        // Hide map skeleton when iframe loads
+        const mapIframe = document.querySelector('.map-showcase iframe');
+        if (mapIframe) {
+            mapIframe.addEventListener('load', function() {
+                const skeleton = document.getElementById('mapSkeleton');
+                if (skeleton) skeleton.style.display = 'none';
+            });
+        }
 
         // Mobile menu functionality
         function toggleMobileMenu() {
