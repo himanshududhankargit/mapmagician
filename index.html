@@ -197,6 +197,11 @@
             height: calc(100% - 70px);
             border: none;
             display: block;
+            animation: mapFadeIn 0.5s ease-out forwards;
+        }
+        @keyframes mapFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         .map-showcase-overlay {
             position: absolute;
@@ -1154,18 +1159,18 @@
             </div>
         </div>
         <iframe
-            src="maps.html?lat=19.076&lng=72.877&zoom=13&embed=1"
+            src="../../maps.html?lat=19.076&lng=72.877&zoom=13&embed=1"
             title="Development Plans GIS - Live Preview"
             loading="eager"
             allow="accelerometer; autoplay; encrypted-media; gyroscope"
         ></iframe>
-        <div class="map-showcase-overlay" onclick="window.open('maps.html?lat=19.076&lng=72.877&zoom=13', '_blank')">
+        <div class="map-showcase-overlay" onclick="window.open('../maps.html?lat=19.076&lng=72.877&zoom=13', '_blank')">
             <span class="map-showcase-badge">
                 <span class="pulse-dot"></span>
                 LIVE
             </span>
             <span class="map-showcase-text">Development Plans for 157+ Regions Across India</span>
-            <a href="maps.html?lat=19.076&lng=72.877&zoom=13"
+            <a href="../maps.html?lat=19.076&lng=72.877&zoom=13"
                target="_blank"
                rel="noopener"
                class="map-showcase-cta"
