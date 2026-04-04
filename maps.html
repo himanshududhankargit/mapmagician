@@ -657,6 +657,7 @@
             <div class="dock-divider"></div>
             <span id="zoom-level">Z=13</span>
             <span class="region-status" id="region-status" style="display:none"></span>
+            <span class="region-status" id="region-plan-status" style="display:none"></span>
         </div>
     </div>
     <span id="status-indicator" style="display:none">Ready</span>
@@ -1213,6 +1214,32 @@
         // Check if a product is purchased
         function hasPurchase(productId) {
             return findPurchaseEntry(productId) !== null;
+        }
+
+        // Check Firebase DB directly for a purchase entry (handles mobile→web sync lag)
+        async function checkFirebasePurchaseEntry(productId) {
+            if (!currentUser || currentUser.isAnonymous || !currentUser.email || !productId) return false;
+            try {
+                const emailKey = currentUser.email.replace(/\./g, ',');
+                const snap = await firebase.database()
+                    .ref('GISAPPOneTimePurchase/' + emailKey + '/' + productId)
+                    .once('value');
+                const raw = snap.val();
+                if (!raw) return false;
+                const expiry = typeof raw === 'number' ? raw : (raw && raw.expiry ? raw.expiry : 0);
+                const plan = (typeof raw === 'object' && raw) ? (raw.plan || '') : '';
+                // Skip mobile-only purchases (same filter as cloud function)
+                if (plan === 'onetime' || plan === '') return false;
+                if (expiry <= Date.now()) return false;
+                // Valid web-compatible purchase found — update in-memory cache
+                activePurchases.set(productId, { expiry, plan });
+                // Trigger full sync in background (for access token + other purchases)
+                fetchPurchaseStatus(true);
+                return true;
+            } catch (e) {
+                console.error('checkFirebasePurchaseEntry error:', e);
+                return false;
+            }
         }
 
         // Get plan type for a purchased product
@@ -2223,22 +2250,29 @@
 
         function updateRegionStatus() {
             const el = document.getElementById('region-status');
+            const planEl = document.getElementById('region-plan-status');
             const district = findDistrictAtCenter();
             if (district) {
                 el.style.display = 'inline';
+                el.textContent = district.districtName;
                 if (hasPurchase(district.productPurchaseID)) {
                     const plan = getPurchasePlan(district.productPurchaseID);
-                    const planLabel = plan === 'professional' ? ' · Mobile + Web' :
-                                     plan === 'web' ? ' · Web Only' :
-                                     plan === 'override' ? ' · Override' : '';
+                    const planLabel = plan === 'professional' ? 'Mobile + Web' :
+                                     plan === 'web' ? 'Web Only' :
+                                     plan === 'override' ? 'Override' : 'Active';
                     el.className = 'region-status subscribed';
-                    el.textContent = district.districtName + ' - Active' + planLabel;
+                    planEl.style.display = 'inline';
+                    planEl.className = 'region-status subscribed';
+                    planEl.textContent = planLabel;
                 } else {
                     el.className = 'region-status not-subscribed';
-                    el.textContent = district.districtName + ' - Not Subscribed';
+                    planEl.style.display = 'inline';
+                    planEl.className = 'region-status not-subscribed';
+                    planEl.textContent = 'Not Subscribed';
                 }
             } else {
                 el.style.display = 'none';
+                planEl.style.display = 'none';
             }
             return district;
         }
@@ -2565,10 +2599,22 @@
                     dialogTriggeredByRegionEntry = true;
                     showNoDataDialog();
                 } else if (z >= MAX_FREE_ZOOM && district && !hasPurchase(district.productPurchaseID)) {
-                    // At zoom limit in unpurchased region — lock zoom and show purchase dialog
+                    // At zoom limit in unpurchased region — lock zoom, then verify against Firebase before showing dialog
                     map.setOptions({ maxZoom: MAX_FREE_ZOOM });
                     dialogTriggeredByRegionEntry = true;
-                    showZoomRestrictionDialog(district);
+                    checkFirebasePurchaseEntry(district.productPurchaseID).then(function(found) {
+                        if (found) {
+                            // Purchase exists in Firebase (e.g. bought on mobile) — unlock
+                            map.setOptions({ maxZoom: 21 });
+                            showUnlockToast(district.districtName);
+                            lastCheckedRegionId = null;
+                            stickyTile = null;
+                            stickyDistrict = null;
+                            checkRegionOnMove();
+                        } else {
+                            showZoomRestrictionDialog(district);
+                        }
+                    });
                 } else if (z < MAX_FREE_ZOOM && overlay.classList.contains('open')) {
                     // Zoomed out — auto-dismiss dialog
                     overlay.classList.remove('open');
@@ -3438,13 +3484,22 @@
                 const fallback = document.createElement('button');
                 fallback.className = 'search-result-item';
                 fallback.style.borderTop = '1px solid #eee';
-                fallback.innerHTML = `
-                    <div class="search-result-icon">🔍</div>
-                    <div class="search-result-text">
-                        <div class="search-result-name">Search "<strong>${query}</strong>" on Google Maps</div>
-                        <div class="search-result-path">${results.length === 0 ? 'No saved locations found' : 'Can\'t find your place?'}</div>
-                    </div>
-                `;
+                const fallbackIcon = document.createElement('div');
+                fallbackIcon.className = 'search-result-icon';
+                fallbackIcon.textContent = '🔍';
+                const fallbackText = document.createElement('div');
+                fallbackText.className = 'search-result-text';
+                const fallbackName = document.createElement('div');
+                fallbackName.className = 'search-result-name';
+                fallbackName.innerHTML = 'Search "<strong></strong>" on Google Maps';
+                fallbackName.querySelector('strong').textContent = query;
+                const fallbackPath = document.createElement('div');
+                fallbackPath.className = 'search-result-path';
+                fallbackPath.textContent = results.length === 0 ? 'No saved locations found' : 'Can\'t find your place?';
+                fallbackText.appendChild(fallbackName);
+                fallbackText.appendChild(fallbackPath);
+                fallback.appendChild(fallbackIcon);
+                fallback.appendChild(fallbackText);
                 fallback.addEventListener('click', () => {
                     searchResultsEl.classList.remove('open');
                     searchGooglePlaces(query);
