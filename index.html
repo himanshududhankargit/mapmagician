@@ -198,13 +198,10 @@
             border: none;
             display: block;
             opacity: 0;
+            transition: opacity 0.5s ease-out;
         }
         .map-showcase iframe.loaded {
-            animation: mapFadeIn 0.5s ease-out forwards;
-        }
-        @keyframes mapFadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            opacity: 1;
         }
         .map-showcase-overlay {
             position: absolute;
@@ -1166,7 +1163,7 @@
             title="Development Plans GIS - Live Preview"
             loading="eager"
             allow="accelerometer; autoplay; encrypted-media; gyroscope"
-            onload="this.classList.add('loaded')"
+            onload="var el=this;setTimeout(function(){el.classList.add('loaded')},1000)"
         ></iframe>
         <div class="map-showcase-overlay" onclick="window.open('../maps.html?lat=19.076&lng=72.877&zoom=13', '_blank')">
             <span class="map-showcase-badge">
