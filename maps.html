@@ -510,6 +510,16 @@
         .fab.gps-following svg { stroke: #fff; }
         .fab.gps-tracking { background: #E3F2FD !important; }
         .fab.gps-tracking svg { stroke: #4285F4; }
+
+        /* Embed/preview mode — hides all UI chrome for iframe embedding */
+        body.embed-mode .top-search-row,
+        body.embed-mode .toolbar-scroll,
+        body.embed-mode .fab-stack,
+        body.embed-mode .bottom-bar,
+        body.embed-mode .crosshair,
+        body.embed-mode .measure-toolbar,
+        body.embed-mode .measure-info { display: none !important; }
+        body.embed-mode { overflow: hidden; }
     </style>
 </head>
 <body>
@@ -2545,17 +2555,32 @@
         // Initialize the map when the Google Maps API is loaded
         function initMap() {
             updateStatus("Initializing map...");
-            
+
+            // URL parameter support for embedding and deep-linking
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramLat = parseFloat(urlParams.get('lat'));
+            const paramLng = parseFloat(urlParams.get('lng'));
+            const paramZoom = parseInt(urlParams.get('zoom'), 10);
+            const isEmbedMode = urlParams.get('embed') === '1';
+
+            const initLat = !isNaN(paramLat) ? paramLat : 17.6599;
+            const initLng = !isNaN(paramLng) ? paramLng : 75.9064;
+            const initZoom = !isNaN(paramZoom) ? paramZoom : 13;
+
+            if (isEmbedMode) {
+                document.body.classList.add('embed-mode');
+            }
+
             map = new google.maps.Map(document.getElementById('map'), {
-                center: { lat: 17.6599, lng: 75.9064 },
-                zoom: 13,
+                center: { lat: initLat, lng: initLng },
+                zoom: initZoom,
                 mapTypeId: google.maps.MapTypeId.HYBRID,
                 streetViewControl: false,
                 mapTypeControl: false,
-                zoomControl: true,
+                zoomControl: !isEmbedMode,
                 zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
                 fullscreenControl: false,
-                gestureHandling: 'greedy',
+                gestureHandling: isEmbedMode ? 'none' : 'greedy',
                 maxZoom: MAX_FREE_ZOOM
             });
 
