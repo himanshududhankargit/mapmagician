@@ -851,6 +851,9 @@
     </script>
     
     <script>
+        // Global embed mode flag (checked before auth/session logic)
+        const isEmbedMode = new URLSearchParams(window.location.search).get('embed') === '1';
+
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
         googleProvider.setCustomParameters({ prompt: 'select_account' });
@@ -890,6 +893,19 @@
 
         // Auth state listener
         firebase.auth().onAuthStateChanged(user => {
+            // In embed mode, skip all auth UI/session/purchase logic — just load tiles
+            if (isEmbedMode) {
+                currentUser = user;
+                if (!user) {
+                    firebase.auth().signInAnonymously().catch(function() {});
+                } else if (!user.isAnonymous) {
+                    fetchCloudFrontCookies();
+                } else {
+                    fetchCloudFrontCookies();
+                }
+                return;
+            }
+
             currentUser = user;
             const profileBtn = document.getElementById('profile-btn');
             const profileIcon = document.getElementById('profile-btn-icon');
@@ -1200,32 +1216,15 @@
             }
         }
 
-        // Find matching entry in activePurchases with prefix-matching fallback
+        // Find matching entry in activePurchases (exact match only, with normalization)
         function findPurchaseEntry(productId) {
             if (!productId) return null;
             const pid = productId.toLowerCase().replace(/gst$/, '');
             const pidNoPrefix = pid.replace(/^district/, '');
-            // Fast path: exact checks with/without "district" prefix
-            const exact = activePurchases.get(pid) ||
-                          activePurchases.get('district' + pid) ||
-                          activePurchases.get(pidNoPrefix);
-            if (exact) return exact;
-            // Fallback: prefix matching for mismatched naming conventions
-            // Cap length difference to avoid false positives (e.g. "pune" matching "punekarjat")
-            let bestFallback = null;
-            let bestFallbackDiff = Infinity;
-            for (const [key, val] of activePurchases.entries()) {
-                const keyNoPrefix = key.toLowerCase().replace(/gst$/, '').replace(/^district/, '');
-                if (pidNoPrefix.length >= 3 && keyNoPrefix.length >= 3 &&
-                    (keyNoPrefix.startsWith(pidNoPrefix) || pidNoPrefix.startsWith(keyNoPrefix))) {
-                    const diff = Math.abs(keyNoPrefix.length - pidNoPrefix.length);
-                    if (diff <= 5 && diff < bestFallbackDiff) {
-                        bestFallbackDiff = diff;
-                        bestFallback = val;
-                    }
-                }
-            }
-            return bestFallback;
+            return activePurchases.get(pid) ||
+                   activePurchases.get('district' + pid) ||
+                   activePurchases.get(pidNoPrefix) ||
+                   null;
         }
 
         // Check if a product is purchased
@@ -2093,25 +2092,7 @@
                 }
             }
 
-            // Pass 2: Prefix matching fallback (handles naming variations like
-            // tile "aurangabad" vs menuData "districtaurangabadchhatrapatisamhajinagar")
-            // Picks best match (smallest length difference) to avoid false positives
-            let bestMatch = null;
-            let bestDiff = Infinity;
-            for (const item of menuData) {
-                if (!item.productPurchaseID) continue;
-                const itemPid = item.productPurchaseID.toLowerCase().replace(/gst$/, '');
-                const itemPidNoPrefix = itemPid.replace(/^district/, '');
-                if (pidNoPrefix.length >= 3 && itemPidNoPrefix.length >= 3 &&
-                    (itemPidNoPrefix.startsWith(pidNoPrefix) || pidNoPrefix.startsWith(itemPidNoPrefix))) {
-                    const diff = Math.abs(itemPidNoPrefix.length - pidNoPrefix.length);
-                    if (diff <= 10 && diff < bestDiff) {
-                        bestDiff = diff;
-                        bestMatch = { productPurchaseID: item.productPurchaseID, districtName: item.district || item.state };
-                    }
-                }
-            }
-            return bestMatch;
+            return null;
         }
 
         function disableMapInteraction() {
@@ -2573,7 +2554,6 @@
             const paramLat = parseFloat(urlParams.get('lat'));
             const paramLng = parseFloat(urlParams.get('lng'));
             const paramZoom = parseInt(urlParams.get('zoom'), 10);
-            const isEmbedMode = urlParams.get('embed') === '1';
 
             const initLat = !isNaN(paramLat) ? paramLat : 17.6599;
             const initLng = !isNaN(paramLng) ? paramLng : 75.9064;
