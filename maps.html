@@ -425,6 +425,14 @@
         .coord-row { display:flex; gap:12px; }
         .coord-row select.coord-input { cursor:pointer; }
         .coord-hint { font-size:12px; color:#888; margin-top:-4px; }
+        .coord-label { font-size:13px; font-weight:700; color:#212121; margin-bottom:-6px; }
+        .coord-dms-row { display:flex; gap:10px; align-items:flex-end; }
+        .coord-input-tiny { flex:1; min-width:0; text-align:left; }
+        .coord-dir-toggle { display:flex; gap:4px; flex-shrink:0; }
+        .coord-dir-btn { width:34px; height:34px; border:none; border-radius:6px; background:#e0e0e0; color:#555; font-size:13px; font-weight:700; cursor:pointer; transition:background 0.15s,color 0.15s; padding:0; font-family:inherit; }
+        .coord-dir-btn:hover { background:#d0d0d0; }
+        .coord-dir-btn.active { background:#2196f3; color:#fff; }
+        .coord-dir-btn.active:hover { background:#1e88e5; }
         .coord-error { font-size:12px; color:#d32f2f; min-height:16px; margin:4px 0 6px; }
         .coord-dialog-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
         .coord-dialog-btn { background:none; border:none; font-size:14px; font-weight:600; color:#2196f3; padding:10px 16px; cursor:pointer; border-radius:4px; font-family:inherit; letter-spacing:0.5px; }
@@ -447,6 +455,8 @@
         .zoom-dialog-support:hover { background:#3949AB; }
         .unlock-toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:#2E7D32; color:#fff; padding:12px 24px; border-radius:8px; font-size:14px; font-weight:500; box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:4000; opacity:0; transition:opacity 0.3s,transform 0.3s; pointer-events:none; font-family:'Segoe UI',Roboto,Arial,sans-serif; display:flex; align-items:center; gap:8px; }
         .unlock-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+        .zoom-info-toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:#ef6c00; color:#fff; padding:12px 20px; border-radius:8px; font-size:13px; font-weight:500; box-shadow:0 4px 12px rgba(0,0,0,0.25); z-index:4000; opacity:0; transition:opacity 0.3s,transform 0.3s; pointer-events:none; font-family:'Segoe UI',Roboto,Arial,sans-serif; display:flex; align-items:center; gap:8px; max-width:92vw; }
+        .zoom-info-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
         /* Bottom bar region status */
         .region-status { font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px; flex-shrink:1; }
@@ -776,9 +786,27 @@
                 <div class="coord-hint">Example: 18.5204, 73.8567</div>
             </div>
             <div class="coord-panel" id="coord-panel-dms" style="display:none">
-                <input class="coord-input" id="coord-dms-lat" type="text" placeholder="Latitude (e.g. 18 31 13.4 N)" autocomplete="off">
-                <input class="coord-input" id="coord-dms-lng" type="text" placeholder="Longitude (e.g. 73 51 24.1 E)" autocomplete="off">
-                <div class="coord-hint">Format: DD MM SS.S N/S &nbsp;·&nbsp; DD MM SS.S E/W</div>
+                <div class="coord-label">Latitude</div>
+                <div class="coord-dms-row">
+                    <input class="coord-input coord-input-tiny" id="coord-dms-lat-deg" type="text" placeholder="Deg" inputmode="decimal" autocomplete="off">
+                    <input class="coord-input coord-input-tiny" id="coord-dms-lat-min" type="text" placeholder="Min" inputmode="decimal" autocomplete="off">
+                    <input class="coord-input coord-input-tiny" id="coord-dms-lat-sec" type="text" placeholder="Sec" inputmode="decimal" autocomplete="off">
+                    <div class="coord-dir-toggle" data-dir-group="lat">
+                        <button type="button" class="coord-dir-btn active" data-dir="N">N</button>
+                        <button type="button" class="coord-dir-btn" data-dir="S">S</button>
+                    </div>
+                </div>
+                <div class="coord-label">Longitude</div>
+                <div class="coord-dms-row">
+                    <input class="coord-input coord-input-tiny" id="coord-dms-lng-deg" type="text" placeholder="Deg" inputmode="decimal" autocomplete="off">
+                    <input class="coord-input coord-input-tiny" id="coord-dms-lng-min" type="text" placeholder="Min" inputmode="decimal" autocomplete="off">
+                    <input class="coord-input coord-input-tiny" id="coord-dms-lng-sec" type="text" placeholder="Sec" inputmode="decimal" autocomplete="off">
+                    <div class="coord-dir-toggle" data-dir-group="lng">
+                        <button type="button" class="coord-dir-btn active" data-dir="E">E</button>
+                        <button type="button" class="coord-dir-btn" data-dir="W">W</button>
+                    </div>
+                </div>
+                <div class="coord-hint">Example: 18° 31' 13.44" N, 73° 51' 24.12" E</div>
             </div>
             <div class="coord-panel" id="coord-panel-utm" style="display:none">
                 <div class="coord-row">
@@ -918,6 +946,12 @@
     <div class="unlock-toast" id="unlock-toast">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="#fff"/></svg>
         <span id="unlock-toast-text">Region unlocked</span>
+    </div>
+
+    <!-- Zoom-limit info toast (shown when zoom exceeds overlay's maxZoom at current location) -->
+    <div class="zoom-info-toast" id="zoom-info-toast">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L1 21h22L12 2zm0 4l7.5 13h-15L12 6zm-1 5v4h2v-4h-2zm0 5v2h2v-2h-2z" fill="#fff"/></svg>
+        <span id="zoom-info-toast-text"></span>
     </div>
 
     <!-- Fullscreen region browser -->
@@ -2800,6 +2834,8 @@
                 updateRegionStatus();
                 // Show/hide old maps button based on current region
                 updateOldMapsButtonVisibility();
+                // Warn user when current zoom exceeds the maxZoom of every active overlay covering the center
+                checkOverlayZoomLimit(z, c);
             });
             map.addListener('bounds_changed', debouncedLoadTiles);
 
@@ -2847,6 +2883,52 @@
                     enableMapInteraction();
                 }
             });
+
+            // ----- Zoom-exceeds-overlay-max warning toast -----
+            // Fires when user's zoom is higher than the maxZoom of every overlay covering the map center.
+            // Suppressed while user stays at/above the same threshold; re-fires on new threshold or when they re-exceed.
+            let _lastZoomToastMax = null;
+            let _zoomToastTimer = null;
+            function showZoomMaxToast(currentZoom, overlayMax) {
+                const toast = document.getElementById('zoom-info-toast');
+                const text = document.getElementById('zoom-info-toast-text');
+                if (!toast || !text) return;
+                text.textContent = 'No data available at zoom ' + currentZoom + ' — max zoom here is ' + overlayMax;
+                toast.classList.add('show');
+                clearTimeout(_zoomToastTimer);
+                _zoomToastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+            }
+            function checkOverlayZoomLimit(z, centerLatLng) {
+                if (zoomBypassActive || mapInteractionDisabled) return;
+                if (!centerLatLng) return;
+                const centerPoint = { lat: centerLatLng.lat(), lng: centerLatLng.lng() };
+                let overlayMax = -1;
+                const sources = [];
+                if (isDPLayerVisible && !isShowingOldMaps && typeof dpLayerData !== 'undefined' && dpLayerData.length) sources.push(dpLayerData);
+                if (isShowingOldMaps && typeof oldDPLayerData !== 'undefined' && oldDPLayerData.length) sources.push(oldDPLayerData);
+                if (isLayoutLayerVisible && typeof layoutLayerData !== 'undefined' && layoutLayerData.length) sources.push(layoutLayerData);
+                if (isVillageLayerVisible && typeof villageLayerData !== 'undefined' && villageLayerData.length) sources.push(villageLayerData);
+                for (const arr of sources) {
+                    for (const ov of arr) {
+                        const bb = ov.bbox;
+                        if (!bb) continue;
+                        if (centerPoint.lat < bb.minLat || centerPoint.lat > bb.maxLat ||
+                            centerPoint.lng < bb.minLng || centerPoint.lng > bb.maxLng) continue;
+                        if (!ov.polygon || !pointInPolygon(centerPoint, ov.polygon)) continue;
+                        const m = (typeof ov.maxZoom === 'number') ? ov.maxZoom : 22;
+                        if (m > overlayMax) overlayMax = m;
+                    }
+                }
+                if (overlayMax < 0) { _lastZoomToastMax = null; return; }  // no overlay here — existing handlers cover it
+                if (z > overlayMax) {
+                    if (_lastZoomToastMax !== overlayMax) {
+                        showZoomMaxToast(z, overlayMax);
+                        _lastZoomToastMax = overlayMax;
+                    }
+                } else {
+                    _lastZoomToastMax = null;
+                }
+            }
 
             // Projection helper for converting LatLng to screen pixels (magnifier)
             projHelper = new google.maps.OverlayView();
@@ -3982,6 +4064,16 @@
 
             coordTabs.forEach(t => t.addEventListener('click', () => setCoordTab(t.dataset.coordTab)));
 
+            // Wire DMS N/S and E/W toggle buttons (only one active per group)
+            coordOverlay.querySelectorAll('.coord-dir-toggle').forEach(group => {
+                group.querySelectorAll('.coord-dir-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        group.querySelectorAll('.coord-dir-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                    });
+                });
+            });
+
             document.getElementById('coord-btn-search').addEventListener('click', () => openCoordDialog('decimal'));
             document.getElementById('coord-cancel').addEventListener('click', closeCoordDialog);
             coordOverlay.addEventListener('click', (e) => { if (e.target === coordOverlay) closeCoordDialog(); });
@@ -4008,11 +4100,23 @@
                     if (lat < -90 || lat > 90) { coordErr.textContent = 'Latitude must be between -90 and 90.'; return; }
                     if (lng < -180 || lng > 180) { coordErr.textContent = 'Longitude must be between -180 and 180.'; return; }
                 } else if (activeCoordTab === 'dms') {
-                    lat = parseDMSValue(document.getElementById('coord-dms-lat').value);
-                    lng = parseDMSValue(document.getElementById('coord-dms-lng').value);
-                    if (lat === null || lng === null) { coordErr.textContent = 'Enter DMS as: DD MM SS.S N/S and DD MM SS.S E/W'; return; }
-                    if (lat < -90 || lat > 90) { coordErr.textContent = 'Latitude out of range.'; return; }
-                    if (lng < -180 || lng > 180) { coordErr.textContent = 'Longitude out of range.'; return; }
+                    const latDeg = document.getElementById('coord-dms-lat-deg').value.trim();
+                    const latMin = document.getElementById('coord-dms-lat-min').value.trim();
+                    const latSec = document.getElementById('coord-dms-lat-sec').value.trim();
+                    const lngDeg = document.getElementById('coord-dms-lng-deg').value.trim();
+                    const lngMin = document.getElementById('coord-dms-lng-min').value.trim();
+                    const lngSec = document.getElementById('coord-dms-lng-sec').value.trim();
+                    const latDirBtn = coordOverlay.querySelector('.coord-dir-toggle[data-dir-group="lat"] .coord-dir-btn.active');
+                    const lngDirBtn = coordOverlay.querySelector('.coord-dir-toggle[data-dir-group="lng"] .coord-dir-btn.active');
+                    if (!latDeg) { coordErr.textContent = 'Enter latitude degrees.'; return; }
+                    if (!lngDeg) { coordErr.textContent = 'Enter longitude degrees.'; return; }
+                    const latDir = latDirBtn ? latDirBtn.dataset.dir : 'N';
+                    const lngDir = lngDirBtn ? lngDirBtn.dataset.dir : 'E';
+                    lat = parseDMSValue(latDeg + ' ' + (latMin || '0') + ' ' + (latSec || '0') + ' ' + latDir);
+                    lng = parseDMSValue(lngDeg + ' ' + (lngMin || '0') + ' ' + (lngSec || '0') + ' ' + lngDir);
+                    if (lat === null || lng === null) { coordErr.textContent = 'Enter valid DMS values (min/sec 0-59).'; return; }
+                    if (lat < -90 || lat > 90) { coordErr.textContent = 'Latitude out of range (0-90).'; return; }
+                    if (lng < -180 || lng > 180) { coordErr.textContent = 'Longitude out of range (0-180).'; return; }
                 } else if (activeCoordTab === 'utm') {
                     const zone = parseInt(document.getElementById('coord-utm-zone').value, 10);
                     const hemi = document.getElementById('coord-utm-hemi').value;
