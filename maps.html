@@ -1507,6 +1507,46 @@
             });
         }
 
+        // --- Back-press dismisses modal dialogs ---
+        (function() {
+            const selectors = '.zoom-dialog-overlay, .auth-dialog-overlay, .coord-dialog-overlay';
+            const stack = [];                 // open overlay elements, in open order
+            let closingFromPopstate = false;  // set true while popstate handler is closing
+
+            const observer = new MutationObserver((mutations) => {
+                for (const m of mutations) {
+                    if (m.attributeName !== 'class') continue;
+                    const el = m.target;
+                    const isOpen = el.classList.contains('open');
+                    const inStack = stack.includes(el);
+                    if (isOpen && !inStack) {
+                        stack.push(el);
+                        history.pushState({ mmDialog: el.id || 'anon' }, '');
+                    } else if (!isOpen && inStack) {
+                        const i = stack.indexOf(el);
+                        stack.splice(i, 1);
+                        if (!closingFromPopstate) {
+                            // Closed via button → consume the history state we pushed
+                            history.back();
+                        }
+                    }
+                }
+                closingFromPopstate = false;
+            });
+
+            document.querySelectorAll(selectors).forEach((el) => {
+                observer.observe(el, { attributes: true, attributeFilter: ['class'] });
+            });
+
+            window.addEventListener('popstate', () => {
+                if (stack.length === 0) return;
+                closingFromPopstate = true;
+                const top = stack[stack.length - 1];
+                top.classList.remove('open');
+                // MutationObserver fires, sees closingFromPopstate=true, skips history.back()
+            });
+        })();
+
         // --- Single-session enforcement ---
         function registerSession(email) {
             const emailKey = email.replace(/\./g, ',');
