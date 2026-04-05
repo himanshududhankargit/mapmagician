@@ -114,6 +114,12 @@
             width: 36px; height: 36px; padding: 0; border-radius: 50%;
         }
         .profile-btn img { width: 36px; height: 36px; border-radius: 50%; }
+        .coord-btn-search {
+            width: 36px; height: 36px; border-radius: 50%; border: none;
+            background: #e0f2f1; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; flex-shrink: 0; padding: 0; transition: background 0.2s;
+        }
+        .coord-btn-search:hover { background: #b2dfdb; }
 
         /* Horizontal toolbar buttons */
         .toolbar-scroll {
@@ -402,6 +408,28 @@
         .auth-dialog-cancel { display:block; margin:20px auto 0; background:none; border:none; color:#1a73e8; font-size:14px; font-weight:500; cursor:pointer; font-family:'Google Sans','Segoe UI',Roboto,Arial,sans-serif; }
         .auth-dialog-cancel:hover { color:#174ea6; background:rgba(26,115,232,0.04); border-radius:4px; padding:4px 8px; }
 
+        /* Go to Coordinates dialog */
+        .coord-dialog-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:3000; display:none; align-items:center; justify-content:center; }
+        .coord-dialog-overlay.open { display:flex; }
+        .coord-dialog { background:#fff; border-radius:12px; padding:20px 24px 16px; max-width:400px; width:92%; box-shadow:0 8px 32px rgba(0,0,0,0.25); font-family:'Segoe UI',Roboto,Arial,sans-serif; }
+        .coord-dialog h3 { margin:0 0 6px; font-size:20px; color:#212121; font-weight:600; text-align:left; }
+        .coord-dialog-sub { margin:0 0 14px; font-size:13px; color:#555; text-align:left; }
+        .coord-tabs { display:flex; gap:6px; margin-bottom:18px; background:#f0f0f0; border-radius:8px; padding:4px; }
+        .coord-tab { flex:1; height:36px; border:none; background:transparent; border-radius:6px; font-size:13px; font-weight:600; color:#555; cursor:pointer; transition:all 0.15s; }
+        .coord-tab.active { background:#2196f3; color:#fff; }
+        .coord-panel { display:flex; flex-direction:column; gap:14px; margin-bottom:12px; }
+        .coord-input { height:36px; border:none; border-bottom:1px solid #ccc; outline:none; font-size:15px; padding:0 2px; background:transparent; font-family:inherit; color:#212121; }
+        .coord-input:focus { border-bottom-color:#2196f3; border-bottom-width:2px; }
+        .coord-input::placeholder { color:#999; }
+        .coord-input-small { flex:1; min-width:0; }
+        .coord-row { display:flex; gap:12px; }
+        .coord-row select.coord-input { cursor:pointer; }
+        .coord-hint { font-size:12px; color:#888; margin-top:-4px; }
+        .coord-error { font-size:12px; color:#d32f2f; min-height:16px; margin:4px 0 6px; }
+        .coord-dialog-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
+        .coord-dialog-btn { background:none; border:none; font-size:14px; font-weight:600; color:#2196f3; padding:10px 16px; cursor:pointer; border-radius:4px; font-family:inherit; letter-spacing:0.5px; }
+        .coord-dialog-btn:hover { background:rgba(33,150,243,0.08); }
+
         /* Zoom restriction dialog */
         .zoom-dialog-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:3000; display:none; align-items:center; justify-content:center; }
         .zoom-dialog-overlay.open { display:flex; }
@@ -605,6 +633,9 @@
             <option value="roadmap">Roadmap</option>
             <option value="terrain">Terrain</option>
         </select>
+        <button class="coord-btn-search" id="coord-btn-search" title="Go to coordinates" aria-label="Go to coordinates">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2v3M12 19v3M2 12h3M19 12h3M12 7a5 5 0 100 10 5 5 0 000-10zm0 3a2 2 0 110 4 2 2 0 010-4z" stroke="#00796B" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
         <button class="profile-btn" id="profile-btn" title="Sign in">
             <svg id="profile-btn-svg" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#1976D2"/></svg>
             <span id="profile-btn-icon">Sign In</span>
@@ -689,7 +720,7 @@
                 <span class="toggle-track"></span>
                 <span class="layer-toggle-label">Development Plan</span>
             </label>
-            <label class="layer-toggle">
+            <label class="layer-toggle" style="display:none">
                 <input type="checkbox" id="village-layer">
                 <span class="toggle-track"></span>
                 <span class="layer-toggle-label">Village Plans</span>
@@ -728,6 +759,46 @@
         </div>
     </div>
     <span id="status-indicator" style="display:none">Ready</span>
+
+    <!-- Go to Coordinates dialog -->
+    <div class="coord-dialog-overlay" id="coord-dialog-overlay">
+        <div class="coord-dialog">
+            <h3>Go to Coordinates</h3>
+            <p class="coord-dialog-sub">Enter coordinates to search:</p>
+            <div class="coord-tabs">
+                <button class="coord-tab active" data-coord-tab="decimal" type="button">Decimal</button>
+                <button class="coord-tab" data-coord-tab="dms" type="button">DMS</button>
+                <button class="coord-tab" data-coord-tab="utm" type="button">UTM</button>
+            </div>
+            <div class="coord-panel" id="coord-panel-decimal">
+                <input class="coord-input" id="coord-dec-lat" type="text" placeholder="Latitude" inputmode="decimal" autocomplete="off">
+                <input class="coord-input" id="coord-dec-lng" type="text" placeholder="Longitude" inputmode="decimal" autocomplete="off">
+                <div class="coord-hint">Example: 18.5204, 73.8567</div>
+            </div>
+            <div class="coord-panel" id="coord-panel-dms" style="display:none">
+                <input class="coord-input" id="coord-dms-lat" type="text" placeholder="Latitude (e.g. 18 31 13.4 N)" autocomplete="off">
+                <input class="coord-input" id="coord-dms-lng" type="text" placeholder="Longitude (e.g. 73 51 24.1 E)" autocomplete="off">
+                <div class="coord-hint">Format: DD MM SS.S N/S &nbsp;·&nbsp; DD MM SS.S E/W</div>
+            </div>
+            <div class="coord-panel" id="coord-panel-utm" style="display:none">
+                <div class="coord-row">
+                    <input class="coord-input coord-input-small" id="coord-utm-zone" type="text" placeholder="Zone (1-60)" inputmode="numeric" autocomplete="off">
+                    <select class="coord-input coord-input-small" id="coord-utm-hemi">
+                        <option value="N">N (Northern)</option>
+                        <option value="S">S (Southern)</option>
+                    </select>
+                </div>
+                <input class="coord-input" id="coord-utm-easting" type="text" placeholder="Easting (m)" inputmode="decimal" autocomplete="off">
+                <input class="coord-input" id="coord-utm-northing" type="text" placeholder="Northing (m)" inputmode="decimal" autocomplete="off">
+                <div class="coord-hint">Example: Zone 43 N, 297000, 2048000</div>
+            </div>
+            <div class="coord-error" id="coord-error"></div>
+            <div class="coord-dialog-actions">
+                <button class="coord-dialog-btn" id="coord-cancel" type="button">CANCEL</button>
+                <button class="coord-dialog-btn" id="coord-go" type="button">GO</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Sign-in required dialog -->
     <div class="auth-dialog-overlay" id="auth-dialog-overlay">
@@ -3506,7 +3577,12 @@
             searchInput.addEventListener('keyup', function() {
                 clearTimeout(searchDebounce);
                 const q = this.value.trim().toLowerCase();
-                if (q.length < 2 || menuData.length === 0) {
+                if (q.length < 2) {
+                    searchResultsEl.classList.remove('open');
+                    return;
+                }
+                // Run search if we have data OR if this looks like coordinates
+                if (menuData.length === 0 && !detectCoordsInQuery(q)) {
                     searchResultsEl.classList.remove('open');
                     return;
                 }
@@ -3531,6 +3607,18 @@
                 const results = [];
                 const addedStates = new Set();
                 const addedDistricts = new Set();
+
+                // Auto-detect coordinates in the query and surface a direct "Go to" result at the top
+                const coordHit = detectCoordsInQuery(query);
+                if (coordHit) {
+                    results.push({
+                        name: coordHit.label,
+                        path: 'Go to these coordinates',
+                        type: 'coord',
+                        lat: coordHit.lat,
+                        lng: coordHit.lng
+                    });
+                }
 
                 menuData.forEach(item => {
                     const state = item.state || '';
@@ -3583,9 +3671,9 @@
                     }
                 });
 
-                // Sort: villages first (most useful), then districts, then states
+                // Sort: coord match first, then villages (most useful), then districts, then states
                 results.sort((a, b) => {
-                    const order = { village: 0, district: 1, state: 2 };
+                    const order = { coord: -1, village: 0, district: 1, state: 2 };
                     return (order[a.type] || 0) - (order[b.type] || 0);
                 });
 
@@ -3608,16 +3696,20 @@
                             new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'),
                             '<mark>$1</mark>'
                         );
-                        const icon = r.type === 'village' ? '📍' : r.type === 'district' ? '🏘' : '🗺';
+                        const icon = r.type === 'coord' ? '🎯' : r.type === 'village' ? '📍' : r.type === 'district' ? '🏘' : '🗺';
+                        // Coord result shouldn't get query highlighting (the name is formatted coords, not a text match)
+                        const nameHtml = r.type === 'coord' ? r.name : highlighted;
                         btn.innerHTML = `
                             <div class="search-result-icon">${icon}</div>
                             <div class="search-result-text">
-                                <div class="search-result-name">${highlighted}</div>
+                                <div class="search-result-name">${nameHtml}</div>
                                 <div class="search-result-path">${r.path}</div>
                             </div>
                         `;
                         btn.addEventListener('click', () => {
-                            if (r.type === 'village' && r.lat && r.lng) {
+                            if (r.type === 'coord') {
+                                goToCoordinate(r.lat, r.lng, r.name);
+                            } else if (r.type === 'village' && r.lat && r.lng) {
                                 const pid = r.item ? r.item.productPurchaseID : '';
                                 goToLocation(r.lat, r.lng, r.name, pid);
                             } else if (r.item) {
@@ -3705,10 +3797,243 @@
             };
         }
 
+        // ---------------- Coordinate parsers (shared by dialog + search auto-detect) ----------------
+
+        // Parse one lat or lng expressed in DMS-like form.
+        // Accepts: "18.5204" | "18 31 13.4 N" | "18°31'13.4\"N" | "-18 31 13.4" | "N 18 31 13.4"
+        // Returns the signed decimal degree value, or null if unparseable / out of DMS ranges.
+        function parseDMSValue(raw) {
+            if (raw == null) return null;
+            const s = String(raw).trim();
+            if (!s) return null;
+            const dirMatch = s.match(/[NSEWnsew]/);
+            const dir = dirMatch ? dirMatch[0].toUpperCase() : null;
+            // Replace symbols/letters with spaces, then tokenize numbers (keep minus signs).
+            const cleaned = s.replace(/[°'"dms\u00B0NSEWnsew,]/g, ' ').replace(/\s+/g, ' ').trim();
+            if (!cleaned) return null;
+            const tokens = cleaned.split(' ').filter(Boolean);
+            const nums = tokens.map(t => parseFloat(t)).filter(n => !isNaN(n));
+            if (nums.length === 0) return null;
+            const deg = nums[0];
+            const min = nums.length > 1 ? nums[1] : 0;
+            const sec = nums.length > 2 ? nums[2] : 0;
+            if (min < 0 || min >= 60) return null;
+            if (sec < 0 || sec >= 60) return null;
+            const negative = deg < 0;
+            let val = Math.abs(deg) + min / 60 + sec / 3600;
+            if (negative) val = -val;
+            if (dir === 'S' || dir === 'W') val = -Math.abs(val);
+            else if (dir === 'N' || dir === 'E') val = Math.abs(val);
+            return val;
+        }
+
+        // WGS84 UTM -> Lat/Lng (ported from androidGISProject/UTMConverter.kt)
+        function utmToLatLng(zone, hemisphere, easting, northing) {
+            const a = 6378137.0;
+            const f = 1.0 / 298.257223563;
+            const b = a * (1 - f);
+            const e = Math.sqrt(1 - (b * b) / (a * a));
+            const e2 = e * e;
+            const ep2 = e2 / (1 - e2);
+            const k0 = 0.9996;
+
+            const x = easting - 500000.0;
+            let y = northing;
+            if (hemisphere === 'S') y -= 10000000.0;
+
+            const lon0 = (zone - 1) * 6 - 180 + 3;
+            const lon0Rad = lon0 * Math.PI / 180;
+
+            const M = y / k0;
+            const mu = M / (a * (1 - e2 / 4 - 3 * e2 * e2 / 64 - 5 * e2 * e2 * e2 / 256));
+            const e1 = (1 - Math.sqrt(1 - e2)) / (1 + Math.sqrt(1 - e2));
+
+            const phi1 = mu
+                + (3 * e1 / 2 - 27 * e1 * e1 * e1 / 32) * Math.sin(2 * mu)
+                + (21 * e1 * e1 / 16 - 55 * e1 * e1 * e1 * e1 / 32) * Math.sin(4 * mu)
+                + (151 * e1 * e1 * e1 / 96) * Math.sin(6 * mu)
+                + (1097 * e1 * e1 * e1 * e1 / 512) * Math.sin(8 * mu);
+
+            const sinPhi1 = Math.sin(phi1);
+            const cosPhi1 = Math.cos(phi1);
+            const tanPhi1 = Math.tan(phi1);
+            const N1 = a / Math.sqrt(1 - e2 * sinPhi1 * sinPhi1);
+            const T1 = tanPhi1 * tanPhi1;
+            const C1 = ep2 * cosPhi1 * cosPhi1;
+            const R1 = a * (1 - e2) / Math.pow(1 - e2 * sinPhi1 * sinPhi1, 1.5);
+            const D = x / (N1 * k0);
+
+            const lat = phi1 - (N1 * tanPhi1 / R1) * (D * D / 2
+                - (5 + 3 * T1 + 10 * C1 - 4 * C1 * C1 - 9 * ep2) * Math.pow(D, 4) / 24
+                + (61 + 90 * T1 + 298 * C1 + 45 * T1 * T1 - 252 * ep2 - 3 * C1 * C1) * Math.pow(D, 6) / 720);
+
+            const lng = lon0Rad + (D - (1 + 2 * T1 + C1) * Math.pow(D, 3) / 6
+                + (5 - 2 * C1 + 28 * T1 - 3 * C1 * C1 + 8 * ep2 + 24 * T1 * T1) * Math.pow(D, 5) / 120) / cosPhi1;
+
+            return { lat: lat * 180 / Math.PI, lng: lng * 180 / Math.PI };
+        }
+
+        // Detect coordinates inside a free-form search query.
+        // Returns {lat,lng,label} if the whole query is a coord pair, else null.
+        function detectCoordsInQuery(q) {
+            if (!q) return null;
+            const s = q.trim();
+            if (!s) return null;
+
+            // 1) Pure decimal pair: "18.5204, 73.8567" or "18.52 73.86" or "-18.5, -73.8"
+            const decMatch = s.match(/^(-?\d+(?:\.\d+)?)[\s,]+(-?\d+(?:\.\d+)?)$/);
+            if (decMatch) {
+                const lat = parseFloat(decMatch[1]);
+                const lng = parseFloat(decMatch[2]);
+                if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                    return { lat: lat, lng: lng, label: lat.toFixed(6) + ', ' + lng.toFixed(6) };
+                }
+            }
+
+            // 2) DMS pair: contains °'" or N/S + E/W letters and at least two numbers each side.
+            if (/[°'"]/.test(s) || (/[NSns]/.test(s) && /[EWew]/.test(s))) {
+                // Split into two halves. Try comma first; otherwise split at E/W boundary or N/S boundary.
+                let halves = null;
+                if (s.includes(',')) {
+                    halves = s.split(',', 2);
+                } else {
+                    // Split after N/S direction letter
+                    const m = s.match(/^(.+?[NSns])\s+(.+)$/);
+                    if (m) halves = [m[1], m[2]];
+                }
+                if (halves && halves.length === 2) {
+                    const lat = parseDMSValue(halves[0]);
+                    const lng = parseDMSValue(halves[1]);
+                    if (lat !== null && lng !== null && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                        return { lat: lat, lng: lng, label: lat.toFixed(6) + ', ' + lng.toFixed(6) };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        // Navigate the map to a coordinate (reuses goToLocation behaviour).
+        function goToCoordinate(lat, lng, label) {
+            if (typeof goToLocation === 'function') {
+                goToLocation(lat, lng, label || (lat.toFixed(6) + ', ' + lng.toFixed(6)), '');
+            } else if (typeof map !== 'undefined' && map) {
+                map.setCenter({ lat: lat, lng: lng });
+                map.setZoom(15);
+            }
+            // Drop a marker at the destination for visual reference
+            if (typeof markers !== 'undefined' && typeof google !== 'undefined') {
+                try {
+                    markers.forEach(m => m.setMap(null));
+                    markers.length = 0;
+                    const mk = new google.maps.Marker({ map: map, position: { lat: lat, lng: lng }, title: label });
+                    markers.push(mk);
+                } catch (e) { /* marker is optional */ }
+            }
+        }
+
         function initUIEvents() {
             // Map type control
             document.getElementById('map-type').addEventListener('change', function() {
                 map.setMapTypeId(this.value);
+            });
+
+            // ---------------- Go to Coordinates dialog ----------------
+            const coordOverlay = document.getElementById('coord-dialog-overlay');
+            const coordErr = document.getElementById('coord-error');
+            const coordTabs = coordOverlay.querySelectorAll('.coord-tab');
+            const coordPanels = {
+                decimal: document.getElementById('coord-panel-decimal'),
+                dms: document.getElementById('coord-panel-dms'),
+                utm: document.getElementById('coord-panel-utm')
+            };
+            let activeCoordTab = 'decimal';
+
+            function setCoordTab(name) {
+                if (!coordPanels[name]) return;
+                activeCoordTab = name;
+                coordTabs.forEach(t => t.classList.toggle('active', t.dataset.coordTab === name));
+                Object.keys(coordPanels).forEach(k => { coordPanels[k].style.display = (k === name) ? 'flex' : 'none'; });
+                coordErr.textContent = '';
+            }
+
+            function openCoordDialog(preselectTab, prefill) {
+                coordErr.textContent = '';
+                if (preselectTab) setCoordTab(preselectTab);
+                if (prefill) {
+                    if (prefill.decLat != null) document.getElementById('coord-dec-lat').value = prefill.decLat;
+                    if (prefill.decLng != null) document.getElementById('coord-dec-lng').value = prefill.decLng;
+                }
+                coordOverlay.classList.add('open');
+                // Focus first input of active panel
+                setTimeout(() => {
+                    const panel = coordPanels[activeCoordTab];
+                    const first = panel && panel.querySelector('input');
+                    if (first) first.focus();
+                }, 50);
+            }
+
+            function closeCoordDialog() {
+                coordOverlay.classList.remove('open');
+                coordErr.textContent = '';
+            }
+
+            window.openCoordDialog = openCoordDialog; // exposed for search dropdown
+
+            coordTabs.forEach(t => t.addEventListener('click', () => setCoordTab(t.dataset.coordTab)));
+
+            document.getElementById('coord-btn-search').addEventListener('click', () => openCoordDialog('decimal'));
+            document.getElementById('coord-cancel').addEventListener('click', closeCoordDialog);
+            coordOverlay.addEventListener('click', (e) => { if (e.target === coordOverlay) closeCoordDialog(); });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && coordOverlay.classList.contains('open')) closeCoordDialog();
+            });
+
+            function submitCoordDialog() {
+                coordErr.textContent = '';
+                let lat = null, lng = null;
+                if (activeCoordTab === 'decimal') {
+                    const latStr = document.getElementById('coord-dec-lat').value.trim();
+                    const lngStr = document.getElementById('coord-dec-lng').value.trim();
+                    // Allow the user to paste "lat, lng" into the lat field
+                    if (latStr && !lngStr && /[,\s]/.test(latStr)) {
+                        const parts = latStr.split(/[,\s]+/).filter(Boolean);
+                        if (parts.length >= 2) {
+                            lat = parseFloat(parts[0]); lng = parseFloat(parts[1]);
+                        }
+                    } else {
+                        lat = parseFloat(latStr); lng = parseFloat(lngStr);
+                    }
+                    if (isNaN(lat) || isNaN(lng)) { coordErr.textContent = 'Enter valid decimal numbers.'; return; }
+                    if (lat < -90 || lat > 90) { coordErr.textContent = 'Latitude must be between -90 and 90.'; return; }
+                    if (lng < -180 || lng > 180) { coordErr.textContent = 'Longitude must be between -180 and 180.'; return; }
+                } else if (activeCoordTab === 'dms') {
+                    lat = parseDMSValue(document.getElementById('coord-dms-lat').value);
+                    lng = parseDMSValue(document.getElementById('coord-dms-lng').value);
+                    if (lat === null || lng === null) { coordErr.textContent = 'Enter DMS as: DD MM SS.S N/S and DD MM SS.S E/W'; return; }
+                    if (lat < -90 || lat > 90) { coordErr.textContent = 'Latitude out of range.'; return; }
+                    if (lng < -180 || lng > 180) { coordErr.textContent = 'Longitude out of range.'; return; }
+                } else if (activeCoordTab === 'utm') {
+                    const zone = parseInt(document.getElementById('coord-utm-zone').value, 10);
+                    const hemi = document.getElementById('coord-utm-hemi').value;
+                    const easting = parseFloat(document.getElementById('coord-utm-easting').value);
+                    const northing = parseFloat(document.getElementById('coord-utm-northing').value);
+                    if (isNaN(zone) || zone < 1 || zone > 60) { coordErr.textContent = 'Zone must be between 1 and 60.'; return; }
+                    if (hemi !== 'N' && hemi !== 'S') { coordErr.textContent = 'Select hemisphere (N or S).'; return; }
+                    if (isNaN(easting) || easting < 100000 || easting > 900000) { coordErr.textContent = 'Easting must be 100000 – 900000.'; return; }
+                    if (isNaN(northing) || northing < 0 || northing > 10000000) { coordErr.textContent = 'Northing must be 0 – 10000000.'; return; }
+                    const res = utmToLatLng(zone, hemi, easting, northing);
+                    lat = res.lat; lng = res.lng;
+                    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) { coordErr.textContent = 'Converted coordinate is out of range.'; return; }
+                }
+                goToCoordinate(lat, lng, lat.toFixed(6) + ', ' + lng.toFixed(6));
+                closeCoordDialog();
+            }
+
+            document.getElementById('coord-go').addEventListener('click', submitCoordDialog);
+            // Enter key inside any input submits
+            coordOverlay.querySelectorAll('input').forEach(inp => {
+                inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitCoordDialog(); } });
             });
 
             // Layer panel open/close
