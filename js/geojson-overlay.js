@@ -40,7 +40,6 @@
     var inflightDownloads = new Map(); // districtKey -> Promise (dedup)
     var downloadSem = null;
     var activeToastTimer = null;
-    var geocoder = null;
     var lastGeocodedCenter = null;          // {lat, lng} — last position we geocoded
     var lastGeocodedKey = null;             // cached district key from last geocode
     var geocodeCache = new Map();           // cellKey ("lat_lng" rounded) -> district key
@@ -161,28 +160,32 @@
         return 2 * R * Math.asin(Math.sqrt(a));
     }
 
-    // ---------- Google Geocoding: resolve district from lat/lng (matches Android getDistrict) ----------
+    // ---------- Google Geocoding REST API: resolve district from lat/lng (matches Android getDistrict) ----------
     function geocodeDistrict(lat, lng) {
         // Rounded cell cache (~1 km grid at 2 decimals)
         var cellKey = lat.toFixed(2) + '_' + lng.toFixed(2);
         if (geocodeCache.has(cellKey)) {
             return Promise.resolve(geocodeCache.get(cellKey));
         }
-        if (typeof google === 'undefined' || !google.maps || !google.maps.Geocoder) {
+        if (!options.geocodeApiKey) {
+            console.warn('[GeoJsonOverlay] no geocodeApiKey set in init(); skipping geocode');
             return Promise.resolve(null);
         }
-        if (!geocoder) geocoder = new google.maps.Geocoder();
-        return new Promise(function (resolve) {
-            geocoder.geocode({ location: { lat: lat, lng: lng } }, function (results, status) {
-                if (status !== 'OK' || !results || !results.length) {
-                    console.warn('[GeoJsonOverlay] geocode status=' + status);
-                    resolve(null);
-                    return;
+        var url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng=' +
+            lat + ',' + lng + '&key=' + encodeURIComponent(options.geocodeApiKey);
+        return fetch(url)
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.status !== 'OK' || !data.results || !data.results.length) {
+                    console.warn('[GeoJsonOverlay] geocode status=' + data.status +
+                        (data.error_message ? ' - ' + data.error_message : ''));
+                    return null;
                 }
                 // Parse address_components for administrative_area_level_3, fallback locality
+                // (matches Android GeoJsonOverlayManager.kt:935-950)
                 var district = null, locality = null;
-                for (var r = 0; r < results.length && (!district || !locality); r++) {
-                    var comps = results[r].address_components || [];
+                for (var r = 0; r < data.results.length && (!district || !locality); r++) {
+                    var comps = data.results[r].address_components || [];
                     for (var i = 0; i < comps.length; i++) {
                         var types = comps[i].types || [];
                         if (!district && types.indexOf('administrative_area_level_3') !== -1) {
@@ -196,9 +199,12 @@
                 var name = district || locality;
                 var key = name ? districtKey(name) : null;
                 if (key) geocodeCache.set(cellKey, key);
-                resolve(key);
+                return key;
+            })
+            .catch(function (err) {
+                console.warn('[GeoJsonOverlay] geocode fetch error:', err);
+                return null;
             });
-        });
     }
 
     // ---------- Web Worker for GeoJSON parsing ----------
