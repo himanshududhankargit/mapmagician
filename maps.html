@@ -487,6 +487,37 @@
         .zoom-btn-dismiss:hover { background:#e53935; }
         .zoom-dialog-support { display:block; margin:0 auto; padding:8px 20px; border:none; border-radius:8px; background:#3F51B5; color:#fff; font-size:13px; font-weight:500; cursor:pointer; }
         .zoom-dialog-support:hover { background:#3949AB; }
+
+        /* Purchase dialog — refined layout */
+        .pd-header { background:linear-gradient(135deg,#00796B,#004D40); padding:24px 24px 20px; text-align:center; color:#fff; }
+        .pd-header-icon { width:44px; height:44px; background:rgba(255,255,255,0.14); border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; }
+        .pd-kicker { font-size:10px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase; opacity:0.75; margin-bottom:4px; }
+        .pd-title { margin:0; font-size:20px; color:#fff; font-weight:700; letter-spacing:-0.2px; line-height:1.3; word-break:break-word; }
+        .pd-body { padding:20px 24px 4px; }
+        .pd-region-label { font-size:10px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:#00796B; text-align:center; margin-bottom:10px; }
+        .pd-price-card { background:#F5FBFA; border:1px solid #B2DFDB; border-radius:14px; padding:22px 20px 16px; text-align:center; margin-bottom:18px; }
+        .pd-price-row { display:flex; align-items:baseline; justify-content:center; gap:10px; margin-bottom:8px; }
+        .pd-price-amount { font-size:44px; font-weight:800; color:#00695C; line-height:1; letter-spacing:-1px; }
+        .pd-price-unit { font-size:14px; font-weight:600; color:#546E7A; line-height:1.3; text-align:left; }
+        .pd-price-note { font-size:12px; color:#78909C; line-height:1.5; }
+        .pd-desc { margin:0 0 16px; font-size:13px; color:#607D8B; line-height:1.55; text-align:center; }
+        .pd-features { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+        .pd-feat { display:flex; align-items:center; gap:10px; font-size:13px; color:#37474F; font-weight:500; }
+        .pd-feat svg { flex-shrink:0; }
+        .pd-cta { width:100%; padding:14px; font-size:15px; font-weight:600; border:none; border-radius:10px; background:#00796B; color:#fff; cursor:pointer; letter-spacing:0.2px; transition:background 0.15s,transform 0.1s; box-shadow:0 1px 3px rgba(0,121,107,0.25); }
+        .pd-cta:hover { background:#00695C; }
+        .pd-cta:active { transform:scale(0.99); }
+        .pd-cancel { width:100%; padding:12px; border:none; background:none; color:#90A4AE; font-size:13px; font-weight:500; cursor:pointer; margin-top:4px; }
+        .pd-cancel:hover { color:#546E7A; }
+        .pd-footer { padding:14px 24px 18px; border-top:1px solid #ECEFF1; }
+        .pd-mobile-hint { display:flex; align-items:center; gap:12px; background:#FAFAFA; border-radius:10px; padding:10px 12px; font-size:12px; color:#546E7A; line-height:1.45; }
+        .pd-mobile-hint-text { flex:1; }
+        .pd-mobile-hint-text strong { color:#37474F; font-weight:600; display:block; margin-bottom:1px; }
+        .pd-play-btn { display:inline-flex; align-items:center; gap:6px; background:#fff; color:#1B5E20; font-size:11px; font-weight:700; text-decoration:none; padding:7px 11px; border-radius:7px; border:1px solid #C8E6C9; flex-shrink:0; white-space:nowrap; transition:background 0.15s; }
+        .pd-play-btn:hover { background:#F1F8E9; }
+        .pd-play-btn svg { flex-shrink:0; }
+        .pd-support { display:block; margin:12px auto 0; padding:6px 12px; background:none; border:none; color:#B0BEC5; font-size:12px; font-weight:500; cursor:pointer; width:100%; text-align:center; }
+        .pd-support:hover { color:#607D8B; }
         .unlock-toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:#2E7D32; color:#fff; padding:12px 24px; border-radius:8px; font-size:14px; font-weight:500; box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:4000; opacity:0; transition:opacity 0.3s,transform 0.3s; pointer-events:none; font-family:'Segoe UI',Roboto,Arial,sans-serif; display:flex; align-items:center; gap:8px; }
         .unlock-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
         .zoom-info-toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:#ef6c00; color:#fff; padding:12px 20px; border-radius:8px; font-size:13px; font-weight:500; box-shadow:0 4px 12px rgba(0,0,0,0.25); z-index:4000; opacity:0; transition:opacity 0.3s,transform 0.3s; pointer-events:none; font-family:'Segoe UI',Roboto,Arial,sans-serif; display:flex; align-items:center; gap:8px; max-width:92vw; }
@@ -964,65 +995,51 @@
 
     <!-- Zoom restriction / purchase dialog -->
     <div class="zoom-dialog-overlay" id="zoom-restrict-overlay">
-        <div class="zoom-dialog" style="max-width:420px;text-align:left;padding:0;overflow:hidden;">
-            <!-- Header with icon -->
-            <div style="background:linear-gradient(135deg,#00796B,#004D40);padding:28px 24px 22px;text-align:center;color:#fff;position:relative;">
-                <div style="width:52px;height:52px;background:rgba(255,255,255,0.15);border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1 15l-4-4 1.41-1.41L11 14.17l6.59-6.59L19 9l-8 8z" fill="#fff"/></svg>
+        <div class="zoom-dialog" style="max-width:420px;padding:0;overflow:hidden;">
+            <!-- Header -->
+            <div class="pd-header">
+                <div class="pd-header-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1 15l-4-4 1.41-1.41L11 14.17l6.59-6.59L19 9l-8 8z" fill="#fff"/></svg>
                 </div>
-                <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;opacity:0.7;margin-bottom:6px;">Web Access Plan</div>
-                <h3 id="zoom-restrict-title" style="margin:0;font-size:22px;color:#fff;font-weight:700;letter-spacing:-0.3px;">Unlock Region</h3>
+                <div class="pd-kicker">Web Access Plan</div>
+                <h3 id="zoom-restrict-title" class="pd-title">Unlock Region</h3>
             </div>
             <!-- Body -->
-            <div style="padding:22px 24px 0;">
-                <!-- Region badge -->
-                <div id="zoom-restrict-region" style="background:#E0F2F1;color:#00695C;padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;margin-bottom:14px;text-align:center;border:1px solid #B2DFDB;">Region: --</div>
-                <!-- Description -->
-                <p class="zoom-dialog-desc" id="zoom-restrict-desc" style="margin:0 0 18px;font-size:13px;color:#666;line-height:1.6;text-align:center;">Access high-resolution maps and tools directly in your browser.</p>
-                <!-- Price card -->
-                <div id="zoom-restrict-price" style="background:#FAFAFA;border:1px solid #E0E0E0;border-radius:12px;padding:20px 16px;text-align:center;margin-bottom:18px;">
-                    <div style="display:flex;align-items:baseline;justify-content:center;gap:8px;">
-                        <span style="font-size:42px;font-weight:800;color:#212121;line-height:1;" id="zoom-price-amount">&#8377;199</span>
-                        <div style="text-align:left;">
-                            <div style="font-size:14px;font-weight:600;color:#333;">for 7 Days Access</div>
-                            <div style="font-size:12px;color:#888;">to Region</div>
-                        </div>
+            <div class="pd-body">
+                <div id="zoom-restrict-region" class="pd-region-label" style="display:none;">Region</div>
+                <!-- Hero price card -->
+                <div id="zoom-restrict-price" class="pd-price-card">
+                    <div class="pd-price-row">
+                        <span id="zoom-price-amount" class="pd-price-amount">&#8377;199</span>
+                        <div class="pd-price-unit">/ 7 days<br><span style="font-size:12px;font-weight:500;color:#78909C;">access</span></div>
                     </div>
-                    <div style="font-size:11px;color:#999;margin-top:10px;">Flexible access — no recurring charges</div>
+                    <div class="pd-price-note">One-time payment &middot; no auto-renewal</div>
                 </div>
-                <!-- Features grid -->
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-bottom:20px;font-size:12px;color:#444;">
-                    <div style="display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Web browser access</div>
-                    <div style="display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>High zoom maps</div>
-                    <div style="display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Detailed plans</div>
-                    <div style="display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Desktop optimized</div>
+                <!-- Short description -->
+                <p class="pd-desc" id="zoom-restrict-desc">Access high-resolution maps and tools directly in your browser.</p>
+                <!-- Features (single column) -->
+                <div class="pd-features">
+                    <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Web browser access &mdash; no install needed</div>
+                    <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>High-zoom development plan maps</div>
+                    <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Detailed roads, plots & boundaries</div>
+                    <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Works on any modern browser</div>
                 </div>
-                <!-- CTA button -->
-                <button class="zoom-dialog-btn zoom-btn-access" id="zoom-restrict-action" style="width:100%;max-width:none;padding:15px;font-size:15px;border-radius:12px;margin-bottom:8px;background:#00796B;letter-spacing:0.3px;box-shadow:0 2px 8px rgba(0,121,107,0.3);transition:background 0.2s;">Continue to Payment</button>
-                <button id="zoom-restrict-cancel" style="width:100%;padding:10px;border:none;background:none;color:#aaa;font-size:13px;font-weight:500;cursor:pointer;">Not now</button>
+                <!-- CTA -->
+                <button class="pd-cta" id="zoom-restrict-action">Continue to Payment</button>
+                <button class="pd-cancel" id="zoom-restrict-cancel">Not now</button>
             </div>
-            <!-- Divider -->
-            <div style="height:1px;background:#f0f0f0;margin:10px 24px 0;"></div>
-            <!-- Info cards row -->
-            <div style="padding:16px 24px;display:flex;gap:10px;">
-                <!-- Web-only note -->
-                <div style="flex:1;background:#FFF8E1;border-radius:10px;padding:12px;font-size:11px;color:#795548;line-height:1.5;border:1px solid #FFE0B2;">
-                    <div style="font-weight:700;margin-bottom:3px;font-size:11px;color:#E65100;">Web only</div>
-                    This plan is for web browsers. Mobile access needs the Pro plan.
-                </div>
-                <!-- Play Store card -->
-                <div style="flex:1;background:#E8F5E9;border-radius:10px;padding:12px;font-size:11px;color:#2E7D32;line-height:1.5;border:1px solid #C8E6C9;">
-                    <div style="font-weight:700;margin-bottom:4px;font-size:11px;">Want mobile access?</div>
-                    Get the Android app with Pro plan for mobile + web access.
-                    <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;color:#1B5E20;font-weight:700;text-decoration:none;margin-top:6px;background:#fff;padding:5px 10px;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,0.1);">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#1B5E20"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
-                        Get on Google Play
+            <!-- Footer: mobile hint + support -->
+            <div class="pd-footer">
+                <div class="pd-mobile-hint">
+                    <div class="pd-mobile-hint-text">
+                        <strong>Prefer mobile?</strong>Get the Android app for on-the-go access.
+                    </div>
+                    <a class="pd-play-btn" href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="#1B5E20"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
+                        Google Play
                     </a>
                 </div>
-            </div>
-            <!-- Support -->
-            <div style="padding:0 24px 18px;text-align:center;">
-                <button class="zoom-dialog-support" id="zoom-restrict-support" style="background:none;color:#999;font-size:12px;border:none;cursor:pointer;font-weight:500;padding:4px 0;">Need help? Contact Support</button>
+                <button class="pd-support" id="zoom-restrict-support">Need help? Contact Support</button>
             </div>
         </div>
     </div>
@@ -2468,8 +2485,8 @@
 
             // Restore button + support to purchase style (may have been changed by showNoDataDialog)
             actionBtn.textContent = 'Continue to Payment';
-            actionBtn.className = 'zoom-dialog-btn zoom-btn-access';
-            actionBtn.style.cssText = 'width:100%;max-width:none;padding:15px;font-size:15px;border-radius:12px;margin-bottom:8px;background:#00796B;letter-spacing:0.3px;box-shadow:0 2px 8px rgba(0,121,107,0.3);';
+            actionBtn.className = 'pd-cta';
+            actionBtn.style.cssText = '';
             document.getElementById('zoom-restrict-support').style.display = '';
             document.getElementById('zoom-restrict-price').style.display = '';
 
@@ -2567,8 +2584,8 @@
             const newBtn = actionBtn.cloneNode(true);
             newBtn.id = 'zoom-restrict-action';
             newBtn.textContent = 'Browse Available Regions';
-            newBtn.className = 'zoom-dialog-btn zoom-btn-access';
-            newBtn.style.cssText = 'width:100%;max-width:none;padding:14px;font-size:15px;border-radius:12px;margin-bottom:8px;cursor:pointer;';
+            newBtn.className = 'pd-cta';
+            newBtn.style.cssText = '';
             actionBtn.parentNode.replaceChild(newBtn, actionBtn);
 
             newBtn.addEventListener('click', function() {
