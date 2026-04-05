@@ -1012,6 +1012,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
     <!-- Razorpay checkout -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <!-- JSZip for extracting district geojson zips -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
     <!-- Firebase initialization must come after the Firebase scripts have loaded -->
     <script>
@@ -1573,6 +1575,13 @@
         let bannerDismissedForRegion = null; // track dismissed region to avoid re-showing
         let dialogTriggeredByRegionEntry = false; // distinguish region-entry vs zoom triggers
         const MAX_FREE_ZOOM = 14;
+
+        // Village-boundary geojson (ported from Android pipeline)
+        const MIN_ZOOM_FOR_GEOJSON = 11;
+        const GEOJSON_BASE_PATH = 'data/geojson/';
+        const GEOCODER_API_KEY = 'AIzaSyC7v5rPKr_IPOu0IspLbELnYe6TAgPg_Pg';
+        const GEOJSON_MAX_CONCURRENT_DOWNLOADS = 3;
+        const GEOJSON_GEOCODER_CACHE_MAX = 500;
 
         // ===== Measurement State =====
         let measureMode = null;           // null | 'length' | 'area'
@@ -2587,7 +2596,403 @@
         
         const tileProxyUrl = "https://us-central1-sodium-hour-256110.cloudfunctions.net/serveTile";
         const tileBaseUrl = "https://tiles.mapmagician.in";
-        
+
+        // ---------- Village-boundary GeoJSON: IndexedDB wrapper ----------
+        // Mirrors the Android Room schema (districts + villages). Polygons are stored
+        // inline on each village record (IDB has no JOINs) — one getAll per district.
+        const GEOJSON_DB_NAME = 'mapmagician_geojson';
+        const GEOJSON_DB_VERSION = 1;
+        let _geojsonDBPromise = null;
+        function openGeoJsonDB() {
+            if (_geojsonDBPromise) return _geojsonDBPromise;
+            _geojsonDBPromise = new Promise((resolve, reject) => {
+                const req = indexedDB.open(GEOJSON_DB_NAME, GEOJSON_DB_VERSION);
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('districts')) {
+                        db.createObjectStore('districts', { keyPath: 'name' });
+                    }
+                    if (!db.objectStoreNames.contains('villages')) {
+                        const store = db.createObjectStore('villages', { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('by_district', 'districtName', { unique: false });
+                    }
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+            return _geojsonDBPromise;
+        }
+        function _idbTx(db, stores, mode) {
+            const tx = db.transaction(stores, mode);
+            return { tx, ...Object.fromEntries(stores.map(s => [s, tx.objectStore(s)])) };
+        }
+        function _idbReq(req) {
+            return new Promise((resolve, reject) => { req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); });
+        }
+        async function putDistrict(record) {
+            const db = await openGeoJsonDB();
+            const { tx, districts } = _idbTx(db, ['districts'], 'readwrite');
+            districts.put(record);
+            return new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); });
+        }
+        async function getDistrict(name) {
+            const db = await openGeoJsonDB();
+            const { districts } = _idbTx(db, ['districts'], 'readonly');
+            return _idbReq(districts.get(name));
+        }
+        async function putVillages(districtName, villageRecords) {
+            const db = await openGeoJsonDB();
+            const { tx, villages } = _idbTx(db, ['villages'], 'readwrite');
+            // Clear existing villages for this district first (fresh load)
+            const index = villages.index('by_district');
+            const cursorReq = index.openCursor(IDBKeyRange.only(districtName));
+            await new Promise((resolve, reject) => {
+                cursorReq.onsuccess = (e) => {
+                    const c = e.target.result;
+                    if (c) { c.delete(); c.continue(); } else resolve();
+                };
+                cursorReq.onerror = () => reject(cursorReq.error);
+            });
+            for (const v of villageRecords) villages.add({ ...v, districtName });
+            return new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); });
+        }
+        async function getVillagesForDistrict(districtName) {
+            const db = await openGeoJsonDB();
+            const { villages } = _idbTx(db, ['villages'], 'readonly');
+            return _idbReq(villages.index('by_district').getAll(IDBKeyRange.only(districtName)));
+        }
+        async function deleteDistrict(name) {
+            const db = await openGeoJsonDB();
+            const { tx, districts, villages } = _idbTx(db, ['districts', 'villages'], 'readwrite');
+            districts.delete(name);
+            const cursorReq = villages.index('by_district').openCursor(IDBKeyRange.only(name));
+            cursorReq.onsuccess = (e) => { const c = e.target.result; if (c) { c.delete(); c.continue(); } };
+            return new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); });
+        }
+
+        // ---------- loadDistrictGeoJson: download → extract → parse → persist ----------
+        // Mirrors Android's downloadAndUnzipGeoJsonFile + GeoJsonToDatabaseConverter.
+        const _geojsonInFlight = new Map();          // dedup concurrent loads for same district
+        let _geojsonSemaphoreAvail = GEOJSON_MAX_CONCURRENT_DOWNLOADS;
+        const _geojsonSemaphoreQueue = [];
+        function _geojsonAcquire() {
+            if (_geojsonSemaphoreAvail > 0) { _geojsonSemaphoreAvail--; return Promise.resolve(); }
+            return new Promise(resolve => _geojsonSemaphoreQueue.push(resolve));
+        }
+        function _geojsonRelease() {
+            const next = _geojsonSemaphoreQueue.shift();
+            if (next) next(); else _geojsonSemaphoreAvail++;
+        }
+        function _districtFileName(districtName) {
+            return districtName.toLowerCase().replace(/\s+/g, '_');
+        }
+        function _ringToLatLngs(ring) {
+            // GeoJSON is [lng, lat]; Google Maps wants {lat, lng}
+            const out = new Array(ring.length);
+            for (let i = 0; i < ring.length; i++) {
+                out[i] = { lat: ring[i][1], lng: ring[i][0] };
+            }
+            return out;
+        }
+        function _computeBboxFromRings(rings) {
+            let n = -Infinity, s = Infinity, e = -Infinity, w = Infinity;
+            for (const ring of rings) {
+                for (const pt of ring) {
+                    if (pt.lat > n) n = pt.lat;
+                    if (pt.lat < s) s = pt.lat;
+                    if (pt.lng > e) e = pt.lng;
+                    if (pt.lng < w) w = pt.lng;
+                }
+            }
+            return { n, s, e, w };
+        }
+        function _parseGeoJsonFeature(feat) {
+            const props = feat.properties || {};
+            const villageName = props.VILLAGE || props.NAME || props.village || 'Unknown';
+            const talukaName = props.TALUKA || props.TEHSIL || props.taluka || '';
+            const geom = feat.geometry;
+            if (!geom) return null;
+            const rings = [];                         // outer rings only (skip holes)
+            if (geom.type === 'Polygon' && Array.isArray(geom.coordinates) && geom.coordinates.length > 0) {
+                rings.push(_ringToLatLngs(geom.coordinates[0]));
+            } else if (geom.type === 'MultiPolygon' && Array.isArray(geom.coordinates)) {
+                for (const poly of geom.coordinates) {
+                    if (Array.isArray(poly) && poly.length > 0) rings.push(_ringToLatLngs(poly[0]));
+                }
+            } else {
+                return null;
+            }
+            if (rings.length === 0) return null;
+            const bounds = _computeBboxFromRings(rings);
+            return {
+                villageName, talukaName,
+                centerLat: (bounds.n + bounds.s) / 2,
+                centerLng: (bounds.e + bounds.w) / 2,
+                bounds,
+                polygons: rings
+            };
+        }
+        async function loadDistrictGeoJson(districtName) {
+            if (!districtName) throw new Error('districtName required');
+            // Cache hit → load from IDB
+            const existing = await getDistrict(districtName);
+            if (existing) {
+                const villages = await getVillagesForDistrict(districtName);
+                if (villages && villages.length > 0) {
+                    console.log('[geojson] cache hit for', districtName, '—', villages.length, 'villages');
+                    return villages;
+                }
+            }
+            // Dedup in-flight
+            if (_geojsonInFlight.has(districtName)) return _geojsonInFlight.get(districtName);
+            const p = (async () => {
+                await _geojsonAcquire();
+                try {
+                    const fileName = _districtFileName(districtName);
+                    const url = GEOJSON_BASE_PATH + fileName + '.zip';
+                    console.log('[geojson] fetching', url);
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+                    const blob = await res.blob();
+                    const zip = await JSZip.loadAsync(blob);
+                    const entry = Object.values(zip.files).find(f => !f.dir && f.name.toLowerCase().endsWith('.geojson'));
+                    if (!entry) throw new Error('No .geojson file inside ' + fileName + '.zip');
+                    const text = await entry.async('string');
+                    const geojson = JSON.parse(text);
+                    const features = (geojson && geojson.features) || [];
+                    const villageRecords = [];
+                    let dn = -Infinity, ds = Infinity, de = -Infinity, dw = Infinity;
+                    for (let i = 0; i < features.length; i++) {
+                        const rec = _parseGeoJsonFeature(features[i]);
+                        if (rec) {
+                            villageRecords.push(rec);
+                            if (rec.bounds.n > dn) dn = rec.bounds.n;
+                            if (rec.bounds.s < ds) ds = rec.bounds.s;
+                            if (rec.bounds.e > de) de = rec.bounds.e;
+                            if (rec.bounds.w < dw) dw = rec.bounds.w;
+                        }
+                        // Yield every 50 features to keep UI responsive (Android yields every 20)
+                        if (i % 50 === 49) await new Promise(r => setTimeout(r, 0));
+                    }
+                    await putVillages(districtName, villageRecords);
+                    await putDistrict({
+                        name: districtName,
+                        bounds: { n: dn, s: ds, e: de, w: dw },
+                        featureCount: villageRecords.length,
+                        downloadedAt: Date.now()
+                    });
+                    console.log('[geojson] loaded', districtName, '—', villageRecords.length, 'villages');
+                    // Re-read to get records with their auto-generated IDs
+                    return await getVillagesForDistrict(districtName);
+                } finally {
+                    _geojsonRelease();
+                    _geojsonInFlight.delete(districtName);
+                }
+            })();
+            _geojsonInFlight.set(districtName, p);
+            return p;
+        }
+
+        // ---------- reverseGeocodeDistrict: fallback when polygon detection fails ----------
+        // LRU cache in memory (500 entries) + localStorage persistence. Mirrors Android's tier-4.
+        const _geocoderCache = new Map();             // Map<"lat,lng", districtName>
+        let _geocoderCacheLoaded = false;
+        function _loadGeocoderCache() {
+            if (_geocoderCacheLoaded) return;
+            _geocoderCacheLoaded = true;
+            try {
+                const raw = localStorage.getItem('geocoder_cache');
+                if (raw) {
+                    const arr = JSON.parse(raw);
+                    for (const [k, v] of arr) _geocoderCache.set(k, v);
+                }
+            } catch (e) { /* ignore */ }
+        }
+        function _saveGeocoderCache() {
+            try {
+                // Persist last N (most-recently-inserted)
+                const arr = Array.from(_geocoderCache.entries());
+                localStorage.setItem('geocoder_cache', JSON.stringify(arr));
+            } catch (e) { /* quota exceeded — ignore */ }
+        }
+        async function reverseGeocodeDistrict(lat, lng) {
+            _loadGeocoderCache();
+            const key = lat.toFixed(4) + ',' + lng.toFixed(4);
+            if (_geocoderCache.has(key)) {
+                // Refresh LRU position
+                const v = _geocoderCache.get(key);
+                _geocoderCache.delete(key);
+                _geocoderCache.set(key, v);
+                return v;
+            }
+            const url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng=' + lat + ',' + lng + '&key=' + GEOCODER_API_KEY;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (!data || data.status !== 'OK' || !Array.isArray(data.results)) return null;
+                // Prefer administrative_area_level_3 (taluka/tehsil in India → district-equivalent per Android)
+                // Fallback to level_2 (district) then locality
+                let name = null;
+                for (const result of data.results) {
+                    const comps = result.address_components || [];
+                    const a3 = comps.find(c => c.types.includes('administrative_area_level_3'));
+                    if (a3) { name = a3.long_name; break; }
+                }
+                if (!name) {
+                    for (const result of data.results) {
+                        const comps = result.address_components || [];
+                        const a2 = comps.find(c => c.types.includes('administrative_area_level_2'));
+                        if (a2) { name = a2.long_name; break; }
+                    }
+                }
+                if (!name) {
+                    for (const result of data.results) {
+                        const comps = result.address_components || [];
+                        const loc = comps.find(c => c.types.includes('locality'));
+                        if (loc) { name = loc.long_name; break; }
+                    }
+                }
+                if (name) {
+                    // Evict oldest entry if at cap
+                    while (_geocoderCache.size >= GEOJSON_GEOCODER_CACHE_MAX) {
+                        const firstKey = _geocoderCache.keys().next().value;
+                        _geocoderCache.delete(firstKey);
+                    }
+                    _geocoderCache.set(key, name);
+                    _saveGeocoderCache();
+                }
+                return name;
+            } catch (e) {
+                console.warn('[geojson] reverse geocode failed:', e.message);
+                return null;
+            }
+        }
+
+        // ---------- updateVillagePolylines: viewport-filtered rendering ----------
+        // Mirrors Android's updateVisiblePolylinesAndOverlays (zoom gate + bbox filter + diff).
+        let currentDistrictVillages = null;           // {districtName, villages[]}
+        const villagePolylinesByVillageId = new Map(); // Map<villageId, google.maps.Polyline[]>
+        function _bboxIntersectsViewport(bounds, ne, sw) {
+            // bounds: {n,s,e,w}; ne/sw are LatLng
+            return bounds.s <= ne.lat() && bounds.n >= sw.lat() &&
+                   bounds.w <= ne.lng() && bounds.e >= sw.lng();
+        }
+        function _removeAllVillagePolylines() {
+            for (const arr of villagePolylinesByVillageId.values()) {
+                for (const pl of arr) pl.setMap(null);
+            }
+            villagePolylinesByVillageId.clear();
+        }
+        function clearDistrictVillages() {
+            _removeAllVillagePolylines();
+            currentDistrictVillages = null;
+        }
+        function updateVillagePolylines() {
+            if (!map || !currentDistrictVillages) return;
+            const zoom = map.getZoom();
+            if (zoom < MIN_ZOOM_FOR_GEOJSON) {
+                if (villagePolylinesByVillageId.size > 0) _removeAllVillagePolylines();
+                return;
+            }
+            const vp = map.getBounds();
+            if (!vp) return;
+            const ne = vp.getNorthEast();
+            const sw = vp.getSouthWest();
+            // Figure out which villages should be visible now
+            const shouldBeVisible = new Set();
+            const toAdd = [];
+            for (const v of currentDistrictVillages.villages) {
+                if (!v.bounds) continue;
+                if (_bboxIntersectsViewport(v.bounds, ne, sw)) {
+                    shouldBeVisible.add(v.id);
+                    if (!villagePolylinesByVillageId.has(v.id)) toAdd.push(v);
+                }
+            }
+            // Remove polylines for villages that are no longer visible (batched in chunks of 20)
+            const toRemove = [];
+            for (const id of villagePolylinesByVillageId.keys()) {
+                if (!shouldBeVisible.has(id)) toRemove.push(id);
+            }
+            const removeChunk = () => {
+                const batch = toRemove.splice(0, 20);
+                for (const id of batch) {
+                    const arr = villagePolylinesByVillageId.get(id);
+                    if (arr) { for (const pl of arr) pl.setMap(null); }
+                    villagePolylinesByVillageId.delete(id);
+                }
+                if (toRemove.length > 0) requestAnimationFrame(removeChunk);
+            };
+            if (toRemove.length > 0) removeChunk();
+            // Add polylines for newly-visible villages (also batched)
+            const addChunk = () => {
+                const batch = toAdd.splice(0, 20);
+                for (const v of batch) {
+                    const polylines = [];
+                    for (const ring of v.polygons) {
+                        const pl = new google.maps.Polyline({
+                            path: ring,
+                            strokeColor: '#FF0000',
+                            strokeOpacity: 0.8,
+                            strokeWeight: 1.2,
+                            clickable: false,
+                            zIndex: 900,
+                            map: map
+                        });
+                        polylines.push(pl);
+                    }
+                    villagePolylinesByVillageId.set(v.id, polylines);
+                }
+                if (toAdd.length > 0) requestAnimationFrame(addChunk);
+            };
+            if (toAdd.length > 0) addChunk();
+        }
+        // loadGeoJsonForMapCenter: PRIMARY district detection via Google Geocoder (mirrors Android).
+        // Calls the reverse geocoder to get the district name at the current map center,
+        // then fetches & renders the corresponding village-boundary zip. Throttled to avoid
+        // hammering the API while the user pans.
+        let _lastGeojsonLoadAt = 0;
+        let _lastGeojsonLoadLat = null, _lastGeojsonLoadLng = null;
+        async function loadGeoJsonForMapCenter() {
+            if (!map) return;
+            const z = map.getZoom();
+            if (z < MIN_ZOOM_FOR_GEOJSON) return;
+            const c = map.getCenter();
+            const lat = c.lat(), lng = c.lng();
+            const now = Date.now();
+            // Throttle: skip if we attempted within last 3s at a nearby point (~1km)
+            if (now - _lastGeojsonLoadAt < 3000 &&
+                _lastGeojsonLoadLat !== null &&
+                Math.abs(lat - _lastGeojsonLoadLat) < 0.01 &&
+                Math.abs(lng - _lastGeojsonLoadLng) < 0.01) return;
+            _lastGeojsonLoadAt = now;
+            _lastGeojsonLoadLat = lat;
+            _lastGeojsonLoadLng = lng;
+            const name = await reverseGeocodeDistrict(lat, lng);
+            if (!name) return;
+            loadVillageGeoJsonForCurrentDistrict(name);
+        }
+        // Load geojson for the given district and switch the rendered layer.
+        // If already loaded (same districtName), no-op. On district change, clear old polylines first.
+        function loadVillageGeoJsonForCurrentDistrict(districtName) {
+            if (!districtName) return;
+            if (currentDistrictVillages && currentDistrictVillages.districtName === districtName) return;
+            // District change → evict old polylines immediately for clean transition
+            _removeAllVillagePolylines();
+            currentDistrictVillages = { districtName, villages: [] };   // mark loading
+            loadDistrictGeoJson(districtName).then(villages => {
+                // Guard: user may have moved to a different district while we were loading
+                if (!currentDistrictVillages || currentDistrictVillages.districtName !== districtName) return;
+                currentDistrictVillages = { districtName, villages };
+                updateVillagePolylines();
+            }).catch(e => {
+                console.warn('[geojson] load failed for', districtName, '—', e.message);
+                // Clear sentinel so next attempt can retry
+                if (currentDistrictVillages && currentDistrictVillages.districtName === districtName) {
+                    currentDistrictVillages = null;
+                }
+            });
+        }
+
         // Get reference to Firebase database
         const database = firebase.database();
 
@@ -2854,6 +3259,10 @@
                 updateOldMapsButtonVisibility();
                 // Warn user when current zoom exceeds the maxZoom of every active overlay covering the center
                 checkOverlayZoomLimit(z, c);
+                // Refresh viewport-filtered village polylines
+                updateVillagePolylines();
+                // Primary geojson loader: geocode current center → fetch district zip
+                loadGeoJsonForMapCenter();
             });
             map.addListener('bounds_changed', debouncedLoadTiles);
 
