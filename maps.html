@@ -927,7 +927,7 @@
     <span id="status-indicator" style="display:none">Ready</span>
 
     <!-- Go to Coordinates dialog -->
-    <div class="coord-dialog-overlay" id="coord-dialog-overlay">
+    <div class="coord-dialog-overlay" id="coord-dialog-overlay" data-dismiss="coord-cancel">
         <div class="coord-dialog">
             <h3>Go to Coordinates</h3>
             <p class="coord-dialog-sub">Enter coordinates to search:</p>
@@ -985,7 +985,7 @@
     </div>
 
     <!-- Sign-in required dialog -->
-    <div class="auth-dialog-overlay" id="auth-dialog-overlay">
+    <div class="auth-dialog-overlay" id="auth-dialog-overlay" data-dismiss="auth-dialog-cancel">
         <div class="auth-dialog">
             <div style="width:48px;height:48px;margin:0 auto 20px;background:#f0f4ff;border-radius:50%;display:flex;align-items:center;justify-content:center;">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#1a73e8"/></svg>
@@ -1028,7 +1028,7 @@
     </div>
 
     <!-- Install info dialog (z-index above region-browser which sits at 3500) -->
-    <div class="auth-dialog-overlay" id="install-info-overlay" style="z-index:4000;">
+    <div class="auth-dialog-overlay" id="install-info-overlay" data-dismiss="install-info-cancel" style="z-index:4000;">
         <div class="auth-dialog" style="max-width:420px;text-align:left;">
             <div style="width:56px;height:56px;margin:0 auto 16px;background:#E0F2F1;border-radius:50%;display:flex;align-items:center;justify-content:center;">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="#00695C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1053,7 +1053,7 @@
     </div>
 
     <!-- Sign-out confirmation dialog -->
-    <div class="auth-dialog-overlay" id="signout-dialog-overlay">
+    <div class="auth-dialog-overlay" id="signout-dialog-overlay" data-dismiss="signout-dialog-cancel">
         <div class="auth-dialog">
             <h3>Sign Out</h3>
             <p id="signout-dialog-email" style="font-weight:600;color:#333;margin-bottom:16px;word-break:break-all;"></p>
@@ -1064,7 +1064,7 @@
     </div>
 
     <!-- Support form dialog -->
-    <div class="auth-dialog-overlay" id="support-dialog-overlay">
+    <div class="auth-dialog-overlay" id="support-dialog-overlay" data-dismiss="support-cancel-btn">
         <div class="auth-dialog" style="max-width:400px;text-align:left;">
             <h3 style="text-align:center;margin-bottom:16px;">Contact Support</h3>
             <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Your Email</label>
@@ -1079,7 +1079,7 @@
     </div>
 
     <!-- Zoom restriction / purchase dialog -->
-    <div class="zoom-dialog-overlay" id="zoom-restrict-overlay">
+    <div class="zoom-dialog-overlay" id="zoom-restrict-overlay" data-dismiss="zoom-restrict-cancel">
         <div class="zoom-dialog" style="max-width:420px;padding:0;">
             <!-- Header -->
             <div class="pd-header">
@@ -1508,8 +1508,10 @@
         }
 
         // --- Back-press dismisses modal dialogs ---
+        // Watches any overlay with [data-dismiss="..."] pointing to its cancel button.
+        // Back press clicks that button so existing cancel logic (enableMapInteraction,
+        // cleanup, etc.) runs — rather than just hiding the dialog.
         (function() {
-            const selectors = '.zoom-dialog-overlay, .auth-dialog-overlay, .coord-dialog-overlay';
             const stack = [];                 // open overlay elements, in open order
             let closingFromPopstate = false;  // set true while popstate handler is closing
 
@@ -1534,7 +1536,7 @@
                 closingFromPopstate = false;
             });
 
-            document.querySelectorAll(selectors).forEach((el) => {
+            document.querySelectorAll('[data-dismiss]').forEach((el) => {
                 observer.observe(el, { attributes: true, attributeFilter: ['class'] });
             });
 
@@ -1542,8 +1544,18 @@
                 if (stack.length === 0) return;
                 closingFromPopstate = true;
                 const top = stack[stack.length - 1];
-                top.classList.remove('open');
-                // MutationObserver fires, sees closingFromPopstate=true, skips history.back()
+                const dismissId = top.getAttribute('data-dismiss');
+                const btn = dismissId ? document.getElementById(dismissId) : null;
+                if (btn) {
+                    // Trigger the cancel button's click — runs any cleanup
+                    // (enableMapInteraction, zoom-out, form reset, etc.)
+                    btn.click();
+                } else {
+                    // Fallback: just hide the overlay
+                    top.classList.remove('open');
+                }
+                // MutationObserver fires from button click, sees closingFromPopstate=true,
+                // skips history.back()
             });
         })();
 
