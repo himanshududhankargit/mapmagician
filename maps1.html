@@ -2702,6 +2702,18 @@
                 }
             }, true);
 
+            // Global contextmenu block: suppresses native browser menu ("Save Page As...",
+            // "Save Image As...") on every element. Text inputs are whitelisted so users
+            // can still right-click paste. The map has its own custom "Copy coordinates"
+            // menu handled via map.addListener('contextmenu') above.
+            document.addEventListener('contextmenu', function(e) {
+                var t = e.target;
+                if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
+                    return; // allow native menu on editable fields
+                }
+                e.preventDefault();
+            });
+
             // Places Autocomplete (New API)
             // Google Places — new API (Place class)
 
