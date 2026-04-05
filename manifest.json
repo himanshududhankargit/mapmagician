@@ -1,6 +1,6 @@
 {
   "name": "Development Plan GIS - Mapmagician",
-  "short_name": "Mapmagician",
+  "short_name": "Development Plan GIS - Mapmagician",
   "description": "Access development plans for 157+ regions across India on an interactive map.",
   "start_url": "/maps.html",
   "scope": "/",
