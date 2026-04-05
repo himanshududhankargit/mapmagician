@@ -106,7 +106,7 @@
             background: transparent;
         }
         #map-type {
-            height: 32px; border: 1px solid #e0e0e0; border-radius: 16px;
+            height: 32px; line-height: 30px; border: 1px solid #e0e0e0; border-radius: 16px;
             padding: 0 10px; font-size: 11px; background: #f5f5f5;
             cursor: pointer; outline: none; -webkit-appearance: none; appearance: none;
         }
@@ -1532,6 +1532,23 @@
             btn.textContent = 'Sending...';
 
             const district = findDistrictAtCenter();
+
+            // Build list of user's currently-active passes (non-expired only)
+            const now = Date.now();
+            const activeSubscriptions = [];
+            activePurchases.forEach((val, productId) => {
+                if (val && typeof val.expiry === 'number' && val.expiry > now) {
+                    const d = findDistrictByPurchaseId(productId);
+                    activeSubscriptions.push({
+                        productId: productId,
+                        name: d ? d.districtName : productId,
+                        plan: val.plan || '',
+                        expiry: val.expiry
+                    });
+                }
+            });
+            activeSubscriptions.sort((a, b) => a.expiry - b.expiry);
+
             try {
                 const sendSupportRequest = functions.httpsCallable('sendSupportRequest');
                 await sendSupportRequest({
@@ -1539,7 +1556,8 @@
                     region: document.getElementById('support-region').value,
                     regionPid: district ? district.productPurchaseID : '',
                     zoom: map ? map.getZoom() : 0,
-                    userAgent: navigator.userAgent
+                    userAgent: navigator.userAgent,
+                    activeSubscriptions: activeSubscriptions
                 });
                 btn.textContent = 'Sent!';
                 supportReturnToPaywall = false;
