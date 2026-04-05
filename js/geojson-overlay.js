@@ -40,6 +40,11 @@
     var inflightDownloads = new Map(); // districtKey -> Promise (dedup)
     var downloadSem = null;
     var activeToastTimer = null;
+    var geocoder = null;
+    var lastGeocodedCenter = null;          // {lat, lng} — last position we geocoded
+    var lastGeocodedKey = null;             // cached district key from last geocode
+    var geocodeCache = new Map();           // cellKey ("lat_lng" rounded) -> district key
+    var DISTRICT_CHECK_DISTANCE_M = 500;    // matches Android DISTRICT_CHECK_DISTANCE_METERS
 
     // ---------- Tiny semaphore (matches Android Semaphore(3)) ----------
     function Semaphore(max) {
@@ -142,6 +147,58 @@
     function districtKey(districtName) {
         if (!districtName) return '';
         return String(districtName).toLowerCase().replace(/ /g, '_');
+    }
+
+    // ---------- Haversine distance (meters) ----------
+    function haversineMeters(lat1, lng1, lat2, lng2) {
+        var R = 6371000;
+        var toRad = Math.PI / 180;
+        var dLat = (lat2 - lat1) * toRad;
+        var dLng = (lng2 - lng1) * toRad;
+        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        return 2 * R * Math.asin(Math.sqrt(a));
+    }
+
+    // ---------- Google Geocoding: resolve district from lat/lng (matches Android getDistrict) ----------
+    function geocodeDistrict(lat, lng) {
+        // Rounded cell cache (~1 km grid at 2 decimals)
+        var cellKey = lat.toFixed(2) + '_' + lng.toFixed(2);
+        if (geocodeCache.has(cellKey)) {
+            return Promise.resolve(geocodeCache.get(cellKey));
+        }
+        if (typeof google === 'undefined' || !google.maps || !google.maps.Geocoder) {
+            return Promise.resolve(null);
+        }
+        if (!geocoder) geocoder = new google.maps.Geocoder();
+        return new Promise(function (resolve) {
+            geocoder.geocode({ location: { lat: lat, lng: lng } }, function (results, status) {
+                if (status !== 'OK' || !results || !results.length) {
+                    console.warn('[GeoJsonOverlay] geocode status=' + status);
+                    resolve(null);
+                    return;
+                }
+                // Parse address_components for administrative_area_level_3, fallback locality
+                var district = null, locality = null;
+                for (var r = 0; r < results.length && (!district || !locality); r++) {
+                    var comps = results[r].address_components || [];
+                    for (var i = 0; i < comps.length; i++) {
+                        var types = comps[i].types || [];
+                        if (!district && types.indexOf('administrative_area_level_3') !== -1) {
+                            district = comps[i].long_name;
+                        }
+                        if (!locality && types.indexOf('locality') !== -1) {
+                            locality = comps[i].long_name;
+                        }
+                    }
+                }
+                var name = district || locality;
+                var key = name ? districtKey(name) : null;
+                if (key) geocodeCache.set(cellKey, key);
+                resolve(key);
+            });
+        });
     }
 
     // ---------- Web Worker for GeoJSON parsing ----------
@@ -597,24 +654,32 @@
     // ---------- Viewport trigger from maps.html idle handler ----------
     function onViewportChanged() {
         if (disabled || !map) return;
-        // 1. Kick off download if user's center is in a new district
-        try {
-            if (typeof window.findDistrictAtCenter === 'function') {
-                var district = window.findDistrictAtCenter();
-                if (district && district.districtName) {
-                    var key = districtKey(district.districtName);
-                    if (key) {
-                        console.log('[GeoJsonOverlay] center district: "' +
-                            district.districtName + '" → key="' + key + '"');
-                        ensureDistrict(key);
-                    }
-                } else {
-                    console.log('[GeoJsonOverlay] no district at center (dpLayerData may not be loaded yet)');
+        var c = map.getCenter();
+        if (!c) return;
+        var lat = c.lat(), lng = c.lng();
+
+        // 1. Distance-gated geocoding lookup (matches Android 500m threshold)
+        var shouldGeocode = !lastGeocodedCenter ||
+            haversineMeters(lastGeocodedCenter.lat, lastGeocodedCenter.lng, lat, lng) >= DISTRICT_CHECK_DISTANCE_M;
+
+        if (shouldGeocode) {
+            lastGeocodedCenter = { lat: lat, lng: lng };
+            geocodeDistrict(lat, lng).then(function (key) {
+                if (!key) {
+                    console.log('[GeoJsonOverlay] geocode returned no district at ' + lat.toFixed(4) + ',' + lng.toFixed(4));
+                    return;
                 }
-            }
-        } catch (e) {
-            console.warn('[GeoJsonOverlay] findDistrictAtCenter threw:', e);
+                if (key !== lastGeocodedKey) {
+                    lastGeocodedKey = key;
+                    console.log('[GeoJsonOverlay] geocoded district key="' + key + '"');
+                }
+                ensureDistrict(key);
+            });
+        } else if (lastGeocodedKey) {
+            // Within same 500m cell — kick off ensureDistrict (IDB hit = no-op, miss = download)
+            ensureDistrict(lastGeocodedKey);
         }
+
         // 2. Debounced viewport render
         debouncedRender();
     }
