@@ -293,13 +293,15 @@
     // ---------- Fetch + unzip ----------
     function fetchAndUnzip(districtKeyStr) {
         var url = options.zipBase + encodeURIComponent(districtKeyStr) + '.zip';
-        return fetch(url, { credentials: 'include', mode: 'cors' })
+        var credentials = (options.sendCredentials === false) ? 'omit' : 'include';
+        var fetchOpts = { credentials: credentials, mode: 'cors' };
+        return fetch(url, fetchOpts)
             .then(function (res) {
-                if (res.status === 403) {
+                if (res.status === 403 && credentials === 'include') {
                     // Cookies stale or missing — refresh once and retry
                     if (typeof window.fetchCloudFrontCookies === 'function') {
                         return window.fetchCloudFrontCookies().then(function () {
-                            return fetch(url, { credentials: 'include', mode: 'cors' });
+                            return fetch(url, fetchOpts);
                         });
                     }
                     return res;
