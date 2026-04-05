@@ -44,6 +44,11 @@
     var lastGeocodedKey = null;             // cached district key from last geocode
     var geocodeCache = new Map();           // cellKey ("lat_lng" rounded) -> district key
     var DISTRICT_CHECK_DISTANCE_M = 500;    // matches Android DISTRICT_CHECK_DISTANCE_METERS
+    // In-memory district cache for low-lag viewport rendering.
+    // districtKey -> { villages: [{id, bounds}], pathsByVillage: Map<id, Array<path[]>>, lastAccessed }
+    var loadedDistricts = new Map();
+    var hydrationPromises = new Map();      // districtKey -> Promise (dedup in-flight hydrations)
+    var MAX_HYDRATED_DISTRICTS = 3;          // LRU cap
 
     // ---------- Tiny semaphore (matches Android Semaphore(3)) ----------
     function Semaphore(max) {
@@ -464,7 +469,11 @@
                     // Touch lastAccessedAt (fire-and-forget)
                     existing.lastAccessedAt = Date.now();
                     idbPut('districts', existing);
-                    return true;
+                    // Hydrate into memory, then render
+                    return hydrateDistrict(districtKeyStr).then(function () {
+                        renderViewport();
+                        return true;
+                    });
                 }
                 return downloadSem.acquire().then(function () {
                     showToast('Downloading village polygons for ' + districtKeyStr + '...');
@@ -486,15 +495,16 @@
                                     ' villages, ' + res.pointCount + ' points for ' + districtKeyStr);
                                 showToast('Loaded ' + res.villageCount + ' villages for ' +
                                     districtKeyStr, 2500);
-                                // Trigger immediate render now that data is available
-                                renderViewport();
-                                return true;
+                                // Hydrate into memory and render
+                                return hydrateDistrict(districtKeyStr).then(function () {
+                                    renderViewport();
+                                    return true;
+                                });
                             });
                         })
                         .catch(function (err) {
                             console.error('[GeoJsonOverlay] ensureDistrict failed for ' +
                                 districtKeyStr + ':', err);
-                            showToast('Failed to load ' + districtKeyStr, 2500);
                             return false;
                         })
                         .then(function (result) { downloadSem.release(); return result; },
@@ -509,70 +519,121 @@
     }
 
     // ---------- Viewport query + rendering ----------
-    function queryVisibleVillages(bounds) {
-        // Simple strategy: scan the villages store with an index,
-        // filter in JS by bounds intersection. Works up to ~50k records/district.
-        return new Promise(function (resolve, reject) {
-            var matches = [];
-            var tx = db.transaction('villages', 'readonly');
-            var store = tx.objectStore('villages');
-            var req = store.openCursor();
-            req.onsuccess = function (e) {
+    // ---------- Hydration: load an entire district into memory once (Android parity) ----------
+    function hydrateDistrict(districtKeyStr) {
+        if (loadedDistricts.has(districtKeyStr)) {
+            loadedDistricts.get(districtKeyStr).lastAccessed = Date.now();
+            return Promise.resolve(loadedDistricts.get(districtKeyStr));
+        }
+        if (hydrationPromises.has(districtKeyStr)) return hydrationPromises.get(districtKeyStr);
+
+        var t0 = performance.now();
+        var promise = new Promise(function (resolve, reject) {
+            // Step 1: load all villages for district via by_district index
+            var tx = db.transaction(['villages', 'polygon_points'], 'readonly');
+            var villages = [];
+            var vIdx = tx.objectStore('villages').index('by_district');
+            vIdx.openCursor(IDBKeyRange.only(districtKeyStr)).onsuccess = function (e) {
                 var cur = e.target.result;
-                if (!cur) { resolve(matches); return; }
-                var v = cur.value;
-                var intersects =
-                    v.boundsSouth <= bounds.maxLat &&
-                    v.boundsNorth >= bounds.minLat &&
-                    v.boundsWest <= bounds.maxLng &&
-                    v.boundsEast >= bounds.minLng;
-                if (intersects) matches.push(v);
+                if (cur) { villages.push(cur.value); cur.continue(); }
+            };
+            // Step 2: load ALL polygon_points once, group by villageId
+            var pointsByVillage = new Map();
+            var pStore = tx.objectStore('polygon_points');
+            pStore.openCursor().onsuccess = function (e) {
+                var cur = e.target.result;
+                if (!cur) return;
+                var p = cur.value;
+                var arr = pointsByVillage.get(p.villageId);
+                if (!arr) { arr = []; pointsByVillage.set(p.villageId, arr); }
+                arr.push(p);
                 cur.continue();
             };
-            req.onerror = function () { reject(req.error); };
-        });
-    }
-
-    function getVillagePoints(villageId) {
-        return new Promise(function (resolve, reject) {
-            var tx = db.transaction('polygon_points', 'readonly');
-            var idx = tx.objectStore('polygon_points').index('by_village');
-            var range = IDBKeyRange.bound(
-                [villageId, -Infinity, -Infinity],
-                [villageId, Infinity, Infinity]
-            );
-            var pts = [];
-            idx.openCursor(range).onsuccess = function (e) {
-                var cur = e.target.result;
-                if (!cur) { resolve(pts); return; }
-                pts.push(cur.value);
-                cur.continue();
+            tx.oncomplete = function () {
+                // Pre-build ring paths per village (sorted by polygonIndex, pointIndex)
+                var villageMeta = [];
+                for (var i = 0; i < villages.length; i++) {
+                    var v = villages[i];
+                    var pts = pointsByVillage.get(v.id) || [];
+                    // Group by polygonIndex
+                    var rings = new Map();
+                    for (var j = 0; j < pts.length; j++) {
+                        var p = pts[j];
+                        var r = rings.get(p.polygonIndex);
+                        if (!r) { r = []; rings.set(p.polygonIndex, r); }
+                        r.push(p);
+                    }
+                    // Sort each ring by pointIndex, build LatLng path
+                    var paths = [];
+                    rings.forEach(function (ringPoints) {
+                        ringPoints.sort(function (a, b) { return a.pointIndex - b.pointIndex; });
+                        var path = new Array(ringPoints.length);
+                        for (var k = 0; k < ringPoints.length; k++) {
+                            path[k] = { lat: ringPoints[k].lat, lng: ringPoints[k].lng };
+                        }
+                        paths.push(path);
+                    });
+                    villageMeta.push({
+                        id: v.id,
+                        name: v.villageName,
+                        boundsNorth: v.boundsNorth, boundsSouth: v.boundsSouth,
+                        boundsEast: v.boundsEast, boundsWest: v.boundsWest,
+                        paths: paths
+                    });
+                }
+                var entry = { villages: villageMeta, lastAccessed: Date.now() };
+                loadedDistricts.set(districtKeyStr, entry);
+                evictLRUDistricts();
+                console.log('[GeoJsonOverlay] hydrated "' + districtKeyStr + '" — ' +
+                    villageMeta.length + ' villages, ' + (performance.now() - t0).toFixed(0) + ' ms');
+                resolve(entry);
             };
             tx.onerror = function () { reject(tx.error); };
         });
+        hydrationPromises.set(districtKeyStr, promise);
+        promise.then(function () { hydrationPromises.delete(districtKeyStr); },
+                     function () { hydrationPromises.delete(districtKeyStr); });
+        return promise;
     }
 
-    function buildPolylinesForVillage(points) {
-        // Group points by polygonIndex, build one Polyline per ring
-        var rings = new Map();
-        for (var i = 0; i < points.length; i++) {
-            var p = points[i];
-            var arr = rings.get(p.polygonIndex);
-            if (!arr) { arr = []; rings.set(p.polygonIndex, arr); }
-            arr.push({ lat: p.lat, lng: p.lng });
+    function evictLRUDistricts() {
+        if (loadedDistricts.size <= MAX_HYDRATED_DISTRICTS) return;
+        // Find oldest lastAccessed and evict
+        var oldestKey = null, oldestTime = Infinity;
+        loadedDistricts.forEach(function (entry, key) {
+            if (entry.lastAccessed < oldestTime) {
+                oldestTime = entry.lastAccessed;
+                oldestKey = key;
+            }
+        });
+        if (oldestKey) {
+            // Remove any rendered polylines whose villages are in this district
+            var entry = loadedDistricts.get(oldestKey);
+            var ids = new Set(entry.villages.map(function (v) { return v.id; }));
+            renderCache.forEach(function (lines, vid) {
+                if (ids.has(vid)) {
+                    for (var i = 0; i < lines.length; i++) lines[i].setMap(null);
+                    renderCache.delete(vid);
+                }
+            });
+            loadedDistricts.delete(oldestKey);
+            console.log('[GeoJsonOverlay] evicted district "' + oldestKey + '" from memory');
         }
-        var lines = [];
-        rings.forEach(function (path) {
-            lines.push(new google.maps.Polyline({
-                path: path,
+    }
+
+    function buildPolylinesFromPaths(paths) {
+        var lines = new Array(paths.length);
+        for (var i = 0; i < paths.length; i++) {
+            lines[i] = new google.maps.Polyline({
+                path: paths[i],
                 strokeColor: POLYLINE_COLOR,
                 strokeWeight: POLYLINE_WEIGHT,
                 strokeOpacity: POLYLINE_OPACITY,
                 clickable: false,
                 zIndex: POLYLINE_Z_INDEX,
                 map: visible ? map : null
-            }));
-        });
+            });
+        }
         return lines;
     }
 
@@ -584,56 +645,54 @@
     }
 
     function renderViewport() {
-        if (disabled || !map || !visible || !db) {
-            console.log('[GeoJsonOverlay] renderViewport skip',
-                { disabled: disabled, hasMap: !!map, visible: visible, hasDb: !!db });
-            return;
-        }
+        if (disabled || !map || !visible || !db) return;
         var minZoom = (options.minZoom != null) ? options.minZoom : DEFAULT_MIN_ZOOM;
         var curZoom = map.getZoom();
-        if (curZoom < minZoom) {
-            console.log('[GeoJsonOverlay] zoom ' + curZoom + ' < minZoom ' + minZoom +
-                ' — clearing and skipping render');
-            clearAllRenderedPolylines();
-            return;
-        }
+        if (curZoom < minZoom) { clearAllRenderedPolylines(); return; }
         var b = map.getBounds();
         if (!b) return;
         var ne = b.getNorthEast();
         var sw = b.getSouthWest();
-        var vp = {
-            minLat: sw.lat(), maxLat: ne.lat(),
-            minLng: sw.lng(), maxLng: ne.lng()
-        };
-        var gen = ++renderGeneration;
-        queryVisibleVillages(vp).then(function (villages) {
-            if (gen !== renderGeneration) return; // stale pass
-            console.log('[GeoJsonOverlay] render pass: ' + villages.length +
-                ' villages in viewport (zoom=' + curZoom + ')');
-            var wantIds = new Set(villages.map(function (v) { return v.id; }));
-            // Remove polylines no longer visible
-            renderCache.forEach(function (lines, vid) {
-                if (!wantIds.has(vid)) {
-                    for (var i = 0; i < lines.length; i++) lines[i].setMap(null);
-                    renderCache.delete(vid);
+        var vpN = ne.lat(), vpS = sw.lat(), vpE = ne.lng(), vpW = sw.lng();
+
+        var t0 = performance.now();
+        // Filter all hydrated districts' villages by viewport bounds — pure JS, no IDB
+        var visibleVillages = [];
+        loadedDistricts.forEach(function (entry) {
+            entry.lastAccessed = Date.now();
+            var arr = entry.villages;
+            for (var i = 0; i < arr.length; i++) {
+                var v = arr[i];
+                if (v.boundsSouth <= vpN && v.boundsNorth >= vpS &&
+                    v.boundsWest <= vpE && v.boundsEast >= vpW) {
+                    visibleVillages.push(v);
                 }
-            });
-            // Add polylines for newly visible villages (rate-limited per pass)
-            var toAdd = villages.filter(function (v) { return !renderCache.has(v.id); });
-            var chain = Promise.resolve();
-            toAdd.forEach(function (v) {
-                chain = chain.then(function () {
-                    if (gen !== renderGeneration) return;
-                    return getVillagePoints(v.id).then(function (pts) {
-                        if (gen !== renderGeneration) return;
-                        var lines = buildPolylinesForVillage(pts);
-                        renderCache.set(v.id, lines);
-                    });
-                });
-            });
-        }).catch(function (err) {
-            console.warn('[GeoJsonOverlay] renderViewport error:', err);
+            }
         });
+
+        var wantIds = new Set();
+        for (var i = 0; i < visibleVillages.length; i++) wantIds.add(visibleVillages[i].id);
+
+        // Remove polylines no longer visible
+        renderCache.forEach(function (lines, vid) {
+            if (!wantIds.has(vid)) {
+                for (var j = 0; j < lines.length; j++) lines[j].setMap(null);
+                renderCache.delete(vid);
+            }
+        });
+
+        // Add polylines for newly visible villages (synchronous, pre-built paths)
+        var added = 0;
+        for (var k = 0; k < visibleVillages.length; k++) {
+            var v = visibleVillages[k];
+            if (renderCache.has(v.id)) continue;
+            renderCache.set(v.id, buildPolylinesFromPaths(v.paths));
+            added++;
+        }
+
+        console.log('[GeoJsonOverlay] render: ' + visibleVillages.length + ' visible, +' +
+            added + ' added, cache=' + renderCache.size +
+            ', zoom=' + curZoom + ', ' + (performance.now() - t0).toFixed(1) + ' ms');
     }
 
     function debouncedRender() {
