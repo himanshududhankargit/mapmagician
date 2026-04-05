@@ -435,7 +435,7 @@
         .sidebar-overlay.open { display: block; }
 
         /* Login-required dialog */
-        .auth-dialog-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:3000; display:none; align-items:center; justify-content:center; }
+        .auth-dialog-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; height:100dvh; background:rgba(0,0,0,0.5); z-index:3000; display:none; align-items:center; justify-content:center; padding:12px; box-sizing:border-box; overflow-y:auto; }
         .auth-dialog-overlay.open { display:flex; }
         .auth-dialog { background:#fff; border-radius:28px; padding:40px 32px 32px; max-width:380px; width:90%; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.12),0 8px 24px rgba(0,0,0,0.14); font-family:'Google Sans','Segoe UI',Roboto,Arial,sans-serif; }
         .auth-dialog h3 { margin:0 0 8px; font-size:24px; color:#202124; font-weight:400; }
@@ -446,7 +446,7 @@
         .auth-dialog-cancel:hover { color:#174ea6; background:rgba(26,115,232,0.04); border-radius:4px; padding:4px 8px; }
 
         /* Go to Coordinates dialog */
-        .coord-dialog-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:3000; display:none; align-items:center; justify-content:center; }
+        .coord-dialog-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; height:100dvh; background:rgba(0,0,0,0.5); z-index:3000; display:none; align-items:center; justify-content:center; padding:12px; box-sizing:border-box; overflow-y:auto; }
         .coord-dialog-overlay.open { display:flex; }
         .coord-dialog { background:#fff; border-radius:12px; padding:20px 24px 16px; max-width:400px; width:92%; box-shadow:0 8px 32px rgba(0,0,0,0.25); font-family:'Segoe UI',Roboto,Arial,sans-serif; }
         .coord-dialog h3 { margin:0 0 6px; font-size:20px; color:#212121; font-weight:600; text-align:left; }
@@ -476,9 +476,9 @@
         .coord-dialog-btn:hover { background:rgba(33,150,243,0.08); }
 
         /* Zoom restriction dialog */
-        .zoom-dialog-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:3000; display:none; align-items:center; justify-content:center; }
+        .zoom-dialog-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; height:100dvh; background:rgba(0,0,0,0.5); z-index:3000; display:none; align-items:center; justify-content:center; padding:12px; box-sizing:border-box; }
         .zoom-dialog-overlay.open { display:flex; }
-        .zoom-dialog { background:#fff; border-radius:16px; max-width:400px; width:92%; box-shadow:0 8px 32px rgba(0,0,0,0.25); overflow:hidden; }
+        .zoom-dialog { background:#fff; border-radius:16px; max-width:400px; width:100%; max-height:100%; box-shadow:0 8px 32px rgba(0,0,0,0.25); overflow-y:auto; overflow-x:hidden; }
         .zoom-dialog h3 { margin:0 0 10px; font-size:20px; color:#212121; font-weight:700; }
         .zoom-dialog-desc { margin:0 0 16px; font-size:13px; color:#555; line-height:1.6; }
         .zoom-dialog-region { background:#E0F2F1; color:#00695C; padding:10px 16px; border-radius:8px; font-size:14px; font-weight:600; margin-bottom:16px; text-align:center; }
@@ -1080,7 +1080,7 @@
 
     <!-- Zoom restriction / purchase dialog -->
     <div class="zoom-dialog-overlay" id="zoom-restrict-overlay">
-        <div class="zoom-dialog" style="max-width:420px;padding:0;overflow:hidden;">
+        <div class="zoom-dialog" style="max-width:420px;padding:0;">
             <!-- Header -->
             <div class="pd-header">
                 <div class="pd-header-icon">
