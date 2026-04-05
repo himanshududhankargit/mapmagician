@@ -2515,8 +2515,6 @@
                 if (currentUser && !currentUser.isAnonymous) fetchPurchaseStatus();
                 // Update bottom bar immediately on region change so it stays in sync
                 updateRegionStatus();
-                // Load village-boundary geojson for this district (Android parity)
-                loadVillageGeoJsonForCurrentDistrict(district.districtName);
             }
 
             const overlay = document.getElementById('zoom-restrict-overlay');
@@ -2948,34 +2946,30 @@
             };
             if (toAdd.length > 0) addChunk();
         }
-        // Geocoder fallback: if findDistrictAtCenter() can't identify the district from KML polygons,
-        // hit the Google Geocoder API (throttled) and try to match the returned name against menuData.
-        let _lastGeocoderAttemptAt = 0;
-        let _lastGeocoderAttemptLat = null, _lastGeocoderAttemptLng = null;
-        async function tryGeocoderFallback() {
-            if (!map || typeof menuData === 'undefined' || menuData.length === 0) return;
+        // loadGeoJsonForMapCenter: PRIMARY district detection via Google Geocoder (mirrors Android).
+        // Calls the reverse geocoder to get the district name at the current map center,
+        // then fetches & renders the corresponding village-boundary zip. Throttled to avoid
+        // hammering the API while the user pans.
+        let _lastGeojsonLoadAt = 0;
+        let _lastGeojsonLoadLat = null, _lastGeojsonLoadLng = null;
+        async function loadGeoJsonForMapCenter() {
+            if (!map) return;
+            const z = map.getZoom();
+            if (z < MIN_ZOOM_FOR_GEOJSON) return;
             const c = map.getCenter();
             const lat = c.lat(), lng = c.lng();
             const now = Date.now();
-            // Throttle: skip if we attempted within last 3s at a nearby point
-            if (now - _lastGeocoderAttemptAt < 3000 &&
-                _lastGeocoderAttemptLat !== null &&
-                Math.abs(lat - _lastGeocoderAttemptLat) < 0.01 &&
-                Math.abs(lng - _lastGeocoderAttemptLng) < 0.01) return;
-            _lastGeocoderAttemptAt = now;
-            _lastGeocoderAttemptLat = lat;
-            _lastGeocoderAttemptLng = lng;
+            // Throttle: skip if we attempted within last 3s at a nearby point (~1km)
+            if (now - _lastGeojsonLoadAt < 3000 &&
+                _lastGeojsonLoadLat !== null &&
+                Math.abs(lat - _lastGeojsonLoadLat) < 0.01 &&
+                Math.abs(lng - _lastGeojsonLoadLng) < 0.01) return;
+            _lastGeojsonLoadAt = now;
+            _lastGeojsonLoadLat = lat;
+            _lastGeojsonLoadLng = lng;
             const name = await reverseGeocodeDistrict(lat, lng);
             if (!name) return;
-            // Match against menuData district (case-insensitive, loose)
-            const needle = name.toLowerCase().trim();
-            const match = menuData.find(m =>
-                (m.district || '').toLowerCase().trim() === needle ||
-                (m.state || '').toLowerCase().trim() === needle);
-            if (match) {
-                console.log('[geojson] geocoder fallback matched menuData:', match.district || match.state);
-                loadVillageGeoJsonForCurrentDistrict(match.district || match.state);
-            }
+            loadVillageGeoJsonForCurrentDistrict(name);
         }
         // Load geojson for the given district and switch the rendered layer.
         // If already loaded (same districtName), no-op. On district change, clear old polylines first.
@@ -3267,10 +3261,8 @@
                 checkOverlayZoomLimit(z, c);
                 // Refresh viewport-filtered village polylines
                 updateVillagePolylines();
-                // Geocoder fallback: if no district from polygons AND none currently loaded, try geocoding
-                if (!findDistrictAtCenter() && !currentDistrictVillages && z >= MIN_ZOOM_FOR_GEOJSON) {
-                    tryGeocoderFallback();
-                }
+                // Primary geojson loader: geocode current center → fetch district zip
+                loadGeoJsonForMapCenter();
             });
             map.addListener('bounds_changed', debouncedLoadTiles);
 
