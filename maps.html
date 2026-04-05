@@ -490,14 +490,16 @@
 
         /* First-visit disclaimer — blocks app until accepted */
         .disclaimer-overlay {
-            position:fixed; top:0; left:0; width:100vw; height:100vh;
+            position:fixed; top:0; left:0; width:100vw;
+            height:100vh; height:100dvh;
             background:rgba(0,0,0,0.6); z-index:9000; display:flex;
-            align-items:center; justify-content:center; padding:16px;
+            align-items:center; justify-content:center; padding:12px;
             font-family:'Segoe UI',Roboto,Arial,sans-serif;
+            box-sizing:border-box;
         }
         .disclaimer-box {
             background:#fff; border-radius:14px; max-width:520px; width:100%;
-            max-height:92vh; display:flex; flex-direction:column;
+            max-height:100%; display:flex; flex-direction:column;
             box-shadow:0 12px 48px rgba(0,0,0,0.3); overflow:hidden;
         }
         .disclaimer-title {
@@ -1200,19 +1202,11 @@
     
     <!-- Firebase initialization must come after the Firebase scripts have loaded -->
     <script>
-        // --- First-visit disclaimer ---
+        // --- Disclaimer (shown on every page load) ---
         (function() {
-            const DISCLAIMER_KEY = 'mm_disclaimerAccepted_v1';
             const overlay = document.getElementById('disclaimer-overlay');
             if (!overlay) return;
-            let accepted = false;
-            try { accepted = localStorage.getItem(DISCLAIMER_KEY) === '1'; } catch (e) {}
-            if (accepted) {
-                overlay.style.display = 'none';
-                return;
-            }
             document.getElementById('disclaimer-agree').addEventListener('click', function() {
-                try { localStorage.setItem(DISCLAIMER_KEY, '1'); } catch (e) {}
                 overlay.style.display = 'none';
             });
             document.getElementById('disclaimer-disagree').addEventListener('click', function() {
