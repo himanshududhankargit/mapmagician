@@ -535,26 +535,28 @@
         }
         .sidebar-list-arrow { color: #999; font-size: 16px; flex-shrink: 0; }
 
-        /* "Install App" button (shown in region browser) */
+        /* "Install App" button (shown in region browser) — subtle outline style */
         .sidebar-install-btn {
-            display: flex; align-items: center; gap: 12px;
-            margin: 0 auto 12px; padding: 12px 14px;
-            background: #008577; color: #fff; border: none; border-radius: 10px;
-            cursor: pointer; text-align: left; width: 100%; max-width: 600px;
-            box-shadow: 0 2px 6px rgba(0,133,119,0.25); transition: background 0.15s;
-            font-family: inherit;
+            display: inline-flex; align-items: center; gap: 8px;
+            margin: 0 auto 10px; padding: 6px 12px;
+            background: transparent; color: #546E7A; border: 1px solid #CFD8DC;
+            border-radius: 16px; cursor: pointer; text-align: left;
+            transition: background 0.15s, border-color 0.15s;
+            font-family: inherit; font-size: 12px;
         }
-        .sidebar-install-btn:hover { background: #00695C; }
+        .sidebar-install-btn:hover { background: #ECEFF1; border-color: #B0BEC5; }
         .sidebar-install-icon {
-            width: 36px; height: 36px; border-radius: 8px;
-            background: rgba(255,255,255,0.15); display: flex;
+            width: 16px; height: 16px; display: flex;
             align-items: center; justify-content: center; flex-shrink: 0;
+            color: #78909C;
         }
-        .sidebar-install-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-        .sidebar-install-title { font-size: 14px; font-weight: 600; color: #fff; }
-        .sidebar-install-sub { font-size: 11px; color: rgba(255,255,255,0.85); margin-top: 2px; }
-        .sidebar-install-btn.installed { background: #4caf50; cursor: default; }
-        .sidebar-install-btn.installed:hover { background: #4caf50; }
+        .sidebar-install-text { display: flex; align-items: baseline; gap: 6px; }
+        .sidebar-install-title { font-size: 12px; font-weight: 500; color: #455A64; }
+        .sidebar-install-sub { font-size: 11px; color: #90A4AE; }
+        .sidebar-install-btn.installed { color: #2E7D32; border-color: #A5D6A7; cursor: default; }
+        .sidebar-install-btn.installed:hover { background: transparent; border-color: #A5D6A7; }
+        .sidebar-install-btn.installed .sidebar-install-title { color: #2E7D32; }
+        .sidebar-install-btn.installed .sidebar-install-icon { color: #2E7D32; }
 
         /* Measurement toolbar */
         .measure-toolbar {
@@ -1009,15 +1011,17 @@
         </div>
         <input type="search" class="region-browser-search" id="region-browser-search" placeholder="Search regions..." autocomplete="off">
         <div class="region-browser-body">
-            <button class="sidebar-install-btn" id="sidebar-install-btn" style="display:none;">
-                <span class="sidebar-install-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </span>
-                <span class="sidebar-install-text">
-                    <span class="sidebar-install-title">Install App</span>
-                    <span class="sidebar-install-sub">Add to home screen &bull; Works like a native app</span>
-                </span>
-            </button>
+            <div id="sidebar-install-wrap" style="display:none;text-align:center;">
+                <button class="sidebar-install-btn" id="sidebar-install-btn">
+                    <span class="sidebar-install-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span class="sidebar-install-text">
+                        <span class="sidebar-install-title">Install app</span>
+                        <span class="sidebar-install-sub">add to home screen</span>
+                    </span>
+                </button>
+            </div>
             <div class="region-grid" id="region-grid"></div>
         </div>
     </div>
@@ -1269,11 +1273,12 @@
         // --- PWA install prompt handling ---
         let deferredInstallPrompt = null;
         const installBtn = document.getElementById('sidebar-install-btn');
+        const installWrap = document.getElementById('sidebar-install-wrap');
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredInstallPrompt = e;
-            installBtn.style.display = 'flex';
+            installWrap.style.display = 'block';
         });
 
         installBtn.addEventListener('click', async () => {
@@ -1283,22 +1288,22 @@
             deferredInstallPrompt = null;
             if (outcome === 'accepted') {
                 installBtn.classList.add('installed');
-                installBtn.querySelector('.sidebar-install-title').textContent = 'App Installed';
-                installBtn.querySelector('.sidebar-install-sub').textContent = 'Launch from home screen';
+                installBtn.querySelector('.sidebar-install-title').textContent = 'App installed';
+                installBtn.querySelector('.sidebar-install-sub').textContent = '';
             }
         });
 
         window.addEventListener('appinstalled', () => {
             installBtn.classList.add('installed');
-            installBtn.querySelector('.sidebar-install-title').textContent = 'App Installed';
-            installBtn.querySelector('.sidebar-install-sub').textContent = 'Launch from home screen';
+            installBtn.querySelector('.sidebar-install-title').textContent = 'App installed';
+            installBtn.querySelector('.sidebar-install-sub').textContent = '';
             deferredInstallPrompt = null;
         });
 
         // Hide install button if app is already running as installed PWA
         if (window.matchMedia('(display-mode: standalone)').matches ||
             window.navigator.standalone === true) {
-            installBtn.style.display = 'none';
+            installWrap.style.display = 'none';
         }
 
         // Register service worker (required for PWA installability)
