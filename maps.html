@@ -8,7 +8,7 @@
     <!-- Open Graph Meta Tags for Social Media Sharing -->
     <meta property="og:title" content="Development Plans (GIS) - MapMagician">
     <meta property="og:description" content="Access development plans for 157+ regions across India. View, overlay, and explore DP plans on an interactive map.">
-    <meta property="og:image" content="https://www.mapmagician.in/AssetsGIS/mapmagiciansmall.png">
+    <meta property="og:image" content="https://www.mapmagician.in/AssetsGIS/image-1.png">
     <meta property="og:url" content="https://www.mapmagician.in/maps.html">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="MapMagician">
@@ -17,11 +17,11 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Development Plans (GIS) - MapMagician">
     <meta name="twitter:description" content="Access development plans for 157+ regions across India. View, overlay, and explore DP plans on an interactive map.">
-    <meta name="twitter:image" content="https://www.mapmagician.in/AssetsGIS/mapmagiciansmall.png">
+    <meta name="twitter:image" content="https://www.mapmagician.in/AssetsGIS/image-1.png">
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="AssetsGIS/mapmagiciansmall.png">
-    <link rel="apple-touch-icon" href="AssetsGIS/mapmagiciansmall.png">
+    <!-- Favicon (brand icon — matches Android app) -->
+    <link rel="icon" type="image/png" href="AssetsGIS/image-1.png">
+    <link rel="apple-touch-icon" href="AssetsGIS/image-1.png">
 
     <!-- PWA manifest -->
     <link rel="manifest" href="manifest.json">
@@ -511,7 +511,8 @@
         .pd-cancel:hover { color:#546E7A; }
         .pd-footer { padding:14px 24px 18px; border-top:1px solid #ECEFF1; }
         .pd-mobile-hint { display:flex; align-items:center; gap:12px; background:#FAFAFA; border-radius:10px; padding:10px 12px; font-size:12px; color:#546E7A; line-height:1.45; }
-        .pd-mobile-hint-text { flex:1; }
+        .pd-app-icon { width:36px; height:36px; border-radius:8px; flex-shrink:0; box-shadow:0 1px 3px rgba(0,0,0,0.12); background:#fff; }
+        .pd-mobile-hint-text { flex:1; min-width:0; }
         .pd-mobile-hint-text strong { color:#37474F; font-weight:600; display:block; margin-bottom:1px; }
         .pd-play-btn { display:inline-flex; align-items:center; gap:6px; background:#fff; color:#1B5E20; font-size:11px; font-weight:700; text-decoration:none; padding:7px 11px; border-radius:7px; border:1px solid #C8E6C9; flex-shrink:0; white-space:nowrap; transition:background 0.15s; }
         .pd-play-btn:hover { background:#F1F8E9; }
@@ -1031,8 +1032,9 @@
             <!-- Footer: mobile hint + support -->
             <div class="pd-footer">
                 <div class="pd-mobile-hint">
+                    <img class="pd-app-icon" src="AssetsGIS/image-1.png" alt="MapMagician app icon">
                     <div class="pd-mobile-hint-text">
-                        <strong>Prefer mobile?</strong>Get the Android app for on-the-go access.
+                        <strong>Prefer mobile?</strong>Get the MapMagician Android app for on-the-go access.
                     </div>
                     <a class="pd-play-btn" href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="#1B5E20"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
