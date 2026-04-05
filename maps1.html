@@ -1579,7 +1579,6 @@
         // Village-boundary geojson (ported from Android pipeline)
         const MIN_ZOOM_FOR_GEOJSON = 11;
         const GEOJSON_BASE_PATH = 'data/geojson/';
-        const GEOCODER_API_KEY = 'AIzaSyBBfEcHoR1yHBlnOvWKYLkr3C3ob6nb5hw';
         const GEOJSON_MAX_CONCURRENT_DOWNLOADS = 3;
         const GEOJSON_GEOCODER_CACHE_MAX = 500;
 
@@ -2825,28 +2824,32 @@
                 _geocoderCache.set(key, v);
                 return v;
             }
-            const url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng=' + lat + ',' + lng + '&key=' + GEOCODER_API_KEY;
+            // Use client-side google.maps.Geocoder (piggybacks on Maps JS auth session,
+            // so the referrer-restricted Maps JS key works here — unlike the REST endpoint
+            // which rejects referrer-restricted keys with REQUEST_DENIED).
             try {
-                const res = await fetch(url);
-                const data = await res.json();
-                if (!data || data.status !== 'OK' || !Array.isArray(data.results)) return null;
+                if (!window.google || !google.maps || !google.maps.Geocoder) return null;
+                if (!_geocoderInstance) _geocoderInstance = new google.maps.Geocoder();
+                const response = await _geocoderInstance.geocode({ location: { lat, lng } });
+                const results = response && response.results;
+                if (!Array.isArray(results) || results.length === 0) return null;
                 // Prefer administrative_area_level_3 (taluka/tehsil in India → district-equivalent per Android)
                 // Fallback to level_2 (district) then locality
                 let name = null;
-                for (const result of data.results) {
+                for (const result of results) {
                     const comps = result.address_components || [];
                     const a3 = comps.find(c => c.types.includes('administrative_area_level_3'));
                     if (a3) { name = a3.long_name; break; }
                 }
                 if (!name) {
-                    for (const result of data.results) {
+                    for (const result of results) {
                         const comps = result.address_components || [];
                         const a2 = comps.find(c => c.types.includes('administrative_area_level_2'));
                         if (a2) { name = a2.long_name; break; }
                     }
                 }
                 if (!name) {
-                    for (const result of data.results) {
+                    for (const result of results) {
                         const comps = result.address_components || [];
                         const loc = comps.find(c => c.types.includes('locality'));
                         if (loc) { name = loc.long_name; break; }
@@ -2863,10 +2866,14 @@
                 }
                 return name;
             } catch (e) {
-                console.warn('[geojson] reverse geocode failed:', e.message);
+                // ZERO_RESULTS is a normal "no match" case, not an error worth logging
+                if (e && e.code !== 'ZERO_RESULTS') {
+                    console.warn('[geojson] reverse geocode failed:', e.code || e.message);
+                }
                 return null;
             }
         }
+        let _geocoderInstance = null;
 
         // ---------- updateVillagePolylines: viewport-filtered rendering ----------
         // Mirrors Android's updateVisiblePolylinesAndOverlays (zoom gate + bbox filter + diff).
