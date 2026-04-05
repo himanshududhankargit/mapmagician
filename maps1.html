@@ -4313,7 +4313,88 @@
 
         // Initialize a cache for tile loading
         const tileCache = new Map();
-        
+
+        // Custom MapType that renders tiles to <canvas> via off-DOM Image objects.
+        // Why: native ImageMapType uses <img src=tile.png> which gets scraped by
+        // Ctrl+S / File->Save As (browser refetches every <img src> into _files/).
+        // Off-DOM Images are never in the DOM tree, so Save As can't see them;
+        // canvas pixel data is runtime-only, so saved pages show blank tiles.
+        // No CORS needed -- tainted canvas still displays, we just can't read pixels.
+        function CanvasMapType(layerDef, layerType, opacity) {
+            this.tileSize = new google.maps.Size(256, 256);
+            this.maxZoom = 22;
+            this.minZoom = 0;
+            this.name = layerType + '_' + layerDef.id;
+            this.layerDef = layerDef;
+            this.layerType = layerType;
+            this.opacity_ = opacity;
+            this.tiles_ = new Set();
+
+            // Resolve layer-specific zoom bounds (mirrors old ImageMapType logic).
+            var def = layerDef;
+            switch (layerType) {
+                case "dp":      this.zMin_ = def.minZoom || MIN_ZOOM_FOR_DP;         this.zMax_ = def.maxZoom || MAX_ZOOM_FOR_DP;         break;
+                case "layout":  this.zMin_ = def.minZoom || MIN_ZOOM_FOR_LAYOUT;     this.zMax_ = def.maxZoom || MAX_ZOOM_FOR_LAYOUT;     break;
+                case "village": this.zMin_ = def.minZoom || MIN_ZOOM_FOR_VILLAGEMAP; this.zMax_ = def.maxZoom || MAX_ZOOM_FOR_VILLAGEMAP; break;
+                case "oldDP":   this.zMin_ = def.minZoom || MIN_ZOOM_FOR_OLD_DP;     this.zMax_ = def.maxZoom || MAX_ZOOM_FOR_OLD_DP;     break;
+                default:        this.zMin_ = 0; this.zMax_ = 22;
+            }
+
+            // Build tile URL prefix once.
+            var link = def.link || '';
+            this.urlPrefix_ = tileBaseUrl + (link.endsWith('/') ? link : link + '/');
+        }
+
+        CanvasMapType.prototype.getTile = function(tileCoord, zoom, ownerDocument) {
+            var div = ownerDocument.createElement('div');
+            div.style.width = '256px';
+            div.style.height = '256px';
+            div.style.opacity = this.opacity_;
+
+            // Zoom out of range: return empty div (matches old getTileUrl returning null).
+            if (zoom < this.zMin_ || zoom > this.zMax_) return div;
+
+            var canvas = ownerDocument.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            canvas.style.width = '256px';
+            canvas.style.height = '256px';
+            canvas.style.display = 'block';
+            div.appendChild(canvas);
+
+            var ctx = canvas.getContext('2d');
+
+            // Off-DOM Image: not in document tree, so Save As / Ctrl+S can't see its src.
+            // Browser auto-sends CloudFront signed cookies (same-site subdomain).
+            var img = new Image();
+            img.onload = function() {
+                // Tile may have been released while loading -- skip if detached.
+                if (div.parentNode) ctx.drawImage(img, 0, 0, 256, 256);
+            };
+            img.onerror = function() { /* 404/auth -- leave tile blank */ };
+            img.src = this.urlPrefix_ + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
+
+            div._tileImg = img;
+            this.tiles_.add(div);
+            return div;
+        };
+
+        CanvasMapType.prototype.releaseTile = function(tile) {
+            this.tiles_.delete(tile);
+            var img = tile && tile._tileImg;
+            if (img) {
+                img.onload = null;
+                img.onerror = null;
+                img.src = '';   // aborts in-flight fetch
+                tile._tileImg = null;
+            }
+        };
+
+        CanvasMapType.prototype.setOpacity = function(opacity) {
+            this.opacity_ = opacity;
+            this.tiles_.forEach(function(div) { div.style.opacity = opacity; });
+        };
+
         function loadTileOverlay(layerDef, layerType, overlayMap) {
             try {
                 const cacheKey = `${layerType}_${layerDef.id}`;
@@ -4328,51 +4409,11 @@
                     return cachedOverlay;
                 }
                 
-                // Create custom map type — all tiles routed through Cloud Function proxy
-                const tileLink = encodeURIComponent(layerDef.link);
-                const tilePid = encodeURIComponent(layerDef.productPurchaseID || '');
+                // Canvas-rendered tiles: tiles paint to <canvas> via off-DOM Image.
+                // Defeats Ctrl+S / File->Save As scraping (no <img src> in DOM to harvest,
+                // canvas pixels are runtime-only). Browser auto-sends signed cookies.
+                const customMapType = new CanvasMapType(layerDef, layerType, currentOpacity);
 
-                const customMapType = new google.maps.ImageMapType({
-                    getTileUrl: function(coord, zoom) {
-                        // Implement zoom level constraints
-                        let minZoom, maxZoom;
-
-                        switch (layerType) {
-                            case "dp":
-                                minZoom = layerDef.minZoom || MIN_ZOOM_FOR_DP;
-                                maxZoom = layerDef.maxZoom || MAX_ZOOM_FOR_DP;
-                                break;
-                            case "layout":
-                                minZoom = layerDef.minZoom || MIN_ZOOM_FOR_LAYOUT;
-                                maxZoom = layerDef.maxZoom || MAX_ZOOM_FOR_LAYOUT;
-                                break;
-                            case "village":
-                                minZoom = layerDef.minZoom || MIN_ZOOM_FOR_VILLAGEMAP;
-                                maxZoom = layerDef.maxZoom || MAX_ZOOM_FOR_VILLAGEMAP;
-                                break;
-                            case "oldDP":
-                                minZoom = layerDef.minZoom || MIN_ZOOM_FOR_OLD_DP;
-                                maxZoom = layerDef.maxZoom || MAX_ZOOM_FOR_OLD_DP;
-                                break;
-                            default:
-                                minZoom = 0;
-                                maxZoom = 22;
-                        }
-
-                        if (zoom < minZoom || zoom > maxZoom) {
-                            return null;
-                        }
-
-                        // Load tiles directly from CloudFront (signed cookies handle auth)
-                        const decodedLink = decodeURIComponent(tileLink);
-                        const linkPath = decodedLink.endsWith('/') ? decodedLink : decodedLink + '/';
-                        return `${tileBaseUrl}${linkPath}${zoom}/${coord.x}/${coord.y}.png`;
-                    },
-                    tileSize: new google.maps.Size(256, 256),
-                    opacity: currentOpacity,
-                    name: `${layerType}_${layerDef.id}`
-                });
-                
                 // Set the zIndex
                 customMapType.zIndex = layerDef.zIndex || 0;
                 
