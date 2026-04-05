@@ -94,7 +94,7 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
         #search-input {
-            flex: 1; height: 40px; border: none; outline: none;
+            flex: 1; min-width: 0; height: 40px; border: none; outline: none;
             border-radius: 0; padding: 0 8px; font-size: 14px;
             background: transparent;
         }
@@ -120,6 +120,13 @@
             justify-content: center; flex-shrink: 0; padding: 0; transition: background 0.2s;
         }
         .coord-btn-search:hover { background: #b2dfdb; }
+
+        @media (max-width: 480px) {
+            .top-search-row { padding: 0 8px; gap: 6px; }
+            #map-type { padding: 0 6px; font-size: 10px; }
+            .profile-btn { width: 36px; padding: 0; border-radius: 50%; }
+            .profile-btn #profile-btn-icon { display: none; }
+        }
 
         /* Horizontal toolbar buttons */
         .toolbar-scroll {
@@ -3868,8 +3875,10 @@
                             position: place.location
                         });
                         markers.push(marker);
+                        zoomBypassActive = true;
                         map.setCenter(place.location);
-                        map.setZoom(MAX_FREE_ZOOM);
+                        map.setZoom(MAX_FREE_ZOOM - 1);
+                        google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
                         searchInput.value = place.displayName;
                         updateStatus('Found: ' + place.displayName);
                     } else {
@@ -4435,6 +4444,10 @@
                 }
                 if (selectedMeasureId !== null && !measureMode) {
                     deselectMeasurement();
+                }
+                if (markers.length > 0 && !measureMode) {
+                    markers.forEach(m => m.setMap(null));
+                    markers.length = 0;
                 }
             });
         }
