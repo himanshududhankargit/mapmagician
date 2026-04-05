@@ -488,6 +488,58 @@
         .zoom-dialog-support { display:block; margin:0 auto; padding:8px 20px; border:none; border-radius:8px; background:#3F51B5; color:#fff; font-size:13px; font-weight:500; cursor:pointer; }
         .zoom-dialog-support:hover { background:#3949AB; }
 
+        /* First-visit disclaimer — blocks app until accepted */
+        .disclaimer-overlay {
+            position:fixed; top:0; left:0; width:100vw; height:100vh;
+            background:rgba(0,0,0,0.6); z-index:9000; display:flex;
+            align-items:center; justify-content:center; padding:16px;
+            font-family:'Segoe UI',Roboto,Arial,sans-serif;
+        }
+        .disclaimer-box {
+            background:#fff; border-radius:14px; max-width:520px; width:100%;
+            max-height:92vh; display:flex; flex-direction:column;
+            box-shadow:0 12px 48px rgba(0,0,0,0.3); overflow:hidden;
+        }
+        .disclaimer-title {
+            padding:20px 24px 14px; font-size:18px; font-weight:700;
+            color:#D32F2F; text-align:center; border-bottom:1px solid #EEE;
+            flex-shrink:0; letter-spacing:0.3px;
+        }
+        .disclaimer-body {
+            padding:18px 24px; overflow-y:auto; flex:1;
+            font-size:13.5px; color:#333; line-height:1.6;
+        }
+        .disclaimer-body p { margin:0 0 12px; }
+        .disclaimer-body p:last-child { margin-bottom:0; }
+        .disclaimer-body strong { color:#212121; }
+        .disclaimer-section-title {
+            font-size:14px; font-weight:700; color:#212121;
+            margin:18px 0 8px; letter-spacing:0.3px;
+        }
+        .disclaimer-list {
+            margin:0 0 14px 22px; padding:0; font-size:13.5px; color:#333; line-height:1.7;
+        }
+        .disclaimer-list li { margin-bottom:2px; }
+        .disclaimer-italic { font-style:italic; color:#555; font-size:13px; }
+        .disclaimer-actions {
+            display:flex; gap:10px; padding:14px 20px 18px;
+            border-top:1px solid #EEE; flex-shrink:0;
+        }
+        .disclaimer-btn {
+            flex:1; padding:12px; border:none; border-radius:8px;
+            font-size:14px; font-weight:600; cursor:pointer;
+            font-family:inherit; transition:background 0.15s;
+        }
+        .disclaimer-btn-disagree { background:#F44336; color:#fff; }
+        .disclaimer-btn-disagree:hover { background:#D32F2F; }
+        .disclaimer-btn-agree { background:#4CAF50; color:#fff; }
+        .disclaimer-btn-agree:hover { background:#388E3C; }
+        @media (max-width:480px) {
+            .disclaimer-title { font-size:16px; padding:16px 18px 12px; }
+            .disclaimer-body { padding:14px 18px; font-size:13px; }
+            .disclaimer-actions { padding:12px 14px 14px; }
+        }
+
         /* Purchase dialog — refined layout */
         .pd-header { background:linear-gradient(135deg,#00796B,#004D40); padding:24px 24px 20px; text-align:center; color:#fff; }
         .pd-header-icon { width:44px; height:44px; background:rgba(255,255,255,0.14); border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; }
@@ -943,6 +995,33 @@
         </div>
     </div>
 
+    <!-- First-visit disclaimer dialog (blocks app until accepted) -->
+    <div class="disclaimer-overlay" id="disclaimer-overlay">
+        <div class="disclaimer-box">
+            <div class="disclaimer-title">IMPORTANT DISCLAIMER</div>
+            <div class="disclaimer-body">
+                <p>This is a privately developed GIS visualization and mapping application.</p>
+                <p><strong>This app is NOT affiliated with, endorsed by, or connected to any government agency or authority.</strong> It does NOT represent a government entity and does NOT provide official government data, legal records, or authoritative planning information.</p>
+                <p>Maps and layers shown in this app are independently processed into map tiles and visualized for reference and spatial understanding purposes only. Any use of publicly available planning documents is solely for general reference and does not imply accuracy, completeness, or official validity.</p>
+
+                <div class="disclaimer-section-title">LIMITATIONS OF USE</div>
+                <p>The information displayed in this app:</p>
+                <ol class="disclaimer-list">
+                    <li>Is for reference and visualization only</li>
+                    <li>Is NOT suitable for legal, regulatory, or official purposes</li>
+                    <li>May not reflect the latest notifications, amendments, or approvals</li>
+                    <li>Should not be used for property transactions or statutory compliance</li>
+                </ol>
+
+                <p class="disclaimer-italic">Users must independently verify all information with official notifications, planning authorities, and qualified professionals before making any decisions. For legally valid and authoritative information, always consult the respective government department or official publications.</p>
+            </div>
+            <div class="disclaimer-actions">
+                <button class="disclaimer-btn disclaimer-btn-disagree" id="disclaimer-disagree">Disagree</button>
+                <button class="disclaimer-btn disclaimer-btn-agree" id="disclaimer-agree">I Agree</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Install info dialog (z-index above region-browser which sits at 3500) -->
     <div class="auth-dialog-overlay" id="install-info-overlay" style="z-index:4000;">
         <div class="auth-dialog" style="max-width:420px;text-align:left;">
@@ -1121,6 +1200,26 @@
     
     <!-- Firebase initialization must come after the Firebase scripts have loaded -->
     <script>
+        // --- First-visit disclaimer ---
+        (function() {
+            const DISCLAIMER_KEY = 'mm_disclaimerAccepted_v1';
+            const overlay = document.getElementById('disclaimer-overlay');
+            if (!overlay) return;
+            let accepted = false;
+            try { accepted = localStorage.getItem(DISCLAIMER_KEY) === '1'; } catch (e) {}
+            if (accepted) {
+                overlay.style.display = 'none';
+                return;
+            }
+            document.getElementById('disclaimer-agree').addEventListener('click', function() {
+                try { localStorage.setItem(DISCLAIMER_KEY, '1'); } catch (e) {}
+                overlay.style.display = 'none';
+            });
+            document.getElementById('disclaimer-disagree').addEventListener('click', function() {
+                window.location.href = 'https://www.mapmagician.in';
+            });
+        })();
+
         // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCJ1MkbVviNX0RrqOEg-00wKBiB3zCtUsQ",
