@@ -2718,15 +2718,21 @@
             };
 
             document.getElementById('zoom-restrict-support').onclick = () => {
-                // Hide purchase dialog first
+                // Dismiss payment dialog, zoom to free level, then show support form
                 overlay.classList.remove('open');
-                if (!currentUser) {
-                    pendingPurchase = null;
-                    document.getElementById('auth-dialog-desc').textContent = 'Please sign in to contact support.';
-                    document.getElementById('auth-dialog-overlay').classList.add('open');
-                    return;
-                }
-                openSupportForm(district, true);
+                enableMapInteraction();
+                zoomBypassActive = true;
+                map.setZoom(MAX_FREE_ZOOM - 1);
+                google.maps.event.addListenerOnce(map, 'idle', () => {
+                    zoomBypassActive = false;
+                    if (!currentUser || currentUser.isAnonymous) {
+                        pendingPurchase = null;
+                        document.getElementById('auth-dialog-desc').textContent = 'Please sign in to contact support.';
+                        document.getElementById('auth-dialog-overlay').classList.add('open');
+                        return;
+                    }
+                    openSupportForm(district, false);
+                });
             };
 
             overlay.classList.add('open');
