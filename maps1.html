@@ -1683,6 +1683,58 @@
         const GEOJSON_MAX_CONCURRENT_DOWNLOADS = 3;
         const GEOJSON_GEOCODER_CACHE_MAX = 500;
 
+        // ---------- Static district bounds index (for viewport-based loading) ----------
+        // Pre-computed bounding boxes for all 37 Maharashtra district GeoJSON files.
+        // Used to determine which districts intersect the current viewport without downloading.
+        const GEOJSON_DISTRICT_INDEX = [
+            { name: "Ahmadnagar", file: "ahilyanagar", n: 19.9951, s: 18.3298, e: 75.5832, w: 73.615 },
+            { name: "Akola", file: "akola", n: 21.248, s: 20.2753, e: 77.6197, w: 76.6912 },
+            { name: "Amravati", file: "amravati", n: 21.7701, s: 20.5381, e: 78.4494, w: 76.622 },
+            { name: "Beed", file: "beed", n: 19.4423, s: 18.542, e: 76.734, w: 74.8084 },
+            { name: "Bhandara", file: "bhandara", n: 21.6045, s: 20.6416, e: 80.1021, w: 79.448 },
+            { name: "Buldana", file: "buldhana", n: 21.2896, s: 19.8376, e: 76.8262, w: 75.9232 },
+            { name: "Chandrapur", file: "chandrapur", n: 20.7351, s: 19.4592, e: 79.9922, w: 78.7987 },
+            { name: "Chh. Sambhajinagar", file: "chhatrapati_sambhajinagar", n: 20.6685, s: 19.3776, e: 76.0428, w: 74.5889 },
+            { name: "Dharashiv", file: "dharashiv", n: 18.6979, s: 17.6417, e: 76.7907, w: 75.2842 },
+            { name: "Dhule", file: "dhule", n: 21.634, s: 20.6277, e: 75.2053, w: 73.8507 },
+            { name: "Gadchiroli", file: "gadchiroli", n: 20.8349, s: 18.689, e: 80.8979, w: 79.7406 },
+            { name: "Gondia", file: "gondia", n: 21.6361, s: 20.655, e: 80.682, w: 79.7961 },
+            { name: "Hingoli", file: "hingoli", n: 20.0177, s: 19.2218, e: 77.4898, w: 76.512 },
+            { name: "Jalgaon", file: "jalgaon", n: 21.4152, s: 20.2701, e: 76.3986, w: 74.7603 },
+            { name: "Jalna", file: "jalna", n: 20.5609, s: 19.2769, e: 76.5346, w: 75.5584 },
+            { name: "Kolhapur", file: "kolhapur", n: 17.1817, s: 15.7405, e: 74.7006, w: 73.6885 },
+            { name: "Latur", file: "latur", n: 18.839, s: 17.8712, e: 77.3421, w: 76.2038 },
+            { name: "Mumbai", file: "mumbai", n: 19.2695, s: 18.8788, e: 72.9821, w: 72.7748 },
+            { name: "Mumbai City", file: "mumbai_city", n: 19.2702, s: 18.894, e: 72.9797, w: 72.7763 },
+            { name: "Mumbai Suburban", file: "mumbai_suburban", n: 19.2702, s: 18.894, e: 72.9797, w: 72.7763 },
+            { name: "Nagpur", file: "nagpur", n: 21.7226, s: 20.583, e: 79.6571, w: 78.2497 },
+            { name: "Nanded", file: "nanded", n: 19.9244, s: 18.2629, e: 78.3651, w: 76.9296 },
+            { name: "Nandurbar", file: "nandurbar", n: 22.0099, s: 20.9961, e: 74.7713, w: 73.576 },
+            { name: "Nashik", file: "nashik", n: 20.8649, s: 19.5859, e: 74.9351, w: 73.2483 },
+            { name: "Osmanabad", file: "osmanabad", n: 18.6979, s: 17.6417, e: 76.7907, w: 75.2842 },
+            { name: "Parbhani", file: "parbhani", n: 19.8306, s: 18.7496, e: 77.1926, w: 76.2071 },
+            { name: "Pune", file: "pune", n: 19.3947, s: 17.8948, e: 75.1629, w: 73.323 },
+            { name: "Raigad", file: "raigad", n: 19.1354, s: 17.8503, e: 73.6665, w: 72.811 },
+            { name: "Ratnagiri", file: "ratnagiri", n: 18.071, s: 16.4934, e: 73.8638, w: 73.0288 },
+            { name: "Sangli", file: "sangli", n: 17.6299, s: 16.7159, e: 75.6796, w: 73.6909 },
+            { name: "Satara", file: "satara", n: 18.1826, s: 17.0898, e: 74.9067, w: 73.5326 },
+            { name: "Sindhudurg", file: "sindhudurg", n: 16.6651, s: 15.6059, e: 74.2087, w: 73.3109 },
+            { name: "Solapur", file: "solapur", n: 18.5539, s: 17.1455, e: 76.4279, w: 74.6071 },
+            { name: "Thane", file: "thane", n: 20.228, s: 18.9868, e: 73.795, w: 72.6426 },
+            { name: "Wardha", file: "wardha", n: 21.3593, s: 20.2938, e: 79.2224, w: 78.0523 },
+            { name: "Washim", file: "washim", n: 20.7572, s: 19.8471, e: 77.6908, w: 76.6057 },
+            { name: "Yavatmal", file: "yavatmal", n: 20.6979, s: 19.4306, e: 79.1494, w: 77.2827 },
+        ];
+        // 15-color palette matching Android GeoJsonOverlayManager (alpha ≈ 100/255 = 0.39)
+        const GEOJSON_DISTRICT_COLORS = [
+            'rgba(255,255,255,0.39)', 'rgba(0,0,255,0.39)', 'rgba(0,0,0,0.39)',
+            'rgba(255,0,0,0.39)',     'rgba(255,255,0,0.39)', 'rgba(255,0,255,0.39)',
+            'rgba(0,255,255,0.39)',   'rgba(0,128,0,0.39)',   'rgba(128,128,128,0.39)',
+            'rgba(64,64,64,0.39)',    'rgba(192,192,192,0.39)', 'rgba(255,165,0,0.39)',
+            'rgba(128,0,128,0.39)',   'rgba(255,192,203,0.39)', 'rgba(165,42,42,0.39)'
+        ];
+        let _nextDistrictColorIndex = 0;
+
         // ===== Measurement State =====
         let measureMode = null;           // null | 'length' | 'area'
         let measurePoints = [];           // Array of {lat, lng}
@@ -2769,6 +2821,11 @@
             cursorReq.onsuccess = (e) => { const c = e.target.result; if (c) { c.delete(); c.continue(); } };
             return new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); });
         }
+        async function getAllDistricts() {
+            const db = await openGeoJsonDB();
+            const { districts } = _idbTx(db, ['districts'], 'readonly');
+            return _idbReq(districts.getAll());
+        }
 
         // ---------- loadDistrictGeoJson: download → extract → parse → persist ----------
         // Mirrors Android's downloadAndUnzipGeoJsonFile + GeoJsonToDatabaseConverter.
@@ -2976,129 +3033,165 @@
         }
         let _geocoderInstance = null;
 
-        // ---------- updateVillagePolylines: viewport-filtered rendering ----------
-        // Mirrors Android's updateVisiblePolylinesAndOverlays (zoom gate + bbox filter + diff).
-        let currentDistrictVillages = null;           // {districtName, villages[]}
-        const villagePolylinesByVillageId = new Map(); // Map<villageId, google.maps.Polyline[]>
+        // ---------- Multi-district viewport rendering (mirrors Android GeoJsonOverlayManager) ----------
+        // Each visible district gets its own color from GEOJSON_DISTRICT_COLORS.
+        // Map<file, {districtName, villages[], colorIndex, polylineMap: Map<villageId, Polyline[]>, loading}>
+        const renderedDistricts = new Map();
         function _bboxIntersectsViewport(bounds, ne, sw) {
             // bounds: {n,s,e,w}; ne/sw are LatLng
             return bounds.s <= ne.lat() && bounds.n >= sw.lat() &&
                    bounds.w <= ne.lng() && bounds.e >= sw.lng();
         }
         function _removeAllVillagePolylines() {
-            for (const arr of villagePolylinesByVillageId.values()) {
-                for (const pl of arr) pl.setMap(null);
+            for (const entry of renderedDistricts.values()) {
+                for (const arr of entry.polylineMap.values()) {
+                    for (const pl of arr) pl.setMap(null);
+                }
+                entry.polylineMap.clear();
             }
-            villagePolylinesByVillageId.clear();
+            renderedDistricts.clear();
         }
         function clearDistrictVillages() {
             _removeAllVillagePolylines();
-            currentDistrictVillages = null;
         }
         function updateVillagePolylines() {
-            if (!map || !currentDistrictVillages) return;
+            if (!map || renderedDistricts.size === 0) return;
             const zoom = map.getZoom();
             if (zoom < MIN_ZOOM_FOR_GEOJSON) {
-                if (villagePolylinesByVillageId.size > 0) _removeAllVillagePolylines();
+                if (renderedDistricts.size > 0) _removeAllVillagePolylines();
                 return;
             }
             const vp = map.getBounds();
             if (!vp) return;
             const ne = vp.getNorthEast();
             const sw = vp.getSouthWest();
-            // Figure out which villages should be visible now
-            const shouldBeVisible = new Set();
-            const toAdd = [];
-            for (const v of currentDistrictVillages.villages) {
-                if (!v.bounds) continue;
-                if (_bboxIntersectsViewport(v.bounds, ne, sw)) {
-                    shouldBeVisible.add(v.id);
-                    if (!villagePolylinesByVillageId.has(v.id)) toAdd.push(v);
-                }
-            }
-            // Remove polylines for villages that are no longer visible (batched in chunks of 20)
-            const toRemove = [];
-            for (const id of villagePolylinesByVillageId.keys()) {
-                if (!shouldBeVisible.has(id)) toRemove.push(id);
-            }
-            const removeChunk = () => {
-                const batch = toRemove.splice(0, 20);
-                for (const id of batch) {
-                    const arr = villagePolylinesByVillageId.get(id);
-                    if (arr) { for (const pl of arr) pl.setMap(null); }
-                    villagePolylinesByVillageId.delete(id);
-                }
-                if (toRemove.length > 0) requestAnimationFrame(removeChunk);
-            };
-            if (toRemove.length > 0) removeChunk();
-            // Add polylines for newly-visible villages (also batched)
-            const addChunk = () => {
-                const batch = toAdd.splice(0, 20);
-                for (const v of batch) {
-                    const polylines = [];
-                    for (const ring of v.polygons) {
-                        const pl = new google.maps.Polyline({
-                            path: ring,
-                            strokeColor: '#FF0000',
-                            strokeOpacity: 0.8,
-                            strokeWeight: 1.2,
-                            clickable: false,
-                            zIndex: 900,
-                            map: map
-                        });
-                        polylines.push(pl);
+
+            for (const [file, entry] of renderedDistricts) {
+                if (entry.loading || !entry.villages.length) continue;
+                const color = GEOJSON_DISTRICT_COLORS[entry.colorIndex % GEOJSON_DISTRICT_COLORS.length];
+                const shouldBeVisible = new Set();
+                const toAdd = [];
+                for (const v of entry.villages) {
+                    if (!v.bounds) continue;
+                    if (_bboxIntersectsViewport(v.bounds, ne, sw)) {
+                        shouldBeVisible.add(v.id);
+                        if (!entry.polylineMap.has(v.id)) toAdd.push(v);
                     }
-                    villagePolylinesByVillageId.set(v.id, polylines);
                 }
-                if (toAdd.length > 0) requestAnimationFrame(addChunk);
-            };
-            if (toAdd.length > 0) addChunk();
+                // Remove out-of-viewport villages for this district
+                const toRemove = [];
+                for (const id of entry.polylineMap.keys()) {
+                    if (!shouldBeVisible.has(id)) toRemove.push(id);
+                }
+                for (const id of toRemove) {
+                    const arr = entry.polylineMap.get(id);
+                    if (arr) { for (const pl of arr) pl.setMap(null); }
+                    entry.polylineMap.delete(id);
+                }
+                // Add newly-visible villages (batched via rAF)
+                if (toAdd.length > 0) {
+                    const addChunk = () => {
+                        const batch = toAdd.splice(0, 20);
+                        for (const v of batch) {
+                            const polylines = [];
+                            for (const ring of v.polygons) {
+                                const pl = new google.maps.Polyline({
+                                    path: ring,
+                                    strokeColor: color,
+                                    strokeOpacity: 1.0,
+                                    strokeWeight: 1.2,
+                                    clickable: false,
+                                    zIndex: 900,
+                                    map: map
+                                });
+                                polylines.push(pl);
+                            }
+                            entry.polylineMap.set(v.id, polylines);
+                        }
+                        if (toAdd.length > 0) requestAnimationFrame(addChunk);
+                    };
+                    addChunk();
+                }
+            }
         }
-        // loadGeoJsonForMapCenter: PRIMARY district detection via Google Geocoder (mirrors Android).
-        // Calls the reverse geocoder to get the district name at the current map center,
-        // then fetches & renders the corresponding village-boundary zip. Throttled to avoid
-        // hammering the API while the user pans.
-        let _lastGeojsonLoadAt = 0;
-        let _lastGeojsonLoadLat = null, _lastGeojsonLoadLng = null;
-        async function loadGeoJsonForMapCenter() {
+
+        // ---------- Viewport-based district loading ----------
+        let _geojsonViewportDebounce = null;
+        function loadGeoJsonForViewport() {
             if (!map) return;
-            const z = map.getZoom();
-            if (z < MIN_ZOOM_FOR_GEOJSON) return;
-            const c = map.getCenter();
-            const lat = c.lat(), lng = c.lng();
-            const now = Date.now();
-            // Throttle: skip if we attempted within last 3s at a nearby point (~1km)
-            if (now - _lastGeojsonLoadAt < 3000 &&
-                _lastGeojsonLoadLat !== null &&
-                Math.abs(lat - _lastGeojsonLoadLat) < 0.01 &&
-                Math.abs(lng - _lastGeojsonLoadLng) < 0.01) return;
-            _lastGeojsonLoadAt = now;
-            _lastGeojsonLoadLat = lat;
-            _lastGeojsonLoadLng = lng;
-            const name = await reverseGeocodeDistrict(lat, lng);
-            if (!name) return;
-            loadVillageGeoJsonForCurrentDistrict(name);
+            if (map.getZoom() < MIN_ZOOM_FOR_GEOJSON) {
+                if (renderedDistricts.size > 0) _removeAllVillagePolylines();
+                return;
+            }
+            clearTimeout(_geojsonViewportDebounce);
+            _geojsonViewportDebounce = setTimeout(_doLoadGeoJsonForViewport, 150);
         }
-        // Load geojson for the given district and switch the rendered layer.
-        // If already loaded (same districtName), no-op. On district change, clear old polylines first.
-        function loadVillageGeoJsonForCurrentDistrict(districtName) {
-            if (!districtName) return;
-            if (currentDistrictVillages && currentDistrictVillages.districtName === districtName) return;
-            // District change → evict old polylines immediately for clean transition
-            _removeAllVillagePolylines();
-            currentDistrictVillages = { districtName, villages: [] };   // mark loading
-            loadDistrictGeoJson(districtName).then(villages => {
-                // Guard: user may have moved to a different district while we were loading
-                if (!currentDistrictVillages || currentDistrictVillages.districtName !== districtName) return;
-                currentDistrictVillages = { districtName, villages };
-                updateVillagePolylines();
-            }).catch(e => {
-                console.warn('[geojson] load failed for', districtName, '—', e.message);
-                // Clear sentinel so next attempt can retry
-                if (currentDistrictVillages && currentDistrictVillages.districtName === districtName) {
-                    currentDistrictVillages = null;
+        async function _doLoadGeoJsonForViewport() {
+            if (!map) return;
+            if (map.getZoom() < MIN_ZOOM_FOR_GEOJSON) return;
+            const vp = map.getBounds();
+            if (!vp) return;
+            const vpN = vp.getNorthEast().lat(), vpS = vp.getSouthWest().lat();
+            const vpE = vp.getNorthEast().lng(), vpW = vp.getSouthWest().lng();
+
+            // 1. Find districts whose bounds intersect the viewport
+            const visibleFiles = new Set();
+            for (const d of GEOJSON_DISTRICT_INDEX) {
+                if (d.s <= vpN && d.n >= vpS && d.w <= vpE && d.e >= vpW) {
+                    visibleFiles.add(d.file);
                 }
-            });
+            }
+
+            // 2. Remove districts no longer in viewport
+            for (const [file, entry] of renderedDistricts) {
+                if (!visibleFiles.has(file)) {
+                    for (const arr of entry.polylineMap.values()) {
+                        for (const pl of arr) pl.setMap(null);
+                    }
+                    renderedDistricts.delete(file);
+                }
+            }
+
+            // 3. Download & render newly visible districts
+            for (const file of visibleFiles) {
+                if (renderedDistricts.has(file)) continue;
+                const idx = GEOJSON_DISTRICT_INDEX.find(d => d.file === file);
+                const name = idx ? idx.name : file;
+                renderedDistricts.set(file, {
+                    districtName: name, villages: [], colorIndex: 0,
+                    polylineMap: new Map(), loading: true
+                });
+                _loadAndRenderDistrict(file, name);
+            }
+        }
+        async function _loadAndRenderDistrict(file, districtName) {
+            try {
+                const villages = await loadDistrictGeoJson(file);
+                // Assign color: check IDB for existing, else use next in sequence
+                const distRec = await getDistrict(file);
+                let colorIndex;
+                if (distRec && typeof distRec.colorIndex === 'number') {
+                    colorIndex = distRec.colorIndex;
+                } else {
+                    colorIndex = _nextDistrictColorIndex;
+                    _nextDistrictColorIndex = (_nextDistrictColorIndex + 1) % GEOJSON_DISTRICT_COLORS.length;
+                    // Persist colorIndex
+                    if (distRec) {
+                        distRec.colorIndex = colorIndex;
+                        await putDistrict(distRec);
+                    }
+                }
+                // Check if still in renderedDistricts (user may have panned away)
+                const entry = renderedDistricts.get(file);
+                if (!entry) return;
+                entry.villages = villages;
+                entry.colorIndex = colorIndex;
+                entry.loading = false;
+                updateVillagePolylines();
+            } catch (e) {
+                console.warn('[geojson] load failed for', file, '—', e.message);
+                renderedDistricts.delete(file);
+            }
         }
 
         // Get reference to Firebase database
@@ -3242,6 +3335,17 @@
         function initMap() {
             updateStatus("Initializing map...");
 
+            // Restore color counter from any previously-cached districts
+            getAllDistricts().then(all => {
+                if (all && all.length > 0) {
+                    let maxIdx = -1;
+                    for (const d of all) {
+                        if (typeof d.colorIndex === 'number' && d.colorIndex > maxIdx) maxIdx = d.colorIndex;
+                    }
+                    if (maxIdx >= 0) _nextDistrictColorIndex = (maxIdx + 1) % GEOJSON_DISTRICT_COLORS.length;
+                }
+            }).catch(() => {});
+
             // URL parameter support for embedding and deep-linking
             const urlParams = new URLSearchParams(window.location.search);
             const paramLat = parseFloat(urlParams.get('lat'));
@@ -3370,7 +3474,7 @@
                 // Refresh viewport-filtered village polylines
                 updateVillagePolylines();
                 // Primary geojson loader: geocode current center → fetch district zip
-                loadGeoJsonForMapCenter();
+                loadGeoJsonForViewport();
             });
             map.addListener('bounds_changed', debouncedLoadTiles);
 
