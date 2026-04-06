@@ -867,13 +867,6 @@
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
             </svg>
         </button>
-        <!-- Settings popup menu -->
-        <div id="settings-menu" style="display:none; position:absolute; right:56px; bottom:0; background:#fff; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,0.25); padding:8px 0; min-width:180px; z-index:1001;">
-            <button id="settings-clear-cache" style="display:flex; align-items:center; gap:10px; width:100%; padding:10px 16px; border:none; background:none; cursor:pointer; font-size:14px; color:#333; font-family:inherit; text-align:left;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="width:18px;height:18px;flex-shrink:0;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                Clear Cache
-            </button>
-        </div>
         <!-- Layers button -->
         <button class="fab" id="btn-layers" title="Layers">
             <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
@@ -934,6 +927,32 @@
                        style="flex:1;height:4px;-webkit-appearance:none;appearance:none;background:#ccc;border-radius:2px;outline:none;">
                 <span id="opacity-value" style="font-size:13px;color:#212121;min-width:36px;">50%</span>
             </div>
+        </div>
+    </div>
+
+    <!-- Settings panel overlay -->
+    <div class="layer-overlay" id="settings-overlay"></div>
+
+    <!-- Slide-in settings panel (reuses layer-panel styling) -->
+    <div class="layer-panel" id="settings-panel">
+        <div class="layer-panel-header">
+            <h3>Settings</h3>
+            <button class="layer-panel-close" id="settings-panel-close">&times;</button>
+        </div>
+
+        <div class="layer-section">
+            <div class="layer-section-title">Cache</div>
+            <button id="settings-clear-cache" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                Clear Cache &amp; Reload
+            </button>
+            <p style="margin:8px 0 0;font-size:12px;color:#757575;line-height:1.4;">Clears all cached data including map tiles, saved regions, and service worker. The page will reload.</p>
+        </div>
+
+        <div class="layer-section">
+            <div class="layer-section-title">About</div>
+            <p style="margin:0;font-size:13px;color:#555;line-height:1.5;">Development Plan GIS<br>Map Magician</p>
+            <p style="margin:6px 0 0;font-size:12px;color:#999;">www.mapmagician.in</p>
         </div>
     </div>
 
@@ -5034,33 +5053,34 @@
             });
 
             // Layer panel open/close
-            // Settings button
-            const settingsMenu = document.getElementById('settings-menu');
-            document.getElementById('btn-settings').addEventListener('click', function(e) {
-                e.stopPropagation();
-                settingsMenu.style.display = settingsMenu.style.display === 'none' ? 'block' : 'none';
+            // Settings panel open/close
+            const settingsPanel = document.getElementById('settings-panel');
+            const settingsOverlay = document.getElementById('settings-overlay');
+            document.getElementById('btn-settings').addEventListener('click', function() {
+                settingsPanel.classList.add('open');
+                settingsOverlay.classList.add('open');
             });
-            document.addEventListener('click', function() { settingsMenu.style.display = 'none'; });
-            settingsMenu.addEventListener('click', function(e) { e.stopPropagation(); });
+            function closeSettingsPanel() {
+                settingsPanel.classList.remove('open');
+                settingsOverlay.classList.remove('open');
+            }
+            document.getElementById('settings-panel-close').addEventListener('click', closeSettingsPanel);
+            settingsOverlay.addEventListener('click', closeSettingsPanel);
             document.getElementById('settings-clear-cache').addEventListener('click', function() {
-                settingsMenu.style.display = 'none';
+                closeSettingsPanel();
                 Promise.all([
-                    // Clear service worker caches
                     caches.keys().then(function(names) {
                         return Promise.all(names.map(function(n) { return caches.delete(n); }));
                     }),
-                    // Unregister service worker
                     navigator.serviceWorker.getRegistrations().then(function(regs) {
                         return Promise.all(regs.map(function(r) { return r.unregister(); }));
                     }),
-                    // Clear GeoJSON IndexedDB
                     new Promise(function(resolve) {
                         var req = indexedDB.deleteDatabase('mapmagician_geojson');
                         req.onsuccess = resolve;
                         req.onerror = resolve;
                         req.onblocked = resolve;
                     }),
-                    // Clear geocoder cache from localStorage
                     new Promise(function(resolve) {
                         try { localStorage.removeItem('mm_geocoder_cache'); } catch(e) {}
                         resolve();
