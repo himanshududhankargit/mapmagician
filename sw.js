@@ -1,6 +1,6 @@
 // Service worker — caches app shell so the installed PWA opens offline
 // instead of showing "This site can't be reached".
-const SW_VERSION = 'v4-2026-04-06';
+const SW_VERSION = 'v5-2026-04-06';
 const CACHE_NAME = 'mm-shell-' + SW_VERSION;
 
 // App-shell files to pre-cache on install
@@ -52,8 +52,10 @@ self.addEventListener('fetch', (e) => {
         e.respondWith(
             fetch(e.request)
                 .then(resp => {
-                    const clone = resp.clone();
-                    caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+                    if (resp.ok) {
+                        const clone = resp.clone();
+                        caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+                    }
                     return resp;
                 })
                 .catch(() => caches.match(e.request))
