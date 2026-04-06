@@ -2760,7 +2760,8 @@
                         buyRegion(district.productPurchaseID, district.districtName);
                     }, 0);
                 } else {
-                    openRegionsBrowser();
+                    // Delay so popstate from overlay close resolves first
+                    setTimeout(function() { openRegionsBrowser(); }, 0);
                 }
             });
 
@@ -2827,7 +2828,8 @@
                 zoomBypassActive = true;
                 map.setZoom(MAX_FREE_ZOOM - 1);
                 google.maps.event.addListenerOnce(map, 'idle', function() { zoomBypassActive = false; });
-                openRegionsBrowser();
+                // Delay so popstate from overlay close resolves before opening region browser
+                setTimeout(function() { openRegionsBrowser(); }, 0);
             });
 
             document.getElementById('zoom-restrict-cancel').onclick = function() {
