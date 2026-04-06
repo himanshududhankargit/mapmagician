@@ -1374,6 +1374,17 @@
                     authLoadingOverlay.classList.remove('open');
                     document.getElementById('payment-loading-text').textContent = 'Preparing your payment...';
                     document.getElementById('payment-loading-sub').textContent = '7-Day Pass';
+                    // Still resume pending actions — user signed in successfully
+                    if (pendingPurchase) {
+                        const pp = pendingPurchase;
+                        pendingPurchase = null;
+                        buyRegion(pp.productId, pp.regionName);
+                    }
+                    if (pendingSupportOpen) {
+                        const ps = pendingSupportOpen;
+                        pendingSupportOpen = null;
+                        openSupportForm(ps.district, ps.returnToPaywall);
+                    }
                 });
             } else if (user && user.isAnonymous) {
                 // Anonymous user — only fetch cookies for tile access, show as not logged in
@@ -1850,7 +1861,7 @@
 
         // Buy a 7-day pass
         async function buyRegion(productId, regionName) {
-            if (!currentUser || currentUser.isAnonymous) {
+            if (!currentUser || currentUser.isAnonymous || !currentUser.email) {
                 // Show login dialog — store purchase intent so we can resume after sign-in
                 pendingPurchase = { productId, regionName };
                 document.getElementById('auth-dialog-desc').textContent =
