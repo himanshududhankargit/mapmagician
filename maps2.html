@@ -5075,10 +5075,13 @@
                 if (isVillageLayerVisible) {
                     if (!villageDataLoaded) fetchVillageLayerData();
                     else { villageTileStatus = Array(villageLayerData.length).fill(false); loadTilesBasedOnViewport(); }
-                    if (villageDataByName.size === 0 && villageLayerData.length > 0) populateVillageDataLookup();
+                    if (villageDataByName.size === 0 && villageLayerData.length > 0) createVillageMarkers();
                     fetchVillagePurchases();
+                    updateVillageMarkerVisibility();
+                } else {
+                    villageMarkers.forEach(function(m) { m.setMap(null); });
+                    updateAddonButtonVisibility();
                 }
-                updateAddonButtonVisibility();
             });
 
             // Sync opacity sliders (layer panel + info strip)
@@ -5391,7 +5394,45 @@
             return calculatePolygonCenter(layerItem.polygon);
         }
 
-        // (Village markers are not displayed on map — villages accessed via addon panel only)
+        // Check if a point is inside any DP plan polygon
+        function isInsideDPRegion(center) {
+            if (!dpLayerData || dpLayerData.length === 0) return false;
+            var pt = { lat: center.lat, lng: center.lng };
+            for (var i = 0; i < dpLayerData.length; i++) {
+                if (dpLayerData[i].polygon && pointInPolygon(pt, dpLayerData[i].polygon)) return true;
+            }
+            return false;
+        }
+
+        function getVillageMarkerIcon(villageName, isPurchased) {
+            var bgColor = isPurchased ? '%234CAF50' : '%23FFFFFF';
+            var borderColor = isPurchased ? '%232E7D32' : '%23999999';
+            var textColor = isPurchased ? '%23FFFFFF' : '%23333333';
+            var displayName = villageName.length > 20 ? villageName.substring(0, 20) + '...' : villageName;
+            var charWidth = 6.5;
+            var padding = 16;
+            var width = Math.max(Math.ceil(displayName.length * charWidth + padding * 2), 50);
+            var height = 28;
+            var arrowH = 8;
+            var totalH = height + arrowH;
+            var rx = height / 2;
+            var cx = width / 2;
+
+            var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + totalH + '">' +
+                '<rect x="1" y="1" width="' + (width - 2) + '" height="' + (height - 2) + '" rx="' + rx + '" ' +
+                'fill="' + bgColor + '" stroke="' + borderColor + '" stroke-width="1.5"/>' +
+                '<polygon points="' + (cx - 5) + ',' + (height - 1) + ' ' + (cx + 5) + ',' + (height - 1) + ' ' + cx + ',' + totalH + '" ' +
+                'fill="' + bgColor + '" stroke="' + borderColor + '" stroke-width="1.5" stroke-linejoin="round"/>' +
+                '<line x1="' + (cx - 4) + '" y1="' + (height - 1) + '" x2="' + (cx + 4) + '" y2="' + (height - 1) + '" stroke="' + bgColor + '" stroke-width="2"/>' +
+                '<text x="' + cx + '" y="' + (height / 2 + 4) + '" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="' + textColor + '">' +
+                displayName.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</text></svg>';
+
+            return {
+                url: 'data:image/svg+xml;charset=UTF-8,' + svg,
+                scaledSize: new google.maps.Size(width, totalH),
+                anchor: new google.maps.Point(cx, totalH)
+            };
+        }
 
         function hasVillagePurchase(villageName) {
             const entry = villagePurchases.get(villageName);
@@ -5421,8 +5462,34 @@
         }
 
         function createVillageMarkers() {
-            // No markers on map — villages accessed via addon panel only
+            // Clear existing markers
+            villageMarkers.forEach(function(marker) { marker.setMap(null); });
+            villageMarkers.clear();
             populateVillageDataLookup();
+
+            // Create markers ONLY for villages outside DP plan regions
+            villageLayerData.forEach(function(item) {
+                if (!item.villageName) return;
+                var center = getVillageCenter(item);
+                if (!center) return;
+                // Skip villages inside DP regions — those are accessed via addon panel
+                if (isInsideDPRegion(center)) return;
+
+                var isPurchased = hasVillagePurchase(item.villageName);
+                var marker = new google.maps.Marker({
+                    position: center,
+                    map: null, // controlled by updateVillageMarkerVisibility
+                    title: item.villageName,
+                    icon: getVillageMarkerIcon(item.villageName, isPurchased),
+                    zIndex: 1000
+                });
+                marker.addListener('click', (function(villageItem) {
+                    return function() { onVillageMarkerClick(villageItem); };
+                })(item));
+                villageMarkers.set(item.villageName, marker);
+            });
+
+            updateVillageMarkerVisibility();
         }
 
         function getVillagesInView() {
@@ -5553,12 +5620,19 @@
         }
 
         function updateVillageMarkerVisibility() {
-            // Markers are not shown on map — villages are accessed via addon panel only
+            var zoom = map ? map.getZoom() : 0;
+            var shouldShow = isVillageLayerVisible && zoom >= MIN_ZOOM_FOR_VILLAGE_MARKERS;
+            villageMarkers.forEach(function(marker) {
+                marker.setMap(shouldShow ? map : null);
+            });
             updateAddonButtonVisibility();
         }
 
         function updateVillageMarkerStyles() {
-            // No-op — markers not shown on map; addon panel re-renders on open
+            villageMarkers.forEach(function(marker, villageName) {
+                var isPurchased = hasVillagePurchase(villageName);
+                marker.setIcon(getVillageMarkerIcon(villageName, isPurchased));
+            });
         }
 
         function onVillageMarkerClick(villageItem) {
