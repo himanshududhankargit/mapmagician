@@ -3399,7 +3399,11 @@
             _lastGeojsonLoadAt = now;
             _lastGeojsonLoadLat = lat;
             _lastGeojsonLoadLng = lng;
-            const name = await reverseGeocodeDistrict(lat, lng);
+            // Prefer tile-based district detection — uses menuData names that match
+            // GeoJSON filenames. Falls back to reverse geocoder only when no tiles are loaded
+            // (avoids mismatches like Google returning "Osmanabad" for a file named dharashiv.zip).
+            const tileDistrict = findDistrictAtCenter();
+            const name = tileDistrict ? tileDistrict.districtName : await reverseGeocodeDistrict(lat, lng);
             if (!name) return;
             loadVillageGeoJsonForCurrentDistrict(name);
         }
