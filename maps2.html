@@ -3156,7 +3156,7 @@
                                     path: ring,
                                     strokeColor: color,
                                     strokeOpacity: 1.0,
-                                    strokeWeight: 1.2,
+                                    strokeWeight: 2.0,
                                     clickable: false,
                                     zIndex: 900,
                                     map: map
@@ -5538,16 +5538,25 @@
             var searchEl = document.getElementById('addon-panel-search');
 
             var inView = getVillagesInView();
+            var inViewNames = new Set(inView.map(function(v) { return v.villageName; }));
+            // All villages with names for search
+            var allVillages = villageLayerData.filter(function(v) { return !!v.villageName; });
             titleEl.textContent = inView.length + ' Add-On Maps';
             searchEl.value = '';
 
             function renderList(query) {
                 listEl.innerHTML = '';
-                var filtered = inView;
+                var source, isSearching = false;
                 if (query) {
+                    // When searching, search ALL villages
+                    isSearching = true;
                     var q = query.toLowerCase();
-                    filtered = inView.filter(function(v) { return v.villageName.toLowerCase().indexOf(q) >= 0; });
+                    source = allVillages.filter(function(v) { return v.villageName.toLowerCase().indexOf(q) >= 0; });
+                } else {
+                    // No search — show only in-view villages
+                    source = inView;
                 }
+                var filtered = source;
                 // Sort: purchased first, then alphabetical
                 filtered.sort(function(a, b) {
                     var ap = hasVillagePurchase(a.villageName) ? 0 : 1;
@@ -5575,10 +5584,15 @@
                         badge = '<span style="font-size:11px;background:#E3F2FD;color:#1565C0;padding:2px 8px;border-radius:10px;font-weight:600;cursor:pointer;">Purchase</span>';
                     }
 
+                    var inViewChip = '';
+                    if (isSearching && inViewNames.has(item.villageName)) {
+                        inViewChip = '<span style="font-size:9px;background:#E8F5E9;color:#2E7D32;padding:1px 5px;border-radius:6px;margin-right:6px;">In View</span>';
+                    }
+
                     var row = document.createElement('div');
                     row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 16px;cursor:pointer;border-bottom:1px solid #f0f0f0;';
                     row.innerHTML = '<span style="font-size:13px;font-weight:500;color:#333;flex:1;margin-right:8px;">' +
-                        item.villageName.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</span>' + badge;
+                        item.villageName.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</span>' + inViewChip + badge;
 
                     row.addEventListener('mouseenter', function() { this.style.background = '#f5f5f5'; });
                     row.addEventListener('mouseleave', function() { this.style.background = ''; });
