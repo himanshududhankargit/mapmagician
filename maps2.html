@@ -1435,6 +1435,7 @@
         let cachedIdToken = null; // Firebase ID token for tile proxy auth
         let cachedAccessToken = ''; // Signed access token from getPurchaseStatus
         let pendingPurchase = null; // { productId, regionName } — set when buy clicked before login
+        let pendingVillageAfterDP = null; // villageItem — set when village needs DP purchase first
         let pendingSupportOpen = null; // {district, returnToPaywall} — set when support clicked before login
         let currentSessionId = null;  // Single-session enforcement
         let sessionListenerRef = null; // Firebase .on() ref for session changes
@@ -1907,6 +1908,14 @@
                             stickyTile = null;
                             stickyDistrict = null;
                             updateStatus('Region activated!');
+                            // If a village purchase was pending, show village dialog now
+                            if (pendingVillageAfterDP) {
+                                var villageToShow = pendingVillageAfterDP;
+                                pendingVillageAfterDP = null;
+                                setTimeout(function() {
+                                    showVillagePurchaseDialog(villageToShow);
+                                }, 500);
+                            }
                         } catch (e) {
                             console.error('Confirm payment error:', e);
                             // Fallback: wait for webhook
@@ -1917,6 +1926,7 @@
                     modal: {
                         ondismiss: function() {
                             updateStatus('Payment cancelled');
+                            pendingVillageAfterDP = null;
                         }
                     }
                 };
@@ -5962,13 +5972,13 @@
                 return;
             }
 
-            // Check if DP region is purchased first — show the standard purchase dialog
+            // Check if DP region is purchased first — show base plan dialog, then village dialog after
             if (villageItem.productPurchaseID && !hasPurchase(villageItem.productPurchaseID)) {
+                pendingVillageAfterDP = villageItem; // remember village for after DP purchase
                 var district = findDistrictByPurchaseId(villageItem.productPurchaseID);
                 if (district) {
                     showZoomRestrictionDialog(district);
                 } else {
-                    // Fallback: construct minimal district object
                     showZoomRestrictionDialog({ productPurchaseID: villageItem.productPurchaseID, districtName: villageItem.productPurchaseID });
                 }
                 return;
