@@ -4090,7 +4090,12 @@
                     if (buyBadge) {
                         buyBadge.addEventListener('click', function(e) {
                             e.stopPropagation();
-                            buyRegion(buyBadge.dataset.pid, buyBadge.dataset.name);
+                            if (type === 'state') {
+                                // Navigate into the region (same as card click)
+                                openStateInBrowser(item.name);
+                            } else {
+                                buyRegion(buyBadge.dataset.pid, buyBadge.dataset.name);
+                            }
                         });
                     }
 
