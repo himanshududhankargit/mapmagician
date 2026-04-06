@@ -3189,7 +3189,9 @@
                     const fileName = _districtFileName(districtName);
                     const url = GEOJSON_BASE_PATH + fileName + '.zip';
                     console.log('[geojson] fetching', url);
-                    const res = await fetch(url);
+                    let res = await fetch(url);
+                    // Retry with cache bypass if 404 (browser HTTP cache may hold stale 404)
+                    if (!res.ok && res.status === 404) res = await fetch(url, { cache: 'reload' });
                     if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
                     const blob = await res.blob();
                     const zip = await JSZip.loadAsync(blob);
@@ -5042,18 +5044,31 @@
             settingsMenu.addEventListener('click', function(e) { e.stopPropagation(); });
             document.getElementById('settings-clear-cache').addEventListener('click', function() {
                 settingsMenu.style.display = 'none';
-                caches.keys().then(function(names) {
-                    return Promise.all(names.map(function(name) { return caches.delete(name); }));
-                }).then(function() {
-                    // Unregister service worker so it re-installs fresh
-                    return navigator.serviceWorker.getRegistrations();
-                }).then(function(regs) {
-                    return Promise.all(regs.map(function(r) { return r.unregister(); }));
-                }).then(function() {
+                Promise.all([
+                    // Clear service worker caches
+                    caches.keys().then(function(names) {
+                        return Promise.all(names.map(function(n) { return caches.delete(n); }));
+                    }),
+                    // Unregister service worker
+                    navigator.serviceWorker.getRegistrations().then(function(regs) {
+                        return Promise.all(regs.map(function(r) { return r.unregister(); }));
+                    }),
+                    // Clear GeoJSON IndexedDB
+                    new Promise(function(resolve) {
+                        var req = indexedDB.deleteDatabase('mapmagician_geojson');
+                        req.onsuccess = resolve;
+                        req.onerror = resolve;
+                        req.onblocked = resolve;
+                    }),
+                    // Clear geocoder cache from localStorage
+                    new Promise(function(resolve) {
+                        try { localStorage.removeItem('mm_geocoder_cache'); } catch(e) {}
+                        resolve();
+                    })
+                ]).then(function() {
                     alert('Cache cleared! The page will reload.');
                     location.reload(true);
-                }).catch(function(err) {
-                    console.error('Clear cache failed:', err);
+                }).catch(function() {
                     alert('Cache cleared! The page will reload.');
                     location.reload(true);
                 });
