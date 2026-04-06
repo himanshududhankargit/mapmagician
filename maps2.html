@@ -1055,6 +1055,21 @@
         </div>
     </div>
 
+    <!-- Base plan required dialog -->
+    <div class="zoom-dialog-overlay" id="baseplan-required-overlay">
+        <div class="zoom-dialog" style="max-width:400px;text-align:left;padding:0;overflow:hidden;border-radius:16px;">
+            <div style="background:linear-gradient(135deg,#E65100,#BF360C);padding:24px 20px 20px;text-align:center;color:#fff;">
+                <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;opacity:0.7;margin-bottom:6px;">Subscription Required</div>
+                <h3 id="baseplan-title" style="margin:0;font-size:20px;font-weight:700;color:#fff;">Region Plan Required</h3>
+            </div>
+            <div style="padding:20px;">
+                <p id="baseplan-desc" style="margin:0 0 18px;font-size:14px;color:#555;line-height:1.6;text-align:center;"></p>
+                <button id="baseplan-subscribe-btn" style="width:100%;padding:14px;font-size:15px;border-radius:12px;margin-bottom:8px;background:#E65100;color:#fff;border:none;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(230,81,0,0.3);">Subscribe to Region</button>
+                <button id="baseplan-cancel-btn" style="width:100%;padding:10px;border:none;background:none;color:#aaa;font-size:13px;cursor:pointer;font-weight:500;">Not now</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Village purchase dialog -->
     <div class="zoom-dialog-overlay" id="village-purchase-overlay">
         <div class="zoom-dialog" style="max-width:400px;text-align:left;padding:0;overflow:hidden;border-radius:16px;">
@@ -5670,13 +5685,42 @@
 
             // Check if DP region is purchased first
             if (villageItem.productPurchaseID && !hasPurchase(villageItem.productPurchaseID)) {
-                var district = findDistrictByPurchaseId(villageItem.productPurchaseID);
-                var regionName = district ? district.districtName : villageItem.productPurchaseID;
-                alert('Region plan required\n\nPurchase the ' + regionName + ' region plan first before buying village add-on plans.');
+                showBasePlanRequiredDialog(villageItem);
                 return;
             }
 
             showVillagePurchaseDialog(villageItem);
+        }
+
+        function showBasePlanRequiredDialog(villageItem) {
+            var overlay = document.getElementById('baseplan-required-overlay');
+            var title = document.getElementById('baseplan-title');
+            var desc = document.getElementById('baseplan-desc');
+            var subscribeBtn = document.getElementById('baseplan-subscribe-btn');
+            var cancelBtn = document.getElementById('baseplan-cancel-btn');
+
+            var district = findDistrictByPurchaseId(villageItem.productPurchaseID);
+            var regionName = district ? district.districtName : villageItem.productPurchaseID;
+
+            title.textContent = 'Region Plan Required';
+            desc.textContent = 'To access ' + villageItem.villageName + ', you need a subscription to ' + regionName + '. Village add-on maps are available after purchasing the base region plan.';
+
+            // Replace button to clear old listeners
+            var newBtn = subscribeBtn.cloneNode(true);
+            newBtn.id = 'baseplan-subscribe-btn';
+            newBtn.textContent = 'Subscribe to ' + regionName;
+            subscribeBtn.parentNode.replaceChild(newBtn, subscribeBtn);
+
+            newBtn.addEventListener('click', function() {
+                overlay.classList.remove('open');
+                buyRegion(villageItem.productPurchaseID, regionName);
+            });
+
+            cancelBtn.onclick = function() {
+                overlay.classList.remove('open');
+            };
+
+            overlay.classList.add('open');
         }
 
         function showVillagePurchaseDialog(villageItem) {
