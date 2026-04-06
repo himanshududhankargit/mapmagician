@@ -3797,7 +3797,7 @@
             initUIEvents();
 
             // Pre-fetch all pricing so purchase dialog opens instantly
-            firebase.database().ref('GISPricingMapMagician').on('value', function(snap) {
+            firebase.database().ref('appConfig/pricing').on('value', function(snap) {
                 cachedPricing.clear();
                 var data = snap.val() || {};
                 Object.entries(data).forEach(function(e) { cachedPricing.set(e[0], e[1]); });
@@ -5652,8 +5652,17 @@
         function onVillageMarkerClick(villageItem) {
             var villageName = villageItem.villageName;
 
+            // Move to village location
+            var center = getVillageCenter(villageItem);
+            if (center) {
+                zoomBypassActive = true;
+                map.setCenter(center);
+                if (map.getZoom() < 15) map.setZoom(15);
+                google.maps.event.addListenerOnce(map, 'idle', function() { zoomBypassActive = false; });
+            }
+
             if (hasVillagePurchase(villageName)) {
-                // Already purchased — zoom to village
+                // Already purchased — zoom to village at 17
                 zoomToVillage(villageItem);
                 updateStatus(villageName + ' — purchased');
                 return;
