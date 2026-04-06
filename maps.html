@@ -2691,6 +2691,9 @@
                 setTimeout(function() { clearInterval(priceCheck); }, 10000);
             }
 
+            // Close region browser so purchase dialog is visible
+            if (document.getElementById('region-browser').classList.contains('open')) closeRegionBrowser();
+
             // Disable map interaction while dialog is visible
             disableMapInteraction();
 
@@ -2751,6 +2754,9 @@
             regionInfo.style.display = 'none';
             supportBtn.style.display = 'none';
             document.getElementById('zoom-restrict-price').style.display = 'none';
+
+            // Close region browser so dialog is visible
+            if (document.getElementById('region-browser').classList.contains('open')) closeRegionBrowser();
 
             disableMapInteraction();
 
