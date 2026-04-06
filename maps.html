@@ -778,6 +778,22 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M22.99 9C19.15 5.16 13.8 3.76 8.84 4.78l2.52 2.52c3.47-.17 6.99 1.05 9.63 3.7l2-2zm-4 4a9.793 9.793 0 00-4.49-2.56l3.53 3.53.96-.97zM2 3.05L5.07 6.1C3.6 6.82 2.22 7.78 1 9l2 2c1.02-1.02 2.17-1.85 3.41-2.5l2.52 2.52C7.69 11.63 6.53 12.41 5 14l2 2 3.01-3.01 8.44 8.44 1.41-1.41L3.41 1.64 2 3.05zM9 18l3 3 3-3a4.237 4.237 0 00-6 0z"/></svg>
         You are offline. Some features may not be available.
     </div>
+    <script>
+    // Offline detection — must run before CDN scripts which block when offline
+    (function() {
+        var banner = document.getElementById('offline-banner');
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                banner.classList.remove('show');
+            } else {
+                banner.classList.add('show');
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+    })();
+    </script>
     <div id="map"></div>
 
     <!-- Expanded sidebar panel -->
@@ -1521,20 +1537,8 @@
             });
         }
 
-        // Offline / online detection — show banner when connection is lost
-        (function() {
-            var banner = document.getElementById('offline-banner');
-            function updateOnlineStatus() {
-                if (navigator.onLine) {
-                    banner.classList.remove('show');
-                } else {
-                    banner.classList.add('show');
-                }
-            }
-            window.addEventListener('online', updateOnlineStatus);
-            window.addEventListener('offline', updateOnlineStatus);
-            updateOnlineStatus();
-        })();
+        // Offline detection is handled by an early inline script (before CDN tags)
+        // so it works even when external scripts fail to load.
 
         // --- Back-press dismisses modal dialogs ---
         // Watches any overlay with [data-dismiss="..."] pointing to its cancel button.
