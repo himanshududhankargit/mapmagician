@@ -1107,10 +1107,9 @@
                 <p class="pd-desc" id="zoom-restrict-desc">Access high-resolution maps and tools directly in your browser.</p>
                 <!-- Features (single column) -->
                 <div class="pd-features">
-                    <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Web browser access &mdash; no install needed</div>
+                    <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Use on any device with one login &mdash; PC, Tablet, Mobile, iPhone &amp; iPad</div>
                     <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>High-zoom development plan maps</div>
-                    <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Detailed roads, plots & boundaries</div>
-                    <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Works on any modern browser</div>
+                    <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Instant access after payment &mdash; start using in seconds</div>
                 </div>
                 <!-- CTA -->
                 <button class="pd-cta" id="zoom-restrict-action">Continue to Payment</button>
@@ -2710,7 +2709,11 @@
                 overlay.classList.remove('open');
                 enableMapInteraction();
                 if (district) {
-                    buyRegion(district.productPurchaseID, district.districtName);
+                    // Delay so popstate from overlay close resolves before buyRegion
+                    // opens the auth dialog (prevents history race condition)
+                    setTimeout(function() {
+                        buyRegion(district.productPurchaseID, district.districtName);
+                    }, 0);
                 } else {
                     openRegionsBrowser();
                 }
