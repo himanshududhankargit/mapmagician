@@ -593,6 +593,25 @@
             .disclaimer-actions { padding:12px 14px 14px; }
         }
 
+        /* Install buttons */
+        .sidebar-install-btn { display:flex; align-items:center; gap:10px; width:calc(100% - 32px); margin:8px auto; padding:12px 14px; border:1.5px solid #B2DFDB; border-radius:10px; background:#E0F2F1; cursor:pointer; font-family:inherit; text-align:left; color:#00695C; transition:background 0.15s,border-color 0.15s,transform 0.1s; }
+        .sidebar-install-btn:hover { background:#B2DFDB; border-color:#4DB6AC; }
+        .sidebar-install-btn:active { transform:scale(0.97); }
+        .sidebar-install-icon { display:flex; align-items:center; justify-content:center; width:28px; height:28px; background:#fff; border-radius:50%; color:#00796B; flex-shrink:0; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+        .sidebar-install-text { display:flex; flex-direction:column; }
+        .sidebar-install-title { font-size:13px; font-weight:600; color:#00695C; }
+        .sidebar-install-sub { font-size:11px; color:#80CBC4; margin-top:1px; }
+        .sidebar-install-btn.installed { background:#E8F5E9; color:#2E7D32; border-color:#A5D6A7; cursor:default; }
+        .sidebar-install-btn.installed:hover { background:#E8F5E9; border-color:#A5D6A7; }
+        .sidebar-install-btn.installed .sidebar-install-title { color:#2E7D32; }
+        .sidebar-install-btn.installed .sidebar-install-icon { color:#2E7D32; }
+        .sidebar-install-btn.installed .sidebar-install-sub { color:#388E3C; }
+        .bottombar-install-btn { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border:1px solid #B2DFDB; border-radius:16px; background:#E0F2F1; color:#00695C; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; transition:background 0.15s; white-space:nowrap; }
+        .bottombar-install-btn:hover { background:#B2DFDB; border-color:#4DB6AC; }
+        .bottombar-install-btn.installed { background:#E8F5E9; color:#2E7D32; border-color:#A5D6A7; cursor:default; }
+        .bottombar-install-btn.installed:hover { background:#E8F5E9; border-color:#A5D6A7; }
+        @media (max-width:768px) { .bottombar-install-btn { display:none !important; } }
+
         .offline-banner { position:fixed; top:0; left:0; right:0; background:#F44336; color:#fff; text-align:center; padding:10px 16px; font-size:13px; font-weight:600; z-index:10000; font-family:'Segoe UI',Roboto,Arial,sans-serif; display:none; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
         .offline-banner.show { display:flex; }
         .offline-banner svg { flex-shrink:0; }
@@ -986,6 +1005,10 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" fill="#fff"/></svg>
                 Browse Regions
             </button>
+            <button class="bottombar-install-btn" id="bottombar-install-btn" style="display:none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Install app
+            </button>
         </div>
         <div class="bottom-bar-right">
             <span class="coord-chip" id="center-coord">--</span>
@@ -1261,6 +1284,17 @@
         </div>
         <input type="search" class="region-browser-search" id="region-browser-search" placeholder="Search regions..." autocomplete="off">
         <div class="region-browser-body">
+            <div id="sidebar-install-wrap" style="display:none;text-align:center;">
+                <button class="sidebar-install-btn" id="sidebar-install-btn">
+                    <span class="sidebar-install-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span class="sidebar-install-text">
+                        <span class="sidebar-install-title">Install app</span>
+                        <span class="sidebar-install-sub">add to home screen</span>
+                    </span>
+                </button>
+            </div>
             <div class="region-grid" id="region-grid"></div>
         </div>
     </div>
@@ -1302,8 +1336,7 @@
             var overlay = document.getElementById('disclaimer-overlay');
             if (!overlay) return;
             var isEmbed = new URLSearchParams(window.location.search).get('embed') === '1';
-            var isMainSite = window.location.hostname === 'mapmagician.in' || window.location.hostname === 'www.mapmagician.in';
-            if (isEmbed || isMainSite) { overlay.style.display = 'none'; return; }
+            if (isEmbed) { overlay.style.display = 'none'; return; }
             document.getElementById('disclaimer-agree').addEventListener('click', function() {
                 overlay.style.display = 'none';
             });
@@ -1311,6 +1344,67 @@
                 window.location.href = 'https://www.mapmagician.in';
             });
         })();
+
+        // --- PWA Install prompt ---
+        let deferredInstallPrompt = null;
+        const installBtn = document.getElementById('sidebar-install-btn');
+        const installWrap = document.getElementById('sidebar-install-wrap');
+        const bottombarInstallBtn = document.getElementById('bottombar-install-btn');
+        const installInfoOverlay = document.getElementById('install-info-overlay');
+
+        function showInstallButtons() {
+            installWrap.style.display = 'block';
+            bottombarInstallBtn.style.display = 'inline-flex';
+        }
+        function hideInstallButtons() {
+            installWrap.style.display = 'none';
+            bottombarInstallBtn.style.display = 'none';
+        }
+        function markInstalled() {
+            installBtn.classList.add('installed');
+            installBtn.querySelector('.sidebar-install-title').textContent = 'App installed';
+            installBtn.querySelector('.sidebar-install-sub').textContent = '';
+            bottombarInstallBtn.classList.add('installed');
+            bottombarInstallBtn.textContent = '';
+            var checkSvg = document.createElement('span');
+            checkSvg.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+            bottombarInstallBtn.appendChild(checkSvg.firstChild);
+            bottombarInstallBtn.appendChild(document.createTextNode(' Installed'));
+            deferredInstallPrompt = null;
+        }
+
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            showInstallButtons();
+        });
+
+        function openInstallInfo() {
+            installInfoOverlay.classList.add('open');
+        }
+        installBtn.addEventListener('click', openInstallInfo);
+        bottombarInstallBtn.addEventListener('click', openInstallInfo);
+
+        document.getElementById('install-info-continue').addEventListener('click', async function() {
+            installInfoOverlay.classList.remove('open');
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            var choice = await deferredInstallPrompt.userChoice;
+            if (choice.outcome === 'accepted') markInstalled();
+        });
+        document.getElementById('install-info-cancel').addEventListener('click', function() {
+            installInfoOverlay.classList.remove('open');
+        });
+        installInfoOverlay.addEventListener('click', function(e) {
+            if (e.target === installInfoOverlay) installInfoOverlay.classList.remove('open');
+        });
+
+        window.addEventListener('appinstalled', function() { markInstalled(); });
+
+        // Hide install buttons if already running as installed PWA
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            hideInstallButtons();
+        }
 
         // Firebase configuration
         const firebaseConfig = {
