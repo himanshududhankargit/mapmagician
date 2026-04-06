@@ -569,6 +569,34 @@
         .zoom-info-toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:#ef6c00; color:#fff; padding:12px 20px; border-radius:8px; font-size:13px; font-weight:500; box-shadow:0 4px 12px rgba(0,0,0,0.25); z-index:4000; opacity:0; transition:opacity 0.3s,transform 0.3s; pointer-events:none; font-family:'Segoe UI',Roboto,Arial,sans-serif; display:flex; align-items:center; gap:8px; max-width:92vw; }
         .zoom-info-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
+        /* First-visit disclaimer */
+        .disclaimer-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:20000; display:flex; align-items:center; justify-content:center; padding:16px; box-sizing:border-box; }
+        .disclaimer-box { background:#fff; border-radius:14px; max-width:540px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.3); }
+        .disclaimer-title { font-size:18px; font-weight:800; color:#C62828; text-align:center; padding:20px 24px 14px; letter-spacing:0.5px; }
+        .disclaimer-body { padding:0 24px 16px; font-size:14px; color:#333; line-height:1.6; }
+        .disclaimer-body p { margin:0 0 12px; }
+        .disclaimer-body p:last-child { margin-bottom:0; }
+        .disclaimer-body strong { color:#212121; }
+        .disclaimer-section-title { font-weight:700; color:#C62828; font-size:14px; margin:14px 0 8px; }
+        .disclaimer-list { padding-left:20px; margin:0 0 12px; }
+        .disclaimer-list li { margin-bottom:2px; }
+        .disclaimer-italic { font-style:italic; color:#555; font-size:13px; }
+        .disclaimer-actions { display:flex; gap:12px; padding:14px 24px 20px; justify-content:flex-end; }
+        .disclaimer-btn { padding:10px 28px; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
+        .disclaimer-btn-disagree { background:#F44336; color:#fff; }
+        .disclaimer-btn-disagree:hover { background:#D32F2F; }
+        .disclaimer-btn-agree { background:#4CAF50; color:#fff; }
+        .disclaimer-btn-agree:hover { background:#388E3C; }
+        @media (max-width:480px) {
+            .disclaimer-title { font-size:16px; padding:16px 18px 12px; }
+            .disclaimer-body { padding:14px 18px; font-size:13px; }
+            .disclaimer-actions { padding:12px 14px 14px; }
+        }
+
+        .offline-banner { position:fixed; top:0; left:0; right:0; background:#F44336; color:#fff; text-align:center; padding:10px 16px; font-size:13px; font-weight:600; z-index:10000; font-family:'Segoe UI',Roboto,Arial,sans-serif; display:none; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+        .offline-banner.show { display:flex; }
+        .offline-banner svg { flex-shrink:0; }
+
         /* Bottom bar region status */
         .region-status { font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px; flex-shrink:1; }
         .region-status.subscribed { background:#E8F5E9; color:#2E7D32; }
@@ -778,6 +806,23 @@
         <div class="sidebar-list" id="sidebar-list"></div>
     </div>
 
+    <!-- Offline banner -->
+    <div class="offline-banner" id="offline-banner">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M22.99 9C19.15 5.16 13.8 3.76 8.84 4.78l2.52 2.52c3.47-.17 6.99 1.05 9.63 3.7l2-2zm-4 4a9.793 9.793 0 00-4.49-2.56l3.53 3.53.96-.97zM2 3.05L5.07 6.1C3.6 6.82 2.22 7.78 1 9l2 2c1.02-1.02 2.17-1.85 3.41-2.5l2.52 2.52C7.69 11.63 6.53 12.41 5 14l2 2 3.01-3.01 8.44 8.44 1.41-1.41L3.41 1.64 2 3.05zM9 18l3 3 3-3a4.237 4.237 0 00-6 0z"/></svg>
+        You are offline. Some features may not be available.
+    </div>
+    <script>
+    (function() {
+        var banner = document.getElementById('offline-banner');
+        function updateOnlineStatus() {
+            if (navigator.onLine) { banner.classList.remove('show'); } else { banner.classList.add('show'); }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+    })();
+    </script>
+
     <!-- Center crosshair -->
     <div class="crosshair"></div>
 
@@ -832,6 +877,13 @@
 
     <!-- Right-side floating action buttons -->
     <div class="fab-stack">
+        <!-- Settings button -->
+        <button class="fab" id="btn-settings" title="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+        </button>
         <!-- Layers button -->
         <button class="fab" id="btn-layers" title="Layers">
             <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
@@ -896,6 +948,30 @@
     </div>
 
     <!-- Bottom navigation bar -->
+    <!-- Settings panel overlay -->
+    <div class="layer-overlay" id="settings-overlay"></div>
+
+    <!-- Slide-in settings panel -->
+    <div class="layer-panel" id="settings-panel">
+        <div class="layer-panel-header">
+            <h3>Settings</h3>
+            <button class="layer-panel-close" id="settings-panel-close">&times;</button>
+        </div>
+        <div class="layer-section">
+            <div class="layer-section-title">Cache</div>
+            <button id="settings-clear-cache" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                Clear Cache &amp; Reload
+            </button>
+            <p style="margin:8px 0 0;font-size:12px;color:#757575;line-height:1.4;">Clears all cached data including map tiles, saved regions, and service worker. The page will reload.</p>
+        </div>
+        <div class="layer-section">
+            <div class="layer-section-title">About</div>
+            <p style="margin:0;font-size:13px;color:#555;line-height:1.5;">Development Plan GIS<br>Map Magician</p>
+            <p style="margin:6px 0 0;font-size:12px;color:#999;">www.mapmagician.in</p>
+        </div>
+    </div>
+
     <!-- Unified bottom bar -->
     <div class="bottom-bar" id="bottom-bar">
         <div class="bottom-bar-left">
@@ -1020,6 +1096,56 @@
             <textarea id="support-message" rows="4" placeholder="Describe your issue..." style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;resize:vertical;margin-bottom:16px;box-sizing:border-box;font-family:inherit;"></textarea>
             <button class="auth-dialog-btn" id="support-send-btn" style="width:100%;justify-content:center;margin-bottom:0;">Send Message</button>
             <button class="auth-dialog-cancel" id="support-cancel-btn">Cancel</button>
+        </div>
+    </div>
+
+    <!-- First-visit disclaimer dialog (blocks app until accepted; skipped in embed mode) -->
+    <div class="disclaimer-overlay" id="disclaimer-overlay">
+        <div class="disclaimer-box">
+            <div class="disclaimer-title">IMPORTANT DISCLAIMER</div>
+            <div class="disclaimer-body">
+                <p>This is a privately developed GIS visualization and mapping application.</p>
+                <p><strong>This app is NOT affiliated with, endorsed by, or connected to any government agency or authority.</strong> It does NOT represent a government entity and does NOT provide official government data, legal records, or authoritative planning information.</p>
+                <p>Maps and layers shown in this app are independently processed into map tiles and visualized for reference and spatial understanding purposes only. Any use of publicly available planning documents is solely for general reference and does not imply accuracy, completeness, or official validity.</p>
+                <div class="disclaimer-section-title">LIMITATIONS OF USE</div>
+                <p>The information displayed in this app:</p>
+                <ol class="disclaimer-list">
+                    <li>Is for reference and visualization only</li>
+                    <li>Is NOT suitable for legal, regulatory, or official purposes</li>
+                    <li>May not reflect the latest notifications, amendments, or approvals</li>
+                    <li>Should not be used for property transactions or statutory compliance</li>
+                </ol>
+                <p class="disclaimer-italic">Users must independently verify all information with official notifications, planning authorities, and qualified professionals before making any decisions. For legally valid and authoritative information, always consult the respective government department or official publications.</p>
+            </div>
+            <div class="disclaimer-actions">
+                <button class="disclaimer-btn disclaimer-btn-disagree" id="disclaimer-disagree">Disagree</button>
+                <button class="disclaimer-btn disclaimer-btn-agree" id="disclaimer-agree">I Agree</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Install info dialog -->
+    <div class="auth-dialog-overlay" id="install-info-overlay" data-dismiss="install-info-cancel" style="z-index:4000;">
+        <div class="auth-dialog" style="max-width:420px;text-align:left;">
+            <div style="width:56px;height:56px;margin:0 auto 16px;background:#E0F2F1;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="#00695C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3 style="text-align:center;">Install MapMagician?</h3>
+            <p style="font-size:13px;color:#555;margin-bottom:12px;line-height:1.6;">
+                <strong>This is safe.</strong> You're not downloading anything new &mdash; your browser just saves this website as a shortcut that opens in its own window, without tabs or the address bar.
+            </p>
+            <p style="font-size:13px;color:#555;margin-bottom:12px;">What you get:</p>
+            <ul style="font-size:13px;color:#555;line-height:1.7;padding-left:20px;margin-bottom:14px;">
+                <li>An icon on your home screen / Start menu</li>
+                <li>Opens faster, runs in its own window</li>
+                <li>Works the same as the website &mdash; same account, same purchases</li>
+                <li>Uninstall anytime from your phone / PC app list</li>
+            </ul>
+            <p style="font-size:12px;color:#888;background:#f5f5f5;padding:10px 12px;border-radius:8px;margin-bottom:20px;line-height:1.5;">
+                &#128161; You can also install from your browser's menu: open the Chrome / Edge menu (&#8942;) and look for <em>&ldquo;Install MapMagician&rdquo;</em> or <em>&ldquo;Add to Home screen&rdquo;</em>.
+            </p>
+            <button class="auth-dialog-btn" id="install-info-continue" style="width:100%;justify-content:center;background:#008577;color:#fff;border-color:#008577;margin-bottom:0;">Continue to install</button>
+            <button class="auth-dialog-cancel" id="install-info-cancel">Not now</button>
         </div>
     </div>
 
@@ -1171,6 +1297,21 @@
     
     <!-- Firebase initialization must come after the Firebase scripts have loaded -->
     <script>
+        // --- Disclaimer (shown on every page load, skipped in embed mode and on mapmagician.in) ---
+        (function() {
+            var overlay = document.getElementById('disclaimer-overlay');
+            if (!overlay) return;
+            var isEmbed = new URLSearchParams(window.location.search).get('embed') === '1';
+            var isMainSite = window.location.hostname === 'mapmagician.in' || window.location.hostname === 'www.mapmagician.in';
+            if (isEmbed || isMainSite) { overlay.style.display = 'none'; return; }
+            document.getElementById('disclaimer-agree').addEventListener('click', function() {
+                overlay.style.display = 'none';
+            });
+            document.getElementById('disclaimer-disagree').addEventListener('click', function() {
+                window.location.href = 'https://www.mapmagician.in';
+            });
+        })();
+
         // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCJ1MkbVviNX0RrqOEg-00wKBiB3zCtUsQ",
@@ -4877,6 +5018,46 @@
             // Enter key inside any input submits
             coordOverlay.querySelectorAll('input').forEach(inp => {
                 inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitCoordDialog(); } });
+            });
+
+            // Layer panel open/close
+            // Settings panel open/close
+            const settingsPanel = document.getElementById('settings-panel');
+            const settingsOverlay = document.getElementById('settings-overlay');
+            document.getElementById('btn-settings').addEventListener('click', function() {
+                settingsPanel.classList.add('open');
+                settingsOverlay.classList.add('open');
+            });
+            function closeSettingsPanel() {
+                settingsPanel.classList.remove('open');
+                settingsOverlay.classList.remove('open');
+            }
+            document.getElementById('settings-panel-close').addEventListener('click', closeSettingsPanel);
+            settingsOverlay.addEventListener('click', closeSettingsPanel);
+            document.getElementById('settings-clear-cache').addEventListener('click', function() {
+                closeSettingsPanel();
+                Promise.all([
+                    caches.keys().then(function(names) {
+                        return Promise.all(names.map(function(n) { return caches.delete(n); }));
+                    }),
+                    navigator.serviceWorker.getRegistrations().then(function(regs) {
+                        return Promise.all(regs.map(function(r) { return r.unregister(); }));
+                    }),
+                    new Promise(function(resolve) {
+                        var req = indexedDB.deleteDatabase('mapmagician_geojson');
+                        req.onsuccess = resolve; req.onerror = resolve; req.onblocked = resolve;
+                    }),
+                    new Promise(function(resolve) {
+                        try { localStorage.removeItem('mm_geocoder_cache'); } catch(e) {}
+                        resolve();
+                    })
+                ]).then(function() {
+                    alert('Cache cleared! The page will reload.');
+                    location.reload(true);
+                }).catch(function() {
+                    alert('Cache cleared! The page will reload.');
+                    location.reload(true);
+                });
             });
 
             // Layer panel open/close
