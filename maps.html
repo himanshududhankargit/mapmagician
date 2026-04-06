@@ -1208,11 +1208,10 @@
     
     <!-- Firebase initialization must come after the Firebase scripts have loaded -->
     <script>
-        // --- Disclaimer (shown on every page load, skipped in embed mode) ---
+        // --- Disclaimer (shown on every page load) ---
         (function() {
             const overlay = document.getElementById('disclaimer-overlay');
             if (!overlay) return;
-            if (isEmbedMode) { overlay.style.display = 'none'; return; }
             document.getElementById('disclaimer-agree').addEventListener('click', function() {
                 overlay.style.display = 'none';
             });
