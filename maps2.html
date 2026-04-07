@@ -190,7 +190,7 @@
             .top-search-row { padding: 0 8px; gap: 6px; }
             #map-type { padding: 0 6px; font-size: 10px; }
             .profile-btn { width: 36px; padding: 0; border-radius: 50%; }
-            .profile-btn #profile-btn-icon { display: none; }
+            .profile-btn:not(.signed-in) #profile-btn-icon { display: none; }
         }
 
         /* Horizontal toolbar buttons */
@@ -4191,7 +4191,13 @@
                     var sub = districtCount > 0
                         ? districtCount + ' districts'
                         : locationCount + ' locations';
-                    return { name: st.name, sub: sub, icon: st.icon, hasChildren: true };
+                    // For states without sub-districts, attach productPurchaseID so badge renders
+                    var pid = '';
+                    if (districtCount === 0) {
+                        var stateEntry = menuData.find(function(m) { return m.state === st.name && !m.district; });
+                        if (stateEntry) pid = stateEntry.productPurchaseID;
+                    }
+                    return { name: st.name, sub: sub, icon: st.icon, hasChildren: true, productPurchaseID: pid };
                 });
                 pushRegionLevel('All Regions', items, 'state');
                 regionBrowser.classList.add('open');
