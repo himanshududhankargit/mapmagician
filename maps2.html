@@ -6075,7 +6075,11 @@
                     row.addEventListener('click', (function(villageItem) {
                         return function() {
                             overlay.classList.remove('open');
-                            onVillageMarkerClick(villageItem);
+                            // Delay so the back-button history cleanup from addon panel
+                            // close completes before the next dialog opens
+                            setTimeout(function() {
+                                onVillageMarkerClick(villageItem);
+                            }, 300);
                         };
                     })(item));
 
