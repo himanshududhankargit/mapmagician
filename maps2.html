@@ -1784,16 +1784,24 @@
         const FETCH_COOLDOWN_MS = 30000; // Don't re-fetch within 30 seconds
 
         // Re-check purchase status when user returns to the tab
-        // Only checks if signed in and has active purchases — zero wasted calls
+        // Only reloads tiles if purchase data actually changed
         document.addEventListener('visibilitychange', function() {
             if (document.visibilityState !== 'visible') return;
             if (!currentUser || currentUser.isAnonymous) return;
             if (activePurchases.size === 0 && villagePurchases.size === 0) return;
+            // Snapshot current state to compare after fetch
+            var prevRegionKeys = Array.from(activePurchases.keys()).sort().join(',');
+            var prevVillageKeys = Array.from(villagePurchases.keys()).sort().join(',');
             Promise.all([fetchPurchaseStatus(true), fetchVillagePurchases()]).then(function() {
-                clearAllLayersOfType(villageOverlays);
-                villageTileStatus = Array(villageLayerData.length).fill(false);
-                loadTilesBasedOnViewport();
-                updateVillageMarkerStyles();
+                var newRegionKeys = Array.from(activePurchases.keys()).sort().join(',');
+                var newVillageKeys = Array.from(villagePurchases.keys()).sort().join(',');
+                if (newRegionKeys !== prevRegionKeys || newVillageKeys !== prevVillageKeys) {
+                    // Purchase data changed — reload tiles
+                    clearAllLayersOfType(villageOverlays);
+                    villageTileStatus = Array(villageLayerData.length).fill(false);
+                    loadTilesBasedOnViewport();
+                    updateVillageMarkerStyles();
+                }
             });
         });
 
