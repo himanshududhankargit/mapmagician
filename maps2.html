@@ -82,6 +82,9 @@
     }
     </script>
 
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#008577">
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="AssetsGIS/mapmagiciansmall.png">
     <link rel="apple-touch-icon" href="AssetsGIS/mapmagiciansmall.png">
@@ -1479,6 +1482,13 @@
         // Hide install buttons if already running as installed PWA
         if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
             hideInstallButtons();
+        }
+
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js').catch(function(err) { console.warn('SW register failed:', err); });
+            });
         }
 
         // Firebase configuration
