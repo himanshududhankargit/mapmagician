@@ -5847,14 +5847,30 @@
             var bgColor = isPurchased ? '%234CAF50' : '%23FFFFFF';
             var borderColor = isPurchased ? '%232E7D32' : '%23999999';
             var textColor = isPurchased ? '%23FFFFFF' : '%23333333';
+            var subColor = isPurchased ? '%23C8E6C9' : '%23999999';
             var displayName = villageName.length > 20 ? villageName.substring(0, 20) + '...' : villageName;
+
+            // Sub text: days remaining or "Click to purchase"
+            var subText = '';
+            if (isPurchased) {
+                var entry = villagePurchases.get(villageName);
+                if (entry) {
+                    var daysLeft = Math.ceil((entry.expiry - Date.now()) / (24 * 60 * 60 * 1000));
+                    subText = daysLeft + 'd remaining';
+                }
+            } else {
+                subText = 'Click to purchase';
+            }
+
             var charWidth = 6.5;
             var padding = 16;
-            var width = Math.max(Math.ceil(displayName.length * charWidth + padding * 2), 50);
-            var height = 28;
+            var nameWidth = Math.ceil(displayName.length * charWidth + padding * 2);
+            var subWidth = Math.ceil(subText.length * 5.5 + padding * 2);
+            var width = Math.max(nameWidth, subWidth, 50);
+            var height = 40;
             var arrowH = 8;
             var totalH = height + arrowH;
-            var rx = height / 2;
+            var rx = 12;
             var cx = width / 2;
 
             var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + totalH + '">' +
@@ -5863,8 +5879,10 @@
                 '<polygon points="' + (cx - 5) + ',' + (height - 1) + ' ' + (cx + 5) + ',' + (height - 1) + ' ' + cx + ',' + totalH + '" ' +
                 'fill="' + bgColor + '" stroke="' + borderColor + '" stroke-width="1.5" stroke-linejoin="round"/>' +
                 '<line x1="' + (cx - 4) + '" y1="' + (height - 1) + '" x2="' + (cx + 4) + '" y2="' + (height - 1) + '" stroke="' + bgColor + '" stroke-width="2"/>' +
-                '<text x="' + cx + '" y="' + (height / 2 + 4) + '" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="' + textColor + '">' +
-                displayName.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</text></svg>';
+                '<text x="' + cx + '" y="16" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="' + textColor + '">' +
+                displayName.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</text>' +
+                '<text x="' + cx + '" y="30" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="' + subColor + '">' +
+                subText + '</text></svg>';
 
             return {
                 url: 'data:image/svg+xml;charset=UTF-8,' + svg,
