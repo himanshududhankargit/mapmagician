@@ -1324,7 +1324,8 @@
         </div>
         <input type="search" class="region-browser-search" id="region-browser-search" placeholder="Search regions..." autocomplete="off">
         <div class="region-browser-body">
-            <div style="text-align:center;margin-bottom:8px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
+            <div class="region-grid" id="region-grid"></div>
+            <div id="sidebar-actions-wrap" style="text-align:center;padding:16px 0 8px;display:none;justify-content:center;gap:8px;flex-wrap:wrap;">
                 <div id="sidebar-install-wrap" style="display:none;">
                     <button class="sidebar-install-btn" id="sidebar-install-btn">
                         <span class="sidebar-install-icon">
@@ -1346,7 +1347,6 @@
                     </span>
                 </button>
             </div>
-            <div class="region-grid" id="region-grid"></div>
         </div>
     </div>
 
@@ -4392,6 +4392,12 @@
 
             function renderRegionGrid(items, type) {
                 regionGrid.innerHTML = '';
+
+                // Show install/share buttons only on first page (state level)
+                var actionsWrap = document.getElementById('sidebar-actions-wrap');
+                if (actionsWrap) {
+                    actionsWrap.style.display = (type === 'state') ? 'flex' : 'none';
+                }
 
                 // Villages: horizontal list rows (icon left, name + coords right)
                 if (type === 'village') {
