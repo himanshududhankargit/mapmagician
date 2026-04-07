@@ -5384,11 +5384,46 @@
             // Settings panel open/close
             const settingsPanel = document.getElementById('settings-panel');
             const settingsOverlay = document.getElementById('settings-overlay');
+            function makeExpandableGroup(title, color, count, items) {
+                var wrap = document.createElement('div');
+                wrap.style.cssText = 'margin-bottom:8px;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;';
+
+                var header = document.createElement('div');
+                header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#fafafa;cursor:pointer;user-select:none;';
+                header.innerHTML = '<div style="display:flex;align-items:center;gap:8px;">' +
+                    '<span style="font-size:12px;font-weight:700;color:' + color + ';text-transform:uppercase;letter-spacing:0.5px;">' + title + '</span>' +
+                    '<span style="font-size:11px;background:#e0e0e0;color:#555;padding:1px 6px;border-radius:8px;">' + count + '</span></div>' +
+                    '<span class="expand-arrow" style="font-size:14px;color:#999;transition:transform 0.2s;">&#9660;</span>';
+
+                var body = document.createElement('div');
+                body.style.cssText = 'display:none;padding:6px 8px 8px;';
+
+                if (items.length === 0) {
+                    body.innerHTML = '<div style="font-size:12px;color:#999;padding:4px 4px;">No active purchases</div>';
+                } else {
+                    items.forEach(function(item) {
+                        var row = document.createElement('div');
+                        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#f5f5f5;border-radius:8px;margin-bottom:4px;font-size:13px;';
+                        row.innerHTML = item.html;
+                        body.appendChild(row);
+                    });
+                }
+
+                header.addEventListener('click', function() {
+                    var isOpen = body.style.display !== 'none';
+                    body.style.display = isOpen ? 'none' : 'block';
+                    header.querySelector('.expand-arrow').style.transform = isOpen ? '' : 'rotate(180deg)';
+                });
+
+                wrap.appendChild(header);
+                wrap.appendChild(body);
+                return wrap;
+            }
+
             function renderSettingsPurchases() {
                 var section = document.getElementById('settings-purchases-section');
                 var dpDiv = document.getElementById('settings-dp-purchases');
                 var villDiv = document.getElementById('settings-village-purchases');
-                var noP = document.getElementById('settings-no-purchases');
 
                 if (!currentUser || currentUser.isAnonymous) {
                     section.style.display = 'none';
@@ -5397,52 +5432,34 @@
 
                 dpDiv.innerHTML = '';
                 villDiv.innerHTML = '';
-                var hasAny = false;
 
                 // DP / Region purchases
-                if (activePurchases.size > 0) {
-                    var dpLabel = document.createElement('div');
-                    dpLabel.style.cssText = 'font-size:11px;font-weight:700;color:#00796B;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;';
-                    dpLabel.textContent = 'Development Plans';
-                    dpDiv.appendChild(dpLabel);
-
-                    activePurchases.forEach(function(val, pid) {
-                        var district = findDistrictByPurchaseId(pid);
-                        var name = district ? district.districtName : pid;
-                        var daysLeft = Math.ceil((val.expiry - Date.now()) / (24 * 60 * 60 * 1000));
-                        var planTag = val.plan === 'professional' ? 'Pro' : val.plan === 'web' ? 'Web' : val.plan === 'override' ? 'Override' : '7-Day';
-
-                        var row = document.createElement('div');
-                        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#f5f5f5;border-radius:8px;margin-bottom:4px;font-size:13px;';
-                        row.innerHTML = '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#333;">' + name + '</div><div style="font-size:11px;color:#888;">' + planTag + ' Pass</div></div>' +
-                            '<span style="font-size:11px;font-weight:600;color:' + (daysLeft <= 1 ? '#c62828' : '#2E7D32') + ';">' + daysLeft + 'd left</span>';
-                        dpDiv.appendChild(row);
-                        hasAny = true;
+                var dpItems = [];
+                activePurchases.forEach(function(val, pid) {
+                    var district = findDistrictByPurchaseId(pid);
+                    var name = district ? district.districtName : pid;
+                    var daysLeft = Math.ceil((val.expiry - Date.now()) / (24 * 60 * 60 * 1000));
+                    var planTag = val.plan === 'professional' ? 'Pro' : val.plan === 'web' ? 'Web' : val.plan === 'override' ? 'Override' : '7-Day';
+                    dpItems.push({
+                        html: '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#333;">' + name + '</div><div style="font-size:11px;color:#888;">' + planTag + ' Pass</div></div>' +
+                            '<span style="font-size:11px;font-weight:600;color:' + (daysLeft <= 1 ? '#c62828' : '#2E7D32') + ';">' + daysLeft + 'd left</span>'
                     });
-                }
+                });
+                dpDiv.appendChild(makeExpandableGroup('Development Plans', '#00796B', dpItems.length, dpItems));
 
                 // Village purchases
-                if (villagePurchases.size > 0) {
-                    var villLabel = document.createElement('div');
-                    villLabel.style.cssText = 'font-size:11px;font-weight:700;color:#1565C0;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;';
-                    villLabel.textContent = 'Village Add-On Plans';
-                    villDiv.appendChild(villLabel);
-
-                    villagePurchases.forEach(function(val, vName) {
-                        var daysLeft = Math.ceil((val.expiry - Date.now()) / (24 * 60 * 60 * 1000));
-
-                        var row = document.createElement('div');
-                        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#f5f5f5;border-radius:8px;margin-bottom:4px;font-size:13px;';
-                        row.innerHTML = '<div style="font-weight:600;color:#333;">' + vName + '</div>' +
-                            '<span style="font-size:11px;font-weight:600;color:' + (daysLeft <= 1 ? '#c62828' : '#2E7D32') + ';">' + daysLeft + 'd left</span>';
-                        villDiv.appendChild(row);
-                        hasAny = true;
+                var villItems = [];
+                villagePurchases.forEach(function(val, vName) {
+                    var daysLeft = Math.ceil((val.expiry - Date.now()) / (24 * 60 * 60 * 1000));
+                    villItems.push({
+                        html: '<div style="font-weight:600;color:#333;">' + vName + '</div>' +
+                            '<span style="font-size:11px;font-weight:600;color:' + (daysLeft <= 1 ? '#c62828' : '#2E7D32') + ';">' + daysLeft + 'd left</span>'
                     });
-                }
+                });
+                villDiv.appendChild(makeExpandableGroup('Village Add-On Plans', '#1565C0', villItems.length, villItems));
 
-                section.style.display = hasAny || (activePurchases.size === 0 && villagePurchases.size === 0 && currentUser && !currentUser.isAnonymous) ? 'block' : 'none';
-                noP.style.display = hasAny ? 'none' : 'block';
                 section.style.display = 'block';
+                document.getElementById('settings-no-purchases').style.display = 'none';
             }
 
             document.getElementById('btn-settings').addEventListener('click', function() {
