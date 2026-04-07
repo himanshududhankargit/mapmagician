@@ -2239,28 +2239,20 @@
 
                 loadingOverlay.classList.remove('open');
 
-                var options = {
-                    key: 'rzp_live_SXr1BKnoysSo9r',
-                    subscription_id: result.data.subscriptionId,
-                    name: 'Development Plans (GIS)',
-                    description: 'Weekly Subscription: ' + regionName,
-                    prefill: {
-                        email: currentUser.email,
-                        name: currentUser.displayName || ''
-                    },
-                    theme: { color: '#008577' },
-                    handler: async function(response) {
-                        updateStatus('Subscription activating...');
-                        try {
-                            // Fast-path: verify subscription status via Razorpay API
-                            var confirmSubscription = functions.httpsCallable('confirmSubscription');
-                            await confirmSubscription({
-                                subscriptionId: result.data.subscriptionId,
-                                productId: productId
-                            });
-                            await fetchPurchaseStatus(true);
+                var subscriptionId = result.data.subscriptionId;
+
+                // Poll for webhook confirmation — don't trust Razorpay UI result
+                function pollForSubscriptionActivation(pid, subId, attempts, maxAttempts) {
+                    if (attempts >= maxAttempts) {
+                        loadingOverlay.classList.remove('open');
+                        updateStatus('Subscription is being processed. Please refresh in a minute.');
+                        return;
+                    }
+                    setTimeout(async function() {
+                        await fetchPurchaseStatus(true);
+                        if (hasPurchase(pid)) {
+                            // Webhook confirmed — subscription is active
                             await fetchSubscriptionStatus();
-                            // Clear and reload tiles
                             clearAllLayersOfType(dpOverlays);
                             dpTileStatus = Array(dpLayerData.length).fill(false);
                             clearAllLayersOfType(layoutOverlays);
@@ -2272,19 +2264,41 @@
                             lastCheckedRegionId = null;
                             stickyTile = null;
                             stickyDistrict = null;
+                            loadingOverlay.classList.remove('open');
                             updateStatus('Subscription active!');
-                        } catch (e) {
-                            console.error('Confirm subscription error:', e);
-                            // Fallback: poll for webhook to write the purchase
-                            updateStatus('Subscription processing...');
-                            setTimeout(function() { fetchPurchaseStatus(true); }, 3000);
-                            setTimeout(function() { fetchPurchaseStatus(true); }, 8000);
-                            setTimeout(function() { fetchPurchaseStatus(true); fetchSubscriptionStatus(); }, 15000);
+                        } else {
+                            pollForSubscriptionActivation(pid, subId, attempts + 1, maxAttempts);
                         }
+                    }, 3000); // poll every 3 seconds
+                }
+
+                var options = {
+                    key: 'rzp_live_SXr1BKnoysSo9r',
+                    subscription_id: subscriptionId,
+                    name: 'Development Plans (GIS)',
+                    description: 'Weekly Subscription: ' + regionName,
+                    prefill: {
+                        email: currentUser.email,
+                        name: currentUser.displayName || ''
+                    },
+                    theme: { color: '#008577' },
+                    handler: function(response) {
+                        // Payment went through Razorpay UI — show processing and poll
+                        document.getElementById('payment-loading-text').textContent = 'Processing subscription...';
+                        document.getElementById('payment-loading-sub').textContent = regionName;
+                        loadingOverlay.classList.add('open');
+                        updateStatus('Processing subscription...');
+                        pollForSubscriptionActivation(productId, subscriptionId, 0, 10);
                     },
                     modal: {
                         ondismiss: function() {
-                            updateStatus('Subscription cancelled');
+                            // User closed Razorpay modal — payment may still have gone through
+                            // Poll a few times to check if webhook activated it
+                            document.getElementById('payment-loading-text').textContent = 'Checking payment status...';
+                            document.getElementById('payment-loading-sub').textContent = regionName;
+                            loadingOverlay.classList.add('open');
+                            updateStatus('Checking payment status...');
+                            pollForSubscriptionActivation(productId, subscriptionId, 0, 5);
                         }
                     }
                 };
@@ -2305,14 +2319,16 @@
                 console.error('Subscription error:', error);
                 if (error.code === 'already-exists') {
                     await fetchPurchaseStatus(true);
-                    map.setOptions({ maxZoom: 21 });
-                    enableMapInteraction();
-                    document.getElementById('zoom-restrict-overlay').classList.remove('open');
-                    showUnlockToast(regionName);
+                    if (hasPurchase(productId)) {
+                        map.setOptions({ maxZoom: 21 });
+                        enableMapInteraction();
+                        document.getElementById('zoom-restrict-overlay').classList.remove('open');
+                        showUnlockToast(regionName);
+                    }
                 } else {
                     alert('Subscription error: ' + (error.message || error.code || JSON.stringify(error)));
                 }
-                updateStatus('Subscription failed');
+                updateStatus('');
             }
         }
 
