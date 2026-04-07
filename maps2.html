@@ -5285,11 +5285,13 @@
                             clickable: false, zIndex: 1
                         });
                         map.setCenter(loc);
-                        // Free users (no purchases): stay at MAX_FREE_ZOOM; premium: zoom to 17
-                        if (activePurchases.size > 0) {
+                        // Check if the located region is purchased before zooming past free limit
+                        var locDistrict = findDistrictAtCenter();
+                        var regionPurchased = locDistrict && hasPurchase(locDistrict.productPurchaseID);
+                        if (regionPurchased) {
                             if (map.getZoom() < 16) map.setZoom(17);
                         } else {
-                            if (map.getZoom() < MAX_FREE_ZOOM) map.setZoom(MAX_FREE_ZOOM);
+                            if (map.getZoom() < MAX_FREE_ZOOM - 1) map.setZoom(MAX_FREE_ZOOM - 1);
                         }
                         showGpsToast('Location found', '#2E7D32');
                     } else {
