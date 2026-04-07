@@ -995,6 +995,12 @@
                 Contact Support
             </button>
         </div>
+        <div class="layer-section" id="settings-purchases-section" style="display:none;">
+            <div class="layer-section-title">My Purchases</div>
+            <div id="settings-dp-purchases" style="margin-bottom:8px;"></div>
+            <div id="settings-village-purchases"></div>
+            <p id="settings-no-purchases" style="margin:0;font-size:13px;color:#999;display:none;">No active purchases</p>
+        </div>
         <div class="layer-section">
             <div class="layer-section-title">About</div>
             <p style="margin:0;font-size:13px;color:#555;line-height:1.5;">Development Plan GIS<br>Map Magician</p>
@@ -5366,9 +5372,71 @@
             // Settings panel open/close
             const settingsPanel = document.getElementById('settings-panel');
             const settingsOverlay = document.getElementById('settings-overlay');
+            function renderSettingsPurchases() {
+                var section = document.getElementById('settings-purchases-section');
+                var dpDiv = document.getElementById('settings-dp-purchases');
+                var villDiv = document.getElementById('settings-village-purchases');
+                var noP = document.getElementById('settings-no-purchases');
+
+                if (!currentUser || currentUser.isAnonymous) {
+                    section.style.display = 'none';
+                    return;
+                }
+
+                dpDiv.innerHTML = '';
+                villDiv.innerHTML = '';
+                var hasAny = false;
+
+                // DP / Region purchases
+                if (activePurchases.size > 0) {
+                    var dpLabel = document.createElement('div');
+                    dpLabel.style.cssText = 'font-size:11px;font-weight:700;color:#00796B;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;';
+                    dpLabel.textContent = 'Development Plans';
+                    dpDiv.appendChild(dpLabel);
+
+                    activePurchases.forEach(function(val, pid) {
+                        var district = findDistrictByPurchaseId(pid);
+                        var name = district ? district.districtName : pid;
+                        var daysLeft = Math.ceil((val.expiry - Date.now()) / (24 * 60 * 60 * 1000));
+                        var planTag = val.plan === 'professional' ? 'Pro' : val.plan === 'web' ? 'Web' : val.plan === 'override' ? 'Override' : '7-Day';
+
+                        var row = document.createElement('div');
+                        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#f5f5f5;border-radius:8px;margin-bottom:4px;font-size:13px;';
+                        row.innerHTML = '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#333;">' + name + '</div><div style="font-size:11px;color:#888;">' + planTag + ' Pass</div></div>' +
+                            '<span style="font-size:11px;font-weight:600;color:' + (daysLeft <= 1 ? '#c62828' : '#2E7D32') + ';">' + daysLeft + 'd left</span>';
+                        dpDiv.appendChild(row);
+                        hasAny = true;
+                    });
+                }
+
+                // Village purchases
+                if (villagePurchases.size > 0) {
+                    var villLabel = document.createElement('div');
+                    villLabel.style.cssText = 'font-size:11px;font-weight:700;color:#1565C0;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;';
+                    villLabel.textContent = 'Village Add-On Plans';
+                    villDiv.appendChild(villLabel);
+
+                    villagePurchases.forEach(function(val, vName) {
+                        var daysLeft = Math.ceil((val.expiry - Date.now()) / (24 * 60 * 60 * 1000));
+
+                        var row = document.createElement('div');
+                        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#f5f5f5;border-radius:8px;margin-bottom:4px;font-size:13px;';
+                        row.innerHTML = '<div style="font-weight:600;color:#333;">' + vName + '</div>' +
+                            '<span style="font-size:11px;font-weight:600;color:' + (daysLeft <= 1 ? '#c62828' : '#2E7D32') + ';">' + daysLeft + 'd left</span>';
+                        villDiv.appendChild(row);
+                        hasAny = true;
+                    });
+                }
+
+                section.style.display = hasAny || (activePurchases.size === 0 && villagePurchases.size === 0 && currentUser && !currentUser.isAnonymous) ? 'block' : 'none';
+                noP.style.display = hasAny ? 'none' : 'block';
+                section.style.display = 'block';
+            }
+
             document.getElementById('btn-settings').addEventListener('click', function() {
                 settingsPanel.classList.add('open');
                 settingsOverlay.classList.add('open');
+                renderSettingsPurchases();
                 // Hide floating sign-in button while settings is open
                 var fsb = document.getElementById('floating-signin-btn');
                 if (fsb) fsb.style.display = 'none';
