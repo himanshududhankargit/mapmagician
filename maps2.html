@@ -6289,7 +6289,9 @@
 
             newBtn.addEventListener('click', function() {
                 overlay.classList.remove('open');
-                buyVillage(villageItem.villageName);
+                setTimeout(function() {
+                    buyVillage(villageItem.villageName);
+                }, 300);
             });
 
             document.getElementById('village-purchase-cancel').onclick = function() {
