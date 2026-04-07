@@ -598,13 +598,13 @@
         }
 
         /* Install buttons */
-        .sidebar-install-btn { display:flex; align-items:center; gap:10px; width:calc(100% - 32px); margin:8px auto; padding:12px 14px; border:1.5px solid #B2DFDB; border-radius:10px; background:#E0F2F1; cursor:pointer; font-family:inherit; text-align:left; color:#00695C; transition:background 0.15s,border-color 0.15s,transform 0.1s; }
+        .sidebar-install-btn { display:inline-flex; align-items:center; gap:10px; margin:0 auto 12px; padding:10px 18px; background:#E0F2F1; color:#00695C; border:1px solid #80CBC4; border-radius:22px; cursor:pointer; text-align:left; transition:background 0.15s,border-color 0.15s,transform 0.12s; font-family:inherit; font-size:13px; box-shadow:0 1px 3px rgba(0,105,92,0.12); }
         .sidebar-install-btn:hover { background:#B2DFDB; border-color:#4DB6AC; }
         .sidebar-install-btn:active { transform:scale(0.97); }
-        .sidebar-install-icon { display:flex; align-items:center; justify-content:center; width:28px; height:28px; background:#fff; border-radius:50%; color:#00796B; flex-shrink:0; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
-        .sidebar-install-text { display:flex; flex-direction:column; }
+        .sidebar-install-icon { width:18px; height:18px; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#00695C; }
+        .sidebar-install-text { display:flex; align-items:baseline; gap:8px; }
         .sidebar-install-title { font-size:13px; font-weight:600; color:#00695C; }
-        .sidebar-install-sub { font-size:11px; color:#80CBC4; margin-top:1px; }
+        .sidebar-install-sub { font-size:12px; color:#00897B; }
         .sidebar-install-btn.installed { background:#E8F5E9; color:#2E7D32; border-color:#A5D6A7; cursor:default; }
         .sidebar-install-btn.installed:hover { background:#E8F5E9; border-color:#A5D6A7; }
         .sidebar-install-btn.installed .sidebar-install-title { color:#2E7D32; }
@@ -1335,6 +1335,17 @@
                     </span>
                 </button>
             </div>
+            <div style="text-align:center;margin-bottom:12px;">
+                <button class="sidebar-install-btn" id="sidebar-share-btn" style="display:inline-flex;">
+                    <span class="sidebar-install-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="2"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" stroke-width="2"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" stroke-width="2"/></svg>
+                    </span>
+                    <span class="sidebar-install-text">
+                        <span class="sidebar-install-title">Share</span>
+                        <span class="sidebar-install-sub">send to friends</span>
+                    </span>
+                </button>
+            </div>
             <div class="region-grid" id="region-grid"></div>
         </div>
     </div>
@@ -1492,6 +1503,25 @@
         if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
             hideInstallButtons();
         }
+
+        // Share button
+        document.getElementById('sidebar-share-btn').addEventListener('click', function() {
+            var shareData = {
+                title: 'Development Plan GIS - MapMagician',
+                text: 'View development plan maps overlaid on satellite imagery. Browse DP maps for Maharashtra, Bengaluru, Hyderabad and more.',
+                url: 'https://www.mapmagician.in/maps2.html'
+            };
+            if (navigator.share) {
+                navigator.share(shareData).catch(function() {});
+            } else {
+                // Fallback: copy link to clipboard
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(shareData.url).then(function() {
+                        alert('Link copied to clipboard!');
+                    });
+                }
+            }
+        });
 
         // Register service worker for PWA
         if ('serviceWorker' in navigator) {
