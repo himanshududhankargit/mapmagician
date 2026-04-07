@@ -2921,11 +2921,15 @@
             newBtn.addEventListener('click', () => {
                 overlay.classList.remove('open');
                 enableMapInteraction();
-                if (district) {
-                    buyRegion(district.productPurchaseID, district.districtName);
-                } else {
-                    openRegionsBrowser();
-                }
+                // Delay so the back-button history cleanup completes
+                // before buyRegion opens auth dialog or Razorpay
+                setTimeout(() => {
+                    if (district) {
+                        buyRegion(district.productPurchaseID, district.districtName);
+                    } else {
+                        openRegionsBrowser();
+                    }
+                }, 300);
             });
 
             document.getElementById('zoom-restrict-cancel').onclick = () => {
