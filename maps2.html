@@ -1646,6 +1646,12 @@
                 profileBtn.style.background = '#e3f2fd';
                 profileBtn.style.color = '#1976D2';
                 profileBtn.title = 'Sign in';
+                // Clear village purchases and reload tiles
+                villagePurchases.clear();
+                clearAllLayersOfType(villageOverlays);
+                villageTileStatus = Array(villageLayerData.length).fill(false);
+                loadTilesBasedOnViewport();
+                updateVillageMarkerStyles();
             } else {
                 profileBtn.classList.remove('signed-in');
                 profileSvg.style.display = '';
@@ -1655,8 +1661,14 @@
                 profileBtn.style.color = '#1976D2';
                 profileBtn.title = 'Sign in';
                 activePurchases.clear();
+                villagePurchases.clear();
                 cachedIdToken = null;
                 clearSession();
+                // Clear village tiles
+                clearAllLayersOfType(villageOverlays);
+                villageTileStatus = Array(villageLayerData.length).fill(false);
+                loadTilesBasedOnViewport();
+                updateVillageMarkerStyles();
 
                 // Clear CloudFront cookies on sign-out
                 document.cookie = 'CloudFront-Policy=; domain=.mapmagician.in; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
