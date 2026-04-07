@@ -564,6 +564,7 @@
         .pd-play-btn svg { flex-shrink:0; }
         .pd-support { display:block; margin:12px auto 0; padding:6px 12px; background:none; border:none; color:#B0BEC5; font-size:12px; font-weight:500; cursor:pointer; width:100%; text-align:center; }
         .pd-support:hover { color:#607D8B; }
+        #addon-panel-search::placeholder { color:#c8e6c9; opacity:1; }
         .unlock-toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:#2E7D32; color:#fff; padding:12px 24px; border-radius:8px; font-size:14px; font-weight:500; box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:4000; opacity:0; transition:opacity 0.3s,transform 0.3s; pointer-events:none; font-family:'Segoe UI',Roboto,Arial,sans-serif; display:flex; align-items:center; gap:8px; }
         .unlock-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
         .zoom-info-toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:#ef6c00; color:#fff; padding:12px 20px; border-radius:8px; font-size:13px; font-weight:500; box-shadow:0 4px 12px rgba(0,0,0,0.25); z-index:4000; opacity:0; transition:opacity 0.3s,transform 0.3s; pointer-events:none; font-family:'Segoe UI',Roboto,Arial,sans-serif; display:flex; align-items:center; gap:8px; max-width:92vw; }
@@ -1279,7 +1280,7 @@
                     <h3 id="addon-panel-title" style="margin:0;font-size:18px;font-weight:700;color:#fff;">Add-On Maps</h3>
                     <button id="addon-panel-close" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:0 4px;line-height:1;">&times;</button>
                 </div>
-                <input id="addon-panel-search" type="search" placeholder="Search villages..." autocomplete="off" style="width:100%;margin-top:12px;padding:8px 12px;border:none;border-radius:8px;font-size:13px;background:rgba(255,255,255,0.2);color:#fff;outline:none;box-sizing:border-box;" />
+                <input id="addon-panel-search" type="search" placeholder="Search villages..." autocomplete="off" style="width:100%;margin-top:12px;padding:8px 12px;border:none;border-radius:8px;font-size:13px;background:rgba(255,255,255,0.25);color:#fff;outline:none;box-sizing:border-box;" />
             </div>
             <div id="addon-panel-list" style="overflow-y:auto;flex:1;padding:8px 0;"></div>
         </div>
@@ -4333,13 +4334,15 @@
                     var goCard = document.createElement('div');
                     goCard.className = 'region-card';
                     goCard.innerHTML =
-                        '<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;">' +
-                        '<svg width="56" height="56" viewBox="0 0 469.333 469.333" fill="#333"><path d="M234.667,149.333c-47.147,0 -85.333,38.187 -85.333,85.333S187.52,320 234.667,320S320,281.813 320,234.667S281.813,149.333 234.667,149.333zM425.387,213.333C415.573,124.373 344.96,53.76 256,43.947V0h-42.667v43.947C124.373,53.76 53.76,124.373 43.947,213.333H0V256h43.947c9.813,88.96 80.427,159.573 169.387,169.387v43.947H256v-43.947C344.96,415.573 415.573,344.96 425.387,256h43.947v-42.667H425.387L425.387,213.333zM234.667,384c-82.453,0 -149.333,-66.88 -149.333,-149.333s66.88,-149.333 149.333,-149.333S384,152.213 384,234.667S317.12,384 234.667,384z"/></svg>' +
+                        '<div class="region-card-placeholder" style="background:#fff;">' +
+                        '<svg width="64" height="64" viewBox="0 0 469.333 469.333" fill="#333"><path d="M234.667,149.333c-47.147,0 -85.333,38.187 -85.333,85.333S187.52,320 234.667,320S320,281.813 320,234.667S281.813,149.333 234.667,149.333zM425.387,213.333C415.573,124.373 344.96,53.76 256,43.947V0h-42.667v43.947C124.373,53.76 53.76,124.373 43.947,213.333H0V256h43.947c9.813,88.96 80.427,159.573 169.387,169.387v43.947H256v-43.947C344.96,415.573 415.573,344.96 425.387,256h43.947v-42.667H425.387L425.387,213.333zM234.667,384c-82.453,0 -149.333,-66.88 -149.333,-149.333s66.88,-149.333 149.333,-149.333S384,152.213 384,234.667S317.12,384 234.667,384z"/></svg>' +
                         '</div>' +
                         '<div class="region-card-body"><div class="region-card-name">Go to Location</div></div>';
                     goCard.addEventListener('click', function() {
                         closeRegionBrowser();
-                        document.getElementById('coord-dialog-overlay').classList.add('open');
+                        setTimeout(function() {
+                            document.getElementById('coord-dialog-overlay').classList.add('open');
+                        }, 350);
                     });
                     regionGrid.appendChild(goCard);
                 }
@@ -5984,7 +5987,7 @@
             var inViewNames = new Set(inView.map(function(v) { return v.villageName; }));
             // All villages with names for search
             var allVillages = villageLayerData.filter(function(v) { return !!v.villageName; });
-            titleEl.textContent = inView.length + ' Add-On Maps';
+            titleEl.textContent = inView.length + ' Add-On Maps in view';
             searchEl.value = '';
 
             function renderList(query) {
