@@ -5833,13 +5833,34 @@
         // Find the DP region's productPurchaseID for a village (spatial lookup like Android)
         function getDPProductIdForVillage(villageItem) {
             var center = getVillageCenter(villageItem);
-            if (!center || !dpLayerData || dpLayerData.length === 0) return null;
+            if (!center) return null;
             var pt = { lat: center.lat, lng: center.lng };
-            for (var i = 0; i < dpLayerData.length; i++) {
-                if (dpLayerData[i].polygon && pointInPolygon(pt, dpLayerData[i].polygon)) {
-                    return dpLayerData[i].productPurchaseID || null;
+
+            // Check current DP polygons
+            if (dpLayerData && dpLayerData.length > 0) {
+                for (var i = 0; i < dpLayerData.length; i++) {
+                    if (dpLayerData[i].polygon && pointInPolygon(pt, dpLayerData[i].polygon)) {
+                        return dpLayerData[i].productPurchaseID || null;
+                    }
                 }
             }
+
+            // Check old DP polygons (like Android's oldDPPolygonArraylist)
+            if (typeof oldDPLayerData !== 'undefined' && oldDPLayerData && oldDPLayerData.length > 0) {
+                for (var j = 0; j < oldDPLayerData.length; j++) {
+                    if (oldDPLayerData[j].polygon && pointInPolygon(pt, oldDPLayerData[j].polygon)) {
+                        return oldDPLayerData[j].productPurchaseID || null;
+                    }
+                }
+            }
+
+            // Fallback: check if the village's own productPurchaseID maps to a known district
+            // (in MahaVillage, productPurchaseID often IS the DP region ID)
+            if (villageItem.productPurchaseID) {
+                var district = findDistrictByPurchaseId(villageItem.productPurchaseID);
+                if (district) return villageItem.productPurchaseID;
+            }
+
             return null;
         }
 
@@ -6147,7 +6168,7 @@
                 return;
             }
 
-            // Check if DP region is purchased first (spatial lookup — find which DP contains this village)
+            // Check if DP region is purchased first (spatial lookup)
             var dpProductId = getDPProductIdForVillage(villageItem);
             if (dpProductId && !hasPurchase(dpProductId)) {
                 pendingVillageAfterDP = villageItem;
