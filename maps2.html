@@ -6165,15 +6165,6 @@
         function onVillageMarkerClick(villageItem) {
             var villageName = villageItem.villageName;
 
-            // Move to village location with animation
-            var center = getVillageCenter(villageItem);
-            if (center) {
-                zoomBypassActive = true;
-                map.panTo(center);
-                if (map.getZoom() < 15) smoothZoomTo(15);
-                google.maps.event.addListenerOnce(map, 'idle', function() { zoomBypassActive = false; });
-            }
-
             if (hasVillagePurchase(villageName)) {
                 // Already purchased — zoom to village at 17
                 zoomToVillage(villageItem);
@@ -6184,6 +6175,8 @@
             // Check if DP region is purchased first (spatial lookup)
             var dpProductId = getDPProductIdForVillage(villageItem);
             if (dpProductId && !hasPurchase(dpProductId)) {
+                // Don't zoom — just show the base plan dialog
+                // Zooming would trigger the zoom_changed paywall simultaneously
                 pendingVillageAfterDP = villageItem;
                 var district = findDistrictByPurchaseId(dpProductId);
                 // Fallback: try findDistrictAtCenter for the name
@@ -6194,6 +6187,14 @@
                 return;
             }
 
+            // DP is purchased (or no DP) — move to village and show purchase dialog
+            var center = getVillageCenter(villageItem);
+            if (center) {
+                zoomBypassActive = true;
+                map.panTo(center);
+                if (map.getZoom() < 15) smoothZoomTo(15);
+                google.maps.event.addListenerOnce(map, 'idle', function() { zoomBypassActive = false; });
+            }
             showVillagePurchaseDialog(villageItem);
         }
 
@@ -6217,6 +6218,9 @@
             document.getElementById('baseplan-cancel-btn').onclick = function() {
                 overlay.classList.remove('open');
                 pendingVillageAfterDP = null;
+                // Also dismiss any zoom-restrict dialog that might be underneath
+                document.getElementById('zoom-restrict-overlay').classList.remove('open');
+                enableMapInteraction();
             };
 
             overlay.classList.add('open');
