@@ -1330,6 +1330,31 @@
         </div>
     </div>
 
+    <!-- Cancel subscription confirmation dialog -->
+    <div class="zoom-dialog-overlay" id="cancel-sub-overlay">
+        <div class="zoom-dialog" style="max-width:400px;padding:0;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#c62828,#b71c1c);padding:20px 20px 16px;text-align:center;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style="margin-bottom:8px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm4-4H8v-2h8v2z" fill="#fff"/></svg>
+                <h3 style="margin:0;font-size:18px;font-weight:700;color:#fff;">Cancel Subscription</h3>
+                <div id="cancel-sub-region" style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:4px;"></div>
+            </div>
+            <div style="padding:20px;">
+                <p style="margin:0 0 16px;font-size:13px;color:#555;line-height:1.7;text-align:center;">Are you sure you want to cancel your weekly subscription?</p>
+                <div style="background:#FFF3E0;border:1px solid #FFE0B2;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+                    <div style="font-size:12px;font-weight:600;color:#E65100;margin-bottom:8px;">What happens when you cancel:</div>
+                    <div style="font-size:12px;color:#555;line-height:1.7;">
+                        <div style="margin-bottom:4px;">&#8226; Your access continues until the current period ends</div>
+                        <div style="margin-bottom:4px;">&#8226; No more charges will be made to your account</div>
+                        <div style="margin-bottom:4px;">&#8226; UPI mandate will be automatically revoked</div>
+                        <div>&#8226; You can re-subscribe or buy a 7-Day Pass anytime</div>
+                    </div>
+                </div>
+                <button id="cancel-sub-confirm" style="width:100%;padding:14px;font-size:14px;font-weight:600;border:none;border-radius:10px;background:#c62828;color:#fff;cursor:pointer;margin-bottom:8px;box-shadow:0 2px 8px rgba(198,40,40,0.3);">Cancel Subscription</button>
+                <button id="cancel-sub-keep" style="width:100%;padding:12px;border:none;background:none;color:#00796B;font-size:13px;font-weight:600;cursor:pointer;">Keep My Subscription</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Add-On Maps panel -->
     <div class="zoom-dialog-overlay" id="addon-panel-overlay" data-dismiss="addon-panel-close" style="z-index:1100;align-items:flex-start;padding-top:60px;">
         <div class="zoom-dialog" style="max-width:420px;text-align:left;padding:0;overflow:hidden;border-radius:16px;max-height:80vh;display:flex;flex-direction:column;">
@@ -2334,23 +2359,47 @@
             }
         }
 
-        // Cancel a weekly subscription
-        async function cancelRegionSubscription(productId, regionName) {
-            if (!confirm('Cancel your weekly subscription for ' + regionName + '?\n\nYou will keep access until the current period ends.')) return;
-            try {
-                updateStatus('Cancelling subscription...');
-                var cancel = functions.httpsCallable('cancelSubscription');
-                var result = await cancel({ productId: productId });
-                await fetchSubscriptionStatus();
-                var accessUntil = result.data.accessUntil;
-                var dateStr = accessUntil ? new Date(accessUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'end of period';
-                updateStatus('Subscription cancelled — access until ' + dateStr);
-                refreshSidebarIfOpen();
-            } catch (e) {
-                console.error('Cancel subscription error:', e);
-                alert('Failed to cancel subscription: ' + (e.message || e.code || 'Unknown error'));
-                updateStatus('');
-            }
+        // Cancel a weekly subscription — show professional confirmation dialog
+        function cancelRegionSubscription(productId, regionName) {
+            var overlay = document.getElementById('cancel-sub-overlay');
+            document.getElementById('cancel-sub-region').textContent = regionName;
+
+            // Replace buttons to remove old listeners
+            var confirmBtn = document.getElementById('cancel-sub-confirm');
+            var newConfirm = confirmBtn.cloneNode(true);
+            newConfirm.id = 'cancel-sub-confirm';
+            confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+
+            var keepBtn = document.getElementById('cancel-sub-keep');
+            var newKeep = keepBtn.cloneNode(true);
+            newKeep.id = 'cancel-sub-keep';
+            keepBtn.parentNode.replaceChild(newKeep, keepBtn);
+
+            newKeep.addEventListener('click', function() {
+                overlay.classList.remove('open');
+            });
+
+            newConfirm.addEventListener('click', async function() {
+                newConfirm.disabled = true;
+                newConfirm.textContent = 'Cancelling...';
+                try {
+                    var cancel = functions.httpsCallable('cancelSubscription');
+                    var result = await cancel({ productId: productId });
+                    await fetchSubscriptionStatus();
+                    overlay.classList.remove('open');
+                    var accessUntil = result.data.accessUntil;
+                    var dateStr = accessUntil ? new Date(accessUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'end of period';
+                    updateStatus('Subscription cancelled — access until ' + dateStr);
+                    renderSettingsPurchases();
+                } catch (e) {
+                    console.error('Cancel subscription error:', e);
+                    newConfirm.disabled = false;
+                    newConfirm.textContent = 'Cancel Subscription';
+                    alert('Failed to cancel: ' + (e.message || e.code || 'Unknown error'));
+                }
+            });
+
+            overlay.classList.add('open');
         }
 
         // Global variables
