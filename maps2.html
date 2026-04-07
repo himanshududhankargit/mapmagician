@@ -1240,13 +1240,13 @@
                 <div class="pd-header-icon">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1 15l-4-4 1.41-1.41L11 14.17l6.59-6.59L19 9l-8 8z" fill="#fff"/></svg>
                 </div>
-                <div class="pd-kicker">Base Plan Required</div>
-                <h3 id="baseplan-title" class="pd-title">Subscribe to Region</h3>
+                <div class="pd-kicker">Development Plan</div>
+                <h3 id="baseplan-title" class="pd-title">Base Plan Required</h3>
             </div>
             <div class="pd-body">
                 <p id="baseplan-desc" class="pd-desc" style="margin-bottom:20px;"></p>
                 <div class="pd-features" style="margin-bottom:20px;">
-                    <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Village add-on maps require a base region plan</div>
+                    <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Village plan add-on over the Development Plan requires the base plan to be purchased</div>
                     <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Get access to all development plan maps in the region</div>
                     <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Then purchase individual village add-on plans</div>
                 </div>
@@ -6200,7 +6200,7 @@
         function showBasePlanRequiredDialog(villageName, regionName, districtObj) {
             var overlay = document.getElementById('baseplan-required-overlay');
             document.getElementById('baseplan-title').textContent = 'Subscribe to ' + regionName;
-            document.getElementById('baseplan-desc').textContent = 'To access the village plan for ' + villageName + ', you need a subscription to ' + regionName + ' Development Plan first.';
+            document.getElementById('baseplan-desc').textContent = 'The village plan add-on for ' + villageName + ' requires the ' + regionName + ' Development Plan base plan to be purchased first.';
 
             // Replace button to clear old listeners
             var subscribeBtn = document.getElementById('baseplan-subscribe-btn');
