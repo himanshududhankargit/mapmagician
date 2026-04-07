@@ -1324,19 +1324,19 @@
         </div>
         <input type="search" class="region-browser-search" id="region-browser-search" placeholder="Search regions..." autocomplete="off">
         <div class="region-browser-body">
-            <div id="sidebar-install-wrap" style="display:none;text-align:center;">
-                <button class="sidebar-install-btn" id="sidebar-install-btn">
-                    <span class="sidebar-install-icon">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </span>
-                    <span class="sidebar-install-text">
-                        <span class="sidebar-install-title">Install app</span>
-                        <span class="sidebar-install-sub">add to home screen</span>
-                    </span>
-                </button>
-            </div>
-            <div style="text-align:center;margin-bottom:12px;">
-                <button class="sidebar-install-btn" id="sidebar-share-btn" style="display:inline-flex;">
+            <div style="text-align:center;margin-bottom:8px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
+                <div id="sidebar-install-wrap" style="display:none;">
+                    <button class="sidebar-install-btn" id="sidebar-install-btn">
+                        <span class="sidebar-install-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <span class="sidebar-install-text">
+                            <span class="sidebar-install-title">Install app</span>
+                            <span class="sidebar-install-sub">add to home screen</span>
+                        </span>
+                    </button>
+                </div>
+                <button class="sidebar-install-btn" id="sidebar-share-btn">
                     <span class="sidebar-install-icon">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="2"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" stroke-width="2"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" stroke-width="2"/></svg>
                     </span>
@@ -1509,7 +1509,7 @@
             var shareData = {
                 title: 'Development Plan GIS - MapMagician',
                 text: 'View development plan maps overlaid on satellite imagery. Browse DP maps for Maharashtra, Bengaluru, Hyderabad and more.',
-                url: 'https://www.mapmagician.in/maps2.html'
+                url: 'https://maps.mapmagician.in'
             };
             if (navigator.share) {
                 navigator.share(shareData).catch(function() {});
