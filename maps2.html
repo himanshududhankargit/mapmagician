@@ -6212,7 +6212,11 @@
 
             newBtn.addEventListener('click', function() {
                 overlay.classList.remove('open');
-                showZoomRestrictionDialog(districtObj);
+                // Delay so the back-button history cleanup from baseplan dialog
+                // close completes before the zoom-restrict dialog opens
+                setTimeout(function() {
+                    showZoomRestrictionDialog(districtObj);
+                }, 300);
             });
 
             document.getElementById('baseplan-cancel-btn').onclick = function() {
