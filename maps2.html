@@ -552,6 +552,8 @@
         .pd-features { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
         .pd-feat { display:flex; align-items:center; gap:10px; font-size:13px; color:#37474F; font-weight:500; }
         .pd-feat svg { flex-shrink:0; }
+        .pd-tab { flex:1; padding:8px 4px; font-size:13px; font-weight:600; border:none; border-radius:8px; background:transparent; color:#546E7A; cursor:pointer; transition:background 0.15s,color 0.15s; }
+        .pd-tab-active { background:#fff; color:#00796B; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
         .pd-cta { width:100%; padding:14px; font-size:15px; font-weight:600; border:none; border-radius:10px; background:#00796B; color:#fff; cursor:pointer; letter-spacing:0.2px; transition:background 0.15s,transform 0.1s; box-shadow:0 1px 3px rgba(0,121,107,0.25); }
         .pd-cta:hover { background:#00695C; }
         .pd-cta:active { transform:scale(0.99); }
@@ -1233,13 +1235,26 @@
             <!-- Body -->
             <div class="pd-body">
                 <div id="zoom-restrict-region" class="pd-region-label" style="display:none;">Region</div>
-                <!-- Hero price card -->
+                <!-- Plan toggle tabs -->
+                <div id="pd-plan-tabs" style="display:flex;gap:4px;margin-bottom:14px;background:#E0F2F1;border-radius:10px;padding:3px;">
+                    <button id="pd-tab-onetime" class="pd-tab pd-tab-active" onclick="switchPurchaseTab('onetime')">7-Day Pass</button>
+                    <button id="pd-tab-subscription" class="pd-tab" onclick="switchPurchaseTab('subscription')">Weekly Sub</button>
+                </div>
+                <!-- One-time price card -->
                 <div id="zoom-restrict-price" class="pd-price-card">
                     <div class="pd-price-row">
                         <span id="zoom-price-amount" class="pd-price-amount">&#8377;199</span>
                         <div class="pd-price-unit">/ 7 days<br><span style="font-size:12px;font-weight:500;color:#78909C;">access</span></div>
                     </div>
                     <div class="pd-price-note">One-time payment &middot; no auto-renewal</div>
+                </div>
+                <!-- Subscription price card -->
+                <div id="zoom-restrict-sub-price" class="pd-price-card" style="display:none;">
+                    <div class="pd-price-row">
+                        <span id="zoom-sub-price-amount" class="pd-price-amount">&#8377;99</span>
+                        <div class="pd-price-unit">/ week<br><span style="font-size:12px;font-weight:500;color:#78909C;">auto-renews</span></div>
+                    </div>
+                    <div class="pd-price-note">Auto-renews weekly &middot; cancel anytime</div>
                 </div>
                 <!-- Short description -->
                 <p class="pd-desc" id="zoom-restrict-desc">Access high-resolution development plan maps directly in your browser.</p>
@@ -1251,6 +1266,7 @@
                 </div>
                 <!-- CTA -->
                 <button class="pd-cta" id="zoom-restrict-action">Continue to Payment</button>
+                <button class="pd-cta" id="zoom-restrict-sub-action" style="display:none;">Subscribe Weekly</button>
                 <button class="pd-cancel" id="zoom-restrict-cancel">Not now</button>
             </div>
             <!-- Footer: mobile hint + support -->
@@ -1590,6 +1606,8 @@
         let currentUser = null;
         const activePurchases = new Map(); // productId → { expiry, plan }
         const cachedPricing = new Map();   // productId → price (pre-fetched at startup)
+        const activeSubscriptions = new Map(); // productId → subscription metadata from GISWebSubscriptions
+        const cachedSubPricing = new Map(); // productId → { weeklyPrice } (pre-fetched at startup)
         let cachedIdToken = null; // Firebase ID token for tile proxy auth
         let cachedAccessToken = ''; // Signed access token from getPurchaseStatus
         let pendingPurchase = null; // { productId, regionName } — set when buy clicked before login
@@ -1693,6 +1711,7 @@
 
                 // Wait for purchases to load, THEN resume pending actions
                 fetchVillagePurchases(); // also load village purchase status
+                fetchSubscriptionStatus(); // load subscription metadata
                 fetchPurchaseStatus(true).then(function() {
                     authLoadingOverlay.classList.remove('open');
                     // Reset overlay text for future payment use
@@ -1705,6 +1724,8 @@
                         pendingPurchase = null;
                         if (pp.purchaseType === 'village') {
                             buyVillage(pp.villageName);
+                        } else if (pp.purchaseType === 'subscription') {
+                            subscribeRegion(pp.productId, pp.regionName);
                         } else {
                             buyRegion(pp.productId, pp.regionName);
                         }
@@ -1927,6 +1948,21 @@
                 console.error('Failed to fetch purchase status:', e);
             } finally {
                 _fetchingPurchases = false;
+            }
+        }
+
+        // --- Subscription status ---
+        async function fetchSubscriptionStatus() {
+            if (!currentUser || currentUser.isAnonymous) return;
+            try {
+                var getSubscriptionStatus = functions.httpsCallable('getSubscriptionStatus');
+                var result = await getSubscriptionStatus();
+                activeSubscriptions.clear();
+                Object.entries(result.data.subscriptions || {}).forEach(function(e) {
+                    activeSubscriptions.set(e[0], e[1]);
+                });
+            } catch (e) {
+                console.error('Failed to fetch subscription status:', e);
             }
         }
 
@@ -2180,6 +2216,122 @@
                     alert('Payment error: ' + (error.message || error.code || JSON.stringify(error)));
                 }
                 updateStatus('Payment failed');
+            }
+        }
+
+        // Subscribe to a weekly auto-renewing plan
+        async function subscribeRegion(productId, regionName) {
+            if (!currentUser || currentUser.isAnonymous) {
+                pendingPurchase = { productId, regionName, purchaseType: 'subscription' };
+                document.getElementById('auth-dialog-desc').textContent =
+                    'Sign in with your Google account to subscribe to ' + regionName + '.';
+                document.getElementById('auth-dialog-overlay').classList.add('open');
+                return;
+            }
+
+            var loadingOverlay = document.getElementById('payment-loading-overlay');
+            document.getElementById('payment-loading-sub').textContent = 'Weekly Subscription: ' + regionName;
+            loadingOverlay.classList.add('open');
+
+            try {
+                var createSubscription = functions.httpsCallable('createSubscription');
+                var result = await createSubscription({ productId: productId, regionName: regionName });
+
+                loadingOverlay.classList.remove('open');
+
+                var options = {
+                    key: 'rzp_live_SXr1BKnoysSo9r',
+                    subscription_id: result.data.subscriptionId,
+                    name: 'Development Plans (GIS)',
+                    description: 'Weekly Subscription: ' + regionName,
+                    prefill: {
+                        email: currentUser.email,
+                        name: currentUser.displayName || ''
+                    },
+                    theme: { color: '#008577' },
+                    handler: async function(response) {
+                        updateStatus('Subscription activating...');
+                        try {
+                            // Fast-path: verify subscription status via Razorpay API
+                            var confirmSubscription = functions.httpsCallable('confirmSubscription');
+                            await confirmSubscription({
+                                subscriptionId: result.data.subscriptionId,
+                                productId: productId
+                            });
+                            await fetchPurchaseStatus(true);
+                            await fetchSubscriptionStatus();
+                            // Clear and reload tiles
+                            clearAllLayersOfType(dpOverlays);
+                            dpTileStatus = Array(dpLayerData.length).fill(false);
+                            clearAllLayersOfType(layoutOverlays);
+                            layoutTileStatus = Array(layoutLayerData.length).fill(false);
+                            loadTilesBasedOnViewport();
+                            enableMapInteraction();
+                            document.getElementById('zoom-restrict-overlay').classList.remove('open');
+                            map.setOptions({ maxZoom: 21 });
+                            lastCheckedRegionId = null;
+                            stickyTile = null;
+                            stickyDistrict = null;
+                            updateStatus('Subscription active!');
+                        } catch (e) {
+                            console.error('Confirm subscription error:', e);
+                            // Fallback: poll for webhook to write the purchase
+                            updateStatus('Subscription processing...');
+                            setTimeout(function() { fetchPurchaseStatus(true); }, 3000);
+                            setTimeout(function() { fetchPurchaseStatus(true); }, 8000);
+                            setTimeout(function() { fetchPurchaseStatus(true); fetchSubscriptionStatus(); }, 15000);
+                        }
+                    },
+                    modal: {
+                        ondismiss: function() {
+                            updateStatus('Subscription cancelled');
+                        }
+                    }
+                };
+
+                if (typeof Razorpay === 'undefined') {
+                    await new Promise(function(resolve, reject) {
+                        var s = document.createElement('script');
+                        s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                        s.onload = resolve;
+                        s.onerror = function() { reject(new Error('Could not load payment gateway.')); };
+                        document.head.appendChild(s);
+                    });
+                }
+                var rzp = new Razorpay(options);
+                rzp.open();
+            } catch (error) {
+                loadingOverlay.classList.remove('open');
+                console.error('Subscription error:', error);
+                if (error.code === 'already-exists') {
+                    await fetchPurchaseStatus(true);
+                    map.setOptions({ maxZoom: 21 });
+                    enableMapInteraction();
+                    document.getElementById('zoom-restrict-overlay').classList.remove('open');
+                    showUnlockToast(regionName);
+                } else {
+                    alert('Subscription error: ' + (error.message || error.code || JSON.stringify(error)));
+                }
+                updateStatus('Subscription failed');
+            }
+        }
+
+        // Cancel a weekly subscription
+        async function cancelRegionSubscription(productId, regionName) {
+            if (!confirm('Cancel your weekly subscription for ' + regionName + '?\n\nYou will keep access until the current period ends.')) return;
+            try {
+                updateStatus('Cancelling subscription...');
+                var cancel = functions.httpsCallable('cancelSubscription');
+                var result = await cancel({ productId: productId });
+                await fetchSubscriptionStatus();
+                var accessUntil = result.data.accessUntil;
+                var dateStr = accessUntil ? new Date(accessUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'end of period';
+                updateStatus('Subscription cancelled — access until ' + dateStr);
+                refreshSidebarIfOpen();
+            } catch (e) {
+                console.error('Cancel subscription error:', e);
+                alert('Failed to cancel subscription: ' + (e.message || e.code || 'Unknown error'));
+                updateStatus('');
             }
         }
 
@@ -2985,6 +3137,34 @@
             if (map) map.setOptions({ draggable: true, scrollwheel: true, disableDoubleClickZoom: false, zoomControl: true, gestureHandling: 'greedy' });
         }
 
+        // Purchase dialog tab state
+        var currentPurchaseTab = 'onetime';
+
+        function switchPurchaseTab(tab) {
+            currentPurchaseTab = tab;
+            var onetimeCard = document.getElementById('zoom-restrict-price');
+            var subCard = document.getElementById('zoom-restrict-sub-price');
+            var onetimeBtn = document.getElementById('zoom-restrict-action');
+            var subBtn = document.getElementById('zoom-restrict-sub-action');
+            var tabOnetime = document.getElementById('pd-tab-onetime');
+            var tabSub = document.getElementById('pd-tab-subscription');
+            if (tab === 'subscription') {
+                onetimeCard.style.display = 'none';
+                subCard.style.display = '';
+                onetimeBtn.style.display = 'none';
+                subBtn.style.display = '';
+                tabOnetime.className = 'pd-tab';
+                tabSub.className = 'pd-tab pd-tab-active';
+            } else {
+                onetimeCard.style.display = '';
+                subCard.style.display = 'none';
+                onetimeBtn.style.display = '';
+                subBtn.style.display = 'none';
+                tabOnetime.className = 'pd-tab pd-tab-active';
+                tabSub.className = 'pd-tab';
+            }
+        }
+
         function showZoomRestrictionDialog(district) {
             const overlay = document.getElementById('zoom-restrict-overlay');
             const title = document.getElementById('zoom-restrict-title');
@@ -2995,12 +3175,16 @@
 
             lastRestrictedDistrict = district;
 
+            // Reset to one-time tab
+            switchPurchaseTab('onetime');
+
             // Restore button + support to purchase style (may have been changed by showNoDataDialog)
             actionBtn.textContent = 'Continue to Payment';
             actionBtn.className = 'pd-cta';
             actionBtn.style.cssText = '';
             document.getElementById('zoom-restrict-support').style.display = '';
             document.getElementById('zoom-restrict-price').style.display = '';
+            document.getElementById('pd-plan-tabs').style.display = 'flex';
 
             if (district) {
                 title.textContent = 'Unlock ' + district.districtName;
@@ -3013,7 +3197,7 @@
                 regionInfo.style.display = 'none';
             }
 
-            // Display price from pre-fetched cache, or show loading if not ready
+            // Display one-time price from pre-fetched cache
             var pid = district ? district.productPurchaseID : 'default';
             var price = cachedPricing.get(pid) || cachedPricing.get('default') || null;
             if (price) {
@@ -3022,7 +3206,6 @@
             } else {
                 priceEl.textContent = 'Loading...';
                 priceEl.style.fontSize = '16px';
-                // Retry when pricing loads
                 var priceCheck = setInterval(function() {
                     var p = cachedPricing.get(pid) || cachedPricing.get('default');
                     if (p) {
@@ -3031,26 +3214,66 @@
                         clearInterval(priceCheck);
                     }
                 }, 500);
-                // Stop checking after 10s
                 setTimeout(function() { clearInterval(priceCheck); }, 10000);
+            }
+
+            // Display subscription price
+            var subPriceEl = document.getElementById('zoom-sub-price-amount');
+            var subPricing = cachedSubPricing.get(pid) || cachedSubPricing.get('default') || null;
+            var subPrice = subPricing ? (subPricing.weeklyPrice || subPricing) : null;
+            if (subPrice) {
+                subPriceEl.textContent = '\u20B9' + subPrice;
+                subPriceEl.style.fontSize = '';
+            } else {
+                subPriceEl.textContent = 'Loading...';
+                subPriceEl.style.fontSize = '16px';
+                var subCheck = setInterval(function() {
+                    var sp = cachedSubPricing.get(pid) || cachedSubPricing.get('default');
+                    var spv = sp ? (sp.weeklyPrice || sp) : null;
+                    if (spv) {
+                        subPriceEl.textContent = '\u20B9' + spv;
+                        subPriceEl.style.fontSize = '';
+                        clearInterval(subCheck);
+                    }
+                }, 500);
+                setTimeout(function() { clearInterval(subCheck); }, 10000);
             }
 
             // Disable map interaction while dialog is visible
             disableMapInteraction();
 
-            // Replace button to remove old listeners
+            // Replace one-time button to remove old listeners
             const newBtn = actionBtn.cloneNode(true);
             newBtn.id = 'zoom-restrict-action';
             actionBtn.parentNode.replaceChild(newBtn, actionBtn);
+            // Also show/hide based on current tab
+            if (currentPurchaseTab === 'subscription') newBtn.style.display = 'none';
 
             newBtn.addEventListener('click', () => {
                 overlay.classList.remove('open');
                 enableMapInteraction();
-                // Delay so the back-button history cleanup completes
-                // before buyRegion opens auth dialog or Razorpay
                 setTimeout(() => {
                     if (district) {
                         buyRegion(district.productPurchaseID, district.districtName);
+                    } else {
+                        openRegionsBrowser();
+                    }
+                }, 300);
+            });
+
+            // Replace subscribe button to remove old listeners
+            var subActionBtn = document.getElementById('zoom-restrict-sub-action');
+            var newSubBtn = subActionBtn.cloneNode(true);
+            newSubBtn.id = 'zoom-restrict-sub-action';
+            subActionBtn.parentNode.replaceChild(newSubBtn, subActionBtn);
+            if (currentPurchaseTab !== 'subscription') newSubBtn.style.display = 'none';
+
+            newSubBtn.addEventListener('click', () => {
+                overlay.classList.remove('open');
+                enableMapInteraction();
+                setTimeout(() => {
+                    if (district) {
+                        subscribeRegion(district.productPurchaseID, district.districtName);
                     } else {
                         openRegionsBrowser();
                     }
@@ -3066,7 +3289,6 @@
             };
 
             document.getElementById('zoom-restrict-support').onclick = () => {
-                // Hide purchase dialog first
                 overlay.classList.remove('open');
                 if (!currentUser) {
                     pendingPurchase = null;
@@ -3093,6 +3315,9 @@
             regionInfo.style.display = 'none';
             supportBtn.style.display = 'none';
             document.getElementById('zoom-restrict-price').style.display = 'none';
+            document.getElementById('zoom-restrict-sub-price').style.display = 'none';
+            document.getElementById('zoom-restrict-sub-action').style.display = 'none';
+            document.getElementById('pd-plan-tabs').style.display = 'none';
 
             disableMapInteraction();
 
@@ -3144,9 +3369,19 @@
                 el.textContent = district.districtName;
                 if (hasPurchase(district.productPurchaseID)) {
                     const plan = getPurchasePlan(district.productPurchaseID);
-                    const planLabel = plan === 'professional' ? 'Mobile + Web' :
-                                     plan === 'web' ? 'Web Only' :
-                                     plan === 'override' ? 'Override' : 'Active';
+                    const sub = activeSubscriptions.get(district.productPurchaseID);
+                    var planLabel;
+                    if (plan === 'subscription' && sub) {
+                        planLabel = sub.status === 'cancelled' ? 'Sub (Cancelling)' : 'Weekly Sub';
+                    } else if (plan === 'professional') {
+                        planLabel = 'Mobile + Web';
+                    } else if (plan === 'web') {
+                        planLabel = 'Web Only';
+                    } else if (plan === 'override') {
+                        planLabel = 'Override';
+                    } else {
+                        planLabel = 'Active';
+                    }
                     el.className = 'region-status subscribed';
                     planEl.style.display = 'inline';
                     planEl.className = 'region-status subscribed';
@@ -4293,6 +4528,14 @@
                 cachedPricing.clear();
                 var data = snap.val() || {};
                 Object.entries(data).forEach(function(e) { cachedPricing.set(e[0], e[1]); });
+            });
+
+            // Pre-fetch subscription plan pricing
+            var subPricingRef = firebase.database().ref('appConfig/subscriptionPlans');
+            subPricingRef.on('value', function(snap) {
+                cachedSubPricing.clear();
+                var data = snap.val() || {};
+                Object.entries(data).forEach(function(e) { cachedSubPricing.set(e[0], e[1]); });
             });
 
             // Start loading layer data
