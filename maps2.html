@@ -1027,7 +1027,7 @@
     </button>
 
     <!-- Go to Coordinates dialog -->
-    <div class="coord-dialog-overlay" id="coord-dialog-overlay">
+    <div class="coord-dialog-overlay" id="coord-dialog-overlay" data-dismiss="coord-cancel">
         <div class="coord-dialog">
             <h3>Go to Coordinates</h3>
             <p class="coord-dialog-sub">Enter coordinates to search:</p>
@@ -1085,7 +1085,7 @@
     </div>
 
     <!-- Sign-in required dialog -->
-    <div class="auth-dialog-overlay" id="auth-dialog-overlay">
+    <div class="auth-dialog-overlay" id="auth-dialog-overlay" data-dismiss="auth-dialog-cancel">
         <div class="auth-dialog">
             <div style="width:48px;height:48px;margin:0 auto 20px;background:#f0f4ff;border-radius:50%;display:flex;align-items:center;justify-content:center;">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#1a73e8"/></svg>
@@ -1101,7 +1101,7 @@
     </div>
 
     <!-- Sign-out confirmation dialog -->
-    <div class="auth-dialog-overlay" id="signout-dialog-overlay">
+    <div class="auth-dialog-overlay" id="signout-dialog-overlay" data-dismiss="signout-dialog-cancel">
         <div class="auth-dialog">
             <h3>Sign Out</h3>
             <p id="signout-dialog-email" style="font-weight:600;color:#333;margin-bottom:16px;word-break:break-all;"></p>
@@ -1112,7 +1112,7 @@
     </div>
 
     <!-- Support form dialog -->
-    <div class="auth-dialog-overlay" id="support-dialog-overlay">
+    <div class="auth-dialog-overlay" id="support-dialog-overlay" data-dismiss="support-cancel-btn" style="z-index:4000;">
         <div class="auth-dialog" style="max-width:400px;text-align:left;">
             <h3 style="text-align:center;margin-bottom:16px;">Contact Support</h3>
             <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">To</label>
@@ -1230,7 +1230,7 @@
     </div>
 
     <!-- Base plan required dialog -->
-    <div class="zoom-dialog-overlay" id="baseplan-required-overlay">
+    <div class="zoom-dialog-overlay" id="baseplan-required-overlay" data-dismiss="baseplan-cancel-btn">
         <div class="zoom-dialog" style="max-width:400px;text-align:left;padding:0;overflow:hidden;border-radius:16px;">
             <div class="pd-header">
                 <div class="pd-header-icon">
@@ -1253,7 +1253,7 @@
     </div>
 
     <!-- Village purchase dialog -->
-    <div class="zoom-dialog-overlay" id="village-purchase-overlay">
+    <div class="zoom-dialog-overlay" id="village-purchase-overlay" data-dismiss="village-purchase-cancel">
         <div class="zoom-dialog" style="max-width:400px;text-align:left;padding:0;overflow:hidden;border-radius:16px;">
             <div style="background:linear-gradient(135deg,#1565C0,#0D47A1);padding:24px 20px 20px;text-align:center;color:#fff;">
                 <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;opacity:0.7;margin-bottom:6px;">Village Plan</div>
@@ -1272,7 +1272,7 @@
     </div>
 
     <!-- Add-On Maps panel -->
-    <div class="zoom-dialog-overlay" id="addon-panel-overlay" style="z-index:1100;align-items:flex-start;padding-top:60px;">
+    <div class="zoom-dialog-overlay" id="addon-panel-overlay" data-dismiss="addon-panel-close" style="z-index:1100;align-items:flex-start;padding-top:60px;">
         <div class="zoom-dialog" style="max-width:420px;text-align:left;padding:0;overflow:hidden;border-radius:16px;max-height:80vh;display:flex;flex-direction:column;">
             <div style="background:linear-gradient(135deg,#2E7D32,#1B5E20);padding:18px 20px 14px;color:#fff;flex-shrink:0;">
                 <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -1371,6 +1371,51 @@
             });
             document.getElementById('disclaimer-disagree').addEventListener('click', function() {
                 window.location.href = 'https://www.mapmagician.in';
+            });
+        })();
+
+        // --- Back-button dismiss for dialogs ---
+        // Watches any overlay with [data-dismiss="..."] pointing to its cancel button.
+        // Back press clicks that button so existing cancel logic runs.
+        (function() {
+            var stack = [];
+            var closingFromPopstate = false;
+
+            var observer = new MutationObserver(function(mutations) {
+                for (var i = 0; i < mutations.length; i++) {
+                    var m = mutations[i];
+                    if (m.attributeName !== 'class') continue;
+                    var el = m.target;
+                    var isOpen = el.classList.contains('open');
+                    var inStack = stack.indexOf(el) >= 0;
+                    if (isOpen && !inStack) {
+                        stack.push(el);
+                        history.pushState({ mmDialog: el.id || 'anon' }, '');
+                    } else if (!isOpen && inStack) {
+                        stack.splice(stack.indexOf(el), 1);
+                        if (!closingFromPopstate) {
+                            history.back();
+                        }
+                    }
+                }
+                closingFromPopstate = false;
+            });
+
+            document.querySelectorAll('[data-dismiss]').forEach(function(el) {
+                observer.observe(el, { attributes: true, attributeFilter: ['class'] });
+            });
+
+            window.addEventListener('popstate', function() {
+                if (stack.length === 0) return;
+                closingFromPopstate = true;
+                var top = stack[stack.length - 1];
+                var dismissId = top.getAttribute('data-dismiss');
+                var btn = dismissId ? document.getElementById(dismissId) : null;
+                if (btn) {
+                    btn.click();
+                } else {
+                    top.classList.remove('open');
+                }
             });
         })();
 
