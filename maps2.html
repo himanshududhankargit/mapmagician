@@ -1673,6 +1673,8 @@
                 villagePurchases.clear();
                 cachedIdToken = null;
                 clearSession();
+                // Detach pricing listener to prevent unnecessary reads
+                if (typeof pricingListenerRef !== 'undefined') pricingListenerRef.off();
                 // Clear village tiles
                 clearAllLayersOfType(villageOverlays);
                 villageTileStatus = Array(villageLayerData.length).fill(false);
@@ -1814,10 +1816,13 @@
             });
         });
 
+        let _fetchingPurchases = false;
         async function fetchPurchaseStatus(force) {
             if (!currentUser || currentUser.isAnonymous) return;
             const now = Date.now();
-            if (!force && now - lastFetchTime < FETCH_COOLDOWN_MS) return; // skip if recently fetched
+            if (!force && now - lastFetchTime < FETCH_COOLDOWN_MS) return;
+            if (_fetchingPurchases) return; // prevent concurrent calls
+            _fetchingPurchases = true;
             lastFetchTime = now;
 
             try {
@@ -1845,6 +1850,8 @@
                 }
             } catch (e) {
                 console.error('Failed to fetch purchase status:', e);
+            } finally {
+                _fetchingPurchases = false;
             }
         }
 
@@ -4206,7 +4213,8 @@
             initUIEvents();
 
             // Pre-fetch all pricing so purchase dialog opens instantly
-            firebase.database().ref('appConfig/pricing').on('value', function(snap) {
+            var pricingListenerRef = firebase.database().ref('appConfig/pricing');
+            pricingListenerRef.on('value', function(snap) {
                 cachedPricing.clear();
                 var data = snap.val() || {};
                 Object.entries(data).forEach(function(e) { cachedPricing.set(e[0], e[1]); });
