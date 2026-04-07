@@ -2921,7 +2921,7 @@
                 overlay.classList.remove('open');
                 enableMapInteraction();
                 zoomBypassActive = true;
-                map.setZoom(MAX_FREE_ZOOM - 1);
+                smoothZoomTo(MAX_FREE_ZOOM - 1);
                 google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
             };
 
@@ -2969,7 +2969,7 @@
                 enableMapInteraction();
                 supportBtn.style.display = '';
                 zoomBypassActive = true;
-                map.setZoom(MAX_FREE_ZOOM - 1);
+                smoothZoomTo(MAX_FREE_ZOOM - 1);
                 google.maps.event.addListenerOnce(map, 'idle', function() { zoomBypassActive = false; });
                 openRegionsBrowser();
             });
@@ -2979,7 +2979,7 @@
                 enableMapInteraction();
                 supportBtn.style.display = '';
                 zoomBypassActive = true;
-                map.setZoom(MAX_FREE_ZOOM - 1);
+                smoothZoomTo(MAX_FREE_ZOOM - 1);
                 google.maps.event.addListenerOnce(map, 'idle', function() { zoomBypassActive = false; });
             };
 
@@ -4327,6 +4327,23 @@
                 // Grid for states / districts
                 regionGrid.style.gridTemplateColumns = '';
                 regionGrid.style.maxWidth = '';
+
+                // Add "Go to Location" card at top of state-level grid
+                if (type === 'state') {
+                    var goCard = document.createElement('div');
+                    goCard.className = 'region-card';
+                    goCard.innerHTML =
+                        '<div style="width:80px;height:80px;margin:12px auto 0;display:flex;align-items:center;justify-content:center;">' +
+                        '<svg width="56" height="56" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#333" stroke-width="1.5"/><circle cx="12" cy="12" r="4" stroke="#333" stroke-width="1.5"/><line x1="12" y1="2" x2="12" y2="6" stroke="#333" stroke-width="1.5"/><line x1="12" y1="18" x2="12" y2="22" stroke="#333" stroke-width="1.5"/><line x1="2" y1="12" x2="6" y2="12" stroke="#333" stroke-width="1.5"/><line x1="18" y1="12" x2="22" y2="12" stroke="#333" stroke-width="1.5"/></svg>' +
+                        '</div>' +
+                        '<div class="region-card-body"><div class="region-card-name">Go to Location</div></div>';
+                    goCard.addEventListener('click', function() {
+                        closeRegionBrowser();
+                        document.getElementById('coord-dialog-overlay').classList.add('open');
+                    });
+                    regionGrid.appendChild(goCard);
+                }
+
                 items.forEach(function(item) {
                     var card = document.createElement('div');
                     card.className = 'region-card';
@@ -4631,12 +4648,9 @@
 
             function goToLocation(lat, lng, name, districtProductId) {
                 zoomBypassActive = true;
-                map.setCenter({ lat, lng });
-                if (districtProductId && hasPurchase(districtProductId)) {
-                    map.setZoom(15);
-                } else {
-                    map.setZoom(MAX_FREE_ZOOM - 1);
-                }
+                map.panTo({ lat, lng });
+                var targetZoom = (districtProductId && hasPurchase(districtProductId)) ? 15 : MAX_FREE_ZOOM - 1;
+                smoothZoomTo(targetZoom);
                 google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
                 updateStatus('Zoomed to ' + name);
             }
@@ -5934,12 +5948,29 @@
             }
         }
 
+        // Smooth zoom — steps one level at a time for animated effect
+        function smoothZoomTo(targetZoom) {
+            if (!map) return;
+            var current = map.getZoom();
+            if (current === targetZoom) return;
+            var step = targetZoom > current ? 1 : -1;
+            var listener = google.maps.event.addListener(map, 'idle', function() {
+                var z = map.getZoom();
+                if ((step > 0 && z >= targetZoom) || (step < 0 && z <= targetZoom)) {
+                    google.maps.event.removeListener(listener);
+                    return;
+                }
+                map.setZoom(z + step);
+            });
+            map.setZoom(current + step);
+        }
+
         function zoomToVillage(villageItem) {
             var center = getVillageCenter(villageItem);
             if (!center) return;
             zoomBypassActive = true;
-            map.setCenter(center);
-            map.setZoom(17);
+            map.panTo(center);
+            smoothZoomTo(17);
             google.maps.event.addListenerOnce(map, 'idle', function() { zoomBypassActive = false; });
         }
 
@@ -6065,12 +6096,12 @@
         function onVillageMarkerClick(villageItem) {
             var villageName = villageItem.villageName;
 
-            // Move to village location
+            // Move to village location with animation
             var center = getVillageCenter(villageItem);
             if (center) {
                 zoomBypassActive = true;
-                map.setCenter(center);
-                if (map.getZoom() < 15) map.setZoom(15);
+                map.panTo(center);
+                if (map.getZoom() < 15) smoothZoomTo(15);
                 google.maps.event.addListenerOnce(map, 'idle', function() { zoomBypassActive = false; });
             }
 
