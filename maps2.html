@@ -552,9 +552,18 @@
         .pd-features { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
         .pd-feat { display:flex; align-items:center; gap:10px; font-size:13px; color:#37474F; font-weight:500; }
         .pd-feat svg { flex-shrink:0; }
-        .pd-cards-row { display:flex; gap:12px; margin-bottom:16px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+        .pd-carousel-wrap { position:relative; margin-bottom:16px; }
+        .pd-cards-row { display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:4px 0; }
         .pd-cards-row::-webkit-scrollbar { display:none; }
         .pd-plan-card { flex:0 0 calc(50% - 6px); min-width:240px; background:#fff; border-radius:16px; border:1px solid #E0E0E0; padding:18px 16px; display:flex; flex-direction:column; scroll-snap-align:start; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+        .pd-carousel-arrow { display:none; position:absolute; top:50%; transform:translateY(-60%); width:32px; height:32px; border-radius:50%; border:1px solid #ddd; background:#fff; color:#333; font-size:20px; line-height:28px; text-align:center; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.15); z-index:2; }
+        .pd-carousel-arrow:hover { background:#f5f5f5; }
+        .pd-arrow-left { left:-6px; }
+        .pd-arrow-right { right:-6px; }
+        .pd-dots { display:none; justify-content:center; gap:8px; margin-top:10px; }
+        .pd-dot { width:8px; height:8px; border-radius:50%; background:#ccc; transition:background 0.2s; }
+        .pd-dot-active { background:#00796B; }
+        @media (max-width: 520px) { .pd-plan-card { flex:0 0 82%; min-width:0; } .pd-carousel-arrow { display:block; } .pd-dots { display:flex; } }
         .pd-card-badge { display:inline-block; font-size:9px; font-weight:700; color:#fff; padding:3px 8px; border-radius:4px; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px; align-self:flex-start; }
         .pd-card-name { font-size:17px; font-weight:700; line-height:1.3; margin-bottom:10px; }
         .pd-card-price { margin-bottom:4px; }
@@ -1246,36 +1255,45 @@
             <!-- Body: side-by-side plan cards -->
             <div class="pd-body" style="padding:16px 16px 4px;">
                 <p class="pd-desc" id="zoom-restrict-desc" style="margin-bottom:14px;">Access high-resolution development plan maps directly in your browser.</p>
-                <!-- Plan cards container: flex on wide, scroll on narrow -->
-                <div id="pd-plan-tabs" class="pd-cards-row">
-                    <!-- Subscription card -->
-                    <div class="pd-plan-card pd-plan-card-sub">
-                        <div class="pd-card-badge" style="background:#4CAF50;">POPULAR</div>
-                        <div class="pd-card-name" style="color:#2E7D32;">Weekly<br>Subscription</div>
-                        <div class="pd-card-price"><span id="zoom-sub-price-amount" style="font-size:32px;font-weight:800;color:#1A1A1A;">&#8377;89</span><span style="font-size:13px;color:#888;margin-left:4px;">/ week</span></div>
-                        <div class="pd-card-subtitle">Auto-renews &middot; Cancel anytime</div>
-                        <div class="pd-card-divider"></div>
-                        <div class="pd-card-benefits">
-                            <div class="pd-card-benefit">&#10003; Lower weekly cost</div>
-                            <div class="pd-card-benefit">&#10003; Continuous access to maps</div>
-                            <div class="pd-card-benefit">&#10003; Use on any device with login</div>
-                            <div class="pd-card-benefit">&#10003; Best for regular users</div>
+                <!-- Plan cards with navigation -->
+                <div class="pd-carousel-wrap" id="pd-plan-tabs">
+                    <button class="pd-carousel-arrow pd-arrow-left" id="pd-arrow-left" onclick="document.getElementById('pd-cards-scroll').scrollBy({left:-260,behavior:'smooth'})">&#8249;</button>
+                    <div id="pd-cards-scroll" class="pd-cards-row">
+                        <!-- Subscription card -->
+                        <div class="pd-plan-card pd-plan-card-sub">
+                            <div class="pd-card-badge" style="background:#4CAF50;">POPULAR</div>
+                            <div class="pd-card-name" style="color:#2E7D32;">Weekly<br>Subscription</div>
+                            <div class="pd-card-price"><span id="zoom-sub-price-amount" style="font-size:32px;font-weight:800;color:#1A1A1A;">&#8377;89</span><span style="font-size:13px;color:#888;margin-left:4px;">/ week</span></div>
+                            <div class="pd-card-subtitle">Auto-renews &middot; Cancel anytime</div>
+                            <div class="pd-card-divider"></div>
+                            <div class="pd-card-benefits">
+                                <div class="pd-card-benefit">&#10003; Lower weekly cost</div>
+                                <div class="pd-card-benefit">&#10003; Continuous access to maps</div>
+                                <div class="pd-card-benefit">&#10003; Use on any device with login</div>
+                                <div class="pd-card-benefit">&#10003; Best for regular users</div>
+                            </div>
+                            <button class="pd-card-cta" id="zoom-restrict-sub-action" style="background:#4CAF50;">Subscribe Now</button>
                         </div>
-                        <button class="pd-card-cta" id="zoom-restrict-sub-action" style="background:#4CAF50;">Subscribe Now</button>
+                        <!-- 7-Day Pass card -->
+                        <div class="pd-plan-card pd-plan-card-onetime">
+                            <div class="pd-card-name" style="color:#1565C0;">Prepaid<br>7-Day Access</div>
+                            <div class="pd-card-price"><span id="zoom-price-amount" style="font-size:32px;font-weight:800;color:#1A1A1A;">&#8377;199</span><span style="font-size:13px;color:#888;margin-left:4px;">one-time</span></div>
+                            <div class="pd-card-subtitle">No auto-renewal &middot; Login &amp; use anywhere</div>
+                            <div class="pd-card-divider"></div>
+                            <div class="pd-card-benefits">
+                                <div class="pd-card-benefit">&#10003; Non-recurring payment</div>
+                                <div class="pd-card-benefit">&#10003; 7-day full access</div>
+                                <div class="pd-card-benefit">&#10003; Use on any device with login</div>
+                                <div class="pd-card-benefit">&#10003; Best for occasional use</div>
+                            </div>
+                            <button class="pd-card-cta" id="zoom-restrict-action" style="background:#2196F3;">Get 7-Day Access</button>
+                        </div>
                     </div>
-                    <!-- 7-Day Pass card -->
-                    <div class="pd-plan-card pd-plan-card-onetime">
-                        <div class="pd-card-name" style="color:#1565C0;">Prepaid<br>7-Day Access</div>
-                        <div class="pd-card-price"><span id="zoom-price-amount" style="font-size:32px;font-weight:800;color:#1A1A1A;">&#8377;199</span><span style="font-size:13px;color:#888;margin-left:4px;">one-time</span></div>
-                        <div class="pd-card-subtitle">No auto-renewal &middot; Login &amp; use anywhere</div>
-                        <div class="pd-card-divider"></div>
-                        <div class="pd-card-benefits">
-                            <div class="pd-card-benefit">&#10003; Non-recurring payment</div>
-                            <div class="pd-card-benefit">&#10003; 7-day full access</div>
-                            <div class="pd-card-benefit">&#10003; Use on any device with login</div>
-                            <div class="pd-card-benefit">&#10003; Best for occasional use</div>
-                        </div>
-                        <button class="pd-card-cta" id="zoom-restrict-action" style="background:#2196F3;">Get 7-Day Access</button>
+                    <button class="pd-carousel-arrow pd-arrow-right" id="pd-arrow-right" onclick="document.getElementById('pd-cards-scroll').scrollBy({left:260,behavior:'smooth'})">&#8250;</button>
+                    <!-- Dot indicators -->
+                    <div class="pd-dots">
+                        <span class="pd-dot pd-dot-active" id="pd-dot-0"></span>
+                        <span class="pd-dot" id="pd-dot-1"></span>
                     </div>
                 </div>
                 <!-- Hidden price containers for JS price loading (not displayed) -->
@@ -5802,6 +5820,22 @@
                 var fsb = document.getElementById('floating-signin-btn');
                 if (fsb) fsb.style.display = 'none';
             });
+
+            // Plan card carousel: update dots + arrow visibility on scroll
+            var pdScroll = document.getElementById('pd-cards-scroll');
+            if (pdScroll) {
+                pdScroll.addEventListener('scroll', function() {
+                    var scrollLeft = pdScroll.scrollLeft;
+                    var cardWidth = pdScroll.querySelector('.pd-plan-card')?.offsetWidth || 260;
+                    var idx = Math.round(scrollLeft / (cardWidth + 12));
+                    var dot0 = document.getElementById('pd-dot-0');
+                    var dot1 = document.getElementById('pd-dot-1');
+                    if (dot0 && dot1) {
+                        dot0.className = idx === 0 ? 'pd-dot pd-dot-active' : 'pd-dot';
+                        dot1.className = idx >= 1 ? 'pd-dot pd-dot-active' : 'pd-dot';
+                    }
+                });
+            }
             function closeSettingsPanel() {
                 settingsPanel.classList.remove('open');
                 settingsOverlay.classList.remove('open');
