@@ -1007,7 +1007,9 @@
         </div>
         <div class="layer-section" id="settings-purchases-section" style="display:none;">
             <div class="layer-section-title">My Purchases</div>
+            <div id="settings-sub-purchases" style="margin-bottom:8px;"></div>
             <div id="settings-dp-purchases" style="margin-bottom:8px;"></div>
+            <div id="settings-android-purchases" style="margin-bottom:8px;"></div>
             <div id="settings-village-purchases"></div>
             <p id="settings-no-purchases" style="margin:0;font-size:13px;color:#999;display:none;">No active purchases</p>
         </div>
@@ -5681,7 +5683,9 @@
 
             function renderSettingsPurchases() {
                 var section = document.getElementById('settings-purchases-section');
+                var subDiv = document.getElementById('settings-sub-purchases');
                 var dpDiv = document.getElementById('settings-dp-purchases');
+                var androidDiv = document.getElementById('settings-android-purchases');
                 var villDiv = document.getElementById('settings-village-purchases');
 
                 if (!currentUser || currentUser.isAnonymous) {
@@ -5689,27 +5693,93 @@
                     return;
                 }
 
+                subDiv.innerHTML = '';
                 dpDiv.innerHTML = '';
+                androidDiv.innerHTML = '';
                 villDiv.innerHTML = '';
 
-                // DP / Region purchases
+                function calcDaysLeft(expiry) {
+                    return Math.max(0, Math.floor((expiry - Date.now()) / (24 * 60 * 60 * 1000)));
+                }
+
+                // Split purchases into categories
+                var subItems = [];
                 var dpItems = [];
+                var androidItems = [];
+
                 activePurchases.forEach(function(val, pid) {
                     var district = findDistrictByPurchaseId(pid);
                     var name = district ? district.districtName : pid;
-                    var daysLeft = Math.ceil((val.expiry - Date.now()) / (24 * 60 * 60 * 1000));
-                    var planTag = val.plan === 'professional' ? 'Pro' : val.plan === 'web' ? 'Web' : val.plan === 'override' ? 'Override' : '7-Day';
-                    dpItems.push({
-                        html: '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#333;">' + name + '</div><div style="font-size:11px;color:#888;">' + planTag + ' Pass</div></div>' +
-                            '<span style="font-size:11px;font-weight:600;color:' + (daysLeft <= 1 ? '#c62828' : '#2E7D32') + ';">' + daysLeft + 'd left</span>'
-                    });
+                    var daysLeft = calcDaysLeft(val.expiry);
+                    var daysColor = daysLeft <= 1 ? '#c62828' : '#2E7D32';
+
+                    if (val.plan === 'subscription') {
+                        // Subscription — show status + cancel button
+                        var sub = activeSubscriptions.get(pid);
+                        var status = sub ? sub.status : 'active';
+                        var statusColor = status === 'active' ? '#2E7D32' : status === 'cancelled' ? '#c62828' : '#EF6C00';
+                        var statusLabel = status === 'active' ? 'Active' : status === 'cancelled' ? 'Cancelled' : status === 'halted' ? 'Payment Failed' : status.charAt(0).toUpperCase() + status.slice(1);
+
+                        var cancelBtn = '';
+                        if (status === 'active') {
+                            cancelBtn = '<button onclick="cancelRegionSubscription(\'' + pid + '\', \'' + name.replace(/'/g, "\\'") + '\')" ' +
+                                'style="margin-top:4px;padding:3px 10px;font-size:10px;font-weight:600;border:1px solid #c62828;color:#c62828;background:none;border-radius:4px;cursor:pointer;">Cancel</button>';
+                        }
+
+                        subItems.push({
+                            html: '<div style="flex:1;min-width:0;">' +
+                                '<div style="font-weight:600;color:#333;">' + name + '</div>' +
+                                '<div style="display:flex;align-items:center;gap:6px;margin-top:2px;">' +
+                                    '<span style="font-size:10px;font-weight:600;color:#fff;background:' + statusColor + ';padding:1px 6px;border-radius:4px;">' + statusLabel + '</span>' +
+                                    '<span style="font-size:11px;color:#888;">Weekly</span>' +
+                                '</div>' +
+                                cancelBtn +
+                            '</div>' +
+                            '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + 'd left</span>'
+                        });
+                    } else if (val.plan === 'professional') {
+                        androidItems.push({
+                            html: '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#333;">' + name + '</div><div style="font-size:11px;color:#888;">Pro Pass</div></div>' +
+                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + 'd left</span>'
+                        });
+                    } else if (val.plan === 'web') {
+                        dpItems.push({
+                            html: '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#333;">' + name + '</div><div style="font-size:11px;color:#888;">Web Pass</div></div>' +
+                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + 'd left</span>'
+                        });
+                    } else if (val.plan === 'override') {
+                        dpItems.push({
+                            html: '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#333;">' + name + '</div><div style="font-size:11px;color:#888;">Override</div></div>' +
+                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + 'd left</span>'
+                        });
+                    } else {
+                        // Default: 7-Day Pass (empty plan or unknown)
+                        dpItems.push({
+                            html: '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#333;">' + name + '</div><div style="font-size:11px;color:#888;">7-Day Pass</div></div>' +
+                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + 'd left</span>'
+                        });
+                    }
                 });
-                dpDiv.appendChild(makeExpandableGroup('Development Plans', '#00796B', dpItems.length, dpItems));
+
+                // Subscriptions group
+                if (subItems.length > 0) {
+                    subDiv.appendChild(makeExpandableGroup('Subscriptions', '#6A1B9A', subItems.length, subItems));
+                }
+
+                // Web / 7-Day Pass group
+                if (dpItems.length > 0) {
+                    dpDiv.appendChild(makeExpandableGroup('7-Day Pass', '#00796B', dpItems.length, dpItems));
+                }
+
+                // Android / Pro purchases
+                if (androidItems.length > 0) {
+                    androidDiv.appendChild(makeExpandableGroup('Android Purchases', '#E65100', androidItems.length, androidItems));
+                }
 
                 // Village purchases
                 var villItems = [];
                 villagePurchases.forEach(function(val, vName) {
-                    var daysLeft = Math.ceil((val.expiry - Date.now()) / (24 * 60 * 60 * 1000));
+                    var daysLeft = calcDaysLeft(val.expiry);
                     villItems.push({
                         html: '<div style="font-weight:600;color:#333;">' + vName + '</div>' +
                             '<span style="font-size:11px;font-weight:600;color:' + (daysLeft <= 1 ? '#c62828' : '#2E7D32') + ';">' + daysLeft + 'd left</span>'
