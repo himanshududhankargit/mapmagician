@@ -1783,18 +1783,19 @@
         let lastFetchTime = 0;
         const FETCH_COOLDOWN_MS = 30000; // Don't re-fetch within 30 seconds
 
-        // Periodic purchase status check — revokes access if deleted from Firebase
-        // Change to 30 * 60 * 1000 (30 min) for production, 30 * 1000 (30 sec) for testing
-        const PURCHASE_CHECK_INTERVAL_MS = 30 * 1000; // 30 seconds (testing)
-        setInterval(function() {
+        // Re-check purchase status when user returns to the tab
+        // Only checks if signed in and has active purchases — zero wasted calls
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState !== 'visible') return;
             if (!currentUser || currentUser.isAnonymous) return;
-            fetchPurchaseStatus(true);
-            fetchVillagePurchases();
-            // Reload tiles so revoked purchases take effect
-            clearAllLayersOfType(villageOverlays);
-            villageTileStatus = Array(villageLayerData.length).fill(false);
-            loadTilesBasedOnViewport();
-        }, PURCHASE_CHECK_INTERVAL_MS);
+            if (activePurchases.size === 0 && villagePurchases.size === 0) return;
+            Promise.all([fetchPurchaseStatus(true), fetchVillagePurchases()]).then(function() {
+                clearAllLayersOfType(villageOverlays);
+                villageTileStatus = Array(villageLayerData.length).fill(false);
+                loadTilesBasedOnViewport();
+                updateVillageMarkerStyles();
+            });
+        });
 
         async function fetchPurchaseStatus(force) {
             if (!currentUser || currentUser.isAnonymous) return;
