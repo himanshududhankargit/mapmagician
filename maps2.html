@@ -994,6 +994,14 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                 Contact Support
             </button>
+            <button id="settings-share-btn" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;margin-top:8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                Share with friends
+            </button>
+            <button id="settings-install-btn" style="display:none;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;margin-top:8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+                Install app
+            </button>
         </div>
         <div class="layer-section" id="settings-purchases-section" style="display:none;">
             <div class="layer-section-title">My Purchases</div>
@@ -1475,10 +1483,14 @@
         function showInstallButtons() {
             installWrap.style.display = 'block';
             bottombarInstallBtn.style.display = 'inline-flex';
+            var sib = document.getElementById('settings-install-btn');
+            if (sib) sib.style.display = 'flex';
         }
         function hideInstallButtons() {
             installWrap.style.display = 'none';
             bottombarInstallBtn.style.display = 'none';
+            var sib = document.getElementById('settings-install-btn');
+            if (sib) sib.style.display = 'none';
         }
         function markInstalled() {
             installBtn.classList.add('installed');
@@ -5458,6 +5470,26 @@
             document.getElementById('settings-signout-btn').addEventListener('click', function() {
                 closeSettingsPanel();
                 document.getElementById('signout-dialog-overlay').classList.add('open');
+            });
+
+            document.getElementById('settings-share-btn').addEventListener('click', function() {
+                var shareData = {
+                    title: 'Development Plan GIS - MapMagician',
+                    text: 'View development plan maps overlaid on satellite imagery.',
+                    url: 'https://maps.mapmagician.in'
+                };
+                if (navigator.share) {
+                    navigator.share(shareData).catch(function() {});
+                } else if (navigator.clipboard) {
+                    navigator.clipboard.writeText(shareData.url).then(function() {
+                        alert('Link copied to clipboard!');
+                    });
+                }
+                closeSettingsPanel();
+            });
+            document.getElementById('settings-install-btn').addEventListener('click', function() {
+                closeSettingsPanel();
+                openInstallInfo();
             });
 
             document.getElementById('settings-contact-support').addEventListener('click', function() {
