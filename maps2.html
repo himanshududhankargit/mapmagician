@@ -5854,11 +5854,24 @@
                 }
             }
 
-            // Fallback: check if the village's own productPurchaseID maps to a known district
-            // (in MahaVillage, productPurchaseID often IS the DP region ID)
+            // Fallback: if village is known to be inside a DP region (from isInsideDPRegion check
+            // used for marker visibility), try matching via menuGIS data
             if (villageItem.productPurchaseID) {
-                var district = findDistrictByPurchaseId(villageItem.productPurchaseID);
-                if (district) return villageItem.productPurchaseID;
+                // Check if any menuGIS district name partially matches the productPurchaseID
+                for (var k = 0; k < menuData.length; k++) {
+                    if (!menuData[k].productPurchaseID) continue;
+                    var menuPid = menuData[k].productPurchaseID.toLowerCase().replace(/gst$/, '');
+                    var villagePid = villageItem.productPurchaseID.toLowerCase().replace(/gst$/, '');
+                    if (menuPid === villagePid || menuPid === 'district' + villagePid || 'district' + menuPid === villagePid) {
+                        return menuData[k].productPurchaseID;
+                    }
+                }
+            }
+
+            // Last resort: if isInsideDPRegion says yes but we can't find the product ID,
+            // return a truthy placeholder so the base plan dialog still shows
+            if (isInsideDPRegion(pt)) {
+                return '__dp_region_unknown__';
             }
 
             return null;
@@ -6173,8 +6186,10 @@
             if (dpProductId && !hasPurchase(dpProductId)) {
                 pendingVillageAfterDP = villageItem;
                 var district = findDistrictByPurchaseId(dpProductId);
-                var regionName = district ? district.districtName : dpProductId;
-                var districtObj = district || { productPurchaseID: dpProductId, districtName: dpProductId };
+                // Fallback: try findDistrictAtCenter for the name
+                if (!district) district = findDistrictAtCenter();
+                var regionName = district ? district.districtName : 'this region';
+                var districtObj = district || { productPurchaseID: dpProductId, districtName: regionName };
                 showBasePlanRequiredDialog(villageItem.villageName, regionName, districtObj);
                 return;
             }
