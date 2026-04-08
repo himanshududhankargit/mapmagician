@@ -1938,9 +1938,13 @@
                 console.log('CloudFront cookies set, expires:', expires);
                 if (!cfCookiesReady) {
                     cfCookiesReady = true;
-                    // Dismiss loading screen
-                    var ls = document.getElementById('app-loading-screen');
-                    if (ls) { ls.style.opacity = '0'; setTimeout(function() { ls.remove(); }, 500); }
+                    // Reload tiles now that cookies are set (first load tiles failed without cookies)
+                    loadTilesBasedOnViewport();
+                    // Dismiss loading screen after a brief delay for tiles to start rendering
+                    setTimeout(function() {
+                        var ls = document.getElementById('app-loading-screen');
+                        if (ls) { ls.style.opacity = '0'; setTimeout(function() { ls.remove(); }, 500); }
+                    }, 800);
                 }
 
                 // Auto-refresh 1 hour before expiry
