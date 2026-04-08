@@ -1933,6 +1933,8 @@
         // Fetch CloudFront signed cookies after login, with auto-refresh
         let cfCookieRefreshTimer = null;
         async function fetchCloudFrontCookies() {
+            // Start layer data fetch immediately — it only needs auth, not cookies
+            fetchLayerData();
             try {
                 var als = document.getElementById('app-loading-status');
                 if (als) als.textContent = 'Connecting to tile server...';
@@ -1948,8 +1950,8 @@
                 console.log('CloudFront cookies set, expires:', expires);
                 if (!cfCookiesReady) {
                     cfCookiesReady = true;
-                    // Now safe to load layer data — cookies are set so tile images won't 403
-                    fetchLayerData();
+                    // Layer data already fetching in parallel — now cookies are set, trigger tile load
+                    loadTilesBasedOnViewport();
                     // Dismiss loading screen after layer data triggers first tile load
                     setTimeout(function() {
                         var ls = document.getElementById('app-loading-screen');
@@ -3706,6 +3708,8 @@
 
         // Layer visibility and data
         var cfCookiesReady = false; // Gate tile loading until CloudFront cookies are set
+        var tilesInitiated = false; // Gate GeoJSON until tiles have started loading
+        var layerDataFetched = false; // Prevent duplicate fetchLayerData() calls
         let isDPLayerVisible = true;
         let isLayoutLayerVisible = false;
         let isVillageLayerVisible = true;
@@ -4139,6 +4143,7 @@
         let _geojsonViewportDebounce = null;
         function loadGeoJsonForViewport() {
             if (!map) return;
+            if (!tilesInitiated) return; // Defer GeoJSON until tiles are initiated
             if (map.getZoom() < MIN_ZOOM_FOR_GEOJSON) {
                 if (renderedDistricts.size > 0) _removeAllVillagePolylines();
                 return;
@@ -4402,6 +4407,14 @@
                 gestureHandling: isEmbedMode ? 'none' : 'greedy',
                 maxZoom: MAX_FREE_ZOOM
             });
+
+            // Safety: if tiles haven't initiated after 15s, unblock GeoJSON anyway
+            setTimeout(function() {
+                if (!tilesInitiated) {
+                    tilesInitiated = true;
+                    loadGeoJsonForViewport();
+                }
+            }, 15000);
 
             // Replace native right-click menu on map with a custom "Copy coordinates" menu.
             // Also closes the right-click -> Save image as... path for tile imagery.
@@ -6469,6 +6482,7 @@
         }
 
         function clearAllLayersOfType(overlayMap) {
+            if (!map) { overlayMap.clear(); return; }
             const allOverlays = map.overlayMapTypes.getArray();
             const overlaysToRemove = [];
 
@@ -6516,6 +6530,8 @@
         }
 
         function fetchLayerData() {
+            if (layerDataFetched) return;
+            layerDataFetched = true;
             if (isDPLayerVisible) fetchDPLayerData();
             // Village layer on by default — fetch village data at startup
             if (isVillageLayerVisible) fetchVillageLayerData();
@@ -7318,6 +7334,7 @@
 
         function loadTilesBasedOnViewport() {
             if (!map) return;
+            if (!cfCookiesReady) return; // Don't request tile images before cookies are set
             const currentBounds = map.getBounds();
             if (!currentBounds) return;
 
@@ -7348,6 +7365,12 @@
             }
 
             if (layers.length === 0) return;
+
+            // First time tiles have data ready — unblock deferred GeoJSON loading
+            if (!tilesInitiated) {
+                tilesInitiated = true;
+                loadGeoJsonForViewport();
+            }
 
             // Send to Web Worker -- polygon math runs in background thread
             tileWorker.postMessage({ generation: currentGeneration, layers, currentZoom, centerPoint, vp });
