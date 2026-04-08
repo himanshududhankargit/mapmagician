@@ -802,6 +802,23 @@
     </style>
 </head>
 <body>
+    <!-- App loading screen -->
+    <div id="app-loading-screen" style="position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#f8f9fa 0%,#e8edf2 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
+        <img src="AssetsGIS/image-1.png" alt="" style="width:64px;height:64px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.12);margin-bottom:20px;">
+        <div style="font-size:22px;font-weight:700;color:#1a1a1a;letter-spacing:-0.5px;font-family:'Segoe UI',Roboto,Arial,sans-serif;">MapMagician</div>
+        <div style="font-size:13px;color:#888;margin-top:4px;font-family:'Segoe UI',Roboto,Arial,sans-serif;">Development Plan GIS</div>
+        <div style="margin-top:28px;width:36px;height:36px;border:3px solid #e0e0e0;border-top-color:#00796B;border-radius:50%;animation:app-spin 0.8s linear infinite;"></div>
+        <div id="app-loading-status" style="margin-top:16px;font-size:12px;color:#aaa;font-family:'Segoe UI',Roboto,Arial,sans-serif;">Loading maps...</div>
+    </div>
+    <style>@keyframes app-spin { to { transform: rotate(360deg); } }</style>
+    <script>
+    // Fallback: auto-dismiss loading screen after 8s even if init fails
+    setTimeout(function() {
+        var ls = document.getElementById('app-loading-screen');
+        if (ls) { ls.style.opacity = '0'; setTimeout(function() { ls.remove(); }, 500); }
+    }, 8000);
+    </script>
+
     <!-- SEO content: visible to screen readers and crawlers, invisible to sighted users -->
     <section class="sr-only" aria-label="Supported regions and application description">
         <h1>India Development Plan (DP) Maps – Online GIS Viewer</h1>
@@ -1873,6 +1890,8 @@
         let cfCookieRefreshTimer = null;
         async function fetchCloudFrontCookies() {
             try {
+                var als = document.getElementById('app-loading-status');
+                if (als) als.textContent = 'Connecting to tile server...';
                 const getCloudFrontCookies = functions.httpsCallable('getCloudFrontCookies');
                 const result = await getCloudFrontCookies();
                 const data = result.data;
@@ -1886,6 +1905,9 @@
                 if (!cfCookiesReady) {
                     cfCookiesReady = true;
                     loadTilesBasedOnViewport();
+                    // Dismiss loading screen
+                    var ls = document.getElementById('app-loading-screen');
+                    if (ls) { ls.style.opacity = '0'; setTimeout(function() { ls.remove(); }, 500); }
                 }
 
                 // Auto-refresh 1 hour before expiry
@@ -4283,6 +4305,8 @@
         
         // Initialize the map when the Google Maps API is loaded
         function initMap() {
+            var als = document.getElementById('app-loading-status');
+            if (als) als.textContent = 'Initializing map...';
             updateStatus("Initializing map...");
 
             // Restore color counter from any previously-cached districts
