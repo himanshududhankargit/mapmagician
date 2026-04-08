@@ -1828,9 +1828,7 @@
                 clearAllLayersOfType(villageOverlays);
                 villageTileStatus = Array(villageLayerData.length).fill(false);
                 updateVillageMarkerStyles();
-                fetchCloudFrontCookies().then(function() {
-                    loadTilesBasedOnViewport();
-                });
+                fetchCloudFrontCookies();
             } else {
                 profileBtn.classList.remove('signed-in');
                 profileSvg.style.display = '';
@@ -1859,6 +1857,7 @@
                 updateVillageMarkerStyles();
 
                 // Clear CloudFront cookies on sign-out
+                cfCookiesReady = false;
                 document.cookie = 'CloudFront-Policy=; domain=.mapmagician.in; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
                 document.cookie = 'CloudFront-Signature=; domain=.mapmagician.in; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
                 document.cookie = 'CloudFront-Key-Pair-Id=; domain=.mapmagician.in; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
@@ -1884,6 +1883,10 @@
                 document.cookie = `CloudFront-Key-Pair-Id=${data['CloudFront-Key-Pair-Id']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
 
                 console.log('CloudFront cookies set, expires:', expires);
+                if (!cfCookiesReady) {
+                    cfCookiesReady = true;
+                    loadTilesBasedOnViewport();
+                }
 
                 // Auto-refresh 1 hour before expiry
                 if (cfCookieRefreshTimer) clearTimeout(cfCookieRefreshTimer);
@@ -3623,6 +3626,7 @@
         }
 
         // Layer visibility and data
+        var cfCookiesReady = false; // Gate tile loading until CloudFront cookies are set
         let isDPLayerVisible = true;
         let isLayoutLayerVisible = false;
         let isVillageLayerVisible = true;
@@ -7203,7 +7207,7 @@
         }
 
         function loadTilesBasedOnViewport() {
-            if (!map) return;
+            if (!map || !cfCookiesReady) return;
             const currentBounds = map.getBounds();
             if (!currentBounds) return;
 
