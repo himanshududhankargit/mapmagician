@@ -1526,12 +1526,22 @@
     
     <!-- Firebase initialization must come after the Firebase scripts have loaded -->
     <script>
-        // --- Disclaimer (shown on every page load, skipped in embed mode and on mapmagician.in) ---
+        // --- Disclaimer (shown on first map interaction, skipped in embed mode) ---
         (function() {
             var overlay = document.getElementById('disclaimer-overlay');
             if (!overlay) return;
             var isEmbed = new URLSearchParams(window.location.search).get('embed') === '1';
             if (isEmbed) { overlay.style.display = 'none'; return; }
+            // Hide initially — show on first map interaction
+            overlay.style.display = 'none';
+            var disclaimerShown = false;
+            function showDisclaimer() {
+                if (disclaimerShown) return;
+                disclaimerShown = true;
+                overlay.style.display = '';
+            }
+            // Trigger on first pan or zoom
+            window._showDisclaimer = showDisclaimer;
             document.getElementById('disclaimer-agree').addEventListener('click', function() {
                 overlay.style.display = 'none';
             });
@@ -4499,6 +4509,14 @@
                 updateVillageMarkerVisibility();
             });
             map.addListener('bounds_changed', debouncedLoadTiles);
+
+            // Show disclaimer on first user interaction with map
+            google.maps.event.addListenerOnce(map, 'dragstart', function() {
+                if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
+            });
+            google.maps.event.addListenerOnce(map, 'zoom_changed', function() {
+                if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
+            });
 
             // Region detection on camera move (throttled 300ms, like Android)
             let lastRegionCheckTime = 0;
