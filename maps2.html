@@ -5908,7 +5908,7 @@
                 villDiv.innerHTML = '';
 
                 function calcDaysLeft(expiry) {
-                    return Math.max(0, Math.floor((expiry - Date.now()) / (24 * 60 * 60 * 1000)));
+                    return Math.max(0, Math.ceil((expiry - Date.now()) / (24 * 60 * 60 * 1000)));
                 }
 
                 // Split purchases into categories
