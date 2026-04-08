@@ -1823,9 +1823,17 @@
                 profileBtn.style.color = '#1976D2';
                 profileBtn.title = 'Sign in';
                 activePurchases.clear();
+                activeSubscriptions.clear();
                 villagePurchases.clear();
                 cachedIdToken = null;
                 clearSession();
+                // Hide purchases and close settings panel if open
+                var purchSec = document.getElementById('settings-purchases-section');
+                if (purchSec) purchSec.style.display = 'none';
+                var sp = document.getElementById('settings-panel');
+                var so = document.getElementById('settings-overlay');
+                if (sp) sp.classList.remove('open');
+                if (so) so.classList.remove('open');
                 // Detach pricing listener to prevent unnecessary reads
                 if (typeof pricingListenerRef !== 'undefined') pricingListenerRef.off();
                 // Clear village tiles
@@ -3381,30 +3389,30 @@
             desc.textContent = 'There are no development plan maps available for this area. Browse available regions to explore maps.';
             regionInfo.style.display = 'none';
             supportBtn.style.display = 'none';
-            // Hide plan cards and their carousel wrapper
+            document.getElementById('zoom-restrict-price').style.display = 'none';
+            // Hide plan cards carousel
             document.getElementById('pd-plan-tabs').style.display = 'none';
 
-            // Close region browser if open so dialog is visible
-            var sidebarPanel = document.getElementById('sidebar-panel');
-            if (sidebarPanel && sidebarPanel.classList.contains('open')) {
-                sidebarPanel.classList.remove('open');
+            // Close sidebar if open so dialog is visible
+            if (document.getElementById('sidebar-panel').classList.contains('open')) {
+                document.getElementById('sidebar-panel').classList.remove('open');
                 document.getElementById('sidebar-overlay').classList.remove('open');
             }
 
             disableMapInteraction();
 
-            // Add Browse button after description, replacing cancel button area
-            var cancelBtn = document.getElementById('zoom-restrict-cancel');
-            var newCancel = cancelBtn.cloneNode(true);
-            newCancel.id = 'zoom-restrict-cancel';
-            cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+            // Remove any previous browse button
+            var oldBrowse = document.getElementById('nodata-browse-btn');
+            if (oldBrowse) oldBrowse.remove();
 
-            // Insert a Browse Regions button before the cancel
+            // Insert Browse button before cancel (outside the hidden cards)
+            var cancelBtn = document.getElementById('zoom-restrict-cancel');
             var browseBtn = document.createElement('button');
+            browseBtn.id = 'nodata-browse-btn';
             browseBtn.textContent = 'Browse Available Regions';
             browseBtn.className = 'pd-cta';
             browseBtn.style.cssText = 'margin-bottom:8px;';
-            newCancel.parentNode.insertBefore(browseBtn, newCancel);
+            cancelBtn.parentNode.insertBefore(browseBtn, cancelBtn);
 
             browseBtn.addEventListener('click', function() {
                 overlay.classList.remove('open');
@@ -3417,6 +3425,9 @@
                 setTimeout(function() { openRegionsBrowser(); }, 0);
             });
 
+            var newCancel = cancelBtn.cloneNode(true);
+            newCancel.id = 'zoom-restrict-cancel';
+            cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
             newCancel.addEventListener('click', function() {
                 overlay.classList.remove('open');
                 enableMapInteraction();
