@@ -1032,6 +1032,7 @@
             <div id="settings-android-purchases" style="margin-bottom:8px;"></div>
             <div id="settings-village-purchases"></div>
             <p id="settings-no-purchases" style="margin:0;font-size:13px;color:#999;display:none;">No active purchases</p>
+            <div id="settings-purchase-history" style="margin-top:12px;"></div>
         </div>
         <div class="layer-section">
             <div class="layer-section-title">About</div>
@@ -1784,6 +1785,7 @@
                 // Wait for purchases to load, THEN resume pending actions
                 fetchVillagePurchases(); // also load village purchase status
                 fetchSubscriptionStatus(); // load subscription metadata
+                fetchPurchaseHistory(); // load purchase history for sidebar
                 fetchPurchaseStatus(true).then(function() {
                     authLoadingOverlay.classList.remove('open');
                     // Reset overlay text for future payment use
@@ -2043,6 +2045,19 @@
                 });
             } catch (e) {
                 console.error('Failed to fetch subscription status:', e);
+            }
+        }
+
+        var purchaseHistory = []; // Array of history entries from Firebase
+
+        async function fetchPurchaseHistory() {
+            if (!currentUser || currentUser.isAnonymous) { purchaseHistory = []; return; }
+            try {
+                var getPurchaseHistory = functions.httpsCallable('getPurchaseHistory');
+                var result = await getPurchaseHistory();
+                purchaseHistory = result.data.history || [];
+            } catch (e) {
+                console.error('Failed to fetch purchase history:', e);
             }
         }
 
@@ -5912,6 +5927,39 @@
 
                 section.style.display = 'block';
                 document.getElementById('settings-no-purchases').style.display = 'none';
+            }
+
+            // ── Purchase History ──
+            var histDiv = document.getElementById('settings-purchase-history');
+            histDiv.innerHTML = '';
+            if (purchaseHistory.length > 0) {
+                var histItems = [];
+                var dateFmt = function(ts) {
+                    if (!ts) return '';
+                    var d = new Date(ts);
+                    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                };
+                purchaseHistory.forEach(function(h) {
+                    var eventLabel, badgeColor, badgeBg;
+                    switch (h.event) {
+                        case 'purchase': eventLabel = 'Purchased'; badgeColor = '#2E7D32'; badgeBg = '#E8F5E9'; break;
+                        case 'subscription_started': eventLabel = 'Subscribed'; badgeColor = '#6A1B9A'; badgeBg = '#F3E5F5'; break;
+                        case 'cancelled': eventLabel = 'Cancelled'; badgeColor = '#E65100'; badgeBg = '#FFF3E0'; break;
+                        case 'refund': eventLabel = 'Refunded'; badgeColor = '#c62828'; badgeBg = '#FFEBEE'; break;
+                        default: eventLabel = h.event || 'Unknown'; badgeColor = '#666'; badgeBg = '#F5F5F5';
+                    }
+                    var name = h.regionName || h.productId || '';
+                    var amountStr = h.amount ? ' — ₹' + h.amount : '';
+                    histItems.push({
+                        html: '<div style="display:flex;align-items:center;gap:8px;">' +
+                            '<span style="font-size:10px;font-weight:600;color:' + badgeColor + ';background:' + badgeBg + ';padding:2px 8px;border-radius:4px;">' + eventLabel + '</span>' +
+                            '<span style="font-weight:600;color:#333;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + name + '</span>' +
+                        '</div>' +
+                        '<div style="font-size:11px;color:#888;margin-top:2px;">' + dateFmt(h.timestamp) + amountStr + '</div>'
+                    });
+                });
+                histDiv.appendChild(makeExpandableGroup('Purchase History', '#78909C', histItems.length, histItems));
+                section.style.display = 'block';
             }
 
             document.getElementById('btn-settings').addEventListener('click', function() {
