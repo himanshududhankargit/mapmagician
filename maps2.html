@@ -2410,21 +2410,47 @@
             });
 
             newConfirm.addEventListener('click', async function() {
-                newConfirm.disabled = true;
-                newConfirm.textContent = 'Cancelling...';
+                // Hide cancel dialog, show loading overlay
+                overlay.classList.remove('open');
+                var loadingOverlay = document.getElementById('payment-loading-overlay');
+                document.getElementById('payment-loading-text').textContent = 'Cancelling subscription...';
+                document.getElementById('payment-loading-sub').textContent = regionName;
+                loadingOverlay.classList.add('open');
                 try {
                     var cancel = functions.httpsCallable('cancelSubscription');
                     var result = await cancel({ productId: productId });
                     await fetchSubscriptionStatus();
-                    overlay.classList.remove('open');
+                    loadingOverlay.classList.remove('open');
                     var accessUntil = result.data.accessUntil;
                     var dateStr = accessUntil ? new Date(accessUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'end of period';
+                    // Show success confirmation dialog
+                    var successOverlay = document.getElementById('cancel-sub-overlay');
+                    document.getElementById('cancel-sub-region').textContent = regionName + ' — Cancelled';
+                    var header = successOverlay.querySelector('div[style*="background:linear-gradient"]');
+                    if (header) {
+                        header.querySelector('h3').textContent = 'Subscription Cancelled';
+                        header.querySelector('svg').style.display = 'none';
+                    }
+                    var body = successOverlay.querySelector('div[style*="padding:20px"]');
+                    if (body) {
+                        body.innerHTML = '<div style="text-align:center;padding:10px 0 20px;">' +
+                            '<div style="width:56px;height:56px;border-radius:50%;background:#E8F5E9;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;">' +
+                                '<svg width="28" height="28" viewBox="0 0 24 24" fill="#2E7D32"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' +
+                            '</div>' +
+                            '<p style="margin:0 0 6px;font-size:15px;font-weight:600;color:#333;">Successfully cancelled</p>' +
+                            '<p style="margin:0 0 16px;font-size:13px;color:#888;line-height:1.5;">Your access continues until <strong>' + dateStr + '</strong>.<br>No more charges will be made.</p>' +
+                            '<button id="cancel-sub-done" style="width:100%;padding:14px;font-size:14px;font-weight:600;border:none;border-radius:10px;background:#00796B;color:#fff;cursor:pointer;">Done</button>' +
+                        '</div>';
+                        document.getElementById('cancel-sub-done').addEventListener('click', function() {
+                            successOverlay.classList.remove('open');
+                        });
+                    }
+                    successOverlay.classList.add('open');
                     updateStatus('Subscription cancelled — access until ' + dateStr);
                     renderSettingsPurchases();
                 } catch (e) {
+                    loadingOverlay.classList.remove('open');
                     console.error('Cancel subscription error:', e);
-                    newConfirm.disabled = false;
-                    newConfirm.textContent = 'Cancel Subscription';
                     alert('Failed to cancel: ' + (e.message || e.code || 'Unknown error'));
                 }
             });
@@ -7247,6 +7273,6 @@
     </div>
 
     <!-- Load Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBBfEcHoR1yHBlnOvWKYLkr3C3ob6nb5hw&libraries=places&callback=initMap" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBBfEcHoR1yHBlnOvWKYLkr3C3ob6nb5hw&libraries=places&callback=initMap&loading=async" async defer></script>
 </body>
 </html>
