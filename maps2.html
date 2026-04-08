@@ -1690,6 +1690,7 @@
         let pendingSupportOpen = null; // {district, returnToPaywall} — set when support clicked before login
         let currentSessionId = null;  // Single-session enforcement
         let sessionListenerRef = null; // Firebase .on() ref for session changes
+        var purchaseListenerRef = null; // Firebase .on() ref for realtime purchase updates
 
         // Anonymous sign-in is handled in onAuthStateChanged (after session restoration)
 
@@ -1792,6 +1793,22 @@
                 profileBtn.title = user.displayName || user.email;
                 fetchCloudFrontCookies();
                 if (user.email) registerSession(user.email);
+
+                // Realtime listener: re-fetch when purchases change server-side (admin refund, webhook, etc.)
+                var emailKey = user.email.replace(/\./g, ',');
+                if (purchaseListenerRef) purchaseListenerRef.off();
+                purchaseListenerRef = firebase.database().ref('GISAPPOneTimePurchase/' + emailKey);
+                var purchaseListenerSkipFirst = true; // Skip the initial .on() callback
+                purchaseListenerRef.on('value', function() {
+                    if (purchaseListenerSkipFirst) { purchaseListenerSkipFirst = false; return; }
+                    // Data changed server-side — refresh everything
+                    fetchPurchaseStatus(true).then(function() {
+                        loadTilesBasedOnViewport();
+                        updateRegionStatus();
+                    });
+                    fetchSubscriptionStatus();
+                    fetchPurchaseHistory();
+                });
 
                 // Show loading while fetching purchase data
                 const authLoadingOverlay = document.getElementById('payment-loading-overlay');
@@ -1976,6 +1993,7 @@
 
         function clearSession() {
             if (sessionListenerRef) { sessionListenerRef.off(); sessionListenerRef = null; }
+            if (purchaseListenerRef) { purchaseListenerRef.off(); purchaseListenerRef = null; }
             currentSessionId = null;
         }
 
