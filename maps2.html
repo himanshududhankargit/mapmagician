@@ -3375,43 +3375,57 @@
             const title = document.getElementById('zoom-restrict-title');
             const desc = document.getElementById('zoom-restrict-desc');
             const regionInfo = document.getElementById('zoom-restrict-region');
-            const actionBtn = document.getElementById('zoom-restrict-action');
             const supportBtn = document.getElementById('zoom-restrict-support');
 
             title.textContent = 'No Map Data Available';
             desc.textContent = 'There are no development plan maps available for this area. Browse available regions to explore maps.';
             regionInfo.style.display = 'none';
             supportBtn.style.display = 'none';
+            // Hide plan cards and their carousel wrapper
             document.getElementById('pd-plan-tabs').style.display = 'none';
+
+            // Close region browser if open so dialog is visible
+            var sidebarPanel = document.getElementById('sidebar-panel');
+            if (sidebarPanel && sidebarPanel.classList.contains('open')) {
+                sidebarPanel.classList.remove('open');
+                document.getElementById('sidebar-overlay').classList.remove('open');
+            }
 
             disableMapInteraction();
 
-            // Replace button to strip old listeners — use the cancel button area for Browse
-            const newBtn = actionBtn.cloneNode(true);
-            newBtn.id = 'zoom-restrict-action';
-            newBtn.textContent = 'Browse Available Regions';
-            newBtn.className = 'pd-card-cta';
-            newBtn.style.cssText = 'background:#00796B;margin-bottom:8px;';
-            actionBtn.parentNode.replaceChild(newBtn, actionBtn);
+            // Add Browse button after description, replacing cancel button area
+            var cancelBtn = document.getElementById('zoom-restrict-cancel');
+            var newCancel = cancelBtn.cloneNode(true);
+            newCancel.id = 'zoom-restrict-cancel';
+            cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
 
-            newBtn.addEventListener('click', function() {
+            // Insert a Browse Regions button before the cancel
+            var browseBtn = document.createElement('button');
+            browseBtn.textContent = 'Browse Available Regions';
+            browseBtn.className = 'pd-cta';
+            browseBtn.style.cssText = 'margin-bottom:8px;';
+            newCancel.parentNode.insertBefore(browseBtn, newCancel);
+
+            browseBtn.addEventListener('click', function() {
                 overlay.classList.remove('open');
                 enableMapInteraction();
                 supportBtn.style.display = '';
+                browseBtn.remove();
                 zoomBypassActive = true;
                 smoothZoomTo(MAX_FREE_ZOOM - 1);
                 google.maps.event.addListenerOnce(map, 'idle', function() { zoomBypassActive = false; });
-                openRegionsBrowser();
+                setTimeout(function() { openRegionsBrowser(); }, 0);
             });
 
-            document.getElementById('zoom-restrict-cancel').onclick = function() {
+            newCancel.addEventListener('click', function() {
                 overlay.classList.remove('open');
                 enableMapInteraction();
                 supportBtn.style.display = '';
+                browseBtn.remove();
                 zoomBypassActive = true;
                 smoothZoomTo(MAX_FREE_ZOOM - 1);
                 google.maps.event.addListenerOnce(map, 'idle', function() { zoomBypassActive = false; });
-            };
+            });
 
             overlay.classList.add('open');
         }
