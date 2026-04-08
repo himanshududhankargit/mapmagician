@@ -7391,12 +7391,20 @@
             // Off-DOM Image: not in document tree, so Save As / Ctrl+S can't see its src.
             // Browser auto-sends CloudFront signed cookies (same-site subdomain).
             var img = new Image();
+            var tileSrc = this.urlPrefix_ + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
             img.onload = function() {
                 // Tile may have been released while loading -- skip if detached.
                 if (div.parentNode) ctx.drawImage(img, 0, 0, 256, 256);
             };
-            img.onerror = function() { /* 404/auth -- leave tile blank */ };
-            img.src = this.urlPrefix_ + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
+            var retryCount = 0;
+            img.onerror = function() {
+                // Retry up to 3 times with increasing delay (cookies may not be ready yet)
+                if (retryCount < 3 && div.parentNode) {
+                    retryCount++;
+                    setTimeout(function() { img.src = tileSrc; }, retryCount * 2000);
+                }
+            };
+            img.src = tileSrc;
 
             div._tileImg = img;
             this.tiles_.add(div);
