@@ -3456,6 +3456,7 @@
             newBtn.addEventListener('click', () => {
                 overlay.classList.remove('open');
                 enableMapInteraction();
+                smoothZoomTo(MAX_FREE_ZOOM - 1);
                 setTimeout(() => {
                     if (district) buyRegion(district.productPurchaseID, district.districtName);
                     else openRegionsBrowser();
@@ -3472,6 +3473,7 @@
             newSubBtn.addEventListener('click', () => {
                 overlay.classList.remove('open');
                 enableMapInteraction();
+                smoothZoomTo(MAX_FREE_ZOOM - 1);
                 setTimeout(() => {
                     if (district) subscribeRegion(district.productPurchaseID, district.districtName);
                     else openRegionsBrowser();
