@@ -1816,8 +1816,7 @@
                     document.getElementById('payment-loading-sub').textContent = '7-Day Pass';
                 });
             } else if (user && user.isAnonymous) {
-                // Anonymous user — only fetch cookies for tile access, show as not logged in
-                fetchCloudFrontCookies();
+                // Anonymous user — fetch cookies first, then load tiles
                 profileBtn.classList.remove('signed-in');
                 profileSvg.style.display = '';
                 profileIcon.innerHTML = '';
@@ -1825,12 +1824,13 @@
                 profileBtn.style.background = '#e3f2fd';
                 profileBtn.style.color = '#1976D2';
                 profileBtn.title = 'Sign in';
-                // Clear village purchases and reload tiles
                 villagePurchases.clear();
                 clearAllLayersOfType(villageOverlays);
                 villageTileStatus = Array(villageLayerData.length).fill(false);
-                loadTilesBasedOnViewport();
                 updateVillageMarkerStyles();
+                fetchCloudFrontCookies().then(function() {
+                    loadTilesBasedOnViewport();
+                });
             } else {
                 profileBtn.classList.remove('signed-in');
                 profileSvg.style.display = '';
@@ -1853,10 +1853,9 @@
                 if (so) so.classList.remove('open');
                 // Detach pricing listener to prevent unnecessary reads
                 if (typeof pricingListenerRef !== 'undefined') pricingListenerRef.off();
-                // Clear village tiles
+                // Clear village tiles (don't load tiles yet — signInAnonymously will trigger cookie fetch + tile load)
                 clearAllLayersOfType(villageOverlays);
                 villageTileStatus = Array(villageLayerData.length).fill(false);
-                loadTilesBasedOnViewport();
                 updateVillageMarkerStyles();
 
                 // Clear CloudFront cookies on sign-out
