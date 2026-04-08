@@ -2160,9 +2160,10 @@
                    null;
         }
 
-        // Check if a product is purchased
+        // Check if a product is purchased (excludes refunded entries)
         function hasPurchase(productId) {
-            return findPurchaseEntry(productId) !== null;
+            var entry = findPurchaseEntry(productId);
+            return entry !== null && !entry.refunded;
         }
 
         // Check Firebase DB directly for a purchase entry (handles mobile→web sync lag)
