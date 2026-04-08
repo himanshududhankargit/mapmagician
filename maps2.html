@@ -1938,17 +1938,13 @@
                 console.log('CloudFront cookies set, expires:', expires);
                 if (!cfCookiesReady) {
                     cfCookiesReady = true;
-                    // Dismiss loading screen
-                    var ls = document.getElementById('app-loading-screen');
-                    if (ls) { ls.style.opacity = '0'; setTimeout(function() { ls.remove(); }, 500); }
-                    // Clear all existing tile overlays and reload fresh with cookies
-                    if (typeof map !== 'undefined' && map) {
-                        if (typeof clearAllLayersOfType === 'function' && typeof dpOverlays !== 'undefined') {
-                            clearAllLayersOfType(dpOverlays);
-                            dpTileStatus = Array(dpLayerData.length).fill(false);
-                        }
-                        loadTilesBasedOnViewport();
-                    }
+                    // Now safe to load layer data — cookies are set so tile images won't 403
+                    fetchLayerData();
+                    // Dismiss loading screen after layer data triggers first tile load
+                    setTimeout(function() {
+                        var ls = document.getElementById('app-loading-screen');
+                        if (ls) { ls.style.opacity = '0'; setTimeout(function() { ls.remove(); }, 500); }
+                    }, 1500);
                 }
 
                 // Auto-refresh 1 hour before expiry
@@ -4771,8 +4767,8 @@
                 Object.entries(data).forEach(function(e) { cachedSubPricing.set(e[0], e[1]); });
             });
 
-            // Start loading layer data
-            fetchLayerData();
+            // Layer data loading deferred until CloudFront cookies are ready
+            // (prevents tile overlays from being created before cookies exist)
 
             // Load sidebar navigation from Firebase
             initSidebar();
@@ -7395,20 +7391,12 @@
             // Off-DOM Image: not in document tree, so Save As / Ctrl+S can't see its src.
             // Browser auto-sends CloudFront signed cookies (same-site subdomain).
             var img = new Image();
-            var tileSrc = this.urlPrefix_ + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
             img.onload = function() {
                 // Tile may have been released while loading -- skip if detached.
                 if (div.parentNode) ctx.drawImage(img, 0, 0, 256, 256);
             };
-            var retryCount = 0;
-            img.onerror = function() {
-                // Retry up to 3 times with increasing delay (cookies may not be ready yet)
-                if (retryCount < 3 && div.parentNode) {
-                    retryCount++;
-                    setTimeout(function() { img.src = tileSrc; }, retryCount * 2000);
-                }
-            };
-            img.src = tileSrc;
+            img.onerror = function() { /* 404/auth -- leave tile blank */ };
+            img.src = this.urlPrefix_ + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
 
             div._tileImg = img;
             this.tiles_.add(div);
