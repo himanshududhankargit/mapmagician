@@ -2431,31 +2431,28 @@
                     loadingOverlay.classList.remove('open');
                     var accessUntil = result.data.accessUntil;
                     var dateStr = accessUntil ? new Date(accessUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'end of period';
-                    // Show success confirmation dialog
+                    // Show success confirmation dialog — replace entire dialog content
                     var successOverlay = document.getElementById('cancel-sub-overlay');
-                    document.getElementById('cancel-sub-region').textContent = regionName + ' — Cancelled';
-                    var header = successOverlay.querySelector('div[style*="background:linear-gradient"]');
-                    if (header) {
-                        header.querySelector('h3').textContent = 'Subscription Cancelled';
-                        header.querySelector('svg').style.display = 'none';
-                    }
-                    var body = successOverlay.querySelector('div[style*="padding:20px"]');
-                    if (body) {
-                        body.innerHTML = '<div style="text-align:center;padding:10px 0 20px;">' +
-                            '<div style="width:56px;height:56px;border-radius:50%;background:#E8F5E9;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;">' +
-                                '<svg width="28" height="28" viewBox="0 0 24 24" fill="#2E7D32"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' +
+                    var dialogBox = successOverlay.querySelector('.zoom-dialog');
+                    var origContent = dialogBox.innerHTML;
+                    dialogBox.innerHTML =
+                        '<div style="background:linear-gradient(135deg,#00796B,#004D40);padding:24px 20px;text-align:center;">' +
+                            '<div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.2);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;">' +
+                                '<svg width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' +
                             '</div>' +
-                            '<p style="margin:0 0 6px;font-size:15px;font-weight:600;color:#333;">Successfully cancelled</p>' +
-                            '<p style="margin:0 0 16px;font-size:13px;color:#888;line-height:1.5;">Your access continues until <strong>' + dateStr + '</strong>.<br>No more charges will be made.</p>' +
+                            '<h3 style="margin:0;font-size:17px;font-weight:700;color:#fff;">Successfully cancelled</h3>' +
+                            '<p style="margin:8px 0 0;font-size:13px;color:rgba(255,255,255,0.9);line-height:1.5;">Your access continues until <strong>' + dateStr + '</strong>.<br>No more charges will be made.</p>' +
+                        '</div>' +
+                        '<div style="padding:20px;">' +
                             '<button id="cancel-sub-done" style="width:100%;padding:14px;font-size:14px;font-weight:600;border:none;border-radius:10px;background:#00796B;color:#fff;cursor:pointer;">Done</button>' +
                         '</div>';
-                        document.getElementById('cancel-sub-done').addEventListener('click', function() {
-                            successOverlay.classList.remove('open');
-                        });
-                    }
+                    document.getElementById('cancel-sub-done').addEventListener('click', function() {
+                        successOverlay.classList.remove('open');
+                        dialogBox.innerHTML = origContent;
+                        renderSettingsPurchases();
+                    });
                     successOverlay.classList.add('open');
                     updateStatus('Subscription cancelled — access until ' + dateStr);
-                    renderSettingsPurchases();
                 } catch (e) {
                     loadingOverlay.classList.remove('open');
                     console.error('Cancel subscription error:', e);
@@ -5753,6 +5750,7 @@
                 return wrap;
             }
 
+            window.renderSettingsPurchases = renderSettingsPurchases;
             function renderSettingsPurchases() {
                 var section = document.getElementById('settings-purchases-section');
                 var subDiv = document.getElementById('settings-sub-purchases');
