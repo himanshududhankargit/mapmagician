@@ -2012,7 +2012,7 @@
                 Object.entries(data.purchases || {}).forEach(([productId, val]) => {
                     // Handle both old format (number) and new format ({expiry, plan})
                     if (typeof val === 'object' && val) {
-                        activePurchases.set(productId, { expiry: val.expiry, plan: val.plan || '' });
+                        activePurchases.set(productId, { expiry: val.expiry, plan: val.plan || '', refunded: val.refunded || false });
                     } else {
                         activePurchases.set(productId, { expiry: val, plan: '' });
                     }
@@ -5851,6 +5851,21 @@
                 activePurchases.forEach(function(val, pid) {
                     var district = findDistrictByPurchaseId(pid);
                     var name = district ? district.districtName : pid;
+
+                    // Refunded entry — show with badge, no days left
+                    if (val.refunded) {
+                        var planLabel = val.plan === 'subscription' ? 'Subscription' : val.plan === 'professional' ? 'Pro Pass' : '7-Day Pass';
+                        var targetArr = val.plan === 'subscription' ? subItems : val.plan === 'professional' ? androidItems : dpItems;
+                        targetArr.push({
+                            html: '<div style="flex:1;min-width:0;">' +
+                                '<div style="font-weight:600;color:#999;text-decoration:line-through;">' + name + '</div>' +
+                                '<div style="font-size:11px;color:#888;">' + planLabel + '</div>' +
+                            '</div>' +
+                            '<span style="font-size:10px;font-weight:600;color:#c62828;background:#FFEBEE;padding:2px 8px;border-radius:4px;">Refunded</span>'
+                        });
+                        return;
+                    }
+
                     var daysLeft = calcDaysLeft(val.expiry);
                     var daysColor = daysLeft <= 1 ? '#c62828' : '#2E7D32';
 
