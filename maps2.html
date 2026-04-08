@@ -4974,9 +4974,9 @@
                             isPurchased = true;
                             var exp = getPurchaseExpiry(item.productPurchaseID);
                             var plan = getPurchasePlan(item.productPurchaseID);
-                            var days = Math.ceil((exp - Date.now()) / 86400000);
+                            var days = calcDaysLeft(exp);
                             var planTag = plan === 'professional' ? 'Pro' : plan === 'web' ? 'Web' : plan === 'override' ? 'Override' : '7 Day';
-                            badgeHtml = '<div class="region-card-badge purchased">' + planTag + ' Pass - ' + days + 'd left</div>';
+                            badgeHtml = '<div class="region-card-badge purchased">' + planTag + ' Pass - ' + days + ' left</div>';
                             card.classList.add('has-purchase');
                         } else {
                             badgeHtml = '<div class="region-card-badge buy" data-pid="' + item.productPurchaseID + '" data-name="' + item.name + '">Buy</div>';
@@ -5201,9 +5201,9 @@
                         if (hasPurchase(item.productPurchaseID)) {
                             const expiry = getPurchaseExpiry(item.productPurchaseID);
                             const plan = getPurchasePlan(item.productPurchaseID);
-                            const daysLeft = Math.ceil((expiry - Date.now()) / (24*60*60*1000));
+                            const daysLeft = calcDaysLeft(expiry);
                             const planTag = plan === 'professional' ? 'Pro' : plan === 'web' ? 'Web' : plan === 'override' ? 'Override' : '7 Day';
-                            badge = '<span style="font-size:9px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0">' + planTag + ' \u00b7 ' + daysLeft + 'd left</span>';
+                            badge = '<span style="font-size:9px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0">' + planTag + ' \u00b7 ' + daysLeft + ' left</span>';
                         } else {
                             badge = '<span style="font-size:9px;background:#FF9800;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0;cursor:pointer" class="buy-badge" data-pid="' + item.productPurchaseID + '" data-name="' + item.name + '">Buy 7-Day Pass</span>';
                         }
@@ -5908,7 +5908,13 @@
                 villDiv.innerHTML = '';
 
                 function calcDaysLeft(expiry) {
-                    return Math.max(0, Math.ceil((expiry - Date.now()) / (24 * 60 * 60 * 1000)));
+                    var ms = Math.max(0, expiry - Date.now());
+                    var d = Math.floor(ms / 86400000);
+                    var h = Math.floor((ms % 86400000) / 3600000);
+                    var m = Math.floor((ms % 3600000) / 60000);
+                    if (d > 0) return d + 'd ' + h + 'h';
+                    if (h > 0) return h + 'h ' + m + 'm';
+                    return m + 'm';
                 }
 
                 // Split purchases into categories
@@ -5935,7 +5941,7 @@
                     }
 
                     var daysLeft = calcDaysLeft(val.expiry);
-                    var daysColor = daysLeft <= 1 ? '#c62828' : '#2E7D32';
+                    var daysColor = (val.expiry - Date.now()) < 86400000 ? '#c62828' : '#2E7D32';
 
                     if (val.plan === 'subscription') {
                         // Subscription — show status + cancel button
@@ -5959,28 +5965,28 @@
                                 '</div>' +
                                 cancelBtn +
                             '</div>' +
-                            '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + 'd left</span>'
+                            '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>'
                         });
                     } else if (val.plan === 'professional') {
                         androidItems.push({
                             html: '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#333;">' + name + '</div><div style="font-size:11px;color:#888;">Pro Pass</div></div>' +
-                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + 'd left</span>'
+                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>'
                         });
                     } else if (val.plan === 'web') {
                         dpItems.push({
                             html: '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#333;">' + name + '</div><div style="font-size:11px;color:#888;">Web Pass</div></div>' +
-                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + 'd left</span>'
+                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>'
                         });
                     } else if (val.plan === 'override') {
                         dpItems.push({
                             html: '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#333;">' + name + '</div><div style="font-size:11px;color:#888;">Override</div></div>' +
-                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + 'd left</span>'
+                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>'
                         });
                     } else {
                         // Default: 7-Day Pass (empty plan or unknown)
                         dpItems.push({
                             html: '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#333;">' + name + '</div><div style="font-size:11px;color:#888;">7-Day Pass</div></div>' +
-                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + 'd left</span>'
+                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>'
                         });
                     }
                 });
@@ -6006,7 +6012,7 @@
                     var daysLeft = calcDaysLeft(val.expiry);
                     villItems.push({
                         html: '<div style="font-weight:600;color:#333;">' + vName + '</div>' +
-                            '<span style="font-size:11px;font-weight:600;color:' + (daysLeft <= 1 ? '#c62828' : '#2E7D32') + ';">' + daysLeft + 'd left</span>'
+                            '<span style="font-size:11px;font-weight:600;color:' + ((val.expiry - Date.now()) < 86400000 ? '#c62828' : '#2E7D32') + ';">' + daysLeft + ' left</span>'
                     });
                 });
                 villDiv.appendChild(makeExpandableGroup('Village Add-On Plans', '#1565C0', villItems.length, villItems));
