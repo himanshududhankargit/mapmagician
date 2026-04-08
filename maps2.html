@@ -3498,6 +3498,24 @@
             };
 
             overlay.classList.add('open');
+
+            // Peek animation: briefly show second card on small screens
+            var pdScroll = document.getElementById('pd-cards-scroll');
+            if (pdScroll && window.innerWidth <= 520) {
+                pdScroll.scrollLeft = 0;
+                var peekCancelled = false;
+                var cancelPeek = function() { peekCancelled = true; pdScroll.removeEventListener('touchstart', cancelPeek); };
+                pdScroll.addEventListener('touchstart', cancelPeek, { once: true });
+                setTimeout(function() {
+                    if (peekCancelled) return;
+                    pdScroll.scrollTo({ left: pdScroll.scrollWidth - pdScroll.clientWidth, behavior: 'smooth' });
+                    setTimeout(function() {
+                        if (peekCancelled) return;
+                        pdScroll.scrollTo({ left: 0, behavior: 'smooth' });
+                        pdScroll.removeEventListener('touchstart', cancelPeek);
+                    }, 800);
+                }, 500);
+            }
         }
 
         function showNoDataDialog() {
