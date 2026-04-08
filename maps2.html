@@ -828,7 +828,13 @@
     // Fallback: auto-dismiss loading screen after 8s even if init fails
     setTimeout(function() {
         var ls = document.getElementById('app-loading-screen');
-        if (ls) { ls.style.opacity = '0'; setTimeout(function() { ls.remove(); }, 500); }
+        if (ls) {
+            ls.style.opacity = '0';
+            setTimeout(function() {
+                ls.remove();
+                if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
+            }, 500);
+        }
     }, 8000);
     </script>
 
@@ -1955,7 +1961,13 @@
                     // Dismiss loading screen after layer data triggers first tile load
                     setTimeout(function() {
                         var ls = document.getElementById('app-loading-screen');
-                        if (ls) { ls.style.opacity = '0'; setTimeout(function() { ls.remove(); }, 500); }
+                        if (ls) {
+                            ls.style.opacity = '0';
+                            setTimeout(function() {
+                                ls.remove();
+                                if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
+                            }, 500);
+                        }
                     }, 1500);
                 }
 
@@ -4387,8 +4399,8 @@
             const paramLng = parseFloat(urlParams.get('lng'));
             const paramZoom = parseInt(urlParams.get('zoom'), 10);
 
-            const initLat = !isNaN(paramLat) ? paramLat : 19.2183;
-            const initLng = !isNaN(paramLng) ? paramLng : 72.9781;
+            const initLat = !isNaN(paramLat) ? paramLat : 18.936753231959894;
+            const initLng = !isNaN(paramLng) ? paramLng : 72.82779884306325;
             const initZoom = !isNaN(paramZoom) ? paramZoom : 13;
 
             if (isEmbedMode) {
@@ -4523,13 +4535,6 @@
             });
             map.addListener('bounds_changed', debouncedLoadTiles);
 
-            // Show disclaimer on first user interaction with map
-            google.maps.event.addListenerOnce(map, 'dragstart', function() {
-                if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
-            });
-            google.maps.event.addListenerOnce(map, 'zoom_changed', function() {
-                if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
-            });
 
             // Region detection on camera move (throttled 300ms, like Android)
             let lastRegionCheckTime = 0;
