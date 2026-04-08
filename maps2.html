@@ -1938,28 +1938,9 @@
                 console.log('CloudFront cookies set, expires:', expires);
                 if (!cfCookiesReady) {
                     cfCookiesReady = true;
-                    var als2 = document.getElementById('app-loading-status');
-                    if (als2) als2.textContent = 'Loading map tiles...';
-                    // Re-trigger full viewport processing (geojson + tiles)
-                    if (typeof map !== 'undefined' && map) {
-                        if (typeof loadGeoJsonForViewport === 'function') loadGeoJsonForViewport();
-                        loadTilesBasedOnViewport();
-                        // Dismiss loading screen after tiles render (next idle)
-                        google.maps.event.addListenerOnce(map, 'idle', function() {
-                            // Wait a brief moment for tile images to start loading
-                            setTimeout(function() {
-                                var ls = document.getElementById('app-loading-screen');
-                                if (ls) { ls.style.opacity = '0'; setTimeout(function() { ls.remove(); }, 500); }
-                            }, 300);
-                        });
-                        // Force a new idle cycle by triggering a tiny zoom bounce
-                        var z = map.getZoom();
-                        map.setZoom(z);
-                    } else {
-                        loadTilesBasedOnViewport();
-                        var ls = document.getElementById('app-loading-screen');
-                        if (ls) { ls.style.opacity = '0'; setTimeout(function() { ls.remove(); }, 500); }
-                    }
+                    // Dismiss loading screen
+                    var ls = document.getElementById('app-loading-screen');
+                    if (ls) { ls.style.opacity = '0'; setTimeout(function() { ls.remove(); }, 500); }
                 }
 
                 // Auto-refresh 1 hour before expiry
@@ -7314,7 +7295,7 @@
         }
 
         function loadTilesBasedOnViewport() {
-            if (!map || !cfCookiesReady) return;
+            if (!map) return;
             const currentBounds = map.getBounds();
             if (!currentBounds) return;
 
