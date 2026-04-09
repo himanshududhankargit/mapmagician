@@ -6111,7 +6111,7 @@
 
                     // Refunded entry — show with badge, no days left
                     if (val.refunded) {
-                        var planLabel = val.plan === 'subscription' ? 'Subscription' : val.plan === 'professional' ? 'Pro Pass' : '7-Day Pass';
+                        var planLabel = val.plan === 'subscription' ? 'Subscription' : val.plan === 'professional' ? 'Pro Pass' : val.plan === 'web' ? 'Web Pass' : val.plan === 'override' ? 'Override' : '7-Day Pass';
                         var targetArr = val.plan === 'subscription' ? subItems : val.plan === 'professional' ? androidItems : dpItems;
                         targetArr.push({
                             html: '<div style="flex:1;min-width:0;">' +
