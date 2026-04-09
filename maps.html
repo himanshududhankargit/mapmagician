@@ -1299,13 +1299,13 @@
                     <div style="font-size:12px;color:#666;margin-top:1px;">Android app</div>
                 </div>
             </a>
-            <button id="install-opt-pwa" style="display:none;align-items:center;gap:12px;padding:14px;border:1.5px solid #B2DFDB;border-radius:12px;background:#F0FDFB;color:#333;margin-bottom:10px;width:100%;cursor:pointer;font-family:inherit;text-align:left;font-size:inherit;transition:background 0.15s;">
+            <button id="install-opt-pwa" style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid #B2DFDB;border-radius:12px;background:#F0FDFB;color:#333;margin-bottom:10px;width:100%;cursor:pointer;font-family:inherit;text-align:left;font-size:inherit;transition:background 0.15s;">
                 <div style="width:40px;height:40px;border-radius:10px;background:#00695C;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
                 <div style="min-width:0;">
                     <div style="font-weight:700;font-size:14px;color:#00695C;">Install as Web App</div>
-                    <div style="font-size:12px;color:#666;margin-top:1px;">Add to home screen / Start menu</div>
+                    <div id="install-pwa-sub" style="font-size:12px;color:#666;margin-top:1px;">Add to home screen / Start menu</div>
                 </div>
             </button>
             <button class="auth-dialog-cancel" id="install-info-cancel">Not now</button>
@@ -1698,11 +1698,16 @@
 
         // PWA web install option
         document.getElementById('install-opt-pwa').addEventListener('click', async function() {
-            installInfoOverlay.classList.remove('open');
-            if (!deferredInstallPrompt) return;
-            deferredInstallPrompt.prompt();
-            var choice = await deferredInstallPrompt.userChoice;
-            if (choice.outcome === 'accepted') markInstalled();
+            if (deferredInstallPrompt) {
+                installInfoOverlay.classList.remove('open');
+                deferredInstallPrompt.prompt();
+                var choice = await deferredInstallPrompt.userChoice;
+                if (choice.outcome === 'accepted') markInstalled();
+            } else {
+                // No prompt available — show manual instructions
+                var sub = document.getElementById('install-pwa-sub');
+                if (sub) sub.textContent = 'Use browser menu \u2192 "Install MapMagician" or "Add to Home screen"';
+            }
         });
         document.getElementById('install-info-cancel').addEventListener('click', function() {
             installInfoOverlay.classList.remove('open');
