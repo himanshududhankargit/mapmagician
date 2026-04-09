@@ -1885,7 +1885,7 @@
                 // Realtime listener: re-fetch when purchases change server-side (admin refund, webhook, etc.)
                 var emailKey = user.email.replace(/\./g, ',');
                 if (purchaseListenerRef) purchaseListenerRef.off();
-                purchaseListenerRef = firebase.database().ref('GISAPPOneTimePurchase/' + emailKey);
+                purchaseListenerRef = firebase.database().ref('GISWebOneTimePurchases/' + emailKey);
                 var purchaseListenerSkipFirst = true; // Skip the initial .on() callback
                 purchaseListenerRef.on('value', function() {
                     if (purchaseListenerSkipFirst) { purchaseListenerSkipFirst = false; return; }
@@ -2319,7 +2319,7 @@
             try {
                 const emailKey = currentUser.email.replace(/\./g, ',');
                 const snap = await firebase.database()
-                    .ref('GISAPPOneTimePurchase/' + emailKey + '/' + productId)
+                    .ref('GISWebOneTimePurchases/' + emailKey + '/' + productId)
                     .once('value');
                 const raw = snap.val();
                 if (!raw) return false;
