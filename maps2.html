@@ -4513,8 +4513,16 @@
                 document.body.classList.add('embed-mode');
             }
 
-            // Map ID for future AdvancedMarkerElement migration (Vector+HYBRID has CORS issues as of 2026-04):
-            // mapId: '205cba59b6ab439c17e54bd1'
+            // TODO: Migrate google.maps.Marker → AdvancedMarkerElement when Google fixes Vector+HYBRID CORS issue.
+            // As of 2026-04, Vector maps + HYBRID mapType causes 403 CORS errors on satellite tiles (webgl.js).
+            // Map ID: '205cba59b6ab439c17e54bd1' (created in Cloud Console, ready to use)
+            // Migration checklist:
+            //   1. Add mapId to Map constructor, add 'marker' to libraries, set isFractionalZoomEnabled:false
+            //   2. Replace all new google.maps.Marker(...) with new google.maps.marker.AdvancedMarkerElement(...)
+            //   3. icon → content (DOM element), draggable → gmpDraggable, addListener → addEventListener(gmp-*)
+            //   4. .setPosition() → .position=, .getPosition() → .position, .setMap(null) → .map=null
+            //   5. .setIcon() → .content=, getVillageMarkerIcon must return DOM element not {url,scaledSize,anchor}
+            //   6. Test: satellite tiles load without CORS errors, all markers render, drag/click events work
             map = new google.maps.Map(document.getElementById('map'), {
                 center: { lat: initLat, lng: initLng },
                 zoom: initZoom,

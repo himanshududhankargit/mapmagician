@@ -4513,6 +4513,8 @@
                 document.body.classList.add('embed-mode');
             }
 
+            // TODO: Migrate google.maps.Marker → AdvancedMarkerElement when Google fixes Vector+HYBRID CORS issue.
+            // Map ID: '205cba59b6ab439c17e54bd1' — see maps2.html for full migration checklist.
             map = new google.maps.Map(document.getElementById('map'), {
                 center: { lat: initLat, lng: initLng },
                 zoom: initZoom,
