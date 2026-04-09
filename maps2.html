@@ -3687,7 +3687,8 @@
                     const sub = activeSubscriptions.get(district.productPurchaseID);
                     var planLabel;
                     if (plan === 'subscription' && sub) {
-                        planLabel = sub.status === 'cancelled' ? 'Sub (Cancelling)' : 'Weekly Sub';
+                        var periodLabel = (!sub.currentPeriodStart || !sub.currentPeriodEnd) ? 'Weekly' : (function() { var d = Math.round((sub.currentPeriodEnd - sub.currentPeriodStart) / 86400000); return d <= 1 ? 'Daily' : d <= 7 ? 'Weekly' : d <= 31 ? 'Monthly' : d + '-Day'; })();
+                        planLabel = sub.status === 'cancelled' ? 'Sub (Cancelling)' : periodLabel + ' Sub';
                     } else if (plan === 'professional') {
                         planLabel = 'Mobile + Web';
                     } else if (plan === 'web') {
@@ -6144,7 +6145,7 @@
                                 '<div style="font-weight:600;color:#333;">' + name + '</div>' +
                                 '<div style="display:flex;align-items:center;gap:6px;margin-top:2px;">' +
                                     '<span style="font-size:10px;font-weight:600;color:#fff;background:' + statusColor + ';padding:1px 6px;border-radius:4px;">' + statusLabel + '</span>' +
-                                    '<span style="font-size:11px;color:#888;">Weekly</span>' +
+                                    '<span style="font-size:11px;color:#888;">' + (function() { if (!sub || !sub.currentPeriodStart || !sub.currentPeriodEnd) return 'Weekly'; var days = Math.round((sub.currentPeriodEnd - sub.currentPeriodStart) / 86400000); return days <= 1 ? 'Daily' : days <= 7 ? 'Weekly' : days <= 31 ? 'Monthly' : days + '-Day'; })() + '</span>' +
                                 '</div>' +
                                 cancelBtn +
                             '</div>' +
