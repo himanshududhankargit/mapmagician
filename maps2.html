@@ -1476,7 +1476,7 @@
         <input type="search" class="region-browser-search" id="region-browser-search" placeholder="Search regions..." autocomplete="off">
         <div class="region-browser-body">
             <div class="region-grid" id="region-grid"></div>
-            <div id="sidebar-actions-wrap" style="text-align:center;padding:16px 0 8px;display:none;justify-content:center;gap:8px;flex-wrap:wrap;">
+            <div id="sidebar-actions-wrap" style="text-align:center;padding:16px 0 8px;display:none;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;">
                 <div id="sidebar-install-wrap" style="display:none;">
                     <button class="sidebar-install-btn" id="sidebar-install-btn">
                         <span class="sidebar-install-icon">
@@ -5081,38 +5081,50 @@
                     // Icon — try IndexedDB cache first, fall back to remote
                     var iconName = item.icon || '';
                     var safeChar = item.name.charAt(0).replace(/'/g, '');
-                    var placeholderHtml = '<div class="region-card-placeholder">' + safeChar + '</div>';
 
-                    card.innerHTML = (iconName ? '<img class="region-card-img" data-icon="' + iconName + '" src="" style="visibility:hidden;" onerror="this.outerHTML=\'' + placeholderHtml.replace(/'/g, "\\'") + '\'">' : placeholderHtml) + badgeHtml +
+                    card.innerHTML = badgeHtml +
                         '<div class="region-card-body">' +
                         '<div class="region-card-name">' + item.name + '</div>' +
                         (item.sub ? '<div class="region-card-sub">' + item.sub + '</div>' : '') +
                         '</div>';
 
                     if (iconName) {
-                        (function(cardEl, iName) {
-                            var img = cardEl.querySelector('img[data-icon="' + iName + '"]');
-                            if (!img) return;
+                        var img = document.createElement('img');
+                        img.className = 'region-card-img';
+                        img.style.visibility = 'hidden';
+                        img.onerror = function() {
+                            var ph = document.createElement('div');
+                            ph.className = 'region-card-placeholder';
+                            ph.textContent = safeChar;
+                            this.parentNode.replaceChild(ph, this);
+                        };
+                        card.insertBefore(img, card.firstChild);
+                        (function(imgEl, iName) {
                             openGeoJsonDB().then(function(db) {
                                 var tx = db.transaction('icons', 'readonly');
                                 var req = tx.objectStore('icons').get(iName);
                                 req.onsuccess = function() {
                                     if (req.result && req.result.blob) {
-                                        img.src = URL.createObjectURL(req.result.blob);
+                                        imgEl.src = URL.createObjectURL(req.result.blob);
                                     } else {
-                                        img.src = ICON_BASE + iName + '.png';
+                                        imgEl.src = ICON_BASE + iName + '.png';
                                     }
-                                    img.style.visibility = '';
+                                    imgEl.style.visibility = '';
                                 };
                                 req.onerror = function() {
-                                    img.src = ICON_BASE + iName + '.png';
-                                    img.style.visibility = '';
+                                    imgEl.src = ICON_BASE + iName + '.png';
+                                    imgEl.style.visibility = '';
                                 };
                             }).catch(function() {
-                                img.src = ICON_BASE + iName + '.png';
-                                img.style.visibility = '';
+                                imgEl.src = ICON_BASE + iName + '.png';
+                                imgEl.style.visibility = '';
                             });
-                        })(card, iconName);
+                        })(img, iconName);
+                    } else {
+                        var ph = document.createElement('div');
+                        ph.className = 'region-card-placeholder';
+                        ph.textContent = safeChar;
+                        card.insertBefore(ph, card.firstChild);
                     }
 
                     // Buy badge click
