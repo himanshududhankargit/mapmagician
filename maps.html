@@ -654,7 +654,7 @@
         .region-status.not-subscribed { background:#FFEBEE; color:#C62828; }
 
         /* Payment loading overlay */
-        .payment-loading-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:linear-gradient(135deg,#f8f9fa 0%,#e8edf2 100%); z-index:3000; display:none; align-items:center; justify-content:center; flex-direction:column; }
+        .payment-loading-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(255,255,255,0.85); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:3000; display:none; align-items:center; justify-content:center; flex-direction:column; }
         .payment-loading-overlay.open { display:flex; }
         .payment-spinner { width:36px; height:36px; border:3px solid #e0e0e0; border-top-color:#00796B; border-radius:50%; animation:spin 0.8s linear infinite; }
         @keyframes spin { to { transform:rotate(360deg); } }
@@ -810,7 +810,7 @@
 </head>
 <body>
     <!-- App loading screen -->
-    <div id="app-loading-screen" style="position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#f8f9fa 0%,#e8edf2 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
+    <div id="app-loading-screen" style="position:fixed;inset:0;z-index:99999;background:rgba(255,255,255,0.85);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
         <div class="app-icon-animated" style="margin-bottom:20px;">
             <svg width="88" height="88" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="m30,62v-8h24v-20h8v28z" fill="#f0d0b4"/>
@@ -4517,7 +4517,15 @@
             }
 
             // TODO: Migrate google.maps.Marker → AdvancedMarkerElement when Google fixes Vector+HYBRID CORS issue.
-            // Map ID: '205cba59b6ab439c17e54bd1' — see maps2.html for full migration checklist.
+            // As of 2026-04, Vector maps + HYBRID mapType causes 403 CORS errors on satellite tiles (webgl.js).
+            // Map ID: '205cba59b6ab439c17e54bd1' (created in Cloud Console, ready to use)
+            // Migration checklist:
+            //   1. Add mapId to Map constructor, add 'marker' to libraries, set isFractionalZoomEnabled:false
+            //   2. Replace all new google.maps.Marker(...) with new google.maps.marker.AdvancedMarkerElement(...)
+            //   3. icon → content (DOM element), draggable → gmpDraggable, addListener → addEventListener(gmp-*)
+            //   4. .setPosition() → .position=, .getPosition() → .position, .setMap(null) → .map=null
+            //   5. .setIcon() → .content=, getVillageMarkerIcon must return DOM element not {url,scaledSize,anchor}
+            //   6. Test: satellite tiles load without CORS errors, all markers render, drag/click events work
             map = new google.maps.Map(document.getElementById('map'), {
                 center: { lat: initLat, lng: initLng },
                 zoom: initZoom,
