@@ -587,6 +587,12 @@
         .pd-play-btn { display:inline-flex; align-items:center; gap:6px; background:#fff; color:#1B5E20; font-size:11px; font-weight:700; text-decoration:none; padding:7px 11px; border-radius:7px; border:1px solid #C8E6C9; flex-shrink:0; white-space:nowrap; transition:background 0.15s; }
         .pd-play-btn:hover { background:#F1F8E9; }
         .pd-play-btn svg { flex-shrink:0; }
+        .pd-ms-btn { color:#0078D4; border-color:#B3D7F2; }
+        .pd-ms-btn:hover { background:#E8F4FD; }
+        .pd-app-hints-row { display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+        .pd-app-hints-row::-webkit-scrollbar { display:none; }
+        .pd-app-hints-row .pd-mobile-hint { flex:0 0 100%; scroll-snap-align:start; min-width:0; box-sizing:border-box; }
+        @media (min-width:521px) { .pd-app-hints-row .pd-mobile-hint { flex:0 0 calc(50% - 5px); } }
         .pd-support { display:block; margin:12px auto 0; padding:6px 12px; background:none; border:none; color:#B0BEC5; font-size:12px; font-weight:500; cursor:pointer; width:100%; text-align:center; }
         .pd-support:hover { color:#607D8B; }
         #addon-panel-search::placeholder { color:#c8e6c9; opacity:1; }
@@ -1072,6 +1078,17 @@
             <div id="settings-purchase-history" style="margin-top:12px;"></div>
         </div>
         <div class="layer-section">
+            <div class="layer-section-title">Get the App</div>
+            <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;text-decoration:none;font-size:14px;color:#333;font-family:inherit;text-align:left;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#1B5E20" style="flex-shrink:0;"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
+                Android &mdash; Google Play
+            </a>
+            <a href="https://apps.microsoft.com/detail/9PNZDK3DQPL0?hl=en-us&gl=IN&ocid=pdpshare" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;text-decoration:none;font-size:14px;color:#333;font-family:inherit;text-align:left;margin-top:8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#0078D4" style="flex-shrink:0;"><path d="M1 1h10v10H1zm12 0h10v10H13zM1 13h10v10H1zm12 0h10v10H13z"/></svg>
+                Windows &mdash; Microsoft Store
+            </a>
+        </div>
+        <div class="layer-section">
             <div class="layer-section-title">About</div>
             <p style="margin:0;font-size:13px;color:#555;line-height:1.5;">Development Plan GIS<br>Map Magician</p>
             <p style="margin:6px 0 0;font-size:12px;color:#999;">www.mapmagician.in</p>
@@ -1341,15 +1358,27 @@
             </div>
             <!-- Footer: mobile hint + support -->
             <div class="pd-footer">
-                <div class="pd-mobile-hint">
-                    <img class="pd-app-icon" src="AssetsGIS/image-1.png" alt="MapMagician app icon">
-                    <div class="pd-mobile-hint-text">
-                        <strong>Prefer mobile?</strong>Get the MapMagician Android app for on-the-go access.
+                <div class="pd-app-hints-row" id="pd-app-hints-scroll">
+                    <div class="pd-mobile-hint">
+                        <img class="pd-app-icon" src="AssetsGIS/image-1.png" alt="MapMagician app icon">
+                        <div class="pd-mobile-hint-text">
+                            <strong>Prefer mobile?</strong>Get the Android app for on-the-go access.
+                        </div>
+                        <a class="pd-play-btn" href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#1B5E20"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
+                            Google Play
+                        </a>
                     </div>
-                    <a class="pd-play-btn" href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="#1B5E20"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
-                        Google Play
-                    </a>
+                    <div class="pd-mobile-hint">
+                        <img class="pd-app-icon" src="AssetsGIS/image-1.png" alt="MapMagician app icon">
+                        <div class="pd-mobile-hint-text">
+                            <strong>Want desktop app?</strong>Get MapMagician from the Microsoft Store.
+                        </div>
+                        <a class="pd-play-btn pd-ms-btn" href="https://apps.microsoft.com/detail/9PNZDK3DQPL0?hl=en-us&gl=IN&ocid=pdpshare" target="_blank" rel="noopener">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#0078D4"><path d="M1 1h10v10H1zm12 0h10v10H13zM1 13h10v10H1zm12 0h10v10H13z"/></svg>
+                            Microsoft Store
+                        </a>
+                    </div>
                 </div>
                 <button class="pd-support" id="zoom-restrict-support">Need help? Contact Support</button>
             </div>
@@ -3518,6 +3547,24 @@
                         pdScroll.removeEventListener('touchstart', cancelPeek);
                     }, 800);
                 }, 500);
+            }
+
+            // Cycle app hints (Android / Microsoft Store) — alternate start each time
+            var appScroll = document.getElementById('pd-app-hints-scroll');
+            if (appScroll) {
+                var lastApp = sessionStorage.getItem('pd-app-last') || 'android';
+                if (lastApp === 'android') {
+                    appScroll.scrollLeft = appScroll.scrollWidth - appScroll.clientWidth;
+                    sessionStorage.setItem('pd-app-last', 'windows');
+                } else {
+                    appScroll.scrollLeft = 0;
+                    sessionStorage.setItem('pd-app-last', 'android');
+                }
+                var appCycleTimer = setInterval(function() {
+                    if (!overlay.classList.contains('open')) { clearInterval(appCycleTimer); return; }
+                    appScroll.scrollTo({ left: appScroll.scrollLeft > 0 ? 0 : appScroll.scrollWidth, behavior: 'smooth' });
+                }, 4000);
+                appScroll.addEventListener('touchstart', function() { clearInterval(appCycleTimer); }, { once: true });
             }
         }
 
