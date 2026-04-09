@@ -2658,27 +2658,6 @@
         let markers = [];
         let currentOpacity = 0.5;
 
-        // AdvancedMarkerElement helpers
-        function _svgCircleEl(size, fill, stroke, strokeW) {
-            var el = document.createElement('div');
-            el.innerHTML = '<svg width="' + size * 2 + '" height="' + size * 2 + '" viewBox="0 0 ' + size * 2 + ' ' + size * 2 + '" xmlns="http://www.w3.org/2000/svg">' +
-                '<circle cx="' + size + '" cy="' + size + '" r="' + (size - strokeW) + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + strokeW + '"/></svg>';
-            el.style.cssText = 'line-height:0;cursor:pointer;';
-            return el;
-        }
-        function _svgArrowEl(fill, stroke, strokeW, rotation) {
-            var el = document.createElement('div');
-            el.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(' + rotation + 'deg)">' +
-                '<path d="M8 0L14 12H2Z" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + strokeW + '"/></svg>';
-            el.style.cssText = 'line-height:0;';
-            return el;
-        }
-        function _markerPos(marker) {
-            var p = marker.position;
-            if (p && typeof p.lat === 'function') return { lat: p.lat(), lng: p.lng() };
-            return p || { lat: 0, lng: 0 };
-        }
-
         // Zoom restriction
         // Region detection now uses tile polygon boundaries from dpLayerData
         let zoomBypassActive = false; // true when programmatic zoom should skip restriction
@@ -2879,18 +2858,26 @@
             hideVertexHandle();
             activeVertexHandle = new VertexHandleOverlay(marker, callbacks, map);
             // Highlight the vertex
-            marker.content = _svgCircleEl(10, '#FF5722', '#fff', 3);
+            marker.setIcon({
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10, fillColor: '#FF5722', fillOpacity: 1,
+                strokeColor: '#fff', strokeWeight: 3
+            });
+            activeVertexHandle._origIcon = marker.getIcon();
         }
 
         function hideVertexHandle() {
             if (!activeVertexHandle) return;
             // Restore vertex icon
             const m = activeVertexHandle._marker;
-            if (m && m.map) {
+            if (m && m.getMap()) {
                 const isSaved = activeVertexHandle._isSaved;
                 const color = isSaved ? '#008577' : '#FF6D00';
-                const scale = isSaved ? 7 : 8;
-                m.content = _svgCircleEl(scale, color, '#fff', 2);
+                m.setIcon({
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: isSaved ? 7 : 8, fillColor: color, fillOpacity: 1,
+                    strokeColor: '#fff', strokeWeight: 2
+                });
             }
             activeVertexHandle.setMap(null);
             activeVertexHandle = null;
@@ -2902,11 +2889,11 @@
                 // If only 1 point, just remove it
                 measurePoints.splice(idx, 1);
                 const removed = measureMarkers.splice(idx, 1);
-                removed.forEach(m => { m.map = null; });
+                removed.forEach(m => m.setMap(null));
             } else {
                 measurePoints.splice(idx, 1);
                 const removed = measureMarkers.splice(idx, 1);
-                removed.forEach(m => { m.map = null; });
+                removed.forEach(m => m.setMap(null));
             }
             // Reindex remaining markers
             measureMarkers.forEach(function(m, i) { m._ptIndex = i; });
@@ -2928,7 +2915,7 @@
             const ov = savedMeasureOverlays.find(function(o) { return o.id === measId; });
             if (ov) {
                 ov.shapes.forEach(function(s) { s.setMap(null); });
-                ov.markers.forEach(function(mk) { mk.map = null; });
+                ov.markers.forEach(function(mk) { mk.setMap(null); });
                 ov.labels.forEach(function(l) { l.setMap(null); });
             }
             savedMeasureOverlays = savedMeasureOverlays.filter(function(o) { return o.id !== measId; });
@@ -2978,27 +2965,30 @@
             const idx = measurePoints.length - 1;
 
             // Create vertex marker (draggable + tap to show handle)
-            const marker = new google.maps.marker.AdvancedMarkerElement({
+            const marker = new google.maps.Marker({
                 position: event.latLng,
                 map: map,
-                content: _svgCircleEl(8, '#FF6D00', '#fff', 2),
-                zIndex: 1000, gmpDraggable: true
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 8, fillColor: '#FF6D00', fillOpacity: 1,
+                    strokeColor: '#fff', strokeWeight: 2
+                },
+                zIndex: 1000, clickable: true, draggable: true
             });
             marker._ptIndex = idx;
-            marker.addEventListener('gmp-dragstart', function() {
-                showMagnifier(marker.position);
+            marker.addListener('dragstart', function() {
+                showMagnifier(marker.getPosition());
             });
-            marker.addEventListener('gmp-drag', function() {
-                var p = _markerPos(marker);
-                measurePoints[marker._ptIndex] = p;
+            marker.addListener('drag', function() {
+                measurePoints[marker._ptIndex] = { lat: marker.getPosition().lat(), lng: marker.getPosition().lng() };
                 updateMeasureVisuals();
-                moveMagnifier(marker.position);
+                moveMagnifier(marker.getPosition());
                 if (activeVertexHandle && activeVertexHandle._marker === marker) activeVertexHandle.draw();
             });
-            marker.addEventListener('gmp-dragend', function() {
+            marker.addListener('dragend', function() {
                 hideMagnifier();
             });
-            marker.addEventListener('gmp-click', function() {
+            marker.addListener('click', function() {
                 showVertexHandle(marker, {
                     isSaved: false,
                     onMove: function(latLng) {
@@ -3087,7 +3077,7 @@
         }
 
         function clearMeasureOverlays() {
-            measureMarkers.forEach(m => { m.map = null; });
+            measureMarkers.forEach(m => m.setMap(null));
             measureMarkers = [];
             if (measurePolyline) { measurePolyline.setMap(null); measurePolyline = null; }
             if (measurePolygon) { measurePolygon.setMap(null); measurePolygon = null; }
@@ -3169,36 +3159,37 @@
 
             // Vertex markers (draggable + tap to show move handle + delete)
             m.points.forEach(function(p, idx) {
-                var circleEl = _svgCircleEl(7, color, '#fff', 2);
-                circleEl.style.cursor = 'grab';
-                const marker = new google.maps.marker.AdvancedMarkerElement({
+                const marker = new google.maps.Marker({
                     position: { lat: p.lat, lng: p.lng }, map: map,
-                    content: circleEl,
-                    zIndex: 1000, gmpDraggable: true
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 7, fillColor: color, fillOpacity: 1,
+                        strokeColor: '#fff', strokeWeight: 2
+                    },
+                    zIndex: 1000, clickable: true, draggable: true, cursor: 'grab'
                 });
                 marker._ptIndex = idx;
                 marker._measId = m.id;
-                marker.addEventListener('gmp-dragstart', function() {
-                    showMagnifier(marker.position);
+                marker.addListener('dragstart', function() {
+                    showMagnifier(marker.getPosition());
                 });
-                marker.addEventListener('gmp-drag', function() {
-                    var pos = _markerPos(marker);
-                    m.points[idx] = pos;
+                marker.addListener('drag', function() {
+                    m.points[idx] = { lat: marker.getPosition().lat(), lng: marker.getPosition().lng() };
                     overlays.shapes.forEach(function(s) { s.setMap(null); });
                     overlays.labels.forEach(function(l) { l.setMap(null); });
                     overlays.shapes = [];
                     overlays.labels = [];
                     rebuildSavedShapesAndLabels(m, overlays, color);
-                    moveMagnifier(marker.position);
+                    moveMagnifier(marker.getPosition());
                     if (activeVertexHandle && activeVertexHandle._marker === marker) activeVertexHandle.draw();
                 });
-                marker.addEventListener('gmp-dragend', function() {
+                marker.addListener('dragend', function() {
                     hideMagnifier();
                     try {
                         localStorage.setItem('gis_measurements', JSON.stringify(savedMeasurements));
                     } catch (e) { /* ignore */ }
                 });
-                marker.addEventListener('gmp-click', function() {
+                marker.addListener('click', function() {
                     showVertexHandle(marker, {
                         isSaved: true,
                         onMove: function(latLng) {
@@ -3336,7 +3327,7 @@
             const ov = savedMeasureOverlays.find(o => o.id === id);
             if (ov) {
                 ov.shapes.forEach(s => s.setMap(null));
-                ov.markers.forEach(m => { m.map = null; });
+                ov.markers.forEach(m => m.setMap(null));
                 ov.labels.forEach(l => l.setMap(null));
             }
             savedMeasureOverlays = savedMeasureOverlays.filter(o => o.id !== id);
@@ -4522,11 +4513,11 @@
                 document.body.classList.add('embed-mode');
             }
 
+            // Map ID for future AdvancedMarkerElement migration (Vector+HYBRID has CORS issues as of 2026-04):
+            // mapId: '205cba59b6ab439c17e54bd1'
             map = new google.maps.Map(document.getElementById('map'), {
                 center: { lat: initLat, lng: initLng },
                 zoom: initZoom,
-                mapId: '205cba59b6ab439c17e54bd1',
-                isFractionalZoomEnabled: false,
                 mapTypeId: google.maps.MapTypeId.HYBRID,
                 streetViewControl: false,
                 mapTypeControl: false,
@@ -4836,7 +4827,7 @@
                         const touch = e.touches ? e.touches[0] : e;
                         startX = touch.clientX;
                         startY = touch.clientY;
-                        startLatLng = self._marker.position;
+                        startLatLng = self._marker.getPosition();
                         map.setOptions({ gestureHandling: 'none' });
                         moveBtn.style.background = '#E64A19';
                         showMagnifier(startLatLng);
@@ -4857,7 +4848,7 @@
                         const startPx = proj.fromLatLngToDivPixel(startLatLng);
                         const newPx = new google.maps.Point(startPx.x + dx, startPx.y + dy);
                         const newLatLng = proj.fromDivPixelToLatLng(newPx);
-                        self._marker.position = newLatLng;
+                        self._marker.setPosition(newLatLng);
                         self._callbacks.onMove(newLatLng);
                         self.draw();
                         moveMagnifier(newLatLng);
@@ -4884,7 +4875,7 @@
                 draw() {
                     const proj = this.getProjection();
                     if (!proj || !this._div) return;
-                    const pos = proj.fromLatLngToDivPixel(this._marker.position);
+                    const pos = proj.fromLatLngToDivPixel(this._marker.getPosition());
                     if (pos) {
                         this._div.style.left = pos.x + 'px';
                         this._div.style.top = pos.y + 'px';
@@ -5735,9 +5726,9 @@
                     const { places } = await Place.searchByText(request);
                     if (places && places.length > 0) {
                         const place = places[0];
-                        markers.forEach(m => { m.map = null; });
+                        markers.forEach(m => m.setMap(null));
                         markers = [];
-                        const marker = new google.maps.marker.AdvancedMarkerElement({
+                        const marker = new google.maps.Marker({
                             map: map,
                             title: place.displayName,
                             position: place.location
@@ -5894,9 +5885,9 @@
             // Drop a marker at the destination for visual reference
             if (typeof markers !== 'undefined' && typeof google !== 'undefined') {
                 try {
-                    markers.forEach(m => { m.map = null; });
+                    markers.forEach(m => m.setMap(null));
                     markers.length = 0;
-                    const mk = new google.maps.marker.AdvancedMarkerElement({ map: map, position: { lat: lat, lng: lng }, title: label });
+                    const mk = new google.maps.Marker({ map: map, position: { lat: lat, lng: lng }, title: label });
                     markers.push(mk);
                 } catch (e) { /* marker is optional */ }
             }
@@ -6365,9 +6356,9 @@
                     navigator.geolocation.clearWatch(gpsWatchId);
                     gpsWatchId = null;
                 }
-                if (gpsMarker) { gpsMarker.map = null; gpsMarker = null; }
+                if (gpsMarker) { gpsMarker.setMap(null); gpsMarker = null; }
                 if (gpsAccuracyCircle) { gpsAccuracyCircle.setMap(null); gpsAccuracyCircle = null; }
-                if (gpsHeadingMarker) { gpsHeadingMarker.map = null; gpsHeadingMarker = null; }
+                if (gpsHeadingMarker) { gpsHeadingMarker.setMap(null); gpsHeadingMarker = null; }
                 if (gpsPanListener) { google.maps.event.removeListener(gpsPanListener); gpsPanListener = null; }
                 gpsFollowing = false;
                 setGpsButtonState('off');
@@ -6404,10 +6395,15 @@
 
                     if (!gpsMarker) {
                         // First fix — create blue dot + accuracy circle
-                        gpsMarker = new google.maps.marker.AdvancedMarkerElement({
+                        gpsMarker = new google.maps.Marker({
                             position: loc, map: map,
-                            content: _svgCircleEl(8, '#4285F4', '#fff', 3),
-                            zIndex: 2000,
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 8,
+                                fillColor: '#4285F4', fillOpacity: 1,
+                                strokeColor: '#fff', strokeWeight: 3
+                            },
+                            zIndex: 2000, clickable: false,
                             title: 'My Location'
                         });
                         gpsAccuracyCircle = new google.maps.Circle({
@@ -6428,7 +6424,7 @@
                         }
                         showGpsToast('Location found', '#2E7D32');
                     } else {
-                        gpsMarker.position = loc;
+                        gpsMarker.setPosition(loc);
                         gpsAccuracyCircle.setCenter(loc);
                         gpsAccuracyCircle.setRadius(accuracy);
                     }
@@ -6436,14 +6432,23 @@
                     // Heading indicator (cone/arrow)
                     if (heading !== null && !isNaN(heading) && heading >= 0) {
                         if (!gpsHeadingMarker) {
-                            gpsHeadingMarker = new google.maps.marker.AdvancedMarkerElement({
+                            gpsHeadingMarker = new google.maps.Marker({
                                 position: loc, map: map,
-                                content: _svgArrowEl('rgba(66,133,244,0.7)', '#fff', 1, heading),
-                                zIndex: 1999
+                                icon: {
+                                    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                                    scale: 5,
+                                    fillColor: '#4285F4', fillOpacity: 0.7,
+                                    strokeColor: '#fff', strokeWeight: 1,
+                                    rotation: heading,
+                                    anchor: new google.maps.Point(0, 5)
+                                },
+                                zIndex: 1999, clickable: false
                             });
                         } else {
-                            gpsHeadingMarker.position = loc;
-                            gpsHeadingMarker.content = _svgArrowEl('rgba(66,133,244,0.7)', '#fff', 1, heading);
+                            gpsHeadingMarker.setPosition(loc);
+                            const icon = gpsHeadingMarker.getIcon();
+                            icon.rotation = heading;
+                            gpsHeadingMarker.setIcon(icon);
                         }
                     }
 
@@ -6538,7 +6543,7 @@
                     fetchVillagePurchases();
                     updateVillageMarkerVisibility();
                 } else {
-                    villageMarkers.forEach(function(m) { m.map = null; });
+                    villageMarkers.forEach(function(m) { m.setMap(null); });
                     updateAddonButtonVisibility();
                 }
             });
@@ -6584,7 +6589,7 @@
                 if (measurePoints.length === 0) return;
                 measurePoints.pop();
                 const last = measureMarkers.pop();
-                if (last) last.map = null;
+                if (last) last.setMap(null);
                 updateMeasureVisuals();
             });
             document.getElementById('measure-done').addEventListener('click', function() {
@@ -6611,7 +6616,7 @@
                     deselectMeasurement();
                 }
                 if (markers.length > 0 && !measureMode) {
-                    markers.forEach(m => { m.map = null; });
+                    markers.forEach(m => m.setMap(null));
                     markers.length = 0;
                 }
             });
@@ -6954,10 +6959,11 @@
                 '<text x="' + cx + '" y="30" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="' + subColor + '">' +
                 subText + '</text></svg>';
 
-            var el = document.createElement('div');
-            el.innerHTML = svg;
-            el.style.cssText = 'line-height:0;cursor:pointer;transform:translate(-50%,-100%);';
-            return el;
+            return {
+                url: 'data:image/svg+xml;charset=UTF-8,' + svg,
+                scaledSize: new google.maps.Size(width, totalH),
+                anchor: new google.maps.Point(cx, totalH)
+            };
         }
 
         function hasVillagePurchase(villageName) {
@@ -6989,7 +6995,7 @@
 
         function createVillageMarkers() {
             // Clear existing markers
-            villageMarkers.forEach(function(marker) { marker.map = null; });
+            villageMarkers.forEach(function(marker) { marker.setMap(null); });
             villageMarkers.clear();
             populateVillageDataLookup();
 
@@ -7002,14 +7008,14 @@
                 if (isInsideDPRegion(center)) return;
 
                 var isPurchased = hasVillagePurchase(item.villageName);
-                var marker = new google.maps.marker.AdvancedMarkerElement({
+                var marker = new google.maps.Marker({
                     position: center,
                     map: null, // controlled by updateVillageMarkerVisibility
                     title: item.villageName,
-                    content: getVillageMarkerIcon(item.villageName, isPurchased),
+                    icon: getVillageMarkerIcon(item.villageName, isPurchased),
                     zIndex: 1000
                 });
-                marker.addEventListener('gmp-click', (function(villageItem) {
+                marker.addListener('click', (function(villageItem) {
                     return function() { onVillageMarkerClick(villageItem); };
                 })(item));
                 villageMarkers.set(item.villageName, marker);
@@ -7185,7 +7191,7 @@
             var zoom = map ? map.getZoom() : 0;
             var shouldShow = isVillageLayerVisible && zoom >= MIN_ZOOM_FOR_VILLAGE_MARKERS;
             villageMarkers.forEach(function(marker) {
-                marker.map = shouldShow ? map : null;
+                marker.setMap(shouldShow ? map : null);
             });
             updateAddonButtonVisibility();
         }
@@ -7193,7 +7199,7 @@
         function updateVillageMarkerStyles() {
             villageMarkers.forEach(function(marker, villageName) {
                 var isPurchased = hasVillagePurchase(villageName);
-                marker.content = getVillageMarkerIcon(villageName, isPurchased);
+                marker.setIcon(getVillageMarkerIcon(villageName, isPurchased));
             });
         }
 
@@ -7668,6 +7674,6 @@
     </div>
 
     <!-- Load Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBBfEcHoR1yHBlnOvWKYLkr3C3ob6nb5hw&libraries=places,marker&callback=initMap&loading=async" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBBfEcHoR1yHBlnOvWKYLkr3C3ob6nb5hw&libraries=places&callback=initMap&loading=async" async defer></script>
 </body>
 </html>
