@@ -3810,7 +3810,7 @@
         // Mirrors the Android Room schema (districts + villages). Polygons are stored
         // inline on each village record (IDB has no JOINs) — one getAll per district.
         const GEOJSON_DB_NAME = 'mapmagician_geojson';
-        const GEOJSON_DB_VERSION = 1;
+        const GEOJSON_DB_VERSION = 2;
         let _geojsonDBPromise = null;
         function openGeoJsonDB() {
             if (_geojsonDBPromise) return _geojsonDBPromise;
@@ -3824,6 +3824,9 @@
                     if (!db.objectStoreNames.contains('villages')) {
                         const store = db.createObjectStore('villages', { keyPath: 'id', autoIncrement: true });
                         store.createIndex('by_district', 'districtName', { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains('icons')) {
+                        db.createObjectStore('icons', { keyPath: 'name' });
                     }
                 };
                 req.onsuccess = () => resolve(req.result);
@@ -4833,6 +4836,7 @@
 
         // --- Left Sidebar: Firebase menuGIS navigation ---
         const MENU_DB_NAME = "menuGIS";
+        const ICON_BASE_PRELOAD = 'https://tiles.mapmagician.in/dpplans/0imagesGIS/';
         let menuData = []; // all items from Firebase
         let stateList = []; // unique states for the rail
         let sidebarHistory = []; // breadcrumb: [{level, title, items}]
@@ -4844,7 +4848,10 @@
             const sidebarTitle = document.getElementById('sidebar-title');
             const sidebarSearch = document.getElementById('sidebar-search');
 
-            // The "Access Regions" button is static in HTML; regions data loads in background
+            // Wire up browse button immediately (openRegionsBrowser is a stub until data loads)
+            document.getElementById('btn-access-regions').addEventListener('click', function() {
+                openRegionsBrowser();
+            });
 
             function processMenuData(rawData) {
                 menuData = [];
@@ -4881,7 +4888,42 @@
                 });
 
                 stateList = Array.from(stateMap.values());
-                renderBottomNav();
+                preloadRegionIcons();
+            }
+
+            // Preload region icons into IndexedDB during loading screen
+            function preloadRegionIcons() {
+                var iconNames = new Set();
+                menuData.forEach(function(item) {
+                    if (item.iconState) iconNames.add(item.iconState);
+                    if (item.iconVillage) iconNames.add(item.iconVillage);
+                });
+                if (iconNames.size === 0) return;
+                openGeoJsonDB().then(function(db) {
+                    var tx = db.transaction('icons', 'readonly');
+                    var store = tx.objectStore('icons');
+                    var toFetch = [];
+                    var remaining = iconNames.size;
+                    iconNames.forEach(function(name) {
+                        var req = store.get(name);
+                        req.onsuccess = function() {
+                            if (!req.result) toFetch.push(name);
+                            if (--remaining === 0 && toFetch.length > 0) {
+                                toFetch.forEach(function(iconName) {
+                                    fetch(ICON_BASE_PRELOAD + iconName + '.png')
+                                        .then(function(r) { return r.ok ? r.blob() : null; })
+                                        .then(function(blob) {
+                                            if (!blob) return;
+                                            openGeoJsonDB().then(function(db2) {
+                                                var tx2 = db2.transaction('icons', 'readwrite');
+                                                tx2.objectStore('icons').put({ name: iconName, blob: blob });
+                                            });
+                                        }).catch(function() {});
+                                });
+                            }
+                        };
+                    });
+                }).catch(function() {});
             }
 
             // Try loading from cache first, then fetch from Firebase
@@ -4898,13 +4940,6 @@
                 processMenuData(data);
                 buildAfterMenuData();
             });
-
-            function renderBottomNav() {
-                // Wire up the "Access Regions" button to open states list in sidebar
-                document.getElementById('btn-access-regions').addEventListener('click', function() {
-                    openRegionsBrowser();
-                });
-            }
 
             // ===== Fullscreen Region Browser =====
             const regionBrowser = document.getElementById('region-browser');
@@ -5043,18 +5078,42 @@
                         }
                     }
 
-                    // Icon
+                    // Icon — try IndexedDB cache first, fall back to remote
                     var iconName = item.icon || '';
                     var safeChar = item.name.charAt(0).replace(/'/g, '');
-                    var imgHtml = iconName
-                        ? '<img class="region-card-img" src="' + ICON_BASE + iconName + '.png" onerror="this.outerHTML=\'<div class=region-card-placeholder>' + safeChar + '</div>\'">'
-                        : '<div class="region-card-placeholder">' + safeChar + '</div>';
+                    var placeholderHtml = '<div class="region-card-placeholder">' + safeChar + '</div>';
 
-                    card.innerHTML = imgHtml + badgeHtml +
+                    card.innerHTML = (iconName ? '<img class="region-card-img" data-icon="' + iconName + '" src="" style="visibility:hidden;" onerror="this.outerHTML=\'' + placeholderHtml.replace(/'/g, "\\'") + '\'">' : placeholderHtml) + badgeHtml +
                         '<div class="region-card-body">' +
                         '<div class="region-card-name">' + item.name + '</div>' +
                         (item.sub ? '<div class="region-card-sub">' + item.sub + '</div>' : '') +
                         '</div>';
+
+                    if (iconName) {
+                        (function(cardEl, iName) {
+                            var img = cardEl.querySelector('img[data-icon="' + iName + '"]');
+                            if (!img) return;
+                            openGeoJsonDB().then(function(db) {
+                                var tx = db.transaction('icons', 'readonly');
+                                var req = tx.objectStore('icons').get(iName);
+                                req.onsuccess = function() {
+                                    if (req.result && req.result.blob) {
+                                        img.src = URL.createObjectURL(req.result.blob);
+                                    } else {
+                                        img.src = ICON_BASE + iName + '.png';
+                                    }
+                                    img.style.visibility = '';
+                                };
+                                req.onerror = function() {
+                                    img.src = ICON_BASE + iName + '.png';
+                                    img.style.visibility = '';
+                                };
+                            }).catch(function() {
+                                img.src = ICON_BASE + iName + '.png';
+                                img.style.visibility = '';
+                            });
+                        })(card, iconName);
+                    }
 
                     // Buy badge click
                     var buyBadge = card.querySelector('.region-card-badge.buy');
