@@ -5385,6 +5385,9 @@
 
             function goToLocation(lat, lng, name, districtProductId) {
                 zoomBypassActive = true;
+                if (districtProductId && hasPurchase(districtProductId)) {
+                    map.setOptions({ maxZoom: 21 });
+                }
                 map.panTo({ lat, lng });
                 var targetZoom = (districtProductId && hasPurchase(districtProductId)) ? 15 : MAX_FREE_ZOOM - 1;
                 smoothZoomTo(targetZoom);
