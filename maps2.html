@@ -1639,6 +1639,8 @@
         const installWrap = document.getElementById('sidebar-install-wrap');
         const bottombarInstallBtn = document.getElementById('bottombar-install-btn');
         const installInfoOverlay = document.getElementById('install-info-overlay');
+        const isAndroidDevice = /Android/i.test(navigator.userAgent);
+        const MS_STORE_URL = 'https://apps.microsoft.com/detail/9PNZDK3DQPL0?hl=en-us&gl=IN&ocid=pdpshare';
 
         function showInstallButtons() {
             installWrap.style.display = 'contents';
@@ -1665,13 +1667,28 @@
             deferredInstallPrompt = null;
         }
 
+        // Android: use PWA install prompt
         window.addEventListener('beforeinstallprompt', function(e) {
+            if (!isAndroidDevice) { e.preventDefault(); return; }
             e.preventDefault();
             deferredInstallPrompt = e;
             showInstallButtons();
         });
 
+        // Desktop: always show install button, redirect to Microsoft Store
+        if (!isAndroidDevice) {
+            showInstallButtons();
+            // Update button labels for desktop
+            installBtn.querySelector('.sidebar-install-title').textContent = 'Get desktop app';
+            installBtn.querySelector('.sidebar-install-sub').textContent = 'Microsoft Store';
+        }
+
         function openInstallInfo() {
+            if (!isAndroidDevice) {
+                // Desktop — redirect to Microsoft Store
+                window.open(MS_STORE_URL, '_blank', 'noopener');
+                return;
+            }
             installInfoOverlay.classList.add('open');
         }
         installBtn.addEventListener('click', openInstallInfo);
