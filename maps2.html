@@ -1331,12 +1331,12 @@
                         <!-- Subscription card -->
                         <div class="pd-plan-card pd-plan-card-sub">
                             <div class="pd-card-badge" style="background:#4CAF50;">POPULAR</div>
-                            <div class="pd-card-name" style="color:#2E7D32;">Weekly<br>Subscription</div>
-                            <div class="pd-card-price"><span id="zoom-sub-price-amount" style="font-size:32px;font-weight:800;color:#1A1A1A;">&#8377;89</span><span style="font-size:13px;color:#888;margin-left:4px;">/ week</span></div>
+                            <div class="pd-card-name" id="pd-sub-card-name" style="color:#2E7D32;">Weekly<br>Subscription</div>
+                            <div class="pd-card-price"><span id="zoom-sub-price-amount" style="font-size:32px;font-weight:800;color:#1A1A1A;">&#8377;89</span><span id="pd-sub-period-label" style="font-size:13px;color:#888;margin-left:4px;">/ week</span></div>
                             <div class="pd-card-subtitle">Auto-renews &middot; Cancel anytime</div>
                             <div class="pd-card-divider"></div>
                             <div class="pd-card-benefits">
-                                <div class="pd-card-benefit">&#10003; Lower weekly cost</div>
+                                <div class="pd-card-benefit" id="pd-sub-benefit-cost">&#10003; Lower weekly cost</div>
                                 <div class="pd-card-benefit">&#10003; Continuous access to maps</div>
                                 <div class="pd-card-benefit">&#10003; Use on any device with login</div>
                                 <div class="pd-card-benefit">&#10003; Best for regular users</div>
@@ -2485,7 +2485,9 @@
             }
 
             var loadingOverlay = document.getElementById('payment-loading-overlay');
-            document.getElementById('payment-loading-sub').textContent = 'Weekly Subscription: ' + regionName;
+            var subUnit = (cachedSubPricing.get('default') || {}).periodUnit || 'week';
+            var subUnitLabel = subUnit === 'day' ? 'Daily' : subUnit === 'week' ? 'Weekly' : subUnit === 'month' ? 'Monthly' : subUnit;
+            document.getElementById('payment-loading-sub').textContent = subUnitLabel + ' Subscription: ' + regionName;
             loadingOverlay.classList.add('open');
 
             try {
@@ -2531,7 +2533,7 @@
                     key: 'rzp_live_SXr1BKnoysSo9r',
                     subscription_id: subscriptionId,
                     name: 'Development Plans (GIS)',
-                    description: 'Weekly Subscription: ' + regionName,
+                    description: subUnitLabel + ' Subscription: ' + regionName,
                     prefill: {
                         email: currentUser.email,
                         name: currentUser.displayName || ''
@@ -4918,6 +4920,16 @@
                 cachedSubPricing.clear();
                 var data = snap.val() || {};
                 Object.entries(data).forEach(function(e) { cachedSubPricing.set(e[0], e[1]); });
+                // Update subscription card labels from config
+                var defaultPlan = data['default'] || {};
+                var unit = defaultPlan.periodUnit || 'week';
+                var unitLabel = unit === 'day' ? 'Daily' : unit === 'week' ? 'Weekly' : unit === 'month' ? 'Monthly' : unit;
+                var el = document.getElementById('pd-sub-card-name');
+                if (el) el.innerHTML = unitLabel + '<br>Subscription';
+                var pl = document.getElementById('pd-sub-period-label');
+                if (pl) pl.textContent = '/ ' + unit;
+                var bl = document.getElementById('pd-sub-benefit-cost');
+                if (bl) bl.textContent = '\u2713 Lower ' + unit + 'ly cost';
             });
 
             // Layer data loading deferred until CloudFront cookies are ready
