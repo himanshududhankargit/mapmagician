@@ -2351,6 +2351,16 @@
             return entry ? (entry.expiry || 0) : 0;
         }
 
+        function calcDaysLeft(expiry) {
+            var ms = Math.max(0, expiry - Date.now());
+            var d = Math.floor(ms / 86400000);
+            var h = Math.floor((ms % 86400000) / 3600000);
+            var m = Math.floor((ms % 3600000) / 60000);
+            if (d > 0) return d + 'd ' + h + 'h';
+            if (h > 0) return h + 'h ' + m + 'm';
+            return m + 'm';
+        }
+
         // Buy a 7-day pass
         async function buyRegion(productId, regionName) {
             if (!currentUser || currentUser.isAnonymous) {
