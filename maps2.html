@@ -4973,39 +4973,17 @@
                 preloadRegionIcons();
             }
 
-            // Preload region icons into IndexedDB during loading screen
+            // Preload region icons into browser cache using Image objects (no CORS issues)
             function preloadRegionIcons() {
                 var iconNames = new Set();
                 menuData.forEach(function(item) {
                     if (item.iconState) iconNames.add(item.iconState);
                     if (item.iconVillage) iconNames.add(item.iconVillage);
                 });
-                if (iconNames.size === 0) return;
-                openGeoJsonDB().then(function(db) {
-                    var tx = db.transaction('icons', 'readonly');
-                    var store = tx.objectStore('icons');
-                    var toFetch = [];
-                    var remaining = iconNames.size;
-                    iconNames.forEach(function(name) {
-                        var req = store.get(name);
-                        req.onsuccess = function() {
-                            if (!req.result) toFetch.push(name);
-                            if (--remaining === 0 && toFetch.length > 0) {
-                                toFetch.forEach(function(iconName) {
-                                    fetch(ICON_BASE_PRELOAD + iconName + '.png')
-                                        .then(function(r) { return r.ok ? r.blob() : null; })
-                                        .then(function(blob) {
-                                            if (!blob) return;
-                                            openGeoJsonDB().then(function(db2) {
-                                                var tx2 = db2.transaction('icons', 'readwrite');
-                                                tx2.objectStore('icons').put({ name: iconName, blob: blob });
-                                            });
-                                        }).catch(function() {});
-                                });
-                            }
-                        };
-                    });
-                }).catch(function() {});
+                iconNames.forEach(function(name) {
+                    var img = new Image();
+                    img.src = ICON_BASE_PRELOAD + name + '.png';
+                });
             }
 
             // Try loading from cache first, then fetch from Firebase
@@ -5160,7 +5138,7 @@
                         }
                     }
 
-                    // Icon — try IndexedDB cache first, fall back to remote
+                    // Icon — served from browser cache (preloaded during init)
                     var iconName = item.icon || '';
                     var safeChar = item.name.charAt(0).replace(/'/g, '');
 
@@ -5173,35 +5151,14 @@
                     if (iconName) {
                         var img = document.createElement('img');
                         img.className = 'region-card-img';
-                        img.style.visibility = 'hidden';
                         img.onerror = function() {
                             var ph = document.createElement('div');
                             ph.className = 'region-card-placeholder';
                             ph.textContent = safeChar;
                             this.parentNode.replaceChild(ph, this);
                         };
+                        img.src = ICON_BASE + iconName + '.png';
                         card.insertBefore(img, card.firstChild);
-                        (function(imgEl, iName) {
-                            openGeoJsonDB().then(function(db) {
-                                var tx = db.transaction('icons', 'readonly');
-                                var req = tx.objectStore('icons').get(iName);
-                                req.onsuccess = function() {
-                                    if (req.result && req.result.blob) {
-                                        imgEl.src = URL.createObjectURL(req.result.blob);
-                                    } else {
-                                        imgEl.src = ICON_BASE + iName + '.png';
-                                    }
-                                    imgEl.style.visibility = '';
-                                };
-                                req.onerror = function() {
-                                    imgEl.src = ICON_BASE + iName + '.png';
-                                    imgEl.style.visibility = '';
-                                };
-                            }).catch(function() {
-                                imgEl.src = ICON_BASE + iName + '.png';
-                                imgEl.style.visibility = '';
-                            });
-                        })(img, iconName);
                     } else {
                         var ph = document.createElement('div');
                         ph.className = 'region-card-placeholder';
