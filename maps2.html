@@ -5608,6 +5608,14 @@
                 updateStatus('Zoomed to ' + name);
             }
 
+            // Expose to other outer-scope closures (e.g. renderSettingsPurchases
+            // inside initUIEvents) that need to parse village JSON and pan the
+            // map. Both functions are nested inside initSidebar() so they'd
+            // otherwise be trapped in this closure and unreachable from sibling
+            // init functions. See commit bcdf952 for the caller.
+            window.parseVillagesJSON = parseVillagesJSON;
+            window.goToLocation = goToLocation;
+
             function openSidebar() {
                 sidebarPanel.classList.add('open');
                 sidebarOverlay.classList.add('open');
