@@ -4755,9 +4755,27 @@
             const paramLng = parseFloat(urlParams.get('lng'));
             const paramZoom = parseInt(urlParams.get('zoom'), 10);
 
-            const initLat = !isNaN(paramLat) ? paramLat : 18.93742;
-            const initLng = !isNaN(paramLng) ? paramLng : 72.82810;
-            const initZoom = !isNaN(paramZoom) ? paramZoom : 13;
+            // Last-position memory: restore center + zoom from the previous session.
+            // URL params win over this (explicit deep-link), which in turn wins over the
+            // hardcoded Mumbai default.
+            const LAST_MAP_POS_KEY = 'mm_lastMapPosition_v1';
+            let savedLat = NaN, savedLng = NaN, savedZoom = NaN;
+            try {
+                const raw = localStorage.getItem(LAST_MAP_POS_KEY);
+                if (raw) {
+                    const p = JSON.parse(raw);
+                    if (p && typeof p.lat === 'number' && typeof p.lng === 'number' && typeof p.zoom === 'number'
+                        && p.lat >= -90 && p.lat <= 90
+                        && p.lng >= -180 && p.lng <= 180
+                        && p.zoom >= 0 && p.zoom <= 24) {
+                        savedLat = p.lat; savedLng = p.lng; savedZoom = p.zoom;
+                    }
+                }
+            } catch (e) { /* localStorage unavailable or JSON parse failed — fall through */ }
+
+            const initLat = !isNaN(paramLat) ? paramLat : (!isNaN(savedLat) ? savedLat : 18.93742);
+            const initLng = !isNaN(paramLng) ? paramLng : (!isNaN(savedLng) ? savedLng : 72.82810);
+            const initZoom = !isNaN(paramZoom) ? paramZoom : (!isNaN(savedZoom) ? savedZoom : 13);
 
             if (isEmbedMode) {
                 document.body.classList.add('embed-mode');
@@ -4902,6 +4920,12 @@
                 maybeLoadSolapurOverlay();
                 // Keep Solapur label opacity in sync with current zoom
                 updateSolapurLabelOpacity(z);
+                // Persist last map position so the next visit opens at the same spot
+                try {
+                    localStorage.setItem(LAST_MAP_POS_KEY, JSON.stringify({
+                        lat: c.lat(), lng: c.lng(), zoom: z
+                    }));
+                } catch (e) { /* quota exceeded / storage disabled — ignore */ }
             });
             map.addListener('bounds_changed', debouncedLoadTiles);
 
@@ -5099,7 +5123,11 @@
                         + tspans + '</svg>';
 
                     this._div = div;
-                    this.getPanes().overlayLayer.appendChild(div);
+                    // Use floatPane (not overlayLayer) so the label is NOT affected by the
+                    // zoom-animation CSS transform that scales overlayLayer. Otherwise the
+                    // meters-based size we compute for the target zoom gets double-scaled
+                    // during the animation, causing a visible "grow then shrink" flash.
+                    this.getPanes().floatPane.appendChild(div);
                 }
                 draw() {
                     if (!this._div) return;
