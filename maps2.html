@@ -803,7 +803,9 @@
         body.embed-mode .bottom-bar,
         body.embed-mode .crosshair,
         body.embed-mode .measure-toolbar,
-        body.embed-mode .measure-info { display: none !important; }
+        body.embed-mode .measure-info,
+        body.embed-mode #floating-signin-btn,
+        body.embed-mode .unlock-toast { display: none !important; }
         body.embed-mode { overflow: hidden; }
         @media print { body { display: none !important; } }
     </style>
@@ -3670,6 +3672,7 @@
 
         let unlockToastTimer = null;
         function showUnlockToast(regionName) {
+            if (isEmbedMode) return;
             const toast = document.getElementById('unlock-toast');
             document.getElementById('unlock-toast-text').textContent = regionName + ' — Premium unlocked';
             toast.classList.add('show');
