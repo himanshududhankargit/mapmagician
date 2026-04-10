@@ -6741,10 +6741,10 @@
                 var listenerActive = false;
 
                 // Smoothing pipeline (two stages):
-                // 1. Event-time: median-style circular mean of the last N raw samples to
-                //    kill spikes and high-frequency jitter before they can reach the filter.
+                // 1. Event-time: circular mean of the last N raw samples to kill spikes
+                //    and high-frequency jitter before they reach the filter.
                 // 2. rAF loop: dead-zone + exponential tween for the "slowly follow" feel.
-                var BUF_SIZE = 6;
+                var BUF_SIZE = 4;
                 var headingBuf = [];
                 var gammaBuf = [];
                 var betaBuf = [];
@@ -6835,17 +6835,31 @@
                 }
 
                 function onOrient(e) {
+                    // Only trust true-north absolute readings. On Android we were
+                    // listening to both 'deviceorientationabsolute' (absolute) and
+                    // 'deviceorientation' (often relative) — mixing them poisoned
+                    // the buffer and produced wrong headings plus extra flicker.
                     var heading = null;
+                    var isAbsolute = (e.type === 'deviceorientationabsolute') || (e.absolute === true);
                     if (typeof e.webkitCompassHeading === 'number' && !isNaN(e.webkitCompassHeading)) {
-                        heading = e.webkitCompassHeading; // iOS: clockwise from true north
-                    } else if (e.alpha !== null && e.alpha !== undefined) {
-                        heading = (360 - e.alpha) % 360; // Android absolute: CCW → CW
+                        heading = e.webkitCompassHeading; // iOS: already CW from true north
+                    } else if (isAbsolute && e.alpha !== null && e.alpha !== undefined) {
+                        // Android absolute: alpha is CCW from magnetic north.
+                        // Subtract screen orientation so landscape mode stays correct.
+                        var screenAngle = 0;
+                        if (window.screen && window.screen.orientation && typeof window.screen.orientation.angle === 'number') {
+                            screenAngle = window.screen.orientation.angle;
+                        } else if (typeof window.orientation === 'number') {
+                            screenAngle = window.orientation;
+                        }
+                        heading = (360 - e.alpha - screenAngle + 720) % 360;
                     }
-                    if (heading !== null) {
-                        headingBuf.push(heading);
-                        if (headingBuf.length > BUF_SIZE) headingBuf.shift();
-                        rawHeading = circularMean(headingBuf);
-                    }
+                    if (heading === null) return; // reject non-absolute events
+
+                    headingBuf.push(heading);
+                    if (headingBuf.length > BUF_SIZE) headingBuf.shift();
+                    rawHeading = circularMean(headingBuf);
+
                     if (typeof e.gamma === 'number') {
                         gammaBuf.push(e.gamma);
                         if (gammaBuf.length > BUF_SIZE) gammaBuf.shift();
