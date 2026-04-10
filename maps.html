@@ -6740,9 +6740,57 @@
                 var noSensorMsg = document.getElementById('compass-no-sensor');
                 var listenerActive = false;
 
+                // Smoothing state: latest raw values from sensor events, plus filtered
+                // values that tween toward them inside a rAF loop at 60fps.
+                // Heading needs wrap-around handling (shortest-path around 360°).
+                var rawHeading = null, smoothHeading = null;
+                var rawGamma = 0, rawBeta = 0, smoothGamma = 0, smoothBeta = 0;
+                var rafId = 0;
+                var lastDisplayedDeg = -1;
+                var lastDisplayedCard = '';
+
                 function cardinalFrom(h) {
                     var cards = ['N','NE','E','SE','S','SW','W','NW','N'];
                     return cards[Math.round(h / 45) % 8];
+                }
+
+                function animate() {
+                    rafId = 0;
+                    if (rawHeading === null) return; // no data yet
+                    if (smoothHeading === null) smoothHeading = rawHeading;
+
+                    // Shortest angular distance between smoothed and raw
+                    var diff = ((rawHeading - smoothHeading + 540) % 360) - 180;
+                    smoothHeading = (smoothHeading + diff * 0.18 + 360) % 360;
+                    smoothGamma = smoothGamma + (rawGamma - smoothGamma) * 0.22;
+                    smoothBeta = smoothBeta + (rawBeta - smoothBeta) * 0.22;
+
+                    dial.setAttribute('transform', 'rotate(' + (-smoothHeading).toFixed(2) + ' 100 100)');
+
+                    var bx = Math.max(-20, Math.min(20, smoothGamma)) / 20 * 22;
+                    var by = Math.max(-20, Math.min(20, smoothBeta)) / 20 * 22;
+                    ball.setAttribute('cx', (100 + bx).toFixed(2));
+                    ball.setAttribute('cy', (100 + by).toFixed(2));
+
+                    // Throttle text updates — only rewrite DOM when rounded degree changes
+                    var deg = Math.round(smoothHeading);
+                    if (deg !== lastDisplayedDeg) {
+                        lastDisplayedDeg = deg;
+                        degEl.textContent = deg + '°';
+                        var card = cardinalFrom(smoothHeading);
+                        if (card !== lastDisplayedCard) {
+                            lastDisplayedCard = card;
+                            cardEl.textContent = card;
+                        }
+                    }
+
+                    // Keep animating while the dial/ball are still settling or the listener is live.
+                    var settled = Math.abs(diff) < 0.15
+                        && Math.abs(rawGamma - smoothGamma) < 0.15
+                        && Math.abs(rawBeta - smoothBeta) < 0.15;
+                    if (listenerActive && !settled) {
+                        rafId = requestAnimationFrame(animate);
+                    }
                 }
 
                 function onOrient(e) {
@@ -6750,25 +6798,19 @@
                     if (typeof e.webkitCompassHeading === 'number' && !isNaN(e.webkitCompassHeading)) {
                         heading = e.webkitCompassHeading; // iOS: clockwise from true north
                     } else if (e.alpha !== null && e.alpha !== undefined) {
-                        // Android deviceorientationabsolute: alpha is CCW from true north
-                        heading = (360 - e.alpha) % 360;
+                        heading = (360 - e.alpha) % 360; // Android absolute: CCW → CW
                     }
-                    if (heading !== null) {
-                        dial.setAttribute('transform', 'rotate(' + (-heading) + ' 100 100)');
-                        cardEl.textContent = cardinalFrom(heading);
-                        degEl.textContent = Math.round(heading) + '°';
-                    }
-                    // Level meter — map ±20° of tilt to the ±22 unit radius of the center circle
-                    var gamma = (typeof e.gamma === 'number') ? e.gamma : 0; // left/right
-                    var beta = (typeof e.beta === 'number') ? e.beta : 0;    // front/back
-                    var bx = Math.max(-20, Math.min(20, gamma)) / 20 * 22;
-                    var by = Math.max(-20, Math.min(20, beta)) / 20 * 22;
-                    ball.setAttribute('cx', 100 + bx);
-                    ball.setAttribute('cy', 100 + by);
+                    if (heading !== null) rawHeading = heading;
+                    if (typeof e.gamma === 'number') rawGamma = e.gamma;
+                    if (typeof e.beta === 'number') rawBeta = e.beta;
+                    if (rafId === 0) rafId = requestAnimationFrame(animate);
                 }
 
                 function startListening() {
                     if (listenerActive) return;
+                    rawHeading = null; smoothHeading = null;
+                    smoothGamma = 0; smoothBeta = 0;
+                    lastDisplayedDeg = -1; lastDisplayedCard = '';
                     window.addEventListener('deviceorientationabsolute', onOrient, true);
                     window.addEventListener('deviceorientation', onOrient, true);
                     listenerActive = true;
@@ -6777,6 +6819,7 @@
                     window.removeEventListener('deviceorientationabsolute', onOrient, true);
                     window.removeEventListener('deviceorientation', onOrient, true);
                     listenerActive = false;
+                    if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
                 }
 
                 function requestIosPerm() {
