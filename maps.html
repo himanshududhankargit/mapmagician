@@ -6754,25 +6754,45 @@
                     return cards[Math.round(h / 45) % 8];
                 }
 
+                // Heading noise floor — sub-this-degree jitter is treated as stationary.
+                // Dial also "slowly follows" (small lerp) so the UI lags behind the phone
+                // and catches up smoothly instead of tracking every sample.
+                var HEADING_DEAD_ZONE = 1.0;  // degrees
+                var TILT_DEAD_ZONE = 0.6;
+                var HEADING_LERP = 0.08;
+                var TILT_LERP = 0.12;
+
                 function animate() {
                     rafId = 0;
-                    if (rawHeading === null) return; // no data yet
+                    if (rawHeading === null) return;
                     if (smoothHeading === null) smoothHeading = rawHeading;
 
                     // Shortest angular distance between smoothed and raw
-                    var diff = ((rawHeading - smoothHeading + 540) % 360) - 180;
-                    smoothHeading = (smoothHeading + diff * 0.18 + 360) % 360;
-                    smoothGamma = smoothGamma + (rawGamma - smoothGamma) * 0.22;
-                    smoothBeta = smoothBeta + (rawBeta - smoothBeta) * 0.22;
+                    var diffH = ((rawHeading - smoothHeading + 540) % 360) - 180;
+                    var diffG = rawGamma - smoothGamma;
+                    var diffB = rawBeta - smoothBeta;
 
-                    dial.setAttribute('transform', 'rotate(' + (-smoothHeading).toFixed(2) + ' 100 100)');
+                    // Dead-zone: don't move if the raw sample is within noise range.
+                    var applyH = (Math.abs(diffH) < HEADING_DEAD_ZONE) ? 0 : diffH;
+                    var applyG = (Math.abs(diffG) < TILT_DEAD_ZONE) ? 0 : diffG;
+                    var applyB = (Math.abs(diffB) < TILT_DEAD_ZONE) ? 0 : diffB;
 
-                    var bx = Math.max(-20, Math.min(20, smoothGamma)) / 20 * 22;
-                    var by = Math.max(-20, Math.min(20, smoothBeta)) / 20 * 22;
-                    ball.setAttribute('cx', (100 + bx).toFixed(2));
-                    ball.setAttribute('cy', (100 + by).toFixed(2));
+                    smoothHeading = (smoothHeading + applyH * HEADING_LERP + 360) % 360;
+                    smoothGamma = smoothGamma + applyG * TILT_LERP;
+                    smoothBeta = smoothBeta + applyB * TILT_LERP;
 
-                    // Throttle text updates — only rewrite DOM when rounded degree changes
+                    // Paint — only if anything actually moved this frame.
+                    if (applyH !== 0) {
+                        dial.setAttribute('transform', 'rotate(' + (-smoothHeading).toFixed(2) + ' 100 100)');
+                    }
+                    if (applyG !== 0 || applyB !== 0) {
+                        var bx = Math.max(-20, Math.min(20, smoothGamma)) / 20 * 22;
+                        var by = Math.max(-20, Math.min(20, smoothBeta)) / 20 * 22;
+                        ball.setAttribute('cx', (100 + bx).toFixed(2));
+                        ball.setAttribute('cy', (100 + by).toFixed(2));
+                    }
+
+                    // Text — only when rounded degree actually changes
                     var deg = Math.round(smoothHeading);
                     if (deg !== lastDisplayedDeg) {
                         lastDisplayedDeg = deg;
@@ -6784,10 +6804,11 @@
                         }
                     }
 
-                    // Keep animating while the dial/ball are still settling or the listener is live.
-                    var settled = Math.abs(diff) < 0.15
-                        && Math.abs(rawGamma - smoothGamma) < 0.15
-                        && Math.abs(rawBeta - smoothBeta) < 0.15;
+                    // Settle once everything is inside its dead zone — no more frames until
+                    // a new sensor event nudges us outside it.
+                    var settled = Math.abs(diffH) < HEADING_DEAD_ZONE
+                        && Math.abs(diffG) < TILT_DEAD_ZONE
+                        && Math.abs(diffB) < TILT_DEAD_ZONE;
                     if (listenerActive && !settled) {
                         rafId = requestAnimationFrame(animate);
                     }
