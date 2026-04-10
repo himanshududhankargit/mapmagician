@@ -6740,14 +6740,34 @@
                 var noSensorMsg = document.getElementById('compass-no-sensor');
                 var listenerActive = false;
 
-                // Smoothing state: latest raw values from sensor events, plus filtered
-                // values that tween toward them inside a rAF loop at 60fps.
-                // Heading needs wrap-around handling (shortest-path around 360°).
+                // Smoothing pipeline (two stages):
+                // 1. Event-time: median-style circular mean of the last N raw samples to
+                //    kill spikes and high-frequency jitter before they can reach the filter.
+                // 2. rAF loop: dead-zone + exponential tween for the "slowly follow" feel.
+                var BUF_SIZE = 6;
+                var headingBuf = [];
+                var gammaBuf = [];
+                var betaBuf = [];
                 var rawHeading = null, smoothHeading = null;
                 var rawGamma = 0, rawBeta = 0, smoothGamma = 0, smoothBeta = 0;
                 var rafId = 0;
                 var lastDisplayedDeg = -1;
                 var lastDisplayedCard = '';
+
+                function circularMean(buf) {
+                    var sx = 0, sy = 0;
+                    for (var i = 0; i < buf.length; i++) {
+                        var r = buf[i] * Math.PI / 180;
+                        sx += Math.cos(r); sy += Math.sin(r);
+                    }
+                    return (Math.atan2(sy, sx) * 180 / Math.PI + 360) % 360;
+                }
+                function linearMean(buf) {
+                    if (!buf.length) return 0;
+                    var s = 0;
+                    for (var i = 0; i < buf.length; i++) s += buf[i];
+                    return s / buf.length;
+                }
 
                 function cardinalFrom(h) {
                     var cards = ['N','NE','E','SE','S','SW','W','NW','N'];
@@ -6821,16 +6841,30 @@
                     } else if (e.alpha !== null && e.alpha !== undefined) {
                         heading = (360 - e.alpha) % 360; // Android absolute: CCW → CW
                     }
-                    if (heading !== null) rawHeading = heading;
-                    if (typeof e.gamma === 'number') rawGamma = e.gamma;
-                    if (typeof e.beta === 'number') rawBeta = e.beta;
+                    if (heading !== null) {
+                        headingBuf.push(heading);
+                        if (headingBuf.length > BUF_SIZE) headingBuf.shift();
+                        rawHeading = circularMean(headingBuf);
+                    }
+                    if (typeof e.gamma === 'number') {
+                        gammaBuf.push(e.gamma);
+                        if (gammaBuf.length > BUF_SIZE) gammaBuf.shift();
+                        rawGamma = linearMean(gammaBuf);
+                    }
+                    if (typeof e.beta === 'number') {
+                        betaBuf.push(e.beta);
+                        if (betaBuf.length > BUF_SIZE) betaBuf.shift();
+                        rawBeta = linearMean(betaBuf);
+                    }
                     if (rafId === 0) rafId = requestAnimationFrame(animate);
                 }
 
                 function startListening() {
                     if (listenerActive) return;
                     rawHeading = null; smoothHeading = null;
+                    rawGamma = 0; rawBeta = 0;
                     smoothGamma = 0; smoothBeta = 0;
+                    headingBuf = []; gammaBuf = []; betaBuf = [];
                     lastDisplayedDeg = -1; lastDisplayedCard = '';
                     window.addEventListener('deviceorientationabsolute', onOrient, true);
                     window.addEventListener('deviceorientation', onOrient, true);
