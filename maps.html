@@ -593,6 +593,8 @@
         .pd-app-hints-row::-webkit-scrollbar { display:none; }
         .pd-app-hints-row .pd-mobile-hint { flex:0 0 100%; scroll-snap-align:start; min-width:0; box-sizing:border-box; }
         @media (min-width:521px) { .pd-app-hints-row .pd-mobile-hint { flex:0 0 calc(50% - 5px); } }
+        /* Village dialog is only 400px wide — force one-hint-at-a-time regardless of viewport */
+        #village-app-hints-scroll .pd-mobile-hint { flex:0 0 100% !important; }
         .pd-support { display:block; margin:12px auto 0; padding:6px 12px; background:none; border:none; color:#B0BEC5; font-size:12px; font-weight:500; cursor:pointer; width:100%; text-align:center; }
         .pd-support:hover { color:#607D8B; }
         #addon-panel-search::placeholder { color:#c8e6c9; opacity:1; }
@@ -1441,9 +1443,9 @@
                 <button class="zoom-dialog-btn zoom-btn-access" id="village-purchase-action" style="width:100%;padding:14px;font-size:15px;border-radius:12px;margin-bottom:8px;background:#1565C0;color:#fff;border:none;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(21,101,192,0.3);">Purchase Village Plan</button>
                 <button id="village-purchase-cancel" style="width:100%;padding:10px;border:none;background:none;color:#aaa;font-size:13px;cursor:pointer;font-weight:500;">Not now</button>
             </div>
-            <!-- Footer: Android / Windows app hints -->
+            <!-- Footer: Android / Windows app hints (one-at-a-time, auto-cycles like DP dialog) -->
             <div class="pd-footer">
-                <div class="pd-app-hints-row">
+                <div class="pd-app-hints-row" id="village-app-hints-scroll">
                     <div class="pd-mobile-hint">
                         <img class="pd-app-icon" src="AssetsGIS/image-1.png" alt="MapMagician app icon">
                         <div class="pd-mobile-hint-text">
@@ -7360,6 +7362,24 @@
             };
 
             overlay.classList.add('open');
+
+            // Cycle app hints (Android / Microsoft Store) — alternate start each time
+            var villageAppScroll = document.getElementById('village-app-hints-scroll');
+            if (villageAppScroll) {
+                var lastApp = sessionStorage.getItem('village-app-last') || 'android';
+                if (lastApp === 'android') {
+                    villageAppScroll.scrollLeft = villageAppScroll.scrollWidth - villageAppScroll.clientWidth;
+                    sessionStorage.setItem('village-app-last', 'windows');
+                } else {
+                    villageAppScroll.scrollLeft = 0;
+                    sessionStorage.setItem('village-app-last', 'android');
+                }
+                var villageAppCycleTimer = setInterval(function() {
+                    if (!overlay.classList.contains('open')) { clearInterval(villageAppCycleTimer); return; }
+                    villageAppScroll.scrollTo({ left: villageAppScroll.scrollLeft > 0 ? 0 : villageAppScroll.scrollWidth, behavior: 'smooth' });
+                }, 4000);
+                villageAppScroll.addEventListener('touchstart', function() { clearInterval(villageAppCycleTimer); }, { once: true });
+            }
         }
 
         async function buyVillage(villageName) {
