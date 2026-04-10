@@ -2798,6 +2798,12 @@
         const GEOJSON_MAX_CONCURRENT_DOWNLOADS = 3;
         const GEOJSON_GEOCODER_CACHE_MAX = 500;
 
+        // Solapur decorative overlay (labels, TP scheme dashed polygons, archaeological
+        // magenta buffer lines) — ported from Android Constants.kt. Text labels fade out
+        // as the user zooms into the premium DP tile range so they don't obscure tiles.
+        const SOLAPUR_FADE_MIN_ZOOM = 12; // at/below this zoom labels are fully opaque
+        const SOLAPUR_FADE_MAX_ZOOM = 15; // at/above this zoom labels are fully hidden
+
         // ---------- Static district bounds index (for viewport-based loading) ----------
         // Pre-computed bounding boxes for all 37 Maharashtra district GeoJSON files.
         // Used to determine which districts intersect the current viewport without downloading.
@@ -4399,6 +4405,159 @@
             }
         }
 
+        // ---------- Solapur decorative overlay (labels + TP scheme + archaeological) ----------
+        // Loaded lazily the first time the Solapur district bounds intersect the viewport.
+        // Data file: data/solapur_overlay.json (ported from Android Constants.kt).
+        let solapurOverlayLoadStarted = false;
+        let solapurOverlayLoaded = false;
+        const solapurLabelMarkers = [];
+        const solapurArchaeologicalLines = [];
+        const solapurTpSchemeLines = [];
+
+        function _parseKmlPolyline(kmlString) {
+            // Accepts "lng,lat,0 lng,lat,0 ..." or "lng,lat lng,lat ...". Returns [{lat,lng},...].
+            const tokens = kmlString.trim().split(/\s+/);
+            const path = [];
+            for (let i = 0; i < tokens.length; i++) {
+                const parts = tokens[i].split(',');
+                if (parts.length < 2) continue;
+                const lng = parseFloat(parts[0]);
+                const lat = parseFloat(parts[1]);
+                if (!isNaN(lat) && !isNaN(lng)) path.push({ lat: lat, lng: lng });
+            }
+            return path;
+        }
+
+        function _makeSolapurLabelIcon(text, scale) {
+            // White text with a black stroke, sans-serif. Matches Android bitmap labels.
+            // The Android 'scale' field (0.5 .. 2.5) maps to font size in web pixels.
+            const fontSize = Math.max(10, Math.round(13 * (scale || 1)));
+            const strokeW = Math.max(2, Math.round(fontSize * 0.22));
+            const lines = String(text).split('\n');
+            const lineH = Math.round(fontSize * 1.15);
+            const pad = 6;
+            const maxChars = lines.reduce(function(m, l) { return Math.max(m, l.length); }, 0);
+            const w = Math.max(20, Math.round(maxChars * fontSize * 0.58) + pad * 2);
+            const h = lines.length * lineH + pad * 2;
+            const cx = w / 2;
+            let tspans = '';
+            for (let i = 0; i < lines.length; i++) {
+                const y = pad + lineH * (i + 0.85);
+                const safe = lines[i]
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                tspans += '<text x="' + cx + '" y="' + y + '" text-anchor="middle" '
+                    + 'font-family="sans-serif" font-size="' + fontSize + '" font-weight="700" '
+                    + 'fill="%23FFFFFF" stroke="%23000000" stroke-width="' + strokeW + '" '
+                    + 'paint-order="stroke" stroke-linejoin="round">' + safe + '</text>';
+            }
+            const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h
+                + '" viewBox="0 0 ' + w + ' ' + h + '">' + tspans + '</svg>';
+            return {
+                url: 'data:image/svg+xml;charset=UTF-8,' + svg,
+                scaledSize: new google.maps.Size(w, h),
+                anchor: new google.maps.Point(cx, h / 2)
+            };
+        }
+
+        async function loadSolapurOverlayIfNeeded() {
+            if (solapurOverlayLoadStarted || !map) return;
+            solapurOverlayLoadStarted = true;
+            try {
+                const resp = await fetch('data/solapur_overlay.json');
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+
+                // 1. Labels → Marker with inline SVG icon
+                (data.labels || []).forEach(function(lbl) {
+                    const marker = new google.maps.Marker({
+                        position: { lat: lbl.lat, lng: lbl.lng },
+                        map: map,
+                        icon: _makeSolapurLabelIcon(lbl.text, lbl.scale),
+                        clickable: false,
+                        optimized: false,
+                        zIndex: 50000
+                    });
+                    solapurLabelMarkers.push(marker);
+                });
+
+                // 2. Archaeological buffer rings → solid magenta polylines
+                (data.archaeologicalKml || []).forEach(function(kml) {
+                    const path = _parseKmlPolyline(kml);
+                    if (path.length < 2) return;
+                    const pl = new google.maps.Polyline({
+                        path: path,
+                        strokeColor: '#FF00FF',
+                        strokeWeight: 3,
+                        strokeOpacity: 1,
+                        clickable: false,
+                        zIndex: 20000,
+                        map: map
+                    });
+                    solapurArchaeologicalLines.push(pl);
+                });
+
+                // 3. TP Scheme boundaries → dashed white polylines
+                // Google Maps dashes: invisible main stroke + repeating dash icon.
+                const dashSymbol = {
+                    path: 'M 0,-1 0,1',
+                    strokeColor: '#FFFFFF',
+                    strokeOpacity: 1,
+                    strokeWeight: 3,
+                    scale: 3
+                };
+                (data.tpSchemeKml || []).forEach(function(kml) {
+                    const path = _parseKmlPolyline(kml);
+                    if (path.length < 2) return;
+                    const pl = new google.maps.Polyline({
+                        path: path,
+                        strokeOpacity: 0,
+                        strokeWeight: 3,
+                        icons: [{ icon: dashSymbol, offset: '0', repeat: '16px' }],
+                        clickable: false,
+                        zIndex: 20000,
+                        map: map
+                    });
+                    solapurTpSchemeLines.push(pl);
+                });
+
+                solapurOverlayLoaded = true;
+                updateSolapurLabelOpacity(map.getZoom());
+            } catch (e) {
+                console.warn('Solapur overlay load failed:', e);
+                solapurOverlayLoadStarted = false; // allow a future retry
+            }
+        }
+
+        function updateSolapurLabelOpacity(zoom) {
+            if (!solapurOverlayLoaded) return;
+            let opacity;
+            if (zoom <= SOLAPUR_FADE_MIN_ZOOM) opacity = 1;
+            else if (zoom >= SOLAPUR_FADE_MAX_ZOOM) opacity = 0;
+            else opacity = 1 - (zoom - SOLAPUR_FADE_MIN_ZOOM) / (SOLAPUR_FADE_MAX_ZOOM - SOLAPUR_FADE_MIN_ZOOM);
+            for (let i = 0; i < solapurLabelMarkers.length; i++) {
+                const m = solapurLabelMarkers[i];
+                if (opacity <= 0.001) {
+                    if (m.getMap()) m.setMap(null);
+                } else {
+                    if (!m.getMap()) m.setMap(map);
+                    m.setOpacity(opacity);
+                }
+            }
+        }
+
+        function maybeLoadSolapurOverlay() {
+            if (solapurOverlayLoadStarted || !map) return;
+            const vp = map.getBounds();
+            if (!vp) return;
+            const sd = GEOJSON_DISTRICT_INDEX.find(function(d) { return d.file === 'solapur'; });
+            if (!sd) return;
+            const vpN = vp.getNorthEast().lat(), vpS = vp.getSouthWest().lat();
+            const vpE = vp.getNorthEast().lng(), vpW = vp.getSouthWest().lng();
+            if (sd.s <= vpN && sd.n >= vpS && sd.w <= vpE && sd.e >= vpW) {
+                loadSolapurOverlayIfNeeded();
+            }
+        }
+
         // ---------- Viewport-based district loading ----------
         let _geojsonViewportDebounce = null;
         function loadGeoJsonForViewport() {
@@ -4790,6 +4949,10 @@
                 loadGeoJsonForViewport();
                 // Show/hide village markers based on zoom
                 updateVillageMarkerVisibility();
+                // Lazy-load Solapur decorative overlay when its bounds come into view
+                maybeLoadSolapurOverlay();
+                // Keep Solapur label opacity in sync with current zoom
+                updateSolapurLabelOpacity(z);
             });
             map.addListener('bounds_changed', debouncedLoadTiles);
 
@@ -4805,6 +4968,8 @@
 
             // Show purchase dialog when user hits zoom 14 in unpurchased region, hide when they zoom out
             map.addListener('zoom_changed', function() {
+                // Fade Solapur decorative labels smoothly as the zoom changes
+                updateSolapurLabelOpacity(map.getZoom());
                 if (zoomBypassActive || mapInteractionDisabled) return;
                 const z = map.getZoom();
                 const overlay = document.getElementById('zoom-restrict-overlay');
