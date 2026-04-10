@@ -6209,6 +6209,16 @@
                         var row = document.createElement('div');
                         row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#f5f5f5;border-radius:8px;margin-bottom:4px;font-size:13px;';
                         row.innerHTML = item.html;
+                        // Optional row click: navigate the map to the purchased region.
+                        // Skips the click if the user actually tapped an interactive
+                        // element inside (e.g. the subscription Cancel button).
+                        if (typeof item.onClick === 'function') {
+                            row.style.cursor = 'pointer';
+                            row.addEventListener('click', function(e) {
+                                if (e.target && e.target.closest && e.target.closest('button')) return;
+                                item.onClick();
+                            });
+                        }
                         body.appendChild(row);
                     });
                 }
@@ -6252,6 +6262,55 @@
                     return m + 'm';
                 }
 
+                // Navigate the map to the centre of a purchased district / region.
+                // Uses the first village in the district's villagesJSON as the
+                // representative centre, then lets goToLocation() handle the pan/zoom.
+                function goToPurchasedRegion(pid) {
+                    if (!pid || !menuData || menuData.length === 0) return false;
+                    var want = pid.toLowerCase().replace(/gst$/, '');
+                    var wantNoPrefix = want.replace(/^district/, '');
+                    for (var i = 0; i < menuData.length; i++) {
+                        var m = menuData[i];
+                        if (!m.productPurchaseID) continue;
+                        var mpid = m.productPurchaseID.toLowerCase().replace(/gst$/, '');
+                        var mpidNoPrefix = mpid.replace(/^district/, '');
+                        if (mpid === want || mpidNoPrefix === wantNoPrefix) {
+                            var villages = parseVillagesJSON(m.villagesJSON);
+                            if (villages.length > 0) {
+                                var centre = villages[0];
+                                closeSettingsPanel();
+                                goToLocation(centre.lat, centre.lng, m.district || m.state || 'Region', m.productPurchaseID);
+                                return true;
+                            }
+                            break;
+                        }
+                    }
+                    return false;
+                }
+
+                // Navigate the map to a purchased village by its name.
+                function goToPurchasedVillage(vName) {
+                    if (!vName) return false;
+                    var item = villageDataByName && villageDataByName.get(vName);
+                    if (!item && typeof villageLayerData !== 'undefined' && villageLayerData) {
+                        for (var i = 0; i < villageLayerData.length; i++) {
+                            if (villageLayerData[i] && villageLayerData[i].villageName === vName) {
+                                item = villageLayerData[i];
+                                break;
+                            }
+                        }
+                    }
+                    if (item) {
+                        var centre = getVillageCenter(item);
+                        if (centre) {
+                            closeSettingsPanel();
+                            goToLocation(centre.lat, centre.lng, vName, '');
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+
                 // Split purchases into categories
                 var subItems = [];
                 var dpItems = [];
@@ -6260,6 +6319,10 @@
                 activePurchases.forEach(function(val, pid) {
                     var district = findDistrictByPurchaseId(pid);
                     var name = district ? district.districtName : pid;
+
+                    // Capture pid for the onClick closure.
+                    var regionPid = pid;
+                    var gotoHandler = function() { goToPurchasedRegion(regionPid); };
 
                     // Refunded entry — show with badge, no days left
                     if (val.refunded) {
@@ -6270,7 +6333,8 @@
                                 '<div style="font-weight:600;color:#999;text-decoration:line-through;">' + name + '</div>' +
                                 '<div style="font-size:11px;color:#888;">' + planLabel + '</div>' +
                             '</div>' +
-                            '<span style="font-size:10px;font-weight:600;color:#c62828;background:#FFEBEE;padding:2px 8px;border-radius:4px;">Refunded</span>'
+                            '<span style="font-size:10px;font-weight:600;color:#c62828;background:#FFEBEE;padding:2px 8px;border-radius:4px;">Refunded</span>',
+                            onClick: gotoHandler
                         });
                         return;
                     }
@@ -6300,28 +6364,33 @@
                                 '</div>' +
                                 cancelBtn +
                             '</div>' +
-                            '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>'
+                            '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>',
+                            onClick: gotoHandler
                         });
                     } else if (val.plan === 'professional') {
                         androidItems.push({
                             html: '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#333;">' + name + '</div><div style="font-size:11px;color:#888;">Pro Pass</div></div>' +
-                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>'
+                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>',
+                            onClick: gotoHandler
                         });
                     } else if (val.plan === 'web') {
                         dpItems.push({
                             html: '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#333;">' + name + '</div><div style="font-size:11px;color:#888;">Web Pass</div></div>' +
-                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>'
+                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>',
+                            onClick: gotoHandler
                         });
                     } else if (val.plan === 'override') {
                         dpItems.push({
                             html: '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#333;">' + name + '</div><div style="font-size:11px;color:#888;">Override</div></div>' +
-                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>'
+                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>',
+                            onClick: gotoHandler
                         });
                     } else {
                         // Default: 7-Day Pass (empty plan or unknown)
                         dpItems.push({
                             html: '<div style="flex:1;min-width:0;"><div style="font-weight:600;color:#333;">' + name + '</div><div style="font-size:11px;color:#888;">7-Day Pass</div></div>' +
-                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>'
+                                '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>',
+                            onClick: gotoHandler
                         });
                     }
                 });
@@ -6345,9 +6414,11 @@
                 var villItems = [];
                 villagePurchases.forEach(function(val, vName) {
                     var daysLeft = calcDaysLeft(val.expiry);
+                    var capturedName = vName;
                     villItems.push({
                         html: '<div style="font-weight:600;color:#333;">' + vName + '</div>' +
-                            '<span style="font-size:11px;font-weight:600;color:' + ((val.expiry - Date.now()) < 86400000 ? '#c62828' : '#2E7D32') + ';">' + daysLeft + ' left</span>'
+                            '<span style="font-size:11px;font-weight:600;color:' + ((val.expiry - Date.now()) < 86400000 ? '#c62828' : '#2E7D32') + ';">' + daysLeft + ' left</span>',
+                        onClick: function() { goToPurchasedVillage(capturedName); }
                     });
                 });
                 villDiv.appendChild(makeExpandableGroup('Village Add-On Plans', '#1565C0', villItems.length, villItems));
