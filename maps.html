@@ -7377,7 +7377,7 @@
                 var villageAppCycleTimer = setInterval(function() {
                     if (!overlay.classList.contains('open')) { clearInterval(villageAppCycleTimer); return; }
                     villageAppScroll.scrollTo({ left: villageAppScroll.scrollLeft > 0 ? 0 : villageAppScroll.scrollWidth, behavior: 'smooth' });
-                }, 4000);
+                }, 2000);
                 villageAppScroll.addEventListener('touchstart', function() { clearInterval(villageAppCycleTimer); }, { once: true });
             }
         }
