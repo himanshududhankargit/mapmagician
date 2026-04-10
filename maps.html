@@ -563,6 +563,10 @@
         .pd-dots { display:none; justify-content:center; gap:8px; margin-top:10px; }
         .pd-dot { width:8px; height:8px; border-radius:50%; background:#ccc; transition:background 0.2s; }
         .pd-dot-active { background:#00796B; }
+        .pd-app-hint-dots { display:flex; justify-content:center; gap:8px; margin-top:10px; }
+        .pd-app-hint-dot { width:8px; height:8px; border-radius:50%; background:#cfd8dc; cursor:pointer; transition:background 0.2s, transform 0.2s; }
+        .pd-app-hint-dot:hover { background:#b0bec5; }
+        .pd-app-hint-dot-active { background:#00796B; transform:scale(1.2); }
         @media (max-width: 520px) { .pd-plan-card { flex:0 0 82%; min-width:0; } .pd-carousel-arrow { display:block; } .pd-dots { display:flex; } }
         .pd-card-badge { display:inline-block; font-size:9px; font-weight:700; color:#fff; padding:3px 8px; border-radius:4px; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px; align-self:flex-start; }
         .pd-card-name { font-size:17px; font-weight:700; line-height:1.3; margin-bottom:10px; }
@@ -1398,6 +1402,10 @@
                         </a>
                     </div>
                 </div>
+                <div class="pd-app-hint-dots" id="pd-app-hint-dots">
+                    <span class="pd-app-hint-dot pd-app-hint-dot-active" data-idx="0"></span>
+                    <span class="pd-app-hint-dot" data-idx="1"></span>
+                </div>
                 <button class="pd-support" id="zoom-restrict-support">Need help? Contact Support</button>
             </div>
         </div>
@@ -1466,6 +1474,10 @@
                             Microsoft Store
                         </a>
                     </div>
+                </div>
+                <div class="pd-app-hint-dots" id="village-app-hint-dots">
+                    <span class="pd-app-hint-dot pd-app-hint-dot-active" data-idx="0"></span>
+                    <span class="pd-app-hint-dot" data-idx="1"></span>
                 </div>
             </div>
         </div>
@@ -3618,7 +3630,20 @@
 
             // Cycle app hints (Android / Microsoft Store) — alternate start each time
             var appScroll = document.getElementById('pd-app-hints-scroll');
+            var appDots = document.getElementById('pd-app-hint-dots');
             if (appScroll) {
+                var dotEls = appDots ? appDots.querySelectorAll('.pd-app-hint-dot') : [];
+                var appCycleTimer = null;
+                function updateAppDots() {
+                    if (!dotEls.length) return;
+                    var idx = appScroll.scrollLeft > appScroll.scrollWidth / 4 ? 1 : 0;
+                    dotEls.forEach(function(d, i) {
+                        d.classList.toggle('pd-app-hint-dot-active', i === idx);
+                    });
+                }
+                function stopAppCycle() {
+                    if (appCycleTimer) { clearInterval(appCycleTimer); appCycleTimer = null; }
+                }
                 var lastApp = sessionStorage.getItem('pd-app-last') || 'android';
                 if (lastApp === 'android') {
                     appScroll.scrollLeft = appScroll.scrollWidth - appScroll.clientWidth;
@@ -3627,11 +3652,19 @@
                     appScroll.scrollLeft = 0;
                     sessionStorage.setItem('pd-app-last', 'android');
                 }
-                var appCycleTimer = setInterval(function() {
-                    if (!overlay.classList.contains('open')) { clearInterval(appCycleTimer); return; }
+                updateAppDots();
+                appCycleTimer = setInterval(function() {
+                    if (!overlay.classList.contains('open')) { stopAppCycle(); return; }
                     appScroll.scrollTo({ left: appScroll.scrollLeft > 0 ? 0 : appScroll.scrollWidth, behavior: 'smooth' });
                 }, 4000);
-                appScroll.addEventListener('touchstart', function() { clearInterval(appCycleTimer); }, { once: true });
+                appScroll.addEventListener('touchstart', stopAppCycle, { once: true });
+                appScroll.addEventListener('scroll', updateAppDots, { passive: true });
+                dotEls.forEach(function(d, i) {
+                    d.addEventListener('click', function() {
+                        stopAppCycle();
+                        appScroll.scrollTo({ left: i === 0 ? 0 : appScroll.scrollWidth, behavior: 'smooth' });
+                    });
+                });
             }
         }
 
@@ -7365,7 +7398,20 @@
 
             // Cycle app hints (Android / Microsoft Store) — alternate start each time
             var villageAppScroll = document.getElementById('village-app-hints-scroll');
+            var villageAppDots = document.getElementById('village-app-hint-dots');
             if (villageAppScroll) {
+                var vDotEls = villageAppDots ? villageAppDots.querySelectorAll('.pd-app-hint-dot') : [];
+                var villageAppCycleTimer = null;
+                function updateVillageDots() {
+                    if (!vDotEls.length) return;
+                    var idx = villageAppScroll.scrollLeft > villageAppScroll.scrollWidth / 4 ? 1 : 0;
+                    vDotEls.forEach(function(d, i) {
+                        d.classList.toggle('pd-app-hint-dot-active', i === idx);
+                    });
+                }
+                function stopVillageCycle() {
+                    if (villageAppCycleTimer) { clearInterval(villageAppCycleTimer); villageAppCycleTimer = null; }
+                }
                 var lastApp = sessionStorage.getItem('village-app-last') || 'android';
                 if (lastApp === 'android') {
                     villageAppScroll.scrollLeft = villageAppScroll.scrollWidth - villageAppScroll.clientWidth;
@@ -7374,11 +7420,19 @@
                     villageAppScroll.scrollLeft = 0;
                     sessionStorage.setItem('village-app-last', 'android');
                 }
-                var villageAppCycleTimer = setInterval(function() {
-                    if (!overlay.classList.contains('open')) { clearInterval(villageAppCycleTimer); return; }
+                updateVillageDots();
+                villageAppCycleTimer = setInterval(function() {
+                    if (!overlay.classList.contains('open')) { stopVillageCycle(); return; }
                     villageAppScroll.scrollTo({ left: villageAppScroll.scrollLeft > 0 ? 0 : villageAppScroll.scrollWidth, behavior: 'smooth' });
                 }, 2000);
-                villageAppScroll.addEventListener('touchstart', function() { clearInterval(villageAppCycleTimer); }, { once: true });
+                villageAppScroll.addEventListener('touchstart', stopVillageCycle, { once: true });
+                villageAppScroll.addEventListener('scroll', updateVillageDots, { passive: true });
+                vDotEls.forEach(function(d, i) {
+                    d.addEventListener('click', function() {
+                        stopVillageCycle();
+                        villageAppScroll.scrollTo({ left: i === 0 ? 0 : villageAppScroll.scrollWidth, behavior: 'smooth' });
+                    });
+                });
             }
         }
 
