@@ -217,6 +217,24 @@
         .pill-btn:hover { background: #e8e8e8; }
         .pill-btn.active { background: #008577; color: #fff; }
 
+        /* Compass button — mobile only (device with coarse/touch pointer) */
+        #btn-compass { display: none; }
+        @media (pointer: coarse) { #btn-compass { display: inline-block; } }
+
+        /* Compass overlay (full-screen modal with dial + level meter) */
+        #compass-overlay { display: none; position: fixed; inset: 0; z-index: 9999; background: #0A1929; color: #fff; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
+        #compass-overlay.open { display: flex; }
+        #compass-close { position: absolute; top: 16px; right: 16px; width: 44px; height: 44px; background: rgba(255,255,255,0.12); border: none; color: #fff; border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+        .compass-title { font-size: 12px; letter-spacing: 2px; opacity: 0.6; margin-bottom: 16px; }
+        .compass-ring-wrap { width: min(82vmin, 360px); height: min(82vmin, 360px); }
+        .compass-ring-wrap svg { width: 100%; height: 100%; display: block; }
+        .compass-heading-text { font-size: 40px; font-weight: 700; color: #8BC34A; margin-top: 24px; line-height: 1; }
+        .compass-subtitle { font-size: 12px; opacity: 0.6; margin-top: 6px; letter-spacing: 1px; }
+        #compass-perm-banner { margin-top: 22px; text-align: center; }
+        #compass-perm-banner p { margin: 0 0 12px; font-size: 13px; opacity: 0.8; max-width: 280px; }
+        #compass-perm-btn { background: #1976D2; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600; font-family: inherit; }
+        #compass-no-sensor { margin-top: 20px; font-size: 13px; opacity: 0.7; text-align: center; max-width: 280px; }
+
         /* Center crosshair */
         .crosshair {
             position: absolute; top: 50%; left: 50%;
@@ -949,6 +967,7 @@
         <button class="pill-btn" id="btn-old-maps" style="display:none">Load Old Maps</button>
         <button class="pill-btn" id="btn-measure-area">Measure Area</button>
         <button class="pill-btn" id="btn-measure-length">Measure Length</button>
+        <button class="pill-btn" id="btn-compass">Compass</button>
     </div>
 
     <!-- Measurement toolbar (shown during measure mode) -->
@@ -970,6 +989,50 @@
         <button class="measure-btn measure-btn-cancel" id="measure-cancel">Cancel</button>
     </div>
     <div class="measure-info" id="measure-info"></div>
+
+    <!-- Compass overlay (mobile only) — dial + level meter using DeviceOrientation -->
+    <div id="compass-overlay">
+        <button id="compass-close" aria-label="Close compass">&times;</button>
+        <div class="compass-title">COMPASS</div>
+        <div class="compass-ring-wrap">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <!-- Fixed triangle marker at top (points to heading) -->
+                <polygon points="100,2 93,14 107,14" fill="#fff"/>
+                <!-- Rotating dial group -->
+                <g id="compass-dial">
+                    <circle cx="100" cy="100" r="92" fill="#8BC34A" stroke="#fff" stroke-width="1.5"/>
+                    <circle cx="100" cy="100" r="68" fill="#CDDC39"/>
+                    <!-- Outer ring: cardinal directions (N/E/S/W) at r≈80 -->
+                    <text x="100" y="26" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold" font-family="Arial">N</text>
+                    <text x="176" y="105" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold" font-family="Arial">E</text>
+                    <text x="100" y="184" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold" font-family="Arial">S</text>
+                    <text x="24" y="105" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold" font-family="Arial">W</text>
+                    <!-- Outer ring: 45/135/225/315 marks -->
+                    <text x="153" y="45" text-anchor="middle" fill="#fff" font-size="9" font-family="Arial">45</text>
+                    <text x="155" y="165" text-anchor="middle" fill="#fff" font-size="9" font-family="Arial">135</text>
+                    <text x="47" y="165" text-anchor="middle" fill="#fff" font-size="9" font-family="Arial">225</text>
+                    <text x="45" y="45" text-anchor="middle" fill="#fff" font-size="9" font-family="Arial">315</text>
+                    <!-- Inner ring: cardinal labels -->
+                    <text x="100" y="44" text-anchor="middle" fill="#fff" font-size="10" font-family="Arial">0</text>
+                    <text x="156" y="105" text-anchor="middle" fill="#fff" font-size="10" font-family="Arial">90</text>
+                    <text x="100" y="164" text-anchor="middle" fill="#fff" font-size="10" font-family="Arial">180</text>
+                    <text x="44" y="105" text-anchor="middle" fill="#fff" font-size="10" font-family="Arial">270</text>
+                </g>
+                <!-- Level meter: fixed crosshair + blue ball in the center black circle -->
+                <circle cx="100" cy="100" r="28" fill="#0A1929" stroke="#263238" stroke-width="1"/>
+                <line x1="78" y1="100" x2="122" y2="100" stroke="#fff" stroke-width="1.5"/>
+                <line x1="100" y1="78" x2="100" y2="122" stroke="#fff" stroke-width="1.5"/>
+                <circle id="level-ball" cx="100" cy="100" r="4.5" fill="#2196F3"/>
+            </svg>
+        </div>
+        <div class="compass-heading-text"><span id="compass-card">N</span> <span id="compass-deg">0°</span></div>
+        <div class="compass-subtitle">heading</div>
+        <div id="compass-perm-banner">
+            <p>Tap below to let the page read your phone's orientation sensor.</p>
+            <button id="compass-perm-btn">Enable device sensors</button>
+        </div>
+        <div id="compass-no-sensor">Device orientation is not available on this device.</div>
+    </div>
 
     <!-- Right-side floating action buttons -->
     <div class="fab-stack">
@@ -6661,6 +6724,96 @@
                     updateStatus("Coordinates copied");
                 }
             });
+
+            // ===== Compass (mobile only) =====
+            (function setupCompass() {
+                var btn = document.getElementById('btn-compass');
+                if (!btn) return;
+                var overlay = document.getElementById('compass-overlay');
+                var closeBtn = document.getElementById('compass-close');
+                var dial = document.getElementById('compass-dial');
+                var ball = document.getElementById('level-ball');
+                var cardEl = document.getElementById('compass-card');
+                var degEl = document.getElementById('compass-deg');
+                var permBanner = document.getElementById('compass-perm-banner');
+                var permBtn = document.getElementById('compass-perm-btn');
+                var noSensorMsg = document.getElementById('compass-no-sensor');
+                var listenerActive = false;
+
+                function cardinalFrom(h) {
+                    var cards = ['N','NE','E','SE','S','SW','W','NW','N'];
+                    return cards[Math.round(h / 45) % 8];
+                }
+
+                function onOrient(e) {
+                    var heading = null;
+                    if (typeof e.webkitCompassHeading === 'number' && !isNaN(e.webkitCompassHeading)) {
+                        heading = e.webkitCompassHeading; // iOS: clockwise from true north
+                    } else if (e.alpha !== null && e.alpha !== undefined) {
+                        // Android deviceorientationabsolute: alpha is CCW from true north
+                        heading = (360 - e.alpha) % 360;
+                    }
+                    if (heading !== null) {
+                        dial.setAttribute('transform', 'rotate(' + (-heading) + ' 100 100)');
+                        cardEl.textContent = cardinalFrom(heading);
+                        degEl.textContent = Math.round(heading) + '°';
+                    }
+                    // Level meter — map ±20° of tilt to the ±22 unit radius of the center circle
+                    var gamma = (typeof e.gamma === 'number') ? e.gamma : 0; // left/right
+                    var beta = (typeof e.beta === 'number') ? e.beta : 0;    // front/back
+                    var bx = Math.max(-20, Math.min(20, gamma)) / 20 * 22;
+                    var by = Math.max(-20, Math.min(20, beta)) / 20 * 22;
+                    ball.setAttribute('cx', 100 + bx);
+                    ball.setAttribute('cy', 100 + by);
+                }
+
+                function startListening() {
+                    if (listenerActive) return;
+                    window.addEventListener('deviceorientationabsolute', onOrient, true);
+                    window.addEventListener('deviceorientation', onOrient, true);
+                    listenerActive = true;
+                }
+                function stopListening() {
+                    window.removeEventListener('deviceorientationabsolute', onOrient, true);
+                    window.removeEventListener('deviceorientation', onOrient, true);
+                    listenerActive = false;
+                }
+
+                function requestIosPerm() {
+                    DeviceOrientationEvent.requestPermission().then(function(resp) {
+                        if (resp === 'granted') {
+                            permBanner.style.display = 'none';
+                            startListening();
+                        } else {
+                            cardEl.textContent = '—';
+                            degEl.textContent = 'denied';
+                        }
+                    }).catch(function() {
+                        noSensorMsg.style.display = 'block';
+                    });
+                }
+
+                btn.addEventListener('click', function() {
+                    overlay.classList.add('open');
+                    permBanner.style.display = 'none';
+                    noSensorMsg.style.display = 'none';
+                    if (typeof DeviceOrientationEvent === 'undefined') {
+                        noSensorMsg.style.display = 'block';
+                        return;
+                    }
+                    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                        // iOS 13+: needs user-gesture-triggered permission request
+                        permBanner.style.display = 'block';
+                    } else {
+                        startListening();
+                    }
+                });
+                permBtn.addEventListener('click', requestIosPerm);
+                closeBtn.addEventListener('click', function() {
+                    overlay.classList.remove('open');
+                    stopListening();
+                });
+            })();
 
             // ===== Measurement event listeners =====
             document.getElementById('btn-measure-length').addEventListener('click', function() {
