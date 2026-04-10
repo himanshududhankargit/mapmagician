@@ -599,8 +599,8 @@
         @media (min-width:521px) { .pd-app-hints-row .pd-mobile-hint { flex:0 0 calc(50% - 5px); } }
         /* Village dialog is only 400px wide — force one-hint-at-a-time regardless of viewport */
         #village-app-hints-scroll .pd-mobile-hint { flex:0 0 100% !important; }
-        .pd-support { display:block; margin:12px auto 0; padding:6px 12px; background:none; border:none; color:#B0BEC5; font-size:12px; font-weight:500; cursor:pointer; width:100%; text-align:center; }
-        .pd-support:hover { color:#607D8B; }
+        .pd-support { display:block; margin:12px auto 0; padding:10px 16px; background:#E3F2FD; border:1px solid #90CAF9; border-radius:10px; color:#1565C0; font-size:13px; font-weight:600; cursor:pointer; width:100%; text-align:center; transition:background 0.15s, border-color 0.15s; font-family:inherit; }
+        .pd-support:hover { background:#BBDEFB; border-color:#64B5F6; color:#0D47A1; }
         #addon-panel-search::placeholder { color:#c8e6c9; opacity:1; }
         .unlock-toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:#2E7D32; color:#fff; padding:12px 24px; border-radius:8px; font-size:14px; font-weight:500; box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:4000; opacity:0; transition:opacity 0.3s,transform 0.3s; pointer-events:none; font-family:'Segoe UI',Roboto,Arial,sans-serif; display:flex; align-items:center; gap:8px; }
         .unlock-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
@@ -1479,6 +1479,7 @@
                     <span class="pd-app-hint-dot pd-app-hint-dot-active" data-idx="0"></span>
                     <span class="pd-app-hint-dot" data-idx="1"></span>
                 </div>
+                <button class="pd-support" id="village-support-btn">Need help? Contact Support</button>
             </div>
         </div>
     </div>
@@ -7392,6 +7393,11 @@
 
             document.getElementById('village-purchase-cancel').onclick = function() {
                 overlay.classList.remove('open');
+            };
+
+            document.getElementById('village-support-btn').onclick = function() {
+                overlay.classList.remove('open');
+                openSupportForm(null, false);
             };
 
             overlay.classList.add('open');
