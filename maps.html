@@ -1723,6 +1723,7 @@
         (function() {
             var stack = [];
             var closingFromPopstate = false;
+            var suppressNextPopstate = false;
 
             var observer = new MutationObserver(function(mutations) {
                 for (var i = 0; i < mutations.length; i++) {
@@ -1737,9 +1738,14 @@
                     } else if (!isOpen && inStack) {
                         stack.splice(stack.indexOf(el), 1);
                         if (!closingFromPopstate) {
-                            // Replace state instead of history.back() to avoid
-                            // browser back-swipe animation on mobile
-                            history.replaceState(null, '');
+                            // User-driven close (tap cancel/X or programmatic). Pop the
+                            // history entry we pushed on open so the browser history stack
+                            // stays clean — otherwise every dialog open+close leaves a
+                            // phantom entry and users need multiple back presses to exit.
+                            // suppressNextPopstate tells the popstate handler below to
+                            // ignore the event this history.back() will trigger.
+                            suppressNextPopstate = true;
+                            history.back();
                         }
                     }
                 }
@@ -1751,6 +1757,10 @@
             });
 
             window.addEventListener('popstate', function() {
+                if (suppressNextPopstate) {
+                    suppressNextPopstate = false;
+                    return;
+                }
                 if (stack.length === 0) return;
                 closingFromPopstate = true;
                 var top = stack[stack.length - 1];
