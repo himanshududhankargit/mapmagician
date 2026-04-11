@@ -2811,13 +2811,14 @@
         // Solapur decorative overlay (labels, TP scheme dashed polygons, archaeological
         // magenta buffer lines) — ported from Android Constants.kt. Quadratic ease-out
         // fade: drops fast right after z12 so labels get out of the way for the overview,
-        // then slows asymptotically to a near-invisible floor at z18. Hidden above 18.
+        // then slows asymptotically to a near-invisible floor at z16. Fully hidden at
+        // z17 and above so high-zoom DP tile detail isn't obscured.
         //   z ≤ 12          → 100% opaque
-        //   z 12 → 18       → ease-out 1.00 → 0.15 (steep early, gentle late)
-        //   z > 18          → hidden
+        //   z 12 → 17       → ease-out 1.00 → ~0.18 (steep early, gentle late)
+        //   z ≥ 17          → hidden
         const SOLAPUR_FADE_MIN_ZOOM = 12;   // at/below this zoom labels are fully opaque
-        const SOLAPUR_HIDE_ZOOM     = 18;   // strictly above this zoom labels disappear
-        const SOLAPUR_HIDE_OPACITY  = 0.15; // opacity right at HIDE_ZOOM (almost gone)
+        const SOLAPUR_HIDE_ZOOM     = 17;   // at/above this zoom labels are hidden
+        const SOLAPUR_HIDE_OPACITY  = 0.15; // floor opacity that the ease-out approaches
 
         // ---------- Static district bounds index (for viewport-based loading) ----------
         // Pre-computed bounding boxes for all 37 Maharashtra district GeoJSON files.
@@ -4501,7 +4502,7 @@
         function updateSolapurLabelOpacity(zoom) {
             if (!solapurOverlayLoaded) return;
             let opacity;
-            if (zoom > SOLAPUR_HIDE_ZOOM) {
+            if (zoom >= SOLAPUR_HIDE_ZOOM) {
                 opacity = 0;
             } else if (zoom <= SOLAPUR_FADE_MIN_ZOOM) {
                 opacity = 1;
