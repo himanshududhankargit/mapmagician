@@ -5309,29 +5309,42 @@
                     dialogTriggeredByRegionEntry = true;
                     showNoDataDialog();
                 } else if (z >= MAX_FREE_ZOOM && district && !hasPurchase(district.productPurchaseID)) {
-                    // Clamp zoom and freeze gestures THIS tick so the wheel/pinch animation halts
-                    // immediately — otherwise the map keeps visibly zooming behind the dialog while
-                    // the Firebase re-check is in flight (100–500 ms), which looks laggy.
+                    // Clamp zoom so the in-flight wheel/pinch animation stops cleanly at 14.
                     map.setOptions({ maxZoom: MAX_FREE_ZOOM });
                     dialogTriggeredByRegionEntry = true;
-                    showZoomRestrictionDialog(district);
 
-                    // Firebase re-check runs in parallel; if the user actually owns this region
-                    // (e.g. bought on the Android app), silently dismiss the paywall and unlock.
+                    // Parallel Firebase re-check — safety net for cross-device purchases (e.g.
+                    // bought on the Android app) where the local hasPurchase() cache isn't synced.
+                    // The flag lets the idle handler below short-circuit if we turn out to be paid.
+                    var unlockedByFirebase = false;
                     checkFirebasePurchaseEntry(district.productPurchaseID).then(function(found) {
                         if (!found) return;
-                        const overlay = document.getElementById('zoom-restrict-overlay');
-                        if (overlay && overlay.classList.contains('open')) {
-                            overlay.classList.remove('open');
+                        unlockedByFirebase = true;
+                        var ov = document.getElementById('zoom-restrict-overlay');
+                        if (ov && ov.classList.contains('open')) {
+                            ov.classList.remove('open');
+                            enableMapInteraction();
                         }
-                        enableMapInteraction();
                         map.setOptions({ maxZoom: 21 });
                         showUnlockToast(district.districtName);
                         lastCheckedRegionId = null;
                         stickyTile = null;
                         stickyDistrict = null;
                         checkRegionOnMove();
-                    }).catch(function() { /* network failed — leave paywall up, safest */ });
+                    }).catch(function() { /* network failed — defer to the idle handler */ });
+
+                    // Defer the dialog until the camera animation settles at 14. zoom_changed
+                    // fires on the input tick with the target zoom, but the visual animation
+                    // takes another ~150–300 ms — showing the dialog now would catch the map
+                    // mid-flight and make it look like the paywall appeared at zoom 13.
+                    google.maps.event.addListenerOnce(map, 'idle', function() {
+                        if (unlockedByFirebase) return;
+                        if (map.getZoom() < MAX_FREE_ZOOM) return;
+                        var stillLocked = findDistrictAtCenter();
+                        if (!stillLocked) return;
+                        if (hasPurchase(stillLocked.productPurchaseID)) return;
+                        showZoomRestrictionDialog(stillLocked);
+                    });
                 } else if (z < MAX_FREE_ZOOM && overlay.classList.contains('open')) {
                     // Zoomed out — auto-dismiss dialog
                     overlay.classList.remove('open');
