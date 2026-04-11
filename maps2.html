@@ -7267,10 +7267,62 @@
                     });
                 }
 
+                // Force the compass overlay into fullscreen + portrait so the user can't
+                // rotate the phone mid-use. The rotated-screen heading math is too
+                // device-dependent to fix reliably; locking sidesteps the issue.
+                // Both APIs are best-effort: if a browser refuses fullscreen or the
+                // orientation lock, we silently fall back to "compass works in whatever
+                // orientation the user holds the phone".
+                function lockCompassToPortrait() {
+                    var fsReq = overlay.requestFullscreen
+                        || overlay.webkitRequestFullscreen
+                        || overlay.mozRequestFullScreen
+                        || overlay.msRequestFullscreen;
+                    if (!fsReq) {
+                        // No fullscreen support — try the lock standalone (works on installed PWAs)
+                        if (window.screen && screen.orientation && screen.orientation.lock) {
+                            try { screen.orientation.lock('portrait').catch(function() {}); }
+                            catch (e) { /* sync throw on unsupported, ignore */ }
+                        }
+                        return;
+                    }
+                    try {
+                        Promise.resolve(fsReq.call(overlay)).then(function() {
+                            if (window.screen && screen.orientation && screen.orientation.lock) {
+                                return screen.orientation.lock('portrait');
+                            }
+                        }).catch(function() { /* fullscreen denied or lock unsupported — no-op */ });
+                    } catch (e) { /* ignore */ }
+                }
+
+                function unlockCompassOrientation() {
+                    if (window.screen && screen.orientation && screen.orientation.unlock) {
+                        try { screen.orientation.unlock(); } catch (e) {}
+                    }
+                    var inFs = document.fullscreenElement
+                        || document.webkitFullscreenElement
+                        || document.mozFullScreenElement
+                        || document.msFullscreenElement;
+                    if (!inFs) return;
+                    var fsExit = document.exitFullscreen
+                        || document.webkitExitFullscreen
+                        || document.mozCancelFullScreen
+                        || document.msExitFullscreen;
+                    if (fsExit) {
+                        try {
+                            var p = fsExit.call(document);
+                            if (p && p.catch) p.catch(function() {});
+                        } catch (e) {}
+                    }
+                }
+
                 btn.addEventListener('click', function() {
                     overlay.classList.add('open');
                     permBanner.style.display = 'none';
                     noSensorMsg.style.display = 'none';
+                    // Lock to portrait synchronously inside the user-gesture handler.
+                    // Must run before any await/then chain so the gesture is still active.
+                    lockCompassToPortrait();
                     if (typeof DeviceOrientationEvent === 'undefined') {
                         noSensorMsg.style.display = 'block';
                         return;
@@ -7286,6 +7338,7 @@
                 closeBtn.addEventListener('click', function() {
                     overlay.classList.remove('open');
                     stopListening();
+                    unlockCompassOrientation();
                 });
             })();
 
