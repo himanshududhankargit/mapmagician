@@ -468,6 +468,7 @@
         }
         .search-result-item:last-child { border-bottom: none; }
         .search-result-item:hover { background: #f5f5f5; }
+        .search-result-item.active { background: #e8f5e9; }
         .search-result-icon {
             width: 32px; height: 32px; border-radius: 50%;
             background: #e8f5e9; display: flex; align-items: center;
@@ -6296,9 +6297,20 @@
             const searchInput = document.getElementById('search-input');
             const searchResultsEl = document.getElementById('search-results');
             let searchDebounce = null;
+            let searchActiveIndex = -1;
+
+            function updateSearchHighlight() {
+                const items = searchResultsEl.querySelectorAll('.search-result-item');
+                items.forEach((it, i) => {
+                    const active = i === searchActiveIndex;
+                    it.classList.toggle('active', active);
+                    if (active) it.scrollIntoView({ block: 'nearest' });
+                });
+            }
 
             // Use keyup (not input) -- Google Places SearchBox can suppress input events
-            searchInput.addEventListener('keyup', function() {
+            searchInput.addEventListener('keyup', function(e) {
+                if (e && (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === 'Escape')) return;
                 clearTimeout(searchDebounce);
                 const q = this.value.trim().toLowerCase();
                 if (q.length < 2) {
@@ -6311,6 +6323,29 @@
                     return;
                 }
                 searchDebounce = setTimeout(() => searchMenuData(q), 150);
+            });
+
+            searchInput.addEventListener('keydown', function(e) {
+                if (!searchResultsEl.classList.contains('open')) return;
+                const items = searchResultsEl.querySelectorAll('.search-result-item');
+                if (items.length === 0) return;
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    searchActiveIndex = (searchActiveIndex + 1) % items.length;
+                    updateSearchHighlight();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    searchActiveIndex = (searchActiveIndex - 1 + items.length) % items.length;
+                    updateSearchHighlight();
+                } else if (e.key === 'Enter') {
+                    if (searchActiveIndex >= 0 && searchActiveIndex < items.length) {
+                        e.preventDefault();
+                        items[searchActiveIndex].click();
+                    }
+                } else if (e.key === 'Escape') {
+                    searchResultsEl.classList.remove('open');
+                    searchActiveIndex = -1;
+                }
             });
 
             searchInput.addEventListener('focus', function() {
@@ -6406,6 +6441,7 @@
 
             function renderSearchResults(results, query) {
                 searchResultsEl.innerHTML = '';
+                searchActiveIndex = -1;
 
                 if (results.length > 0) {
                     const header = document.createElement('div');
