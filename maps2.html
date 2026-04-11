@@ -5091,7 +5091,8 @@
                 const lat = opts.lat;
                 const lng = opts.lng;
                 const text = String(opts.text || '');
-                const widthMeters = 1200 * (opts.scale || 1);
+                // Android source of truth: GeoJsonOverlayManager.kt uses `1500f * scale`.
+                const widthMeters = 1500 * (opts.scale || 1);
                 const rotationDeg = opts.rotation || 0;
 
                 // Design metrics — identical to the previous SVG so visual sizing is unchanged.
@@ -5112,37 +5113,36 @@
                 const bboxW_m = absCos * widthMeters + absSin * heightMeters;
                 const bboxH_m = absSin * widthMeters + absCos * heightMeters;
 
-                // Render at design resolution (vbW px ≈ 1200 m). For Solapur latitude this
-                // gives ~4× DPR over the on-screen size at the highest visible zoom (~14),
-                // before the fade kicks in — crisp without ballooning per-label memory.
-                const pxPerMeter = vbW / widthMeters;
-                const canvasW = Math.max(2, Math.round(bboxW_m * pxPerMeter));
-                const canvasH = Math.max(2, Math.round(bboxH_m * pxPerMeter));
+                // Canvas pixels = design units (1:1). For rotation=0 the canvas is exactly
+                // vbW × vbH; for rotation≠0 it grows to the rotated bbox while staying in
+                // the same design coordinate system, so the text-drawing code below can use
+                // the raw fontSize/padding constants without any extra scaling.
+                const canvasW = Math.max(2, Math.round(bboxW_m * (vbW / widthMeters)));
+                const canvasH = Math.max(2, Math.round(bboxH_m * (vbW / widthMeters)));
 
                 const canvas = document.createElement('canvas');
                 canvas.width = canvasW;
                 canvas.height = canvasH;
                 const ctx = canvas.getContext('2d');
 
-                // Origin at canvas center, then rotate. Drawing in design coords scaled by
-                // pxPerMeter mirrors what the old SVG did inside its viewBox.
+                // Origin at canvas center, then rotate. Drawing happens in design units —
+                // matches the SVG `viewBox` mental model 1:1.
                 ctx.translate(canvasW / 2, canvasH / 2);
                 if (rotationDeg) ctx.rotate(theta);
 
-                ctx.font = '700 ' + (fontSize * pxPerMeter) + 'px sans-serif';
+                ctx.font = '700 ' + fontSize + 'px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'alphabetic';
                 ctx.fillStyle = '#FFFFFF';
                 ctx.strokeStyle = '#000000';
-                ctx.lineWidth = fontSize * 0.22 * pxPerMeter;
+                ctx.lineWidth = fontSize * 0.22;
                 ctx.lineJoin = 'round';
                 ctx.miterLimit = 2;
 
                 for (let i = 0; i < lines.length; i++) {
                     // Same baseline formula as the SVG: y = padY + lineH*(i + 0.82),
                     // measured from the top of the design viewBox. Recenter to canvas origin.
-                    const yDesign = (padY + lineH * (i + 0.82)) - vbH / 2;
-                    const y = yDesign * pxPerMeter;
+                    const y = (padY + lineH * (i + 0.82)) - vbH / 2;
                     // strokeText before fillText reproduces SVG `paint-order="stroke"`.
                     ctx.strokeText(lines[i], 0, y);
                     ctx.fillText(lines[i], 0, y);
