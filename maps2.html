@@ -2809,14 +2809,18 @@
         const GEOJSON_GEOCODER_CACHE_MAX = 500;
 
         // Solapur decorative overlay (labels, TP scheme dashed polygons, archaeological
-        // magenta buffer lines) — ported from Android Constants.kt. Text labels fade
-        // partially as the user zooms into the premium DP tile range so they don't
-        // obscure tiles, but stay readable until a hard cutoff. Numbers mirror
-        // GeoJsonOverlayManager.kt (transparency 0→0.3 between z12–15, hide at z18).
-        const SOLAPUR_FADE_MIN_ZOOM = 12;  // at/below this zoom labels are fully opaque
-        const SOLAPUR_FADE_END_ZOOM = 15;  // at this zoom the fade reaches its floor
-        const SOLAPUR_HIDE_ZOOM     = 18;  // strictly above this zoom labels disappear
-        const SOLAPUR_MIN_OPACITY   = 0.7; // floor opacity between FADE_END and HIDE
+        // magenta buffer lines) — ported from Android Constants.kt. Two-phase fade so
+        // labels stay readable as the user zooms into the premium DP tile range, then
+        // become very translucent at the highest visible zooms before being removed:
+        //   z ≤ 12          → 100% opaque
+        //   z 12 → 15       → linear 1.00 → 0.70 (matches Android GeoJsonOverlayManager)
+        //   z 15 → 18       → linear 0.70 → 0.15 (web-only continuation, more aggressive)
+        //   z > 18          → hidden
+        const SOLAPUR_FADE_MIN_ZOOM  = 12;   // at/below this zoom labels are fully opaque
+        const SOLAPUR_FADE_KINK_ZOOM = 15;   // kink point where the curve bends steeper
+        const SOLAPUR_HIDE_ZOOM      = 18;   // strictly above this zoom labels disappear
+        const SOLAPUR_KINK_OPACITY   = 0.7;  // opacity at the kink point (z = KINK_ZOOM)
+        const SOLAPUR_HIDE_OPACITY   = 0.15; // opacity right at HIDE_ZOOM (almost gone)
 
         // ---------- Static district bounds index (for viewport-based loading) ----------
         // Pre-computed bounding boxes for all 37 Maharashtra district GeoJSON files.
@@ -4504,11 +4508,14 @@
                 opacity = 0;
             } else if (zoom <= SOLAPUR_FADE_MIN_ZOOM) {
                 opacity = 1;
-            } else if (zoom >= SOLAPUR_FADE_END_ZOOM) {
-                opacity = SOLAPUR_MIN_OPACITY;
+            } else if (zoom <= SOLAPUR_FADE_KINK_ZOOM) {
+                // Phase 1: fully opaque → kink opacity (mirrors Android)
+                const t = (zoom - SOLAPUR_FADE_MIN_ZOOM) / (SOLAPUR_FADE_KINK_ZOOM - SOLAPUR_FADE_MIN_ZOOM);
+                opacity = 1 - t * (1 - SOLAPUR_KINK_OPACITY);
             } else {
-                const t = (zoom - SOLAPUR_FADE_MIN_ZOOM) / (SOLAPUR_FADE_END_ZOOM - SOLAPUR_FADE_MIN_ZOOM);
-                opacity = 1 - t * (1 - SOLAPUR_MIN_OPACITY);
+                // Phase 2: kink opacity → near-invisible at HIDE_ZOOM
+                const t = (zoom - SOLAPUR_FADE_KINK_ZOOM) / (SOLAPUR_HIDE_ZOOM - SOLAPUR_FADE_KINK_ZOOM);
+                opacity = SOLAPUR_KINK_OPACITY - t * (SOLAPUR_KINK_OPACITY - SOLAPUR_HIDE_OPACITY);
             }
             for (let i = 0; i < solapurLabelOverlays.length; i++) {
                 solapurLabelOverlays[i].setOpacity(opacity);
