@@ -3124,7 +3124,6 @@
         let selectedMeasureId = null;     // Currently selected saved measurement
         let measureDeleteIW = null;       // InfoWindow for delete button
         let MeasureLabelOverlay = null;   // Class, assigned in initMap after API loads
-        let createSolapurLabelGroundOverlay = null;   // Factory, assigned in initMap after API loads
         let VertexHandleOverlay = null;   // Class, assigned in initMap after API loads
         let activeVertexHandle = null;    // Current visible vertex handle overlay
         let magnifierMap = null;          // Secondary map for magnifier loupe
@@ -4683,31 +4682,126 @@
             return path;
         }
 
+        // Builds ONE google.maps.GroundOverlay containing all Solapur village labels
+        // pre-rendered into a single canvas. Collapsing 26 overlays to 1 is what makes
+        // Solapur zoom smooth — each GroundOverlay costs a CSS transform reproject per
+        // frame of the zoom animation, and 26 of them compound noticeably.
+        //
+        // Text drawing (font, stroke, padding, line height, baseline formula, rotation
+        // direction) matches the Android source of truth byte-for-byte, just translated
+        // to consolidated-canvas coordinates via a per-label design-unit → pixel factor.
+        function buildSolapurLabelsConsolidatedOverlay(labels) {
+            if (!labels || !labels.length) return null;
+
+            // 1. Label center bbox, padded by the widest label's extent.
+            let minLat = Infinity, maxLat = -Infinity;
+            let minLng = Infinity, maxLng = -Infinity;
+            let maxLabelMeters = 0;
+            labels.forEach(function(l) {
+                if (l.lat < minLat) minLat = l.lat;
+                if (l.lat > maxLat) maxLat = l.lat;
+                if (l.lng < minLng) minLng = l.lng;
+                if (l.lng > maxLng) maxLng = l.lng;
+                const w = 1500 * (l.scale || 1);
+                if (w > maxLabelMeters) maxLabelMeters = w;
+            });
+            const latMid = (minLat + maxLat) / 2;
+            const mPerDegLat = 111320;
+            const mPerDegLng = 111320 * Math.cos(latMid * Math.PI / 180);
+            const padLat = maxLabelMeters / mPerDegLat;
+            const padLng = maxLabelMeters / mPerDegLng;
+            minLat -= padLat; maxLat += padLat;
+            minLng -= padLng; maxLng += padLng;
+            const bboxW_m = (maxLng - minLng) * mPerDegLng;
+            const bboxH_m = (maxLat - minLat) * mPerDegLat;
+
+            // 2. Canvas sized so the longer side = 4096 px (~5 m/px at ~20 km bbox).
+            const MAX_SIDE_PX = 4096;
+            let canvasW, canvasH;
+            if (bboxW_m >= bboxH_m) {
+                canvasW = MAX_SIDE_PX;
+                canvasH = Math.max(2, Math.round(MAX_SIDE_PX * bboxH_m / bboxW_m));
+            } else {
+                canvasH = MAX_SIDE_PX;
+                canvasW = Math.max(2, Math.round(MAX_SIDE_PX * bboxW_m / bboxH_m));
+            }
+            const pxPerMeter = canvasW / bboxW_m;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = canvasW;
+            canvas.height = canvasH;
+            const ctx = canvas.getContext('2d');
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'alphabetic';
+            ctx.fillStyle = '#FFFFFF';
+            ctx.strokeStyle = '#000000';
+            ctx.lineJoin = 'round';
+            ctx.miterLimit = 2;
+
+            // 3. Draw each label at its world position, rotated in-place.
+            const FONT_SIZE = 100;
+            const LINE_H = 120;
+            const PAD_X = 24;
+            const PAD_Y = 20;
+
+            labels.forEach(function(lbl) {
+                const text = String(lbl.text || '');
+                const lines = text.split('\n');
+                const maxChars = lines.reduce(function(m, l) { return Math.max(m, l.length); }, 0);
+                const vbW = Math.max(160, Math.round(maxChars * FONT_SIZE * 0.58) + PAD_X * 2);
+                const vbH = lines.length * LINE_H + PAD_Y * 2;
+                const widthMeters = 1500 * (lbl.scale || 1);
+
+                // design unit → meter = widthMeters / vbW; meter → canvas px = pxPerMeter.
+                const designToPx = (widthMeters / vbW) * pxPerMeter;
+
+                const cx_m = (lbl.lng - minLng) * mPerDegLng;
+                const cy_m = (maxLat - lbl.lat) * mPerDegLat;
+                const cx_px = cx_m * pxPerMeter;
+                const cy_px = cy_m * pxPerMeter;
+
+                ctx.save();
+                ctx.translate(cx_px, cy_px);
+                if (lbl.rotation) ctx.rotate(lbl.rotation * Math.PI / 180);
+
+                ctx.font = '700 ' + (FONT_SIZE * designToPx) + 'px sans-serif';
+                ctx.lineWidth = FONT_SIZE * 0.22 * designToPx;
+
+                for (let i = 0; i < lines.length; i++) {
+                    const yDesign = (PAD_Y + LINE_H * (i + 0.82)) - vbH / 2;
+                    const y = yDesign * designToPx;
+                    ctx.strokeText(lines[i], 0, y);
+                    ctx.fillText(lines[i], 0, y);
+                }
+
+                ctx.restore();
+            });
+
+            const dataUrl = canvas.toDataURL('image/png');
+            const bounds = { north: maxLat, south: minLat, east: maxLng, west: minLng };
+            return new google.maps.GroundOverlay(dataUrl, bounds, {
+                clickable: false,
+                opacity: 1
+            });
+        }
+
         async function loadSolapurOverlayIfNeeded() {
             if (solapurOverlayLoadStarted || !map) return;
-            if (!createSolapurLabelGroundOverlay) return; // factory not yet defined (API still loading)
             solapurOverlayLoadStarted = true;
             try {
                 const resp = await fetch('data/solapur_overlay.json');
                 if (!resp.ok) throw new Error('HTTP ' + resp.status);
                 const data = await resp.json();
 
-                // 1. Labels → real google.maps.GroundOverlay (smooth zoom, basemap-locked).
-                //    Width in meters = 1200 * scale (matches Android GroundOverlayOptions.position(loc, 1200f*scale))
-                //    Rotation bearing (e.g. Salgarwadi -50°) is baked into the canvas bitmap.
-                // ==== DIAGNOSTIC: labels temporarily disabled to measure GroundOverlay cost ====
-                // To restore: flip the `false` below back to `true` (or revert this block).
-                if (false) {
-                    (data.labels || []).forEach(function(lbl) {
-                        const ov = createSolapurLabelGroundOverlay({
-                            lat: lbl.lat, lng: lbl.lng,
-                            text: lbl.text,
-                            scale: lbl.scale,
-                            rotation: lbl.rotation
-                        });
+                // 1. Labels → ONE consolidated google.maps.GroundOverlay (all 26 villages
+                //    pre-rendered into a single canvas — see buildSolapurLabelsConsolidatedOverlay
+                //    above for why 26→1 is what makes Solapur zoom smooth).
+                if ((data.labels || []).length) {
+                    const ov = buildSolapurLabelsConsolidatedOverlay(data.labels);
+                    if (ov) {
                         ov.setMap(map);
                         solapurLabelOverlays.push(ov);
-                    });
+                    }
                 }
 
                 // 2. TP Scheme boundaries → thin solid white polylines.
@@ -5432,94 +5526,6 @@
                         this._div = null;
                     }
                 }
-            };
-
-            // Build a google.maps.GroundOverlay for a Solapur village label. The label text
-            // is pre-rendered into a transparent canvas at design resolution; the GroundOverlay
-            // is then anchored to a LatLngBounds whose extent represents 1200 m × scale of
-            // real-world width (matching Android's GroundOverlayOptions.position(loc, 1200f*scale)).
-            // Because GroundOverlay is interpolated by Google Maps in lockstep with the basemap,
-            // labels scale smoothly during zoom animation instead of popping at the end.
-            //
-            // Rotation bearing (e.g. Salgarwadi -50°) is baked directly into the bitmap and the
-            // bounds are sized to the rotated rectangle's axis-aligned bounding box, so we don't
-            // need any non-axis-aligned overlay primitive.
-            createSolapurLabelGroundOverlay = function(opts) {
-                const lat = opts.lat;
-                const lng = opts.lng;
-                const text = String(opts.text || '');
-                // Android source of truth: GeoJsonOverlayManager.kt uses `1500f * scale`.
-                const widthMeters = 1500 * (opts.scale || 1);
-                const rotationDeg = opts.rotation || 0;
-
-                // Design metrics — identical to the previous SVG so visual sizing is unchanged.
-                const lines = text.split('\n');
-                const fontSize = 100;
-                const lineH = 120;
-                const padX = 24;
-                const padY = 20;
-                const maxChars = lines.reduce(function(m, l) { return Math.max(m, l.length); }, 0);
-                const vbW = Math.max(160, Math.round(maxChars * fontSize * 0.58) + padX * 2);
-                const vbH = lines.length * lineH + padY * 2;
-                const heightMeters = widthMeters * (vbH / vbW);
-
-                // Axis-aligned bbox of the rotated rectangle (collapses to W×H when rotation=0).
-                const theta = rotationDeg * Math.PI / 180;
-                const absCos = Math.abs(Math.cos(theta));
-                const absSin = Math.abs(Math.sin(theta));
-                const bboxW_m = absCos * widthMeters + absSin * heightMeters;
-                const bboxH_m = absSin * widthMeters + absCos * heightMeters;
-
-                // Canvas pixels = design units (1:1). For rotation=0 the canvas is exactly
-                // vbW × vbH; for rotation≠0 it grows to the rotated bbox while staying in
-                // the same design coordinate system, so the text-drawing code below can use
-                // the raw fontSize/padding constants without any extra scaling.
-                const canvasW = Math.max(2, Math.round(bboxW_m * (vbW / widthMeters)));
-                const canvasH = Math.max(2, Math.round(bboxH_m * (vbW / widthMeters)));
-
-                const canvas = document.createElement('canvas');
-                canvas.width = canvasW;
-                canvas.height = canvasH;
-                const ctx = canvas.getContext('2d');
-
-                // Origin at canvas center, then rotate. Drawing happens in design units —
-                // matches the SVG `viewBox` mental model 1:1.
-                ctx.translate(canvasW / 2, canvasH / 2);
-                if (rotationDeg) ctx.rotate(theta);
-
-                ctx.font = '700 ' + fontSize + 'px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'alphabetic';
-                ctx.fillStyle = '#FFFFFF';
-                ctx.strokeStyle = '#000000';
-                ctx.lineWidth = fontSize * 0.22;
-                ctx.lineJoin = 'round';
-                ctx.miterLimit = 2;
-
-                for (let i = 0; i < lines.length; i++) {
-                    // Same baseline formula as the SVG: y = padY + lineH*(i + 0.82),
-                    // measured from the top of the design viewBox. Recenter to canvas origin.
-                    const y = (padY + lineH * (i + 0.82)) - vbH / 2;
-                    // strokeText before fillText reproduces SVG `paint-order="stroke"`.
-                    ctx.strokeText(lines[i], 0, y);
-                    ctx.fillText(lines[i], 0, y);
-                }
-
-                const dataUrl = canvas.toDataURL('image/png');
-
-                const dLat = (bboxH_m / 2) / 111320;
-                const dLng = (bboxW_m / 2) / (111320 * Math.cos(lat * Math.PI / 180));
-                const bounds = {
-                    north: lat + dLat,
-                    south: lat - dLat,
-                    east: lng + dLng,
-                    west: lng - dLng
-                };
-
-                return new google.maps.GroundOverlay(dataUrl, bounds, {
-                    clickable: false,
-                    opacity: 1
-                });
             };
 
             // Define VertexHandleOverlay (move handle + delete button above a vertex)
