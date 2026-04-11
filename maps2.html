@@ -2061,7 +2061,6 @@
         const activeSubscriptions = new Map(); // productId → subscription metadata from GISWebSubscriptions
         const cachedSubPricing = new Map(); // productId → { weeklyPrice } (pre-fetched at startup)
         let cachedIdToken = null; // Firebase ID token for tile proxy auth
-        let cachedAccessToken = ''; // Signed access token from getPurchaseStatus
         let pendingPurchase = null; // { productId, regionName } — set when buy clicked before login
         let pendingVillageAfterDP = null; // villageItem — set when village needs DP purchase first
         let pendingSupportOpen = null; // {district, returnToPaywall} — set when support clicked before login
@@ -2464,7 +2463,6 @@
                         activePurchases.set(productId, { expiry: val, plan: '' });
                     }
                 });
-                cachedAccessToken = data.accessToken || '';
                 refreshSidebarIfOpen();
                 // Only re-enable map and force re-check after an actual purchase (force=true),
                 // not on routine region-change polls which would cause spurious unlock toasts
