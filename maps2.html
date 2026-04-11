@@ -5309,22 +5309,29 @@
                     dialogTriggeredByRegionEntry = true;
                     showNoDataDialog();
                 } else if (z >= MAX_FREE_ZOOM && district && !hasPurchase(district.productPurchaseID)) {
-                    // At zoom limit in unpurchased region — lock zoom, then verify against Firebase before showing dialog
+                    // Clamp zoom and freeze gestures THIS tick so the wheel/pinch animation halts
+                    // immediately — otherwise the map keeps visibly zooming behind the dialog while
+                    // the Firebase re-check is in flight (100–500 ms), which looks laggy.
                     map.setOptions({ maxZoom: MAX_FREE_ZOOM });
                     dialogTriggeredByRegionEntry = true;
+                    showZoomRestrictionDialog(district);
+
+                    // Firebase re-check runs in parallel; if the user actually owns this region
+                    // (e.g. bought on the Android app), silently dismiss the paywall and unlock.
                     checkFirebasePurchaseEntry(district.productPurchaseID).then(function(found) {
-                        if (found) {
-                            // Purchase exists in Firebase (e.g. bought on mobile) — unlock
-                            map.setOptions({ maxZoom: 21 });
-                            showUnlockToast(district.districtName);
-                            lastCheckedRegionId = null;
-                            stickyTile = null;
-                            stickyDistrict = null;
-                            checkRegionOnMove();
-                        } else {
-                            showZoomRestrictionDialog(district);
+                        if (!found) return;
+                        const overlay = document.getElementById('zoom-restrict-overlay');
+                        if (overlay && overlay.classList.contains('open')) {
+                            overlay.classList.remove('open');
                         }
-                    });
+                        enableMapInteraction();
+                        map.setOptions({ maxZoom: 21 });
+                        showUnlockToast(district.districtName);
+                        lastCheckedRegionId = null;
+                        stickyTile = null;
+                        stickyDistrict = null;
+                        checkRegionOnMove();
+                    }).catch(function() { /* network failed — leave paywall up, safest */ });
                 } else if (z < MAX_FREE_ZOOM && overlay.classList.contains('open')) {
                     // Zoomed out — auto-dismiss dialog
                     overlay.classList.remove('open');
