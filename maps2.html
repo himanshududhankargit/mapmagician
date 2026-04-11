@@ -4695,16 +4695,20 @@
                 // 1. Labels → real google.maps.GroundOverlay (smooth zoom, basemap-locked).
                 //    Width in meters = 1200 * scale (matches Android GroundOverlayOptions.position(loc, 1200f*scale))
                 //    Rotation bearing (e.g. Salgarwadi -50°) is baked into the canvas bitmap.
-                (data.labels || []).forEach(function(lbl) {
-                    const ov = createSolapurLabelGroundOverlay({
-                        lat: lbl.lat, lng: lbl.lng,
-                        text: lbl.text,
-                        scale: lbl.scale,
-                        rotation: lbl.rotation
+                // ==== DIAGNOSTIC: labels temporarily disabled to measure GroundOverlay cost ====
+                // To restore: flip the `false` below back to `true` (or revert this block).
+                if (false) {
+                    (data.labels || []).forEach(function(lbl) {
+                        const ov = createSolapurLabelGroundOverlay({
+                            lat: lbl.lat, lng: lbl.lng,
+                            text: lbl.text,
+                            scale: lbl.scale,
+                            rotation: lbl.rotation
+                        });
+                        ov.setMap(map);
+                        solapurLabelOverlays.push(ov);
                     });
-                    ov.setMap(map);
-                    solapurLabelOverlays.push(ov);
-                });
+                }
 
                 // 2. TP Scheme boundaries → thin solid white polylines.
                 // (Was: repeated SVG symbol "dash" icons at 16px repeat — Google Maps had
