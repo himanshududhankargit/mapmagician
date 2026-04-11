@@ -4706,23 +4706,18 @@
                     solapurLabelOverlays.push(ov);
                 });
 
-                // 2. TP Scheme boundaries → dashed white polylines
-                // Google Maps dashes: invisible main stroke + repeating dash icon.
-                const dashSymbol = {
-                    path: 'M 0,-1 0,1',
-                    strokeColor: '#FFFFFF',
-                    strokeOpacity: 1,
-                    strokeWeight: 3,
-                    scale: 3
-                };
+                // 2. TP Scheme boundaries → thin solid white polylines.
+                // (Was: repeated SVG symbol "dash" icons at 16px repeat — Google Maps had
+                // to reposition thousands of symbol instances every zoom frame, which was
+                // the main cause of Solapur zoom lag.)
                 (data.tpSchemeKml || []).forEach(function(kml) {
                     const path = _parseKmlPolyline(kml);
                     if (path.length < 2) return;
                     const pl = new google.maps.Polyline({
                         path: path,
-                        strokeOpacity: 0,
-                        strokeWeight: 3,
-                        icons: [{ icon: dashSymbol, offset: '0', repeat: '16px' }],
+                        strokeColor: '#FFFFFF',
+                        strokeOpacity: 0.85,
+                        strokeWeight: 2,
                         clickable: false,
                         zIndex: 20000,
                         map: map
