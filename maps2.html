@@ -1686,6 +1686,22 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
+    <!-- Google Analytics (GA4) — loaded via gtag.js so it is independent of the Android-appId firebaseConfig -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NQZGPNG8N6"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){ dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-NQZGPNG8N6', { send_page_view: true });
+    </script>
+    <!-- Microsoft Clarity — heat maps + session replay -->
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "w9zgyteauk");
+    </script>
     <!-- Razorpay checkout -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <!-- JSZip for extracting district geojson zips -->
@@ -1878,17 +1894,166 @@
 
         // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyCJ1MkbVviNX0RrqOEg-00wKBiB3zCtUsQ",
+            apiKey: "AIzaSyDUjHKQ3g2yz2o4ax61QS7dq5z0FV8k5Ss",
             authDomain: "sodium-hour-256110.firebaseapp.com",
             databaseURL: "https://sodium-hour-256110.firebaseio.com",
             projectId: "sodium-hour-256110",
             storageBucket: "sodium-hour-256110.appspot.com",
             messagingSenderId: "427608700943",
-            appId: "1:427608700943:android:5a92253b98544125654b7a"
+            appId: "1:427608700943:web:4b79666808054be5654b7a",
+            measurementId: "G-NQZGPNG8N6"
         };
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
+
+        // ===== Analytics module (GA4 via gtag.js + Microsoft Clarity) =====
+        // Central wrapper so call sites stay one-liners and a missing ID or blocked SDK never breaks the page.
+        window.mmAnalytics = (function() {
+            function safe(fn) { try { fn(); } catch (e) { /* analytics must never throw */ } }
+
+            function detectDevice() {
+                var ua = navigator.userAgent || '';
+                var isTablet = /iPad|Android(?!.*Mobile)|Tablet/i.test(ua);
+                var isMobile = /Mobile|iPhone|iPod|Android.*Mobile|BlackBerry|Opera Mini/i.test(ua);
+                if (isTablet) return 'tablet';
+                if (isMobile) return 'mobile';
+                return 'desktop';
+            }
+            function detectBrowser() {
+                var ua = navigator.userAgent || '';
+                if (/Edg\//.test(ua)) return 'Edge';
+                if (/OPR\//.test(ua)) return 'Opera';
+                if (/Chrome\//.test(ua)) return 'Chrome';
+                if (/Firefox\//.test(ua)) return 'Firefox';
+                if (/Safari\//.test(ua)) return 'Safari';
+                return 'Other';
+            }
+            function detectOS() {
+                var ua = navigator.userAgent || '';
+                if (/Windows NT/.test(ua)) return 'Windows';
+                if (/Android/.test(ua)) return 'Android';
+                if (/iPhone|iPad|iPod/.test(ua)) return 'iOS';
+                if (/Mac OS X/.test(ua)) return 'macOS';
+                if (/Linux/.test(ua)) return 'Linux';
+                return 'Other';
+            }
+
+            var deviceCategory = detectDevice();
+            var browser = detectBrowser();
+            var os = detectOS();
+            var screenSize = (window.screen && window.screen.width && window.screen.height)
+                ? window.screen.width + 'x' + window.screen.height : '';
+            var timezone = '';
+            try { timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+            var connectionType = (navigator.connection && navigator.connection.effectiveType) || '';
+            var language = navigator.language || '';
+
+            // Parse UTM + traffic source from landing URL (persist via sessionStorage so they survive in-page nav)
+            function captureAcquisition() {
+                try {
+                    var params = new URLSearchParams(window.location.search);
+                    var utmKeys = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'];
+                    var utm = {};
+                    utmKeys.forEach(function(k){ var v = params.get(k); if (v) utm[k] = v.slice(0,100); });
+                    var ref = document.referrer || '';
+                    var trafficSource = 'direct';
+                    if (ref) {
+                        try {
+                            var host = new URL(ref).hostname;
+                            if (/google\./.test(host)) trafficSource = 'google';
+                            else if (/bing\./.test(host)) trafficSource = 'bing';
+                            else if (/facebook\.|instagram\.|t\.co|twitter\.|x\.com|linkedin\.|youtube\./.test(host)) trafficSource = 'social';
+                            else if (host !== location.hostname) trafficSource = 'referral';
+                        } catch (e) {}
+                    }
+                    return { utm: utm, trafficSource: trafficSource, landingPage: location.pathname };
+                } catch (e) { return { utm: {}, trafficSource: 'unknown', landingPage: location.pathname }; }
+            }
+            var acquisition = captureAcquisition();
+
+            // Baseline user properties — set before auth so even anonymous visitors have device/env context
+            safe(function() {
+                gtag('set', 'user_properties', {
+                    device_category: deviceCategory,
+                    browser: browser,
+                    os: os,
+                    screen_size: screenSize,
+                    timezone: timezone,
+                    connection_type: connectionType,
+                    language: language,
+                    traffic_source: acquisition.trafficSource
+                });
+            });
+
+            function event(name, params) {
+                safe(function() { gtag('event', name, params || {}); });
+            }
+            function setUserId(id) {
+                safe(function() { gtag('set', { user_id: id }); });
+                safe(function() { if (window.clarity) window.clarity('identify', id); });
+            }
+            function setUserProperties(props) {
+                safe(function() { gtag('set', 'user_properties', props || {}); });
+            }
+            function clarityTag(key, value) {
+                safe(function() { if (window.clarity) window.clarity('set', key, value); });
+            }
+
+            // Page-level retention bookkeeping stored in localStorage
+            function updateRetentionProps() {
+                try {
+                    var now = Date.now();
+                    var first = parseInt(localStorage.getItem('mm_first_seen_ts') || '0', 10);
+                    if (!first) { first = now; localStorage.setItem('mm_first_seen_ts', String(first)); }
+                    var last = parseInt(localStorage.getItem('mm_last_seen_ts') || '0', 10);
+                    var daysSince = last ? Math.floor((now - last) / 86400000) : 0;
+                    var total = parseInt(localStorage.getItem('mm_total_sessions') || '0', 10) + 1;
+                    localStorage.setItem('mm_total_sessions', String(total));
+                    localStorage.setItem('mm_last_seen_ts', String(now));
+                    setUserProperties({
+                        days_since_last_visit: daysSince,
+                        total_sessions: total,
+                        first_seen_days_ago: Math.floor((now - first) / 86400000)
+                    });
+                } catch (e) {}
+            }
+            updateRetentionProps();
+
+            // Global error capture — small payloads, throttled to prevent flood
+            var errorCount = 0;
+            window.addEventListener('error', function(e) {
+                if (errorCount++ > 20) return;
+                event('js_error', {
+                    message: String(e.message || '').slice(0, 200),
+                    source: String(e.filename || '').slice(0, 200),
+                    lineno: e.lineno || 0
+                });
+            });
+            window.addEventListener('unhandledrejection', function(e) {
+                if (errorCount++ > 20) return;
+                var reason = (e && e.reason) ? String(e.reason.message || e.reason) : '';
+                event('unhandled_rejection', { reason: reason.slice(0, 200) });
+            });
+
+            return {
+                event: event,
+                setUserId: setUserId,
+                setUserProperties: setUserProperties,
+                clarityTag: clarityTag,
+                deviceCategory: deviceCategory,
+                browser: browser,
+                os: os,
+                acquisition: acquisition
+            };
+        })();
+
+        // Fire initial page_view / session_start context immediately
+        mmAnalytics.event('app_open', {
+            device_category: mmAnalytics.deviceCategory,
+            browser: mmAnalytics.browser,
+            embed: new URLSearchParams(window.location.search).get('embed') === '1' ? 1 : 0
+        });
     </script>
     
     <script>
@@ -2011,6 +2176,18 @@
 
                 // Realtime listener: re-fetch when purchases change server-side (admin refund, webhook, etc.)
                 var emailKey = user.email.replace(/\./g, ',');
+
+                // Analytics: tag the signed-in user + domain-derived props
+                try {
+                    var emailDomain = (user.email.split('@')[1] || '').toLowerCase();
+                    mmAnalytics.setUserId(emailKey);
+                    mmAnalytics.setUserProperties({
+                        auth_method: 'google',
+                        email_domain: emailDomain
+                    });
+                    mmAnalytics.clarityTag('auth', 'google');
+                    mmAnalytics.clarityTag('email_domain', emailDomain);
+                } catch (e) {}
                 if (purchaseListenerRef) purchaseListenerRef.off();
                 purchaseListenerRef = firebase.database().ref('GISWebOneTimePurchases/' + emailKey);
                 var purchaseListenerSkipFirst = true; // Skip the initial .on() callback
@@ -2077,6 +2254,10 @@
                 clearAllLayersOfType(villageOverlays);
                 villageTileStatus = Array(villageLayerData.length).fill(false);
                 updateVillageMarkerStyles();
+                try {
+                    mmAnalytics.setUserProperties({ auth_method: 'anonymous' });
+                    mmAnalytics.clarityTag('auth', 'anonymous');
+                } catch (e) {}
                 fetchCloudFrontCookies();
             } else {
                 profileBtn.classList.remove('signed-in');
@@ -2196,6 +2377,7 @@
             currentSessionId = (typeof crypto !== 'undefined' && crypto.randomUUID)
                 ? crypto.randomUUID()
                 : (Date.now() + '-' + Math.random().toString(36).slice(2));
+            try { mmAnalytics.event('login', { method: 'google' }); } catch (e) {}
             const ref = firebase.database().ref('GISWebActiveSessions/' + emailKey);
 
             // Detach previous listener if any
@@ -2490,6 +2672,13 @@
 
         // Buy a 7-day pass
         async function buyRegion(productId, regionName) {
+            try {
+                mmAnalytics.event('select_item', {
+                    item_id: productId,
+                    item_name: regionName,
+                    item_category: 'dp_7day'
+                });
+            } catch (e) {}
             if (!currentUser || currentUser.isAnonymous) {
                 // Show login dialog — store purchase intent so we can resume after sign-in
                 pendingPurchase = { productId, regionName };
@@ -2535,6 +2724,15 @@
                                 productId: productId,
                                 regionName: regionName
                             });
+                            try {
+                                mmAnalytics.event('purchase', {
+                                    transaction_id: response.razorpay_payment_id,
+                                    value: (data.amount || 0) / 100,
+                                    currency: data.currency || 'INR',
+                                    items: [{ item_id: productId, item_name: regionName, item_category: 'dp_7day' }]
+                                });
+                                mmAnalytics.clarityTag('plan', 'paid');
+                            } catch (e) {}
                             await fetchPurchaseStatus(true);
                             // Clear and reload tiles so they use the new access token
                             clearAllLayersOfType(dpOverlays);
@@ -2582,7 +2780,25 @@
                         document.head.appendChild(s);
                     });
                 }
+                try {
+                    mmAnalytics.event('begin_checkout', {
+                        currency: data.currency || 'INR',
+                        value: (data.amount || 0) / 100,
+                        items: [{ item_id: productId, item_name: regionName, item_category: 'dp_7day' }]
+                    });
+                } catch (e) {}
                 const rzp = new Razorpay(options);
+                try {
+                    rzp.on('payment.failed', function(resp) {
+                        var err = (resp && resp.error) || {};
+                        mmAnalytics.event('payment_failed', {
+                            item_id: productId,
+                            item_category: 'dp_7day',
+                            code: String(err.code || '').slice(0, 60),
+                            reason: String(err.reason || err.description || '').slice(0, 120)
+                        });
+                    });
+                } catch (e) {}
                 rzp.open();
             } catch (error) {
                 loadingOverlay.classList.remove('open');
@@ -2603,6 +2819,13 @@
 
         // Subscribe to a weekly auto-renewing plan
         async function subscribeRegion(productId, regionName) {
+            try {
+                mmAnalytics.event('select_item', {
+                    item_id: productId,
+                    item_name: regionName,
+                    item_category: 'subscription'
+                });
+            } catch (e) {}
             if (!currentUser || currentUser.isAnonymous) {
                 pendingPurchase = { productId, regionName, purchaseType: 'subscription' };
                 document.getElementById('auth-dialog-desc').textContent =
@@ -2636,6 +2859,14 @@
                         await fetchPurchaseStatus(true);
                         if (hasPurchase(pid)) {
                             // Webhook confirmed — subscription is active
+                            try {
+                                mmAnalytics.event('purchase', {
+                                    transaction_id: subId,
+                                    currency: 'INR',
+                                    items: [{ item_id: pid, item_name: regionName, item_category: 'subscription' }]
+                                });
+                                mmAnalytics.clarityTag('plan', 'paid');
+                            } catch (e) {}
                             await fetchSubscriptionStatus();
                             clearAllLayersOfType(dpOverlays);
                             dpTileStatus = Array(dpLayerData.length).fill(false);
@@ -2696,7 +2927,24 @@
                         document.head.appendChild(s);
                     });
                 }
+                try {
+                    mmAnalytics.event('begin_checkout', {
+                        currency: 'INR',
+                        items: [{ item_id: productId, item_name: regionName, item_category: 'subscription' }]
+                    });
+                } catch (e) {}
                 var rzp = new Razorpay(options);
+                try {
+                    rzp.on('payment.failed', function(resp) {
+                        var err = (resp && resp.error) || {};
+                        mmAnalytics.event('payment_failed', {
+                            item_id: productId,
+                            item_category: 'subscription',
+                            code: String(err.code || '').slice(0, 60),
+                            reason: String(err.reason || err.description || '').slice(0, 120)
+                        });
+                    });
+                } catch (e) {}
                 rzp.open();
             } catch (error) {
                 loadingOverlay.classList.remove('open');
@@ -4717,12 +4965,44 @@
             oldDP: [MIN_ZOOM_FOR_OLD_DP, MAX_ZOOM_FOR_OLD_DP]
         };
 
+        // Analytics: track how long each DP district has been continuously visible.
+        // Emit `district_viewed` once per district per session after >=3s of continuous visibility.
+        var _mmDistrictVisibleSince = {}; // id -> firstSeenTs
+        var _mmDistrictReported = {};     // id -> true (once-per-session)
+        function _mmTrackDistrictVisibility(decisions, layerData) {
+            try {
+                var now = Date.now();
+                var seen = {};
+                for (var i = 0; i < decisions.length; i++) {
+                    if (decisions[i] && layerData[i]) {
+                        var id = layerData[i].id;
+                        seen[id] = true;
+                        if (!_mmDistrictVisibleSince[id]) _mmDistrictVisibleSince[id] = now;
+                        if (!_mmDistrictReported[id] && (now - _mmDistrictVisibleSince[id]) >= 3000) {
+                            _mmDistrictReported[id] = true;
+                            mmAnalytics.event('district_viewed', {
+                                district_id: String(id).slice(0, 60),
+                                pid: String(layerData[i].productPurchaseID || '').slice(0, 60)
+                            });
+                        }
+                    }
+                }
+                // Reset visibility timer for districts that left viewport
+                for (var k in _mmDistrictVisibleSince) {
+                    if (!seen[k]) delete _mmDistrictVisibleSince[k];
+                }
+            } catch (e) {}
+        }
+
         // Worker sends results back -- apply on main thread (fast: just show/hide overlays)
         tileWorker.onmessage = function(e) {
             const { generation, results } = e.data;
 
             // CANCEL stale results: if user has zoomed/panned since, discard
             if (generation !== currentGeneration) return;
+
+            // Analytics: track DP-district visibility (the primary product context)
+            if (results.dp) _mmTrackDistrictVisibility(results.dp, dpLayerData);
 
             // Apply decisions for each layer
             if (results.dp) applyTileDecisions(results.dp, dpLayerData, dpTileStatus, dpOverlays, "dp");
@@ -4920,6 +5200,20 @@
             // Places Autocomplete (New API)
             // Google Places — new API (Place class)
 
+            // Analytics: map_ready (first idle) + debounced map_pan on subsequent idles
+            var _mmMapReady = false;
+            var _mmLastCenter = null;
+            var _mmLastZoom = null;
+            var _mmPanDebounce = null;
+            function _mmDistanceKm(a, b) {
+                if (!a || !b) return 0;
+                var R = 6371;
+                var dLat = (b.lat - a.lat) * Math.PI / 180;
+                var dLng = (b.lng - a.lng) * Math.PI / 180;
+                var s1 = Math.sin(dLat/2), s2 = Math.sin(dLng/2);
+                var h = s1*s1 + Math.cos(a.lat*Math.PI/180) * Math.cos(b.lat*Math.PI/180) * s2*s2;
+                return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+            }
             // Single debounced handler for all viewport changes
             map.addListener('idle', function() {
                 const z = map.getZoom();
@@ -4927,6 +5221,28 @@
                 document.getElementById('zoom-level').textContent = `Z=${z}`;
                 document.getElementById('center-coord').textContent =
                     `${c.lat().toFixed(5)}, ${c.lng().toFixed(5)}`;
+                // Analytics: map_ready (once) + throttled map_pan (2s debounce)
+                try {
+                    if (!_mmMapReady) {
+                        _mmMapReady = true;
+                        mmAnalytics.event('map_ready', { zoom: z });
+                    }
+                    var curr = { lat: c.lat(), lng: c.lng() };
+                    var prev = _mmLastCenter;
+                    _mmLastCenter = curr;
+                    if (_mmPanDebounce) clearTimeout(_mmPanDebounce);
+                    _mmPanDebounce = setTimeout(function() {
+                        var dist = _mmDistanceKm(prev, curr);
+                        if (dist > 0.05) {
+                            mmAnalytics.event('map_pan', {
+                                distance_km: Math.round(dist * 100) / 100,
+                                zoom: z,
+                                lat: Math.round(curr.lat * 1000) / 1000,
+                                lng: Math.round(curr.lng * 1000) / 1000
+                            });
+                        }
+                    }, 2000);
+                } catch (e) {}
                 debouncedLoadTiles();
                 // Update region subscription status in bottom bar
                 updateRegionStatus();
@@ -4963,6 +5279,23 @@
                 checkRegionOnMove();
             });
 
+            // Analytics: map_zoom — debounced 1.5s so rapid scroll-wheel zoom fires once
+            var _mmZoomDebounce = null;
+            map.addListener('zoom_changed', function() {
+                try {
+                    var zNow = map.getZoom();
+                    if (_mmZoomDebounce) clearTimeout(_mmZoomDebounce);
+                    _mmZoomDebounce = setTimeout(function() {
+                        var prev = _mmLastZoom;
+                        _mmLastZoom = zNow;
+                        mmAnalytics.event('map_zoom', {
+                            from: prev || 0,
+                            to: zNow,
+                            bucket: zNow > 14 ? 'premium' : 'free'
+                        });
+                    }, 1500);
+                } catch (e) {}
+            });
             // Show purchase dialog when user hits zoom 14 in unpurchased region, hide when they zoom out
             map.addListener('zoom_changed', function() {
                 // Fade Solapur decorative labels smoothly as the zoom changes
@@ -8174,6 +8507,15 @@
                                 purchaseType: 'village',
                                 villageName: villageName
                             });
+                            try {
+                                mmAnalytics.event('purchase', {
+                                    transaction_id: response.razorpay_payment_id,
+                                    value: (data.amount || 0) / 100,
+                                    currency: data.currency || 'INR',
+                                    items: [{ item_id: 'villagePlanDefault', item_name: villageName, item_category: 'village' }]
+                                });
+                                mmAnalytics.clarityTag('plan', 'paid');
+                            } catch (e) {}
                             await fetchVillagePurchases();
                             // Reload village tiles
                             clearAllLayersOfType(villageOverlays);
@@ -8203,7 +8545,25 @@
                         document.head.appendChild(s);
                     });
                 }
+                try {
+                    mmAnalytics.event('begin_checkout', {
+                        currency: data.currency || 'INR',
+                        value: (data.amount || 0) / 100,
+                        items: [{ item_id: 'villagePlanDefault', item_name: villageName, item_category: 'village' }]
+                    });
+                } catch (e) {}
                 var rzp = new Razorpay(options);
+                try {
+                    rzp.on('payment.failed', function(resp) {
+                        var err = (resp && resp.error) || {};
+                        mmAnalytics.event('payment_failed', {
+                            item_id: 'villagePlanDefault',
+                            item_category: 'village',
+                            code: String(err.code || '').slice(0, 60),
+                            reason: String(err.reason || err.description || '').slice(0, 120)
+                        });
+                    });
+                } catch (e) {}
                 rzp.open();
             } catch (error) {
                 loadingOverlay.classList.remove('open');
@@ -8387,11 +8747,34 @@
             // Off-DOM Image: not in document tree, so Save As / Ctrl+S can't see its src.
             // Browser auto-sends CloudFront signed cookies (same-site subdomain).
             var img = new Image();
+            var _mmLayerType = this.layerType;
+            var _mmPid = (this.layerDef && this.layerDef.productPurchaseID) || '';
             img.onload = function() {
                 // Tile may have been released while loading -- skip if detached.
                 if (div.parentNode) ctx.drawImage(img, 0, 0, 256, 256);
+                // Analytics: 5% sample of successful tile loads to cap GA4 event volume
+                if (Math.random() < 0.05) {
+                    try {
+                        mmAnalytics.event('tile_loaded', {
+                            layer_type: _mmLayerType,
+                            zoom: zoom,
+                            bucket: zoom > 14 ? 'premium' : 'free',
+                            pid: _mmPid
+                        });
+                    } catch (e) {}
+                }
             };
-            img.onerror = function() { /* 404/auth -- leave tile blank */ };
+            img.onerror = function() {
+                /* 404/auth -- leave tile blank */
+                try {
+                    mmAnalytics.event('tile_load_failure', {
+                        layer_type: _mmLayerType,
+                        zoom: zoom,
+                        bucket: zoom > 14 ? 'premium' : 'free',
+                        pid: _mmPid
+                    });
+                } catch (e) {}
+            };
             img.src = this.urlPrefix_ + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
 
             div._tileImg = img;
