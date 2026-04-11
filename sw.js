@@ -1,6 +1,6 @@
 // Service worker — caches app shell so the installed PWA opens offline
 // instead of showing "This site can't be reached".
-const SW_VERSION = 'v5-2026-04-06';
+const SW_VERSION = 'v6-2026-04-11';
 const CACHE_NAME = 'mm-shell-' + SW_VERSION;
 
 // App-shell files to pre-cache on install
@@ -30,6 +30,10 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+    // Cache API only supports GET. Let every other method pass through untouched —
+    // covers form POSTs, analytics beacons (gtag, Clarity), and any XHR/fetch POSTs.
+    if (e.request.method !== 'GET') return;
+
     const url = new URL(e.request.url);
 
     // Navigation requests (page loads): network-first, fall back to cached maps.html
