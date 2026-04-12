@@ -5317,15 +5317,20 @@
                     if (!_mmMapReady) {
                         _mmMapReady = true;
                         mmAnalytics.event('map_ready', { zoom: z });
-                        // Show detected RAM in info toast (debug aid for low-memory gating)
-                        var _ramGb = navigator.deviceMemory;
-                        var _ramToast = document.getElementById('zoom-info-toast');
-                        var _ramText = document.getElementById('zoom-info-toast-text');
-                        if (_ramToast && _ramText) {
-                            _ramText.textContent = _ramGb ? ('Device RAM: ' + _ramGb + ' GB' + (_ramGb < 4 ? ' — lite mode' : '')) : 'Device RAM: unknown';
-                            _ramToast.classList.add('show');
-                            setTimeout(function() { _ramToast.classList.remove('show'); }, 4000);
-                        }
+                        // Show detected RAM in info toast (delay until loading screen is gone)
+                        (function _showRamToast() {
+                            if (document.getElementById('app-loading-screen')) {
+                                return setTimeout(_showRamToast, 500);
+                            }
+                            var _ramGb = navigator.deviceMemory;
+                            var _ramToast = document.getElementById('zoom-info-toast');
+                            var _ramText = document.getElementById('zoom-info-toast-text');
+                            if (_ramToast && _ramText) {
+                                _ramText.textContent = _ramGb ? ('Device RAM: ' + _ramGb + ' GB' + (_ramGb < 4 ? ' — lite mode' : '')) : 'Device RAM: unknown';
+                                _ramToast.classList.add('show');
+                                setTimeout(function() { _ramToast.classList.remove('show'); }, 4000);
+                            }
+                        })();
                     }
                     var curr = { lat: c.lat(), lng: c.lng() };
                     var prev = _mmLastCenter;
