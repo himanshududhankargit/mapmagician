@@ -216,6 +216,7 @@
         }
         .pill-btn:hover { background: #e8e8e8; }
         .pill-btn.active { background: #008577; color: #fff; }
+        .measure-clear-x { color: #f44336; font-weight: 700; padding-left: 4px; font-size: 13px; }
 
         /* Compass button — mobile only (device with coarse/touch pointer) */
         #btn-compass { display: none; }
@@ -966,9 +967,8 @@
     <div class="toolbar-scroll">
         <button class="pill-btn" id="btn-addon-maps" style="display:none;background:#2E7D32;color:#fff;font-weight:600;">0 Add-On Maps</button>
         <button class="pill-btn" id="btn-old-maps" style="display:none">Load Old Maps</button>
-        <button class="pill-btn" id="btn-measure-area">Measure Area</button>
-        <button class="pill-btn" id="btn-measure-length">Measure Length</button>
-        <button class="pill-btn" id="btn-clear-measurements" style="display:none;background:#f44336;color:#fff;">Clear Measurements</button>
+        <button class="pill-btn" id="btn-measure-area">Measure Area<span class="measure-clear-x" id="clear-area-x" style="display:none"> ✕</span></button>
+        <button class="pill-btn" id="btn-measure-length">Measure Length<span class="measure-clear-x" id="clear-length-x" style="display:none"> ✕</span></button>
         <button class="pill-btn" id="btn-compass">Compass</button>
     </div>
 
@@ -3734,23 +3734,36 @@
             updateStatus('Measurement deleted');
         }
 
-        function clearAllMeasurements() {
+        function clearMeasurementsByType(type) {
             deselectMeasurement();
             hideVertexHandle();
+            var idsToRemove = new Set();
+            savedMeasurements.forEach(function(m) { if (m.type === type) idsToRemove.add(m.id); });
             savedMeasureOverlays.forEach(function(ov) {
+                if (!idsToRemove.has(ov.id)) return;
                 ov.shapes.forEach(function(s) { s.setMap(null); });
                 ov.markers.forEach(function(m) { m.setMap(null); });
                 ov.labels.forEach(function(l) { l.setMap(null); });
             });
-            savedMeasureOverlays = [];
-            savedMeasurements = [];
-            try { localStorage.removeItem('gis_measurements'); } catch (e) {}
+            savedMeasureOverlays = savedMeasureOverlays.filter(function(ov) { return !idsToRemove.has(ov.id); });
+            savedMeasurements = savedMeasurements.filter(function(m) { return m.type !== type; });
+            try {
+                if (savedMeasurements.length > 0) {
+                    localStorage.setItem('gis_measurements', JSON.stringify(savedMeasurements));
+                } else {
+                    localStorage.removeItem('gis_measurements');
+                }
+            } catch (e) {}
             updateClearMeasurementsButton();
         }
 
         function updateClearMeasurementsButton() {
-            var btn = document.getElementById('btn-clear-measurements');
-            if (btn) btn.style.display = savedMeasurements.length > 0 ? '' : 'none';
+            var hasArea = savedMeasurements.some(function(m) { return m.type === 'area'; });
+            var hasLength = savedMeasurements.some(function(m) { return m.type === 'length'; });
+            var ax = document.getElementById('clear-area-x');
+            var lx = document.getElementById('clear-length-x');
+            if (ax) ax.style.display = hasArea ? '' : 'none';
+            if (lx) lx.style.display = hasLength ? '' : 'none';
         }
 
         // Point-in-polygon test (ray casting) — used on main thread for region detection
@@ -7835,8 +7848,13 @@
             document.getElementById('measure-cancel').addEventListener('click', function() {
                 stopMeasureMode(false);
             });
-            document.getElementById('btn-clear-measurements').addEventListener('click', function() {
-                clearAllMeasurements();
+            document.getElementById('clear-area-x').addEventListener('click', function(e) {
+                e.stopPropagation();
+                clearMeasurementsByType('area');
+            });
+            document.getElementById('clear-length-x').addEventListener('click', function(e) {
+                e.stopPropagation();
+                clearMeasurementsByType('length');
             });
             document.getElementById('measure-unit-length').addEventListener('change', function() {
                 if (measureMode === 'length') updateMeasureVisuals();
