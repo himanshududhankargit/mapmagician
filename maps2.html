@@ -2288,6 +2288,7 @@
                 if (so) so.classList.remove('open');
                 // Detach pricing listener to prevent unnecessary reads
                 if (typeof pricingListenerRef !== 'undefined') pricingListenerRef.off();
+                if (typeof subPricingRef !== 'undefined') subPricingRef.off();
                 // Clear village tiles (don't load tiles yet — signInAnonymously will trigger cookie fetch + tile load)
                 clearAllLayersOfType(villageOverlays);
                 villageTileStatus = Array(villageLayerData.length).fill(false);
@@ -3035,6 +3036,10 @@
 
             overlay.classList.add('open');
         }
+
+        // Debounce for checkFirebasePurchaseEntry — prevents rapid DB reads on zoom
+        let _lastFirebaseCheckPid = null;
+        let _lastFirebaseCheckTime = 0;
 
         // Global variables
         let map;
@@ -5488,7 +5493,12 @@
                     // Parallel Firebase re-check — safety net for cross-device purchases (e.g.
                     // bought on the Android app) where the local hasPurchase() cache isn't synced.
                     // The flag lets the idle handler below short-circuit if we turn out to be paid.
+                    // Debounced: skip if same productId checked within 2s (prevents rapid zoom spam).
                     var unlockedByFirebase = false;
+                    var _fbNow = Date.now();
+                    if (district.productPurchaseID !== _lastFirebaseCheckPid || _fbNow - _lastFirebaseCheckTime > 2000) {
+                    _lastFirebaseCheckPid = district.productPurchaseID;
+                    _lastFirebaseCheckTime = _fbNow;
                     checkFirebasePurchaseEntry(district.productPurchaseID).then(function(found) {
                         if (!found) return;
                         unlockedByFirebase = true;
@@ -5504,6 +5514,7 @@
                         stickyDistrict = null;
                         checkRegionOnMove();
                     }).catch(function() { /* network failed — defer to the idle handler */ });
+                    } // end debounce guard
 
                     // Defer the dialog until the camera animation settles at 14. zoom_changed
                     // fires on the input tick with the target zoom, but the visual animation
