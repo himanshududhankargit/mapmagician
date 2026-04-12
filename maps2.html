@@ -1320,6 +1320,16 @@
         </div>
     </div>
 
+    <!-- Clear measurements confirmation dialog -->
+    <div class="auth-dialog-overlay" id="clear-measure-dialog-overlay" data-dismiss="clear-measure-cancel">
+        <div class="auth-dialog">
+            <h3>Clear Measurements</h3>
+            <p id="clear-measure-dialog-text">Clear all area measurements?</p>
+            <button class="auth-dialog-btn" id="clear-measure-confirm" style="background:#f44336;color:#fff;border:none;">Clear</button>
+            <button class="auth-dialog-cancel" id="clear-measure-cancel">Cancel</button>
+        </div>
+    </div>
+
     <!-- Support form dialog -->
     <div class="auth-dialog-overlay" id="support-dialog-overlay" data-dismiss="support-cancel-btn" style="z-index:4000;">
         <div class="auth-dialog" style="max-width:400px;text-align:left;">
@@ -7848,13 +7858,29 @@
             document.getElementById('measure-cancel').addEventListener('click', function() {
                 stopMeasureMode(false);
             });
+            var _clearMeasureType = null;
+            var _clearDialog = document.getElementById('clear-measure-dialog-overlay');
+            var _clearText = document.getElementById('clear-measure-dialog-text');
             document.getElementById('clear-area-x').addEventListener('click', function(e) {
                 e.stopPropagation();
-                if (confirm('Clear all area measurements?')) clearMeasurementsByType('area');
+                _clearMeasureType = 'area';
+                _clearText.textContent = 'Clear all area measurements?';
+                _clearDialog.classList.add('open');
             });
             document.getElementById('clear-length-x').addEventListener('click', function(e) {
                 e.stopPropagation();
-                if (confirm('Clear all length measurements?')) clearMeasurementsByType('length');
+                _clearMeasureType = 'length';
+                _clearText.textContent = 'Clear all length measurements?';
+                _clearDialog.classList.add('open');
+            });
+            document.getElementById('clear-measure-confirm').addEventListener('click', function() {
+                if (_clearMeasureType) clearMeasurementsByType(_clearMeasureType);
+                _clearMeasureType = null;
+                _clearDialog.classList.remove('open');
+            });
+            document.getElementById('clear-measure-cancel').addEventListener('click', function() {
+                _clearMeasureType = null;
+                _clearDialog.classList.remove('open');
             });
             document.getElementById('measure-unit-length').addEventListener('change', function() {
                 if (measureMode === 'length') updateMeasureVisuals();
