@@ -7850,11 +7850,11 @@
             });
             document.getElementById('clear-area-x').addEventListener('click', function(e) {
                 e.stopPropagation();
-                clearMeasurementsByType('area');
+                if (confirm('Clear all area measurements?')) clearMeasurementsByType('area');
             });
             document.getElementById('clear-length-x').addEventListener('click', function(e) {
                 e.stopPropagation();
-                clearMeasurementsByType('length');
+                if (confirm('Clear all length measurements?')) clearMeasurementsByType('length');
             });
             document.getElementById('measure-unit-length').addEventListener('change', function() {
                 if (measureMode === 'length') updateMeasureVisuals();
