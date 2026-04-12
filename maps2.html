@@ -216,7 +216,7 @@
         }
         .pill-btn:hover { background: #e8e8e8; }
         .pill-btn.active { background: #008577; color: #fff; }
-        .measure-clear-x { color: #f44336; font-weight: 700; padding-left: 4px; font-size: 13px; }
+        .measure-clear-x { display:none; margin-left:6px; width:18px; height:18px; line-height:18px; text-align:center; border-radius:50%; background:#f44336; color:#fff; font-weight:700; font-size:11px; vertical-align:middle; }
 
         /* Compass button — mobile only (device with coarse/touch pointer) */
         #btn-compass { display: none; }
@@ -967,8 +967,8 @@
     <div class="toolbar-scroll">
         <button class="pill-btn" id="btn-addon-maps" style="display:none;background:#2E7D32;color:#fff;font-weight:600;">0 Add-On Maps</button>
         <button class="pill-btn" id="btn-old-maps" style="display:none">Load Old Maps</button>
-        <button class="pill-btn" id="btn-measure-area">Measure Area<span class="measure-clear-x" id="clear-area-x" style="display:none"> ✕</span></button>
-        <button class="pill-btn" id="btn-measure-length">Measure Length<span class="measure-clear-x" id="clear-length-x" style="display:none"> ✕</span></button>
+        <button class="pill-btn" id="btn-measure-area">Measure Area<span class="measure-clear-x" id="clear-area-x">✕</span></button>
+        <button class="pill-btn" id="btn-measure-length">Measure Length<span class="measure-clear-x" id="clear-length-x">✕</span></button>
         <button class="pill-btn" id="btn-compass">Compass</button>
     </div>
 
@@ -3762,8 +3762,8 @@
             var hasLength = savedMeasurements.some(function(m) { return m.type === 'length'; });
             var ax = document.getElementById('clear-area-x');
             var lx = document.getElementById('clear-length-x');
-            if (ax) ax.style.display = hasArea ? '' : 'none';
-            if (lx) lx.style.display = hasLength ? '' : 'none';
+            if (ax) ax.style.display = hasArea ? 'inline-block' : 'none';
+            if (lx) lx.style.display = hasLength ? 'inline-block' : 'none';
         }
 
         // Point-in-polygon test (ray casting) — used on main thread for region detection
