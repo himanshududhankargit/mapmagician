@@ -1106,6 +1106,11 @@
                 <span class="toggle-track"></span>
                 <span class="layer-toggle-label">Village Plans</span>
             </label>
+            <label class="layer-toggle" id="village-boundary-toggle" style="display:none">
+                <input type="checkbox" id="village-boundary-layer">
+                <span class="toggle-track"></span>
+                <span class="layer-toggle-label">Village Boundaries</span>
+            </label>
         </div>
 
         <div class="layer-section">
@@ -3063,6 +3068,7 @@
         // Android traffic). Returns GiB rounded to nearest power-of-two bucket
         // (0.25, 0.5, 1, 2, 4, 8). Undefined on Firefox/Safari → treated as capable.
         const IS_LOW_MEMORY_DEVICE = (navigator.deviceMemory || 8) < 8;
+        let isVillageBoundaryEnabled = !IS_LOW_MEMORY_DEVICE;
 
         // ---------- Static district bounds index (for viewport-based loading) ----------
         // Pre-computed bounding boxes for all 37 Maharashtra district GeoJSON files.
@@ -4856,7 +4862,7 @@
         }
 
         function maybeLoadSolapurOverlay() {
-            if (IS_LOW_MEMORY_DEVICE) return;
+            if (!isVillageBoundaryEnabled) return;
             if (solapurOverlayLoadStarted || !map) return;
             const vp = map.getBounds();
             if (!vp) return;
@@ -4872,7 +4878,7 @@
         // ---------- Viewport-based district loading ----------
         let _geojsonViewportDebounce = null;
         function loadGeoJsonForViewport() {
-            if (IS_LOW_MEMORY_DEVICE) return;
+            if (!isVillageBoundaryEnabled) return;
             if (!map) return;
             if (!tilesInitiated) return; // Defer GeoJSON until tiles are initiated
             if (map.getZoom() < MIN_ZOOM_FOR_GEOJSON) {
@@ -5317,20 +5323,9 @@
                     if (!_mmMapReady) {
                         _mmMapReady = true;
                         mmAnalytics.event('map_ready', { zoom: z });
-                        // Show detected RAM in info toast (delay until loading screen is gone)
-                        (function _showRamToast() {
-                            if (document.getElementById('app-loading-screen')) {
-                                return setTimeout(_showRamToast, 2000);
-                            }
-                            var _ramGb = navigator.deviceMemory;
-                            var _ramToast = document.getElementById('zoom-info-toast');
-                            var _ramText = document.getElementById('zoom-info-toast-text');
-                            if (_ramToast && _ramText) {
-                                _ramText.textContent = _ramGb ? ('Device RAM: ' + _ramGb + ' GB' + (_ramGb < 8 ? ' — lite mode' : '')) : 'Device RAM: unknown';
-                                _ramToast.classList.add('show');
-                                setTimeout(function() { _ramToast.classList.remove('show'); }, 4000);
-                            }
-                        })();
+                        // Set initial state for village boundary toggle
+                        var _vbCheckbox = document.getElementById('village-boundary-layer');
+                        if (_vbCheckbox) _vbCheckbox.checked = isVillageBoundaryEnabled;
                     }
                     var curr = { lat: c.lat(), lng: c.lng() };
                     var prev = _mmLastCenter;
@@ -5365,6 +5360,23 @@
                 maybeLoadSolapurOverlay();
                 // Keep Solapur label opacity in sync with current zoom
                 updateSolapurLabelOpacity(z);
+                // Show/hide village boundary toggle based on district availability
+                var _vbToggle = document.getElementById('village-boundary-toggle');
+                if (_vbToggle) {
+                    var _hasGeoJson = false;
+                    var _vp = map.getBounds();
+                    if (_vp && z >= MIN_ZOOM_FOR_GEOJSON) {
+                        var _vpN = _vp.getNorthEast().lat(), _vpS = _vp.getSouthWest().lat();
+                        var _vpE = _vp.getNorthEast().lng(), _vpW = _vp.getSouthWest().lng();
+                        for (var _di = 0; _di < GEOJSON_DISTRICT_INDEX.length; _di++) {
+                            var _dd = GEOJSON_DISTRICT_INDEX[_di];
+                            if (_dd.s <= _vpN && _dd.n >= _vpS && _dd.w <= _vpE && _dd.e >= _vpW) {
+                                _hasGeoJson = true; break;
+                            }
+                        }
+                    }
+                    _vbToggle.style.display = _hasGeoJson ? '' : 'none';
+                }
                 // Persist last map position so the next visit opens at the same spot
                 try {
                     localStorage.setItem(LAST_MAP_POS_KEY, JSON.stringify({
@@ -7442,6 +7454,22 @@
                 }
             });
 
+            document.getElementById('village-boundary-layer').addEventListener('change', function() {
+                isVillageBoundaryEnabled = this.checked;
+                if (isVillageBoundaryEnabled) {
+                    loadGeoJsonForViewport();
+                    maybeLoadSolapurOverlay();
+                } else {
+                    _removeAllVillagePolylines();
+                    solapurLabelOverlays.forEach(function(ov) { ov.setMap(null); });
+                    solapurLabelOverlays = [];
+                    solapurTpSchemeLines.forEach(function(pl) { pl.setMap(null); });
+                    solapurTpSchemeLines = [];
+                    solapurOverlayLoadStarted = false;
+                    solapurOverlayLoaded = false;
+                }
+            });
+
             // Sync opacity sliders (layer panel + info strip)
             const opacityPanel = document.getElementById('opacity-slider');
             const opacityInfo = document.getElementById('info-opacity-slider');
@@ -7749,6 +7777,14 @@
                     overlay.classList.remove('open');
                     stopListening();
                     unlockCompassOrientation();
+                });
+                // Back button on mobile exits fullscreen first (browser default),
+                // leaving compass open. Auto-close compass when fullscreen exits.
+                document.addEventListener('fullscreenchange', function() {
+                    if (!document.fullscreenElement && !document.webkitFullscreenElement && overlay.classList.contains('open')) {
+                        overlay.classList.remove('open');
+                        stopListening();
+                    }
                 });
             })();
 
