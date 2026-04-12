@@ -5320,7 +5320,7 @@
                         // Show detected RAM in info toast (delay until loading screen is gone)
                         (function _showRamToast() {
                             if (document.getElementById('app-loading-screen')) {
-                                return setTimeout(_showRamToast, 500);
+                                return setTimeout(_showRamToast, 2000);
                             }
                             var _ramGb = navigator.deviceMemory;
                             var _ramToast = document.getElementById('zoom-info-toast');
