@@ -3058,11 +3058,11 @@
         const SOLAPUR_HIDE_ZOOM     = 17;   // at/above this zoom labels are hidden
         const SOLAPUR_HIDE_OPACITY  = 0.15; // floor opacity that the ease-out approaches
 
-        // Low-memory device gate — skip heavy GeoJSON + Solapur overlays on < 4 GB devices.
+        // Low-memory device gate — skip heavy GeoJSON + Solapur overlays on < 8 GB devices.
         // navigator.deviceMemory is Chrome/Edge/Opera/Samsung Internet (covers most
         // Android traffic). Returns GiB rounded to nearest power-of-two bucket
         // (0.25, 0.5, 1, 2, 4, 8). Undefined on Firefox/Safari → treated as capable.
-        const IS_LOW_MEMORY_DEVICE = (navigator.deviceMemory || 8) < 4;
+        const IS_LOW_MEMORY_DEVICE = (navigator.deviceMemory || 8) < 8;
 
         // ---------- Static district bounds index (for viewport-based loading) ----------
         // Pre-computed bounding boxes for all 37 Maharashtra district GeoJSON files.
@@ -5326,7 +5326,7 @@
                             var _ramToast = document.getElementById('zoom-info-toast');
                             var _ramText = document.getElementById('zoom-info-toast-text');
                             if (_ramToast && _ramText) {
-                                _ramText.textContent = _ramGb ? ('Device RAM: ' + _ramGb + ' GB' + (_ramGb < 4 ? ' — lite mode' : '')) : 'Device RAM: unknown';
+                                _ramText.textContent = _ramGb ? ('Device RAM: ' + _ramGb + ' GB' + (_ramGb < 8 ? ' — lite mode' : '')) : 'Device RAM: unknown';
                                 _ramToast.classList.add('show');
                                 setTimeout(function() { _ramToast.classList.remove('show'); }, 4000);
                             }
