@@ -968,6 +968,7 @@
         <button class="pill-btn" id="btn-old-maps" style="display:none">Load Old Maps</button>
         <button class="pill-btn" id="btn-measure-area">Measure Area</button>
         <button class="pill-btn" id="btn-measure-length">Measure Length</button>
+        <button class="pill-btn" id="btn-clear-measurements" style="display:none;background:#f44336;color:#fff;">Clear Measurements</button>
         <button class="pill-btn" id="btn-compass">Compass</button>
     </div>
 
@@ -3527,6 +3528,7 @@
                 localStorage.setItem('gis_measurements', JSON.stringify(savedMeasurements));
             } catch (e) { /* localStorage full */ }
             renderSavedMeasurement(m);
+            updateClearMeasurementsButton();
             updateStatus('Measurement saved');
         }
 
@@ -3539,6 +3541,7 @@
             } catch (e) {
                 savedMeasurements = [];
             }
+            updateClearMeasurementsButton();
         }
 
         function renderSavedMeasurement(m) {
@@ -3727,7 +3730,27 @@
                 localStorage.setItem('gis_measurements', JSON.stringify(savedMeasurements));
             } catch (e) { /* ignore */ }
             deselectMeasurement();
+            updateClearMeasurementsButton();
             updateStatus('Measurement deleted');
+        }
+
+        function clearAllMeasurements() {
+            deselectMeasurement();
+            hideVertexHandle();
+            savedMeasureOverlays.forEach(function(ov) {
+                ov.shapes.forEach(function(s) { s.setMap(null); });
+                ov.markers.forEach(function(m) { m.setMap(null); });
+                ov.labels.forEach(function(l) { l.setMap(null); });
+            });
+            savedMeasureOverlays = [];
+            savedMeasurements = [];
+            try { localStorage.removeItem('gis_measurements'); } catch (e) {}
+            updateClearMeasurementsButton();
+        }
+
+        function updateClearMeasurementsButton() {
+            var btn = document.getElementById('btn-clear-measurements');
+            if (btn) btn.style.display = savedMeasurements.length > 0 ? '' : 'none';
         }
 
         // Point-in-polygon test (ray casting) — used on main thread for region detection
@@ -7811,6 +7834,9 @@
             });
             document.getElementById('measure-cancel').addEventListener('click', function() {
                 stopMeasureMode(false);
+            });
+            document.getElementById('btn-clear-measurements').addEventListener('click', function() {
+                clearAllMeasurements();
             });
             document.getElementById('measure-unit-length').addEventListener('change', function() {
                 if (measureMode === 'length') updateMeasureVisuals();
