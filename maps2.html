@@ -8018,6 +8018,7 @@
         let _currentDataVersions = null;
         let _dataVersionsReady = null;
         const _layerFetchers = {}; // versionKey -> { cacheKey, refetch }
+        const _inFlightLayerFetches = {}; // cacheKey -> Promise (dedupe racing callers)
 
         function loadDataVersions() {
             if (_dataVersionsReady) return _dataVersionsReady;
@@ -8067,9 +8068,13 @@
                     return cached.d;
                 }
 
+                if (_inFlightLayerFetches[cacheKey]) {
+                    return _inFlightLayerFetches[cacheKey];
+                }
+
                 const vParam = encodeURIComponent(liveVersion == null ? '0' : String(liveVersion));
                 const url = LAYER_JSON_BASE + '/' + dbPath + '.json?v=' + vParam;
-                return fetch(url, { cache: 'no-store' })
+                const p = fetch(url, { cache: 'no-store' })
                     .then(r => {
                         if (!r.ok) throw new Error('layer fetch ' + dbPath + ' -> ' + r.status);
                         return r.json();
@@ -8083,9 +8088,15 @@
                         return data;
                     })
                     .catch(err => {
-                        console.error('[layer] CloudFront fetch failed for', dbPath, err);
+                        console.error('[layer] fetch failed for', dbPath, err);
                         return cached && cached.d ? cached.d : null;
+                    })
+                    .then(result => {
+                        delete _inFlightLayerFetches[cacheKey];
+                        return result;
                     });
+                _inFlightLayerFetches[cacheKey] = p;
+                return p;
             });
         }
 
