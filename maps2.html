@@ -5478,6 +5478,10 @@
                 // Fade Solapur decorative labels smoothly as the zoom changes
                 updateSolapurLabelOpacity(map.getZoom());
                 if (zoomBypassActive || mapInteractionDisabled) return;
+                // Don't make any access decision until layer data is loaded —
+                // otherwise a cold reload at a saved premium zoom flashes the
+                // "No Map Data Available" dialog while MahaGIS.json is still landing.
+                if (!dpDataLoaded || !villageDataLoaded) return;
                 const z = map.getZoom();
                 const overlay = document.getElementById('zoom-restrict-overlay');
                 const district = findDistrictAtCenter();
@@ -8056,25 +8060,36 @@
         // manual Refresh button.
         function getCachedOrFetchLayer(cacheKey, dbPath, versionKey, refetch) {
             if (refetch) _layerFetchers[versionKey] = { cacheKey: cacheKey, refetch: refetch };
-            return loadDataVersions().then(versions => {
+
+            // Synchronous cache read — return stale data instantly, verify in background.
+            let cached = null;
+            try {
+                const raw = localStorage.getItem(cacheKey);
+                if (raw) cached = JSON.parse(raw);
+            } catch (e) { /* ignore corrupt cache */ }
+
+            if (cached && cached.d) {
+                loadDataVersions().then(versions => {
+                    const liveVersion = versions[versionKey];
+                    const normLive = liveVersion === undefined ? null : liveVersion;
+                    const normCached = cached.v === undefined ? null : cached.v;
+                    if (normLive !== normCached) {
+                        try { localStorage.removeItem(cacheKey); } catch (e) {}
+                        if (refetch) refetch();
+                    }
+                }).catch(() => { /* offline: keep stale data, don't refetch */ });
+                return Promise.resolve(cached.d);
+            }
+
+            if (_inFlightLayerFetches[cacheKey]) {
+                return _inFlightLayerFetches[cacheKey];
+            }
+
+            const p = loadDataVersions().then(versions => {
                 const liveVersion = versions[versionKey];
-                let cached = null;
-                try {
-                    const raw = localStorage.getItem(cacheKey);
-                    if (raw) cached = JSON.parse(raw);
-                } catch (e) { /* ignore corrupt cache */ }
-
-                if (cached && 'v' in cached && cached.v === liveVersion && cached.d) {
-                    return cached.d;
-                }
-
-                if (_inFlightLayerFetches[cacheKey]) {
-                    return _inFlightLayerFetches[cacheKey];
-                }
-
                 const vParam = encodeURIComponent(liveVersion == null ? '0' : String(liveVersion));
                 const url = LAYER_JSON_BASE + '/' + dbPath + '.json?v=' + vParam;
-                const p = fetch(url, { cache: 'no-store' })
+                return fetch(url, { cache: 'no-store' })
                     .then(r => {
                         if (!r.ok) throw new Error('layer fetch ' + dbPath + ' -> ' + r.status);
                         return r.json();
@@ -8082,22 +8097,25 @@
                     .then(data => {
                         if (data) {
                             try {
-                                localStorage.setItem(cacheKey, JSON.stringify({ v: liveVersion === undefined ? null : liveVersion, d: data }));
+                                localStorage.setItem(cacheKey, JSON.stringify({
+                                    v: liveVersion === undefined ? null : liveVersion,
+                                    d: data
+                                }));
                             } catch (e) { /* quota */ }
                         }
                         return data;
-                    })
-                    .catch(err => {
-                        console.error('[layer] fetch failed for', dbPath, err);
-                        return cached && cached.d ? cached.d : null;
-                    })
-                    .then(result => {
-                        delete _inFlightLayerFetches[cacheKey];
-                        return result;
                     });
-                _inFlightLayerFetches[cacheKey] = p;
-                return p;
+            })
+            .catch(err => {
+                console.error('[layer] fetch failed for', dbPath, err);
+                return null;
+            })
+            .then(result => {
+                delete _inFlightLayerFetches[cacheKey];
+                return result;
             });
+            _inFlightLayerFetches[cacheKey] = p;
+            return p;
         }
 
         function fetchDPLayerData() {
@@ -8115,6 +8133,7 @@
                 if (isVillageLayerVisible && villageLayerData.length > 0) {
                     createVillageMarkers();
                 }
+                maybeRerunZoomCheck();
             }).catch(error => console.error("Error fetching DP data:", error));
         }
 
@@ -8126,7 +8145,22 @@
                 villageDataLoaded = true;
                 loadTilesBasedOnViewport();
                 if (isVillageLayerVisible && villageMarkers.size === 0) createVillageMarkers();
+                maybeRerunZoomCheck();
             }).catch(error => console.error("Error fetching Village data:", error));
+        }
+
+        // After a layer fetcher completes, if both DP and village data are now
+        // loaded AND the user is already at a premium zoom from a restored
+        // position, re-dispatch zoom_changed so the listener can correctly
+        // decide whether to show the access dialog or unlock tiles.
+        function maybeRerunZoomCheck() {
+            if (!dpDataLoaded || !villageDataLoaded) return;
+            if (!map) return;
+            try {
+                if (map.getZoom() >= MAX_FREE_ZOOM) {
+                    google.maps.event.trigger(map, 'zoom_changed');
+                }
+            } catch (e) { /* ignore */ }
         }
 
         // Show "Load Old Maps" only when crosshair is inside an oldDPPlanGIS polygon
