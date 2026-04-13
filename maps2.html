@@ -8109,6 +8109,12 @@
                 stickyDistrict = null;
                 dpDataLoaded = true;
                 loadTilesBasedOnViewport();
+                // If village markers were created before DP data arrived, isInsideDPRegion
+                // returned false for every village and markers leaked into DP regions.
+                // Re-create now that dpLayerData is populated so the filter applies.
+                if (isVillageLayerVisible && villageLayerData.length > 0) {
+                    createVillageMarkers();
+                }
             }).catch(error => console.error("Error fetching DP data:", error));
         }
 
