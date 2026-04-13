@@ -6869,12 +6869,14 @@
             });
 
             // Admin-only: force-refresh cached layer registries from Firebase without reloading the page.
+            // The live version listener already auto-refetches when appConfig/dataVersions changes,
+            // so this button is a manual override for the rare case where you want to re-pull data
+            // without bumping a version.
             var refreshDbBtn = document.getElementById('settings-refresh-db');
             if (refreshDbBtn) refreshDbBtn.addEventListener('click', function() {
                 ['layer_dp', 'layer_layout', 'layer_village', 'layer_olddp'].forEach(function(k) {
                     try { localStorage.removeItem(k); } catch (e) {}
                 });
-                _dataVersionsPromise = null;
                 layerDataFetched = false;
                 dpDataLoaded = false;
                 layoutDataLoaded = false;
@@ -7534,25 +7536,53 @@
             return processed;
         }
 
-        // --- Layer-registry cache with version stamps ---
-        // Reads appConfig/dataVersions once per session (tiny payload).
-        // For each layer, compares cached version with live version; fetches the full
-        // registry only if they differ. When the admin-only "Refresh database cache"
-        // button is clicked, _dataVersionsPromise is reset so the next fetch re-reads.
-        let _dataVersionsPromise = null;
+        // --- Layer-registry cache with live version-stamp listener ---
+        // Attaches .on('value') to appConfig/dataVersions on first call and keeps
+        // the listener alive for the session. First callback resolves the ready
+        // promise. Subsequent callbacks diff incoming vs previous versions — for
+        // each key that changed, the matching registered fetcher is re-run, which
+        // clears its localStorage cache entry and re-pulls fresh data, updating
+        // the map in place without a page reload.
+        let _currentDataVersions = null;
+        let _dataVersionsReady = null;
+        const _layerFetchers = {}; // versionKey -> { cacheKey, refetch }
+
         function loadDataVersions() {
-            if (_dataVersionsPromise) return _dataVersionsPromise;
-            _dataVersionsPromise = database.ref('appConfig/dataVersions').once('value')
-                .then(snap => snap.val() || {})
-                .catch(err => { console.warn('dataVersions load failed:', err); return {}; });
-            return _dataVersionsPromise;
+            if (_dataVersionsReady) return _dataVersionsReady;
+            _dataVersionsReady = new Promise(resolve => {
+                let firstCallback = true;
+                database.ref('appConfig/dataVersions').on('value', snap => {
+                    const incoming = snap.val() || {};
+                    const prev = _currentDataVersions || {};
+                    _currentDataVersions = incoming;
+                    if (firstCallback) {
+                        firstCallback = false;
+                        resolve(incoming);
+                        return;
+                    }
+                    const allKeys = new Set([...Object.keys(prev), ...Object.keys(incoming)]);
+                    allKeys.forEach(k => {
+                        if (prev[k] !== incoming[k] && _layerFetchers[k]) {
+                            try { localStorage.removeItem(_layerFetchers[k].cacheKey); } catch (e) {}
+                            _layerFetchers[k].refetch();
+                        }
+                    });
+                }, err => {
+                    console.warn('dataVersions listener failed:', err);
+                    if (firstCallback) { firstCallback = false; _currentDataVersions = {}; resolve({}); }
+                });
+            });
+            return _dataVersionsReady;
         }
 
         // Returns a Promise<data>. Uses localStorage cache if its version matches the
         // live version under appConfig/dataVersions/{versionKey}. If the version node
         // doesn't exist yet (both undefined), that still counts as a match — data is
-        // cached until the admin hits Refresh or bumps the version.
-        function getCachedOrFetchLayer(cacheKey, dbPath, versionKey) {
+        // cached indefinitely until the admin bumps the version in Firebase console
+        // (which the live listener above will detect and auto-refetch) or hits the
+        // manual Refresh button.
+        function getCachedOrFetchLayer(cacheKey, dbPath, versionKey, refetch) {
+            if (refetch) _layerFetchers[versionKey] = { cacheKey: cacheKey, refetch: refetch };
             return loadDataVersions().then(versions => {
                 const liveVersion = versions[versionKey];
                 let cached = null;
@@ -7578,7 +7608,7 @@
         }
 
         function fetchDPLayerData() {
-            getCachedOrFetchLayer('layer_dp', DP_URL_DATABASE_NAME, 'layer_dp').then(data => {
+            getCachedOrFetchLayer('layer_dp', DP_URL_DATABASE_NAME, 'layer_dp', fetchDPLayerData).then(data => {
                 if (!data) { dpDataLoaded = true; return; }
                 dpLayerData = applyLayerData(data, "Development Plan");
                 dpTileStatus = Array(dpLayerData.length).fill(false);
@@ -7590,7 +7620,7 @@
         }
 
         function fetchLayoutLayerData() {
-            getCachedOrFetchLayer('layer_layout', LAYOUT_URL_DATABASE_NAME, 'layer_layout').then(data => {
+            getCachedOrFetchLayer('layer_layout', LAYOUT_URL_DATABASE_NAME, 'layer_layout', fetchLayoutLayerData).then(data => {
                 if (!data) { layoutDataLoaded = true; return; }
                 layoutLayerData = applyLayerData(data, "Layout Plan");
                 layoutTileStatus = Array(layoutLayerData.length).fill(false);
@@ -7600,7 +7630,7 @@
         }
 
         function fetchVillageLayerData() {
-            getCachedOrFetchLayer('layer_village', VILLAGE_URL_DATABASE_NAME, 'layer_village').then(data => {
+            getCachedOrFetchLayer('layer_village', VILLAGE_URL_DATABASE_NAME, 'layer_village', fetchVillageLayerData).then(data => {
                 if (!data) { villageDataLoaded = true; return; }
                 villageLayerData = applyLayerData(data, "Village Plan");
                 villageTileStatus = Array(villageLayerData.length).fill(false);
@@ -7652,7 +7682,7 @@
                 if (isShowingOldMaps && isDPLayerVisible) loadTilesBasedOnViewport();
             }
 
-            getCachedOrFetchLayer('layer_olddp', OLD_DP_URL_DATABASE_NAME, 'layer_olddp').then(data => {
+            getCachedOrFetchLayer('layer_olddp', OLD_DP_URL_DATABASE_NAME, 'layer_olddp', fetchOldDPLayerData).then(data => {
                 if (!data) {
                     oldDPDataLoaded = true;
                     localStorage.removeItem('layer_olddp');
