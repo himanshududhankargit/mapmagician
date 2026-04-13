@@ -2333,7 +2333,6 @@
                 document.cookie = `CloudFront-Signature=${data['CloudFront-Signature']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
                 document.cookie = `CloudFront-Key-Pair-Id=${data['CloudFront-Key-Pair-Id']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
 
-                // console.log('CloudFront cookies set, expires:', expires);
                 if (!cfCookiesReady) {
                     cfCookiesReady = true;
                     // Layer data already fetching in parallel — now cookies are set, trigger tile load
@@ -2356,14 +2355,11 @@
                 const refreshIn = data.expiresAt - Date.now() - 3600000; // 1 hour before
                 if (refreshIn > 0) {
                     cfCookieRefreshTimer = setTimeout(() => {
-                        // console.log('Auto-refreshing CloudFront cookies');
                         fetchCloudFrontCookies();
                     }, refreshIn);
                 }
             } catch (err) {
-                if (err.code === 'permission-denied') {
-                    // console.log('No active purchase — tile access restricted');
-                } else {
+                if (err.code !== 'permission-denied') {
                     console.error('Failed to fetch CloudFront cookies:', err);
                 }
             }
@@ -3856,8 +3852,6 @@
                             bestMatch = district;
                             bestArea = area;
                             bestTile = tile;
-                        } else {
-                            // console.log('[RegionDetect] Tile hit but no menuGIS match. tile.id:', tile.id, 'tile.productPurchaseID:', tile.productPurchaseID);
                         }
                     }
                 }
@@ -4500,7 +4494,6 @@
             if (existing) {
                 const villages = await getVillagesForDistrict(districtName);
                 if (villages && villages.length > 0) {
-                    // console.log('[geojson] cache hit for', districtName, '—', villages.length, 'villages');
                     return villages;
                 }
             }
@@ -4511,7 +4504,6 @@
                 try {
                     const fileName = _districtFileName(districtName);
                     const url = GEOJSON_BASE_PATH + fileName + '.zip';
-                    // console.log('[geojson] fetching', url);
                     const res = await fetch(url);
                     if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
                     const blob = await res.blob();
@@ -4542,7 +4534,6 @@
                         featureCount: villageRecords.length,
                         downloadedAt: Date.now()
                     });
-                    // console.log('[geojson] loaded', districtName, '—', villageRecords.length, 'villages');
                     // Re-read to get records with their auto-generated IDs
                     return await getVillagesForDistrict(districtName);
                 } finally {
@@ -7286,7 +7277,6 @@
                     }),
                     new Promise(function(resolve) {
                         try {
-                            localStorage.removeItem('mm_geocoder_cache');
                             localStorage.removeItem('layer_dp');
                             localStorage.removeItem('layer_village');
                             localStorage.removeItem('layer_olddp');
@@ -7994,7 +7984,6 @@
 
         function applyLayerData(data, label) {
             const processed = processLayerData(data);
-            // console.log(`Loaded ${processed.length} ${label} layer definitions`);
             return processed;
         }
 
