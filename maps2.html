@@ -270,11 +270,6 @@
         .fab:hover { background: #f0f0f0; }
         .fab svg { width: 24px; height: 24px; }
 
-        /* In real browser fullscreen, also hide the top search row so the map has more
-           vertical space. Bottom bar stays visible for Browse Regions / home / status.
-           Class is toggled by the fullscreenchange handler alongside real requestFullscreen. */
-        body.app-fullscreen .top-search-row { display: none !important; }
-
         /* Layer panel (slide-in from right) */
         .layer-panel {
             position: absolute; top: 0; right: -300px; width: 280px;
@@ -918,7 +913,7 @@
 
     <!-- Expanded sidebar panel -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
-    <div class="sidebar-panel" id="sidebar-panel" data-dismiss="sidebar-overlay">
+    <div class="sidebar-panel" id="sidebar-panel">
         <div class="sidebar-header">
             <button class="sidebar-back" id="sidebar-back">&larr;</button>
             <span class="sidebar-title" id="sidebar-title">Locations</span>
@@ -5826,9 +5821,6 @@
                 });
 
                 stateList = Array.from(stateMap.values());
-                stateList.sort(function(a, b) {
-                    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
-                });
                 preloadRegionIcons();
             }
 
@@ -6048,7 +6040,8 @@
             }
 
             function openStateInBrowser(stateName) {
-                var districts = menuData.filter(function(m) { return m.state === stateName && m.district; });
+                var districts = menuData.filter(function(m) { return m.state === stateName && m.district; })
+                    .sort(function(a, b) { return a.district.localeCompare(b.district); });
                 var stateItem = menuData.find(function(m) { return m.state === stateName && !m.district; });
 
                 if (districts.length === 1) {
@@ -6064,9 +6057,6 @@
                             villagesJSON: d.villagesJSON,
                             productPurchaseID: d.productPurchaseID
                         };
-                    });
-                    items.sort(function(a, b) {
-                        return a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
                     });
                     pushRegionLevel(stateName, items, 'district');
                 } else if (stateItem && stateItem.villagesJSON) {
@@ -6084,9 +6074,6 @@
                 }
                 var items = locations.map(function(loc) {
                     return { name: loc.name, sub: loc.lat.toFixed(4) + ', ' + loc.lng.toFixed(4), lat: loc.lat, lng: loc.lng };
-                });
-                items.sort(function(a, b) {
-                    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
                 });
                 var level = { title: title, items: items, type: 'village', productPurchaseID: productPurchaseID || '', highlightTerm: highlightTerm || '' };
                 regionHistory.push(level);
@@ -7455,11 +7442,7 @@
                 }
             });
 
-            // Fullscreen button — real browser fullscreen. Also toggles the
-            // body.app-fullscreen class so the top search row hides for extra
-            // map area. Note: mobile back keys exit real fullscreen synchronously
-            // before popstate fires, so stepped back navigation (close overlay
-            // first, then exit fs) does NOT work when real fs is active on mobile.
+            // Fullscreen button
             document.getElementById('btn-fullscreen').addEventListener('click', function() {
                 if (document.fullscreenElement) {
                     document.exitFullscreen();
@@ -7468,16 +7451,10 @@
                 }
             });
             document.addEventListener('fullscreenchange', function() {
-                // Only react when documentElement is the fullscreen element (i.e., the
-                // main map fullscreen button triggered it). The compass requests fs on
-                // its own overlay element and must not flip the main icon/class.
                 const icon = document.getElementById('fullscreen-icon');
-                if (document.fullscreenElement === document.documentElement) {
-                    document.body.classList.add('app-fullscreen');
+                if (document.fullscreenElement) {
                     icon.innerHTML = '<polyline points="4,14 4,20 10,20"/><polyline points="20,10 20,4 14,4"/><polyline points="14,20 20,20 20,14"/><polyline points="10,4 4,4 4,10"/>';
-                } else if (!document.fullscreenElement && document.body.classList.contains('app-fullscreen')) {
-                    // Real fs exited while we were tracking main fs — sync cleanup.
-                    document.body.classList.remove('app-fullscreen');
+                } else {
                     icon.innerHTML = '<polyline points="15,3 21,3 21,9"/><polyline points="9,21 3,21 3,15"/><polyline points="21,15 21,21 15,21"/><polyline points="3,9 3,3 9,3"/>';
                 }
             });
