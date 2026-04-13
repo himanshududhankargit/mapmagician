@@ -4858,13 +4858,26 @@
             });
         }
 
+        // Bump when data/solapur_overlay.json changes — invalidates the localStorage cache.
+        const SOLAPUR_OVERLAY_CACHE_KEY = 'solapur_overlay_v1';
+
         async function loadSolapurOverlayIfNeeded() {
             if (solapurOverlayLoadStarted || !map) return;
             solapurOverlayLoadStarted = true;
             try {
-                const resp = await fetch('data/solapur_overlay.json');
-                if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                const data = await resp.json();
+                let data = null;
+                try {
+                    const raw = localStorage.getItem(SOLAPUR_OVERLAY_CACHE_KEY);
+                    if (raw) data = JSON.parse(raw);
+                } catch (e) { /* ignore corrupt cache */ }
+                if (!data) {
+                    const resp = await fetch('data/solapur_overlay.json');
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    data = await resp.json();
+                    try {
+                        localStorage.setItem(SOLAPUR_OVERLAY_CACHE_KEY, JSON.stringify(data));
+                    } catch (e) { /* quota */ }
+                }
 
                 // 1. Labels → ONE consolidated google.maps.GroundOverlay (all 26 villages
                 //    pre-rendered into a single canvas — see buildSolapurLabelsConsolidatedOverlay
