@@ -2561,8 +2561,6 @@
                             // Clear and reload tiles so they use the new access token
                             clearAllLayersOfType(dpOverlays);
                             dpTileStatus = Array(dpLayerData.length).fill(false);
-                            clearAllLayersOfType(layoutOverlays);
-                            layoutTileStatus = Array(layoutLayerData.length).fill(false);
                             loadTilesBasedOnViewport();
                             enableMapInteraction();
                             document.getElementById('zoom-restrict-overlay').classList.remove('open');
@@ -2661,8 +2659,6 @@
                             await fetchSubscriptionStatus();
                             clearAllLayersOfType(dpOverlays);
                             dpTileStatus = Array(dpLayerData.length).fill(false);
-                            clearAllLayersOfType(layoutOverlays);
-                            layoutTileStatus = Array(layoutLayerData.length).fill(false);
                             loadTilesBasedOnViewport();
                             enableMapInteraction();
                             document.getElementById('zoom-restrict-overlay').classList.remove('open');
@@ -4013,14 +4009,12 @@
         var tilesInitiated = false; // Gate GeoJSON until tiles have started loading
         var layerDataFetched = false; // Prevent duplicate fetchLayerData() calls
         let isDPLayerVisible = true;
-        let isLayoutLayerVisible = false;
         let isVillageLayerVisible = true;
         let isShowingOldMaps = false;
         let oldDPDataAvailable = false;
-        
+
         // Layer data by type
         let dpLayerData = [];
-        let layoutLayerData = [];
         let villageLayerData = [];
         let oldDPLayerData = [];
 
@@ -4028,45 +4022,38 @@
         let villageMarkers = new Map();      // villageName → google.maps.Marker
         let villagePurchases = new Map();    // villageName → { expiry, plan }
         let villageDataByName = new Map();   // villageName → villageLayerData item (for lookup)
-        
+
         // Layer tracking
         let dpOverlays = new Map();
-        let layoutOverlays = new Map();
         let villageOverlays = new Map();
         let oldDPOverlays = new Map();
-        
+
         // Tile loading status tracking
         let dpTileStatus = [];
-        let layoutTileStatus = [];
         let villageTileStatus = [];
         let oldDPTileStatus = [];
 
         // Generation counter -- increments on every viewport change.
         // Stale results from old generations are discarded (like Android coroutine job cancellation).
         let currentGeneration = 0;
-        
+
         // Layer load status
         let dpDataLoaded = false;
-        let layoutDataLoaded = false;
         let villageDataLoaded = false;
         let oldDPDataLoaded = false;
-        
+
         // Constants from your Android app
         const DEVELOPMENT_PLAN = "Development Plan";
-        const LAYOUT_PLAN = "Layout Plan";
         const VILLAGE_PLAN = "Village Plans";
         const OLD_DP_PLAN = "Old Development Plan";
-        
+
         const DP_URL_DATABASE_NAME = "MahaGIS";
-        const LAYOUT_URL_DATABASE_NAME = "layoutURLlink";
         const VILLAGE_URL_DATABASE_NAME = "MahaVillage";
         const OLD_DP_URL_DATABASE_NAME = "oldDPPlanGIS";
-        
+
         // Map settings
         const MAX_ZOOM_FOR_DP = 18;
         const MIN_ZOOM_FOR_DP = 11;
-        const MAX_ZOOM_FOR_LAYOUT = 21;
-        const MIN_ZOOM_FOR_LAYOUT = 15;
         const MAX_ZOOM_FOR_VILLAGEMAP = 18;
         const MIN_ZOOM_FOR_VILLAGEMAP = 11;
         const MAX_ZOOM_FOR_OLD_DP = 18;
@@ -4734,7 +4721,6 @@
         // Zoom limits per layer type
         const ZOOM_LIMITS = {
             dp: [MIN_ZOOM_FOR_DP, MAX_ZOOM_FOR_DP],
-            layout: [MIN_ZOOM_FOR_LAYOUT, MAX_ZOOM_FOR_LAYOUT],
             village: [MIN_ZOOM_FOR_VILLAGEMAP, MAX_ZOOM_FOR_VILLAGEMAP],
             oldDP: [MIN_ZOOM_FOR_OLD_DP, MAX_ZOOM_FOR_OLD_DP]
         };
@@ -4748,7 +4734,6 @@
 
             // Apply decisions for each layer
             if (results.dp) applyTileDecisions(results.dp, dpLayerData, dpTileStatus, dpOverlays, "dp");
-            if (results.layout) applyTileDecisions(results.layout, layoutLayerData, layoutTileStatus, layoutOverlays, "layout");
             if (results.village) {
                 // Only load village tiles for purchased villages
                 var filteredVillage = results.village.map(function(show, i) {
@@ -5052,7 +5037,6 @@
                 const sources = [];
                 if (isDPLayerVisible && !isShowingOldMaps && typeof dpLayerData !== 'undefined' && dpLayerData.length) sources.push(dpLayerData);
                 if (isShowingOldMaps && typeof oldDPLayerData !== 'undefined' && oldDPLayerData.length) sources.push(oldDPLayerData);
-                if (isLayoutLayerVisible && typeof layoutLayerData !== 'undefined' && layoutLayerData.length) sources.push(layoutLayerData);
                 if (isVillageLayerVisible && typeof villageLayerData !== 'undefined' && villageLayerData.length) sources.push(villageLayerData);
                 for (const arr of sources) {
                     for (const ov of arr) {
@@ -6874,12 +6858,11 @@
             // without bumping a version.
             var refreshDbBtn = document.getElementById('settings-refresh-db');
             if (refreshDbBtn) refreshDbBtn.addEventListener('click', function() {
-                ['layer_dp', 'layer_layout', 'layer_village', 'layer_olddp'].forEach(function(k) {
+                ['layer_dp', 'layer_village', 'layer_olddp'].forEach(function(k) {
                     try { localStorage.removeItem(k); } catch (e) {}
                 });
                 layerDataFetched = false;
                 dpDataLoaded = false;
-                layoutDataLoaded = false;
                 villageDataLoaded = false;
                 oldDPDataLoaded = false;
                 fetchLayerData();
@@ -7127,7 +7110,6 @@
                 opacityPanel.value = value;
                 opacityInfo.value = value;
                 updateOverlayOpacity(dpOverlays, currentOpacity);
-                updateOverlayOpacity(layoutOverlays, currentOpacity);
                 updateOverlayOpacity(villageOverlays, currentOpacity);
                 updateOverlayOpacity(oldDPOverlays, currentOpacity);
             }
@@ -7617,16 +7599,6 @@
                 dpDataLoaded = true;
                 loadTilesBasedOnViewport();
             }).catch(error => console.error("Error fetching DP data:", error));
-        }
-
-        function fetchLayoutLayerData() {
-            getCachedOrFetchLayer('layer_layout', LAYOUT_URL_DATABASE_NAME, 'layer_layout', fetchLayoutLayerData).then(data => {
-                if (!data) { layoutDataLoaded = true; return; }
-                layoutLayerData = applyLayerData(data, "Layout Plan");
-                layoutTileStatus = Array(layoutLayerData.length).fill(false);
-                layoutDataLoaded = true;
-                loadTilesBasedOnViewport();
-            }).catch(error => console.error("Error fetching Layout data:", error));
         }
 
         function fetchVillageLayerData() {
@@ -8451,7 +8423,6 @@
             var def = layerDef;
             switch (layerType) {
                 case "dp":      this.zMin_ = def.minZoom || MIN_ZOOM_FOR_DP;         this.zMax_ = def.maxZoom || MAX_ZOOM_FOR_DP;         break;
-                case "layout":  this.zMin_ = def.minZoom || MIN_ZOOM_FOR_LAYOUT;     this.zMax_ = def.maxZoom || MAX_ZOOM_FOR_LAYOUT;     break;
                 case "village": this.zMin_ = def.minZoom || MIN_ZOOM_FOR_VILLAGEMAP; this.zMax_ = def.maxZoom || MAX_ZOOM_FOR_VILLAGEMAP; break;
                 case "oldDP":   this.zMin_ = def.minZoom || MIN_ZOOM_FOR_OLD_DP;     this.zMax_ = def.maxZoom || MAX_ZOOM_FOR_OLD_DP;     break;
                 default:        this.zMin_ = 0; this.zMax_ = 22;
