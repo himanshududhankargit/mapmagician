@@ -4348,9 +4348,9 @@
         const VILLAGE_PLAN = "Village Plans";
         const OLD_DP_PLAN = "Old Development Plan";
 
-        const DP_URL_DATABASE_NAME = "MahaGIS";
-        const VILLAGE_URL_DATABASE_NAME = "MahaVillage";
-        const OLD_DP_URL_DATABASE_NAME = "oldDPPlanGIS";
+        const DP_URL_DATABASE_NAME = "d1";
+        const VILLAGE_URL_DATABASE_NAME = "d2";
+        const OLD_DP_URL_DATABASE_NAME = "d3";
         const LAYER_JSON_BASE = "data/database";
 
         // Map settings
@@ -8101,7 +8101,7 @@
             const p = loadDataVersions().then(versions => {
                 const liveVersion = versions[versionKey];
                 const vParam = encodeURIComponent(liveVersion == null ? '0' : String(liveVersion));
-                const url = LAYER_JSON_BASE + '/' + dbPath + '.json?v=' + vParam;
+                const url = LAYER_JSON_BASE + '/' + dbPath + '.bin?v=' + vParam;
                 return fetch(url, { cache: 'no-store' })
                     .then(r => {
                         if (!r.ok) throw new Error('layer fetch ' + dbPath + ' -> ' + r.status);
