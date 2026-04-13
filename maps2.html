@@ -4351,7 +4351,7 @@
         const DP_URL_DATABASE_NAME = "MahaGIS";
         const VILLAGE_URL_DATABASE_NAME = "MahaVillage";
         const OLD_DP_URL_DATABASE_NAME = "oldDPPlanGIS";
-        const LAYER_JSON_BASE = "https://tiles.mapmagician.in/dpplans/0jsondata";
+        const LAYER_JSON_BASE = "data/database";
 
         // Map settings
         const MAX_ZOOM_FOR_DP = 18;
@@ -8069,7 +8069,7 @@
 
                 const vParam = encodeURIComponent(liveVersion == null ? '0' : String(liveVersion));
                 const url = LAYER_JSON_BASE + '/' + dbPath + '.json?v=' + vParam;
-                return fetch(url, { credentials: 'include', cache: 'no-store' })
+                return fetch(url, { cache: 'no-store' })
                     .then(r => {
                         if (!r.ok) throw new Error('layer fetch ' + dbPath + ' -> ' + r.status);
                         return r.json();
