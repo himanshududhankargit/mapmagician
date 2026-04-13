@@ -1142,14 +1142,6 @@
             </button>
             <p style="margin:8px 0 0;font-size:12px;color:#757575;line-height:1.4;">Clears all cached data including map tiles, saved regions, and service worker. The page will reload.</p>
         </div>
-        <div class="layer-section" id="settings-admin-section" style="display:none;">
-            <div class="layer-section-title">Admin</div>
-            <button id="settings-refresh-db" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-                Refresh database cache
-            </button>
-            <p style="margin:8px 0 0;font-size:12px;color:#757575;line-height:1.4;">Invalidates cached layer registries and re-fetches fresh data from Firebase. Does not reload the page.</p>
-        </div>
         <div class="layer-section">
             <div class="layer-section-title">Support</div>
             <button id="settings-contact-support" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;">
@@ -2082,11 +2074,6 @@
         const functions = firebase.app().functions('asia-south1');
         let currentUser = null;
         const ADMIN_EMAIL = "himanshududhankar@gmail.com";
-        function updateAdminSectionVisibility(user) {
-            var sec = document.getElementById('settings-admin-section');
-            if (!sec) return;
-            sec.style.display = (user && !user.isAnonymous && user.email === ADMIN_EMAIL) ? 'block' : 'none';
-        }
         const activePurchases = new Map(); // productId → { expiry, plan }
         const cachedPricing = new Map();   // productId → price (pre-fetched at startup)
         const activeSubscriptions = new Map(); // productId → subscription metadata from GISWebSubscriptions
@@ -2173,7 +2160,6 @@
                 settingsSignedOut.style.display = 'block';
                 settingsSignedIn.style.display = 'none';
             }
-            updateAdminSectionVisibility(user);
 
             if (user && !user.isAnonymous) {
                 // Google-signed-in user — show avatar or initial
@@ -7299,7 +7285,13 @@
                         req.onsuccess = resolve; req.onerror = resolve; req.onblocked = resolve;
                     }),
                     new Promise(function(resolve) {
-                        try { localStorage.removeItem('mm_geocoder_cache'); } catch(e) {}
+                        try {
+                            localStorage.removeItem('mm_geocoder_cache');
+                            localStorage.removeItem('layer_dp');
+                            localStorage.removeItem('layer_village');
+                            localStorage.removeItem('layer_olddp');
+                            localStorage.removeItem('solapur_overlay_v1');
+                        } catch(e) {}
                         resolve();
                     })
                 ]).then(function() {
@@ -7309,25 +7301,6 @@
                     alert('Cache cleared! The page will reload.');
                     location.reload(true);
                 });
-            });
-
-            // Admin-only: force-refresh cached layer registries from Firebase without reloading the page.
-            // The live version listener already auto-refetches when appConfig/dataVersions changes,
-            // so this button is a manual override for the rare case where you want to re-pull data
-            // without bumping a version.
-            var refreshDbBtn = document.getElementById('settings-refresh-db');
-            if (refreshDbBtn) refreshDbBtn.addEventListener('click', function() {
-                ['layer_dp', 'layer_village', 'layer_olddp'].forEach(function(k) {
-                    try { localStorage.removeItem(k); } catch (e) {}
-                });
-                layerDataFetched = false;
-                dpDataLoaded = false;
-                villageDataLoaded = false;
-                oldDPDataLoaded = false;
-                fetchLayerData();
-                var original = refreshDbBtn.innerHTML;
-                refreshDbBtn.innerHTML = '<span style="color:#2E7D32;">&#10003; Refreshed</span>';
-                setTimeout(function() { refreshDbBtn.innerHTML = original; }, 1500);
             });
 
             // Layer panel open/close
