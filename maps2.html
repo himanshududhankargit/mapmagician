@@ -270,12 +270,9 @@
         .fab:hover { background: #f0f0f0; }
         .fab svg { width: 24px; height: 24px; }
 
-        /* CSS pseudo-fullscreen: hides the top search row so the map has more vertical
-           space. Bottom bar stays visible — users need it to open Browse Regions, see
-           zoom/coord status, and access the home button. Using CSS (not
-           document.requestFullscreen) keeps the hardware back button under our popstate
-           control — mobile real-fullscreen exit consumes the back key synchronously
-           before popstate, which broke stepped back navigation. */
+        /* In real browser fullscreen, also hide the top search row so the map has more
+           vertical space. Bottom bar stays visible for Browse Regions / home / status.
+           Class is toggled by the fullscreenchange handler alongside real requestFullscreen. */
         body.app-fullscreen .top-search-row { display: none !important; }
 
         /* Layer panel (slide-in from right) */
@@ -1132,11 +1129,6 @@
         </div>
     </div>
 
-    <!-- Pseudo-fullscreen back-stack marker. Hidden; .open class is toggled by the
-         fullscreen button handler and picked up by the generic data-dismiss observer. -->
-    <div id="app-fs-state" data-dismiss="app-fs-exit-btn" style="display:none"></div>
-    <button id="app-fs-exit-btn" style="display:none" aria-hidden="true"></button>
-
     <!-- Bottom navigation bar -->
     <!-- Settings panel overlay -->
     <div class="layer-overlay" id="settings-overlay"></div>
@@ -1799,16 +1791,6 @@
                     suppressNextPopstate = false;
                     return;
                 }
-                // Yield to the region-browser's own popstate handler when it's
-                // active — it navigates levels independently and doesn't use
-                // this stack. Without this, a back press while in pseudo-fs +
-                // region browser would simultaneously exit pseudo-fs. Also
-                // suppress during region-browser cleanup (history.go(-N) fired
-                // from closeRegionBrowser) so programmatic closes don't pop the
-                // app-fs-state entry underneath.
-                var regionBrowserEl = document.getElementById('region-browser');
-                if (regionBrowserEl && regionBrowserEl.classList.contains('open')) return;
-                if (window.__mmRegionBrowserClosing) return;
                 if (stack.length === 0) return;
                 closingFromPopstate = true;
                 var top = stack[stack.length - 1];
@@ -5917,12 +5899,8 @@
                 // Go back in browser history to clean up pushed states
                 if (depth > 0) {
                     regionBrowserClosing = true;
-                    window.__mmRegionBrowserClosing = true; // read by generic back-stack
                     history.go(-depth);
-                    setTimeout(function() {
-                        regionBrowserClosing = false;
-                        window.__mmRegionBrowserClosing = false;
-                    }, 300);
+                    setTimeout(function() { regionBrowserClosing = false; }, 300);
                 }
             }
 
@@ -7477,36 +7455,32 @@
                 }
             });
 
-            // Fullscreen button — CSS pseudo-fullscreen via body.app-fullscreen class.
-            // We avoid browser requestFullscreen because mobile back keys exit real fs
-            // synchronously before popstate fires, which breaks stepped back navigation
-            // (back should close the top overlay first, then exit fullscreen on next press).
-            // The hidden #app-fs-state element + [data-dismiss] observer at script top
-            // routes back-button presses through #app-fs-exit-btn automatically.
-            (function() {
-                const btnFs = document.getElementById('btn-fullscreen');
+            // Fullscreen button — real browser fullscreen. Also toggles the
+            // body.app-fullscreen class so the top search row hides for extra
+            // map area. Note: mobile back keys exit real fullscreen synchronously
+            // before popstate fires, so stepped back navigation (close overlay
+            // first, then exit fs) does NOT work when real fs is active on mobile.
+            document.getElementById('btn-fullscreen').addEventListener('click', function() {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                } else {
+                    document.documentElement.requestFullscreen();
+                }
+            });
+            document.addEventListener('fullscreenchange', function() {
+                // Only react when documentElement is the fullscreen element (i.e., the
+                // main map fullscreen button triggered it). The compass requests fs on
+                // its own overlay element and must not flip the main icon/class.
                 const icon = document.getElementById('fullscreen-icon');
-                const appFsState = document.getElementById('app-fs-state');
-                const appFsExitBtn = document.getElementById('app-fs-exit-btn');
-                const enterIcon = '<polyline points="15,3 21,3 21,9"/><polyline points="9,21 3,21 3,15"/><polyline points="21,15 21,21 15,21"/><polyline points="3,9 3,3 9,3"/>';
-                const exitIcon = '<polyline points="4,14 4,20 10,20"/><polyline points="20,10 20,4 14,4"/><polyline points="14,20 20,20 20,14"/><polyline points="10,4 4,4 4,10"/>';
-
-                btnFs.addEventListener('click', function() {
-                    if (appFsState.classList.contains('open')) {
-                        appFsExitBtn.click(); // routes through the generic back-stack
-                    } else {
-                        document.body.classList.add('app-fullscreen');
-                        appFsState.classList.add('open'); // MutationObserver pushes history state
-                        icon.innerHTML = exitIcon;
-                    }
-                });
-
-                appFsExitBtn.addEventListener('click', function() {
+                if (document.fullscreenElement === document.documentElement) {
+                    document.body.classList.add('app-fullscreen');
+                    icon.innerHTML = '<polyline points="4,14 4,20 10,20"/><polyline points="20,10 20,4 14,4"/><polyline points="14,20 20,20 20,14"/><polyline points="10,4 4,4 4,10"/>';
+                } else if (!document.fullscreenElement && document.body.classList.contains('app-fullscreen')) {
+                    // Real fs exited while we were tracking main fs — sync cleanup.
                     document.body.classList.remove('app-fullscreen');
-                    appFsState.classList.remove('open'); // MutationObserver cleans up stack
-                    icon.innerHTML = enterIcon;
-                });
-            })();
+                    icon.innerHTML = '<polyline points="15,3 21,3 21,9"/><polyline points="9,21 3,21 3,15"/><polyline points="21,15 21,21 15,21"/><polyline points="3,9 3,3 9,3"/>';
+                }
+            });
 
             // Add-On Maps button
             document.getElementById('btn-addon-maps').addEventListener('click', function() {
@@ -7885,11 +7859,8 @@
                     stopListening();
                     unlockCompassOrientation();
                 });
-                // Compass uses real requestFullscreen (for screen.orientation.lock).
-                // On mobile, pressing back while compass is open exits real fullscreen
-                // synchronously — this handler then closes the compass overlay so the
-                // user returns to CSS pseudo-fullscreen (if active) cleanly. A second
-                // back press then exits pseudo-fullscreen via the generic back-stack.
+                // Back button on mobile exits fullscreen first (browser default),
+                // leaving compass open. Auto-close compass when fullscreen exits.
                 document.addEventListener('fullscreenchange', function() {
                     if (!document.fullscreenElement && !document.webkitFullscreenElement && overlay.classList.contains('open')) {
                         overlay.classList.remove('open');
