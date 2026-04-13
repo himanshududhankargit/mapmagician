@@ -1136,6 +1136,14 @@
             </button>
             <p style="margin:8px 0 0;font-size:12px;color:#757575;line-height:1.4;">Clears all cached data including map tiles, saved regions, and service worker. The page will reload.</p>
         </div>
+        <div class="layer-section" id="settings-admin-section" style="display:none;">
+            <div class="layer-section-title">Admin</div>
+            <button id="settings-refresh-db" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                Refresh database cache
+            </button>
+            <p style="margin:8px 0 0;font-size:12px;color:#757575;line-height:1.4;">Invalidates cached layer registries and re-fetches fresh data from Firebase. Does not reload the page.</p>
+        </div>
         <div class="layer-section">
             <div class="layer-section-title">Support</div>
             <button id="settings-contact-support" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;">
@@ -1901,6 +1909,12 @@
         googleProvider.setCustomParameters({ prompt: 'select_account' });
         const functions = firebase.app().functions('asia-south1');
         let currentUser = null;
+        const ADMIN_EMAIL = "himanshududhankar@gmail.com";
+        function updateAdminSectionVisibility(user) {
+            var sec = document.getElementById('settings-admin-section');
+            if (!sec) return;
+            sec.style.display = (user && !user.isAnonymous && user.email === ADMIN_EMAIL) ? 'block' : 'none';
+        }
         const activePurchases = new Map(); // productId → { expiry, plan }
         const cachedPricing = new Map();   // productId → price (pre-fetched at startup)
         const activeSubscriptions = new Map(); // productId → subscription metadata from GISWebSubscriptions
@@ -1987,6 +2001,7 @@
                 settingsSignedOut.style.display = 'block';
                 settingsSignedIn.style.display = 'none';
             }
+            updateAdminSectionVisibility(user);
 
             if (user && !user.isAnonymous) {
                 // Google-signed-in user — show avatar or initial
@@ -6845,6 +6860,24 @@
                 });
             });
 
+            // Admin-only: force-refresh cached layer registries from Firebase without reloading the page.
+            var refreshDbBtn = document.getElementById('settings-refresh-db');
+            if (refreshDbBtn) refreshDbBtn.addEventListener('click', function() {
+                ['layer_dp', 'layer_layout', 'layer_village', 'layer_olddp'].forEach(function(k) {
+                    try { localStorage.removeItem(k); } catch (e) {}
+                });
+                _dataVersionsPromise = null;
+                layerDataFetched = false;
+                dpDataLoaded = false;
+                layoutDataLoaded = false;
+                villageDataLoaded = false;
+                oldDPDataLoaded = false;
+                fetchLayerData();
+                var original = refreshDbBtn.innerHTML;
+                refreshDbBtn.innerHTML = '<span style="color:#2E7D32;">&#10003; Refreshed</span>';
+                setTimeout(function() { refreshDbBtn.innerHTML = original; }, 1500);
+            });
+
             // Layer panel open/close
             const layerPanel = document.getElementById('layer-panel');
             const layerOverlay = document.getElementById('layer-overlay');
@@ -7493,75 +7526,79 @@
             return processed;
         }
 
+        // --- Layer-registry cache with version stamps ---
+        // Reads appConfig/dataVersions once per session (tiny payload).
+        // For each layer, compares cached version with live version; fetches the full
+        // registry only if they differ. When the admin-only "Refresh database cache"
+        // button is clicked, _dataVersionsPromise is reset so the next fetch re-reads.
+        let _dataVersionsPromise = null;
+        function loadDataVersions() {
+            if (_dataVersionsPromise) return _dataVersionsPromise;
+            _dataVersionsPromise = database.ref('appConfig/dataVersions').once('value')
+                .then(snap => snap.val() || {})
+                .catch(err => { console.warn('dataVersions load failed:', err); return {}; });
+            return _dataVersionsPromise;
+        }
+
+        // Returns a Promise<data>. Uses localStorage cache if its version matches the
+        // live version under appConfig/dataVersions/{versionKey}. If the version node
+        // doesn't exist yet (both undefined), that still counts as a match — data is
+        // cached until the admin hits Refresh or bumps the version.
+        function getCachedOrFetchLayer(cacheKey, dbPath, versionKey) {
+            return loadDataVersions().then(versions => {
+                const liveVersion = versions[versionKey];
+                let cached = null;
+                try {
+                    const raw = localStorage.getItem(cacheKey);
+                    if (raw) cached = JSON.parse(raw);
+                } catch (e) { /* ignore corrupt cache */ }
+
+                if (cached && 'v' in cached && cached.v === liveVersion && cached.d) {
+                    return cached.d;
+                }
+
+                return database.ref(dbPath).once('value').then(snap => {
+                    const data = snap.val();
+                    if (data) {
+                        try {
+                            localStorage.setItem(cacheKey, JSON.stringify({ v: liveVersion === undefined ? null : liveVersion, d: data }));
+                        } catch (e) { /* quota */ }
+                    }
+                    return data;
+                });
+            });
+        }
+
         function fetchDPLayerData() {
-            const cached = getCachedData('layer_dp');
-            if (cached) {
-                dpLayerData = applyLayerData(cached, "Development Plan");
+            getCachedOrFetchLayer('layer_dp', DP_URL_DATABASE_NAME, 'layer_dp').then(data => {
+                if (!data) { dpDataLoaded = true; return; }
+                dpLayerData = applyLayerData(data, "Development Plan");
                 dpTileStatus = Array(dpLayerData.length).fill(false);
                 stickyTile = null;
                 stickyDistrict = null;
                 dpDataLoaded = true;
                 loadTilesBasedOnViewport();
-            }
-
-            database.ref(DP_URL_DATABASE_NAME).once('value').then(snapshot => {
-                const data = snapshot.val();
-                if (!data) { dpDataLoaded = true; return; }
-                setCachedData('layer_dp', data);
-                if (!cached) {
-                    dpLayerData = applyLayerData(data, "Development Plan");
-                    dpTileStatus = Array(dpLayerData.length).fill(false);
-                    stickyTile = null;
-                    stickyDistrict = null;
-                    dpDataLoaded = true;
-                    loadTilesBasedOnViewport();
-                }
             }).catch(error => console.error("Error fetching DP data:", error));
         }
 
         function fetchLayoutLayerData() {
-            const cached = getCachedData('layer_layout');
-            if (cached) {
-                layoutLayerData = applyLayerData(cached, "Layout Plan");
+            getCachedOrFetchLayer('layer_layout', LAYOUT_URL_DATABASE_NAME, 'layer_layout').then(data => {
+                if (!data) { layoutDataLoaded = true; return; }
+                layoutLayerData = applyLayerData(data, "Layout Plan");
                 layoutTileStatus = Array(layoutLayerData.length).fill(false);
                 layoutDataLoaded = true;
                 loadTilesBasedOnViewport();
-            }
-
-            database.ref(LAYOUT_URL_DATABASE_NAME).once('value').then(snapshot => {
-                const data = snapshot.val();
-                if (!data) { layoutDataLoaded = true; return; }
-                setCachedData('layer_layout', data);
-                if (!cached) {
-                    layoutLayerData = applyLayerData(data, "Layout Plan");
-                    layoutTileStatus = Array(layoutLayerData.length).fill(false);
-                    layoutDataLoaded = true;
-                    loadTilesBasedOnViewport();
-                }
             }).catch(error => console.error("Error fetching Layout data:", error));
         }
 
         function fetchVillageLayerData() {
-            const cached = getCachedData('layer_village');
-            if (cached) {
-                villageLayerData = applyLayerData(cached, "Village Plan");
+            getCachedOrFetchLayer('layer_village', VILLAGE_URL_DATABASE_NAME, 'layer_village').then(data => {
+                if (!data) { villageDataLoaded = true; return; }
+                villageLayerData = applyLayerData(data, "Village Plan");
                 villageTileStatus = Array(villageLayerData.length).fill(false);
                 villageDataLoaded = true;
                 loadTilesBasedOnViewport();
                 if (isVillageLayerVisible && villageMarkers.size === 0) createVillageMarkers();
-            }
-
-            database.ref(VILLAGE_URL_DATABASE_NAME).once('value').then(snapshot => {
-                const data = snapshot.val();
-                if (!data) { villageDataLoaded = true; return; }
-                setCachedData('layer_village', data);
-                if (!cached) {
-                    villageLayerData = applyLayerData(data, "Village Plan");
-                    villageTileStatus = Array(villageLayerData.length).fill(false);
-                    villageDataLoaded = true;
-                    loadTilesBasedOnViewport();
-                    if (isVillageLayerVisible && villageMarkers.size === 0) createVillageMarkers();
-                }
             }).catch(error => console.error("Error fetching Village data:", error));
         }
 
@@ -7607,30 +7644,18 @@
                 if (isShowingOldMaps && isDPLayerVisible) loadTilesBasedOnViewport();
             }
 
-            const cached = getCachedData('layer_olddp');
-            if (cached) {
-                oldDPLayerData = applyLayerData(cached, "Old Development Plan");
-                oldDPTileStatus = Array(oldDPLayerData.length).fill(false);
-                oldDPDataLoaded = true;
-                onOldDPReady();
-            }
-
-            database.ref(OLD_DP_URL_DATABASE_NAME).once('value').then(snapshot => {
-                const data = snapshot.val();
+            getCachedOrFetchLayer('layer_olddp', OLD_DP_URL_DATABASE_NAME, 'layer_olddp').then(data => {
                 if (!data) {
                     oldDPDataLoaded = true;
-                    localStorage.removeItem('layer_olddp'); // Clear stale cache
+                    localStorage.removeItem('layer_olddp');
                     oldDPLayerData = [];
                     updateOldMapsButtonVisibility();
                     return;
                 }
-                setCachedData('layer_olddp', data);
-                if (!cached) {
-                    oldDPLayerData = applyLayerData(data, "Old Development Plan");
-                    oldDPTileStatus = Array(oldDPLayerData.length).fill(false);
-                    oldDPDataLoaded = true;
-                    onOldDPReady();
-                }
+                oldDPLayerData = applyLayerData(data, "Old Development Plan");
+                oldDPTileStatus = Array(oldDPLayerData.length).fill(false);
+                oldDPDataLoaded = true;
+                onOldDPReady();
             }).catch(error => console.error("Error fetching Old DP data:", error));
         }
 
