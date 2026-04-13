@@ -4351,6 +4351,7 @@
         const DP_URL_DATABASE_NAME = "MahaGIS";
         const VILLAGE_URL_DATABASE_NAME = "MahaVillage";
         const OLD_DP_URL_DATABASE_NAME = "oldDPPlanGIS";
+        const LAYER_JSON_BASE = "https://tiles.mapmagician.in/dpplans/0jsondata";
 
         // Map settings
         const MAX_ZOOM_FOR_DP = 18;
@@ -8066,15 +8067,25 @@
                     return cached.d;
                 }
 
-                return database.ref(dbPath).once('value').then(snap => {
-                    const data = snap.val();
-                    if (data) {
-                        try {
-                            localStorage.setItem(cacheKey, JSON.stringify({ v: liveVersion === undefined ? null : liveVersion, d: data }));
-                        } catch (e) { /* quota */ }
-                    }
-                    return data;
-                });
+                const vParam = encodeURIComponent(liveVersion == null ? '0' : String(liveVersion));
+                const url = LAYER_JSON_BASE + '/' + dbPath + '.json?v=' + vParam;
+                return fetch(url, { credentials: 'include', cache: 'no-store' })
+                    .then(r => {
+                        if (!r.ok) throw new Error('layer fetch ' + dbPath + ' -> ' + r.status);
+                        return r.json();
+                    })
+                    .then(data => {
+                        if (data) {
+                            try {
+                                localStorage.setItem(cacheKey, JSON.stringify({ v: liveVersion === undefined ? null : liveVersion, d: data }));
+                            } catch (e) { /* quota */ }
+                        }
+                        return data;
+                    })
+                    .catch(err => {
+                        console.error('[layer] CloudFront fetch failed for', dbPath, err);
+                        return cached && cached.d ? cached.d : null;
+                    });
             });
         }
 
@@ -8106,20 +8117,22 @@
         let oldDPGISLoaded = false;
 
         function loadOldDPGISRegions() {
-            database.ref('oldDPPlanGIS').once('value').then(snapshot => {
-                const data = snapshot.val() || {};
-                for (const key in data) {
-                    const item = data[key];
-                    if (item && item.kml) {
-                        try {
-                            const polygon = parseKML(item.kml);
-                            if (polygon) oldDPGISPolygons.push(polygon);
-                        } catch (e) { /* skip bad entries */ }
+            getCachedOrFetchLayer('layer_olddp', OLD_DP_URL_DATABASE_NAME, 'layer_olddp', fetchOldDPLayerData)
+                .then(data => {
+                    data = data || {};
+                    for (const key in data) {
+                        const item = data[key];
+                        if (item && item.kml) {
+                            try {
+                                const polygon = parseKML(item.kml);
+                                if (polygon) oldDPGISPolygons.push(polygon);
+                            } catch (e) { /* skip bad entries */ }
+                        }
                     }
-                }
-                oldDPGISLoaded = true;
-                updateOldMapsButtonVisibility();
-            });
+                    oldDPGISLoaded = true;
+                    updateOldMapsButtonVisibility();
+                })
+                .catch(err => { console.error('loadOldDPGISRegions', err); oldDPGISLoaded = true; });
         }
 
         function updateOldMapsButtonVisibility() {
