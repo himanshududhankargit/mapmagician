@@ -2230,6 +2230,14 @@
                 document.getElementById('payment-loading-sub').textContent = user.email || '';
                 authLoadingOverlay.classList.add('open');
 
+                // Fire-and-forget: delete this user's expired purchases server-side.
+                // Bounded to the caller's own emailKey; runs once per session.
+                if (!window.__cleanupFiredThisSession) {
+                    window.__cleanupFiredThisSession = true;
+                    functions.httpsCallable('cleanupMyExpiredPurchases')()
+                        .catch(function(err) { console.warn('Self-cleanup failed:', err && err.message); });
+                }
+
                 // Wait for purchases to load, THEN resume pending actions
                 fetchVillagePurchases(); // also load village purchase status
                 fetchSubscriptionStatus(); // load subscription metadata
