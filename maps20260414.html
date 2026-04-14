@@ -216,7 +216,6 @@
         }
         .pill-btn:hover { background: #e8e8e8; }
         .pill-btn.active { background: #008577; color: #fff; }
-        .measure-clear-x { display:none; margin-left:6px; width:18px; height:18px; line-height:18px; text-align:center; border-radius:50%; background:#f44336; color:#fff; font-weight:700; font-size:11px; vertical-align:middle; }
 
         /* Compass button — mobile only (device with coarse/touch pointer) */
         #btn-compass { display: none; }
@@ -967,8 +966,8 @@
     <div class="toolbar-scroll">
         <button class="pill-btn" id="btn-addon-maps" style="display:none;background:#2E7D32;color:#fff;font-weight:600;">0 Add-On Maps</button>
         <button class="pill-btn" id="btn-old-maps" style="display:none">Load Old Maps</button>
-        <button class="pill-btn" id="btn-measure-area">Measure Area<span class="measure-clear-x" id="clear-area-x">✕</span></button>
-        <button class="pill-btn" id="btn-measure-length">Measure Length<span class="measure-clear-x" id="clear-length-x">✕</span></button>
+        <button class="pill-btn" id="btn-measure-area">Measure Area</button>
+        <button class="pill-btn" id="btn-measure-length">Measure Length</button>
         <button class="pill-btn" id="btn-compass">Compass</button>
     </div>
 
@@ -1107,11 +1106,6 @@
                 <span class="toggle-track"></span>
                 <span class="layer-toggle-label">Village Plans</span>
             </label>
-            <label class="layer-toggle" id="village-boundary-toggle" style="display:none">
-                <input type="checkbox" id="village-boundary-layer">
-                <span class="toggle-track"></span>
-                <span class="layer-toggle-label">Village Boundaries</span>
-            </label>
         </div>
 
         <div class="layer-section">
@@ -1141,6 +1135,14 @@
                 Clear Cache &amp; Reload
             </button>
             <p style="margin:8px 0 0;font-size:12px;color:#757575;line-height:1.4;">Clears all cached data including map tiles, saved regions, and service worker. The page will reload.</p>
+        </div>
+        <div class="layer-section" id="settings-admin-section" style="display:none;">
+            <div class="layer-section-title">Admin</div>
+            <button id="settings-refresh-db" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                Refresh database cache
+            </button>
+            <p style="margin:8px 0 0;font-size:12px;color:#757575;line-height:1.4;">Invalidates cached layer registries and re-fetches fresh data from Firebase. Does not reload the page.</p>
         </div>
         <div class="layer-section">
             <div class="layer-section-title">Support</div>
@@ -1320,16 +1322,6 @@
         </div>
     </div>
 
-    <!-- Clear measurements confirmation dialog -->
-    <div class="auth-dialog-overlay" id="clear-measure-dialog-overlay" data-dismiss="clear-measure-cancel">
-        <div class="auth-dialog">
-            <h3>Clear Measurements</h3>
-            <p id="clear-measure-dialog-text">Clear all area measurements?</p>
-            <button class="auth-dialog-btn" id="clear-measure-confirm" style="background:#f44336;color:#fff;border:none;">Clear</button>
-            <button class="auth-dialog-cancel" id="clear-measure-cancel">Cancel</button>
-        </div>
-    </div>
-
     <!-- Support form dialog -->
     <div class="auth-dialog-overlay" id="support-dialog-overlay" data-dismiss="support-cancel-btn" style="z-index:4000;">
         <div class="auth-dialog" style="max-width:400px;text-align:left;">
@@ -1416,7 +1408,7 @@
         <div class="zoom-dialog" style="max-width:720px;padding:0;">
             <!-- Header -->
             <div class="pd-header">
-                <div class="pd-kicker">Choose Your Plan</div>
+                <div class="pd-kicker">Premium Access</div>
                 <h3 id="zoom-restrict-title" class="pd-title">Unlock Region</h3>
                 <div id="zoom-restrict-region" style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;display:none;"></div>
             </div>
@@ -1427,8 +1419,8 @@
                 <div class="pd-carousel-wrap" id="pd-plan-tabs">
                     <button class="pd-carousel-arrow pd-arrow-left" id="pd-arrow-left" onclick="document.getElementById('pd-cards-scroll').scrollBy({left:-260,behavior:'smooth'})">&#8249;</button>
                     <div id="pd-cards-scroll" class="pd-cards-row">
-                        <!-- Subscription card -->
-                        <div class="pd-plan-card pd-plan-card-sub">
+                        <!-- Subscription card (hidden for now) -->
+                        <div class="pd-plan-card pd-plan-card-sub" style="display:none;">
                             <div class="pd-card-badge" style="background:#4CAF50;">POPULAR</div>
                             <div class="pd-card-name" id="pd-sub-card-name" style="color:#2E7D32;">Weekly<br>Subscription</div>
                             <div class="pd-card-price"><span id="zoom-sub-price-amount" style="font-size:32px;font-weight:800;color:#1A1A1A;">&#8377;89</span><span id="pd-sub-period-label" style="font-size:13px;color:#888;margin-left:4px;">/ week</span></div>
@@ -1443,7 +1435,7 @@
                             <button class="pd-card-cta" id="zoom-restrict-sub-action" style="background:#4CAF50;">Subscribe Now</button>
                         </div>
                         <!-- 7-Day Pass card -->
-                        <div class="pd-plan-card pd-plan-card-onetime">
+                        <div class="pd-plan-card pd-plan-card-onetime" style="flex:1;min-width:0;">
                             <div class="pd-card-name" style="color:#1565C0;">Prepaid<br>7-Day Access</div>
                             <div class="pd-card-price"><span id="zoom-price-amount" style="font-size:32px;font-weight:800;color:#1A1A1A;">&#8377;199</span><span style="font-size:13px;color:#888;margin-left:4px;">one-time</span></div>
                             <div class="pd-card-subtitle">No auto-renewal &middot; Login &amp; use anywhere</div>
@@ -1458,8 +1450,8 @@
                         </div>
                     </div>
                     <button class="pd-carousel-arrow pd-arrow-right" id="pd-arrow-right" onclick="document.getElementById('pd-cards-scroll').scrollBy({left:260,behavior:'smooth'})">&#8250;</button>
-                    <!-- Dot indicators -->
-                    <div class="pd-dots">
+                    <!-- Dot indicators (hidden — single card) -->
+                    <div class="pd-dots" style="display:none !important;">
                         <span class="pd-dot pd-dot-active" id="pd-dot-0"></span>
                         <span class="pd-dot" id="pd-dot-1"></span>
                     </div>
@@ -1703,14 +1695,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
-    <!-- Microsoft Clarity — heat maps + session replay -->
-    <script type="text/javascript">
-        (function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window, document, "clarity", "script", "w9zgyteauk");
-    </script>
     <!-- Razorpay checkout -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <!-- JSZip for extracting district geojson zips -->
@@ -1903,165 +1887,17 @@
 
         // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyDUjHKQ3g2yz2o4ax61QS7dq5z0FV8k5Ss",
+            apiKey: "AIzaSyCJ1MkbVviNX0RrqOEg-00wKBiB3zCtUsQ",
             authDomain: "sodium-hour-256110.firebaseapp.com",
             databaseURL: "https://sodium-hour-256110.firebaseio.com",
             projectId: "sodium-hour-256110",
             storageBucket: "sodium-hour-256110.appspot.com",
             messagingSenderId: "427608700943",
-            appId: "1:427608700943:web:4b79666808054be5654b7a"
+            appId: "1:427608700943:android:5a92253b98544125654b7a"
         };
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
-
-        // ===== Analytics module (GA4 via gtag.js + Microsoft Clarity) =====
-        // Central wrapper so call sites stay one-liners and a missing ID or blocked SDK never breaks the page.
-        window.mmAnalytics = (function() {
-            function safe(fn) { try { fn(); } catch (e) { /* analytics must never throw */ } }
-
-            function detectDevice() {
-                var ua = navigator.userAgent || '';
-                var isTablet = /iPad|Android(?!.*Mobile)|Tablet/i.test(ua);
-                var isMobile = /Mobile|iPhone|iPod|Android.*Mobile|BlackBerry|Opera Mini/i.test(ua);
-                if (isTablet) return 'tablet';
-                if (isMobile) return 'mobile';
-                return 'desktop';
-            }
-            function detectBrowser() {
-                var ua = navigator.userAgent || '';
-                if (/Edg\//.test(ua)) return 'Edge';
-                if (/OPR\//.test(ua)) return 'Opera';
-                if (/Chrome\//.test(ua)) return 'Chrome';
-                if (/Firefox\//.test(ua)) return 'Firefox';
-                if (/Safari\//.test(ua)) return 'Safari';
-                return 'Other';
-            }
-            function detectOS() {
-                var ua = navigator.userAgent || '';
-                if (/Windows NT/.test(ua)) return 'Windows';
-                if (/Android/.test(ua)) return 'Android';
-                if (/iPhone|iPad|iPod/.test(ua)) return 'iOS';
-                if (/Mac OS X/.test(ua)) return 'macOS';
-                if (/Linux/.test(ua)) return 'Linux';
-                return 'Other';
-            }
-
-            var deviceCategory = detectDevice();
-            var browser = detectBrowser();
-            var os = detectOS();
-            var screenSize = (window.screen && window.screen.width && window.screen.height)
-                ? window.screen.width + 'x' + window.screen.height : '';
-            var timezone = '';
-            try { timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
-            var connectionType = (navigator.connection && navigator.connection.effectiveType) || '';
-            var language = navigator.language || '';
-
-            // Parse UTM + traffic source from landing URL (persist via sessionStorage so they survive in-page nav)
-            function captureAcquisition() {
-                try {
-                    var params = new URLSearchParams(window.location.search);
-                    var utmKeys = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'];
-                    var utm = {};
-                    utmKeys.forEach(function(k){ var v = params.get(k); if (v) utm[k] = v.slice(0,100); });
-                    var ref = document.referrer || '';
-                    var trafficSource = 'direct';
-                    if (ref) {
-                        try {
-                            var host = new URL(ref).hostname;
-                            if (/google\./.test(host)) trafficSource = 'google';
-                            else if (/bing\./.test(host)) trafficSource = 'bing';
-                            else if (/facebook\.|instagram\.|t\.co|twitter\.|x\.com|linkedin\.|youtube\./.test(host)) trafficSource = 'social';
-                            else if (host !== location.hostname) trafficSource = 'referral';
-                        } catch (e) {}
-                    }
-                    return { utm: utm, trafficSource: trafficSource, landingPage: location.pathname };
-                } catch (e) { return { utm: {}, trafficSource: 'unknown', landingPage: location.pathname }; }
-            }
-            var acquisition = captureAcquisition();
-
-            // Baseline user properties — set before auth so even anonymous visitors have device/env context
-            safe(function() {
-                gtag('set', 'user_properties', {
-                    device_category: deviceCategory,
-                    browser: browser,
-                    os: os,
-                    screen_size: screenSize,
-                    timezone: timezone,
-                    connection_type: connectionType,
-                    language: language,
-                    traffic_source: acquisition.trafficSource
-                });
-            });
-
-            function event(name, params) {
-                safe(function() { gtag('event', name, params || {}); });
-            }
-            function setUserId(id) {
-                safe(function() { gtag('set', { user_id: id }); });
-                safe(function() { if (window.clarity) window.clarity('identify', id); });
-            }
-            function setUserProperties(props) {
-                safe(function() { gtag('set', 'user_properties', props || {}); });
-            }
-            function clarityTag(key, value) {
-                safe(function() { if (window.clarity) window.clarity('set', key, value); });
-            }
-
-            // Page-level retention bookkeeping stored in localStorage
-            function updateRetentionProps() {
-                try {
-                    var now = Date.now();
-                    var first = parseInt(localStorage.getItem('mm_first_seen_ts') || '0', 10);
-                    if (!first) { first = now; localStorage.setItem('mm_first_seen_ts', String(first)); }
-                    var last = parseInt(localStorage.getItem('mm_last_seen_ts') || '0', 10);
-                    var daysSince = last ? Math.floor((now - last) / 86400000) : 0;
-                    var total = parseInt(localStorage.getItem('mm_total_sessions') || '0', 10) + 1;
-                    localStorage.setItem('mm_total_sessions', String(total));
-                    localStorage.setItem('mm_last_seen_ts', String(now));
-                    setUserProperties({
-                        days_since_last_visit: daysSince,
-                        total_sessions: total,
-                        first_seen_days_ago: Math.floor((now - first) / 86400000)
-                    });
-                } catch (e) {}
-            }
-            updateRetentionProps();
-
-            // Global error capture — small payloads, throttled to prevent flood
-            var errorCount = 0;
-            window.addEventListener('error', function(e) {
-                if (errorCount++ > 20) return;
-                event('js_error', {
-                    message: String(e.message || '').slice(0, 200),
-                    source: String(e.filename || '').slice(0, 200),
-                    lineno: e.lineno || 0
-                });
-            });
-            window.addEventListener('unhandledrejection', function(e) {
-                if (errorCount++ > 20) return;
-                var reason = (e && e.reason) ? String(e.reason.message || e.reason) : '';
-                event('unhandled_rejection', { reason: reason.slice(0, 200) });
-            });
-
-            return {
-                event: event,
-                setUserId: setUserId,
-                setUserProperties: setUserProperties,
-                clarityTag: clarityTag,
-                deviceCategory: deviceCategory,
-                browser: browser,
-                os: os,
-                acquisition: acquisition
-            };
-        })();
-
-        // Fire initial page_view / session_start context immediately
-        mmAnalytics.event('app_open', {
-            device_category: mmAnalytics.deviceCategory,
-            browser: mmAnalytics.browser,
-            embed: new URLSearchParams(window.location.search).get('embed') === '1' ? 1 : 0
-        });
     </script>
     
     <script>
@@ -2074,6 +1910,11 @@
         const functions = firebase.app().functions('asia-south1');
         let currentUser = null;
         const ADMIN_EMAIL = "himanshududhankar@gmail.com";
+        function updateAdminSectionVisibility(user) {
+            var sec = document.getElementById('settings-admin-section');
+            if (!sec) return;
+            sec.style.display = (user && !user.isAnonymous && user.email === ADMIN_EMAIL) ? 'block' : 'none';
+        }
         const activePurchases = new Map(); // productId → { expiry, plan }
         const cachedPricing = new Map();   // productId → price (pre-fetched at startup)
         const activeSubscriptions = new Map(); // productId → subscription metadata from GISWebSubscriptions
@@ -2160,6 +2001,7 @@
                 settingsSignedOut.style.display = 'block';
                 settingsSignedIn.style.display = 'none';
             }
+            updateAdminSectionVisibility(user);
 
             if (user && !user.isAnonymous) {
                 // Google-signed-in user — show avatar or initial
@@ -2184,18 +2026,6 @@
 
                 // Realtime listener: re-fetch when purchases change server-side (admin refund, webhook, etc.)
                 var emailKey = user.email.replace(/\./g, ',');
-
-                // Analytics: tag the signed-in user + domain-derived props
-                try {
-                    var emailDomain = (user.email.split('@')[1] || '').toLowerCase();
-                    mmAnalytics.setUserId(emailKey);
-                    mmAnalytics.setUserProperties({
-                        auth_method: 'google',
-                        email_domain: emailDomain
-                    });
-                    mmAnalytics.clarityTag('auth', 'google');
-                    mmAnalytics.clarityTag('email_domain', emailDomain);
-                } catch (e) {}
                 if (purchaseListenerRef) purchaseListenerRef.off();
                 purchaseListenerRef = firebase.database().ref('GISWebOneTimePurchases/' + emailKey);
                 var purchaseListenerSkipFirst = true; // Skip the initial .on() callback
@@ -2270,10 +2100,6 @@
                 clearAllLayersOfType(villageOverlays);
                 villageTileStatus = Array(villageLayerData.length).fill(false);
                 updateVillageMarkerStyles();
-                try {
-                    mmAnalytics.setUserProperties({ auth_method: 'anonymous' });
-                    mmAnalytics.clarityTag('auth', 'anonymous');
-                } catch (e) {}
                 fetchCloudFrontCookies();
             } else {
                 profileBtn.classList.remove('signed-in');
@@ -2297,7 +2123,6 @@
                 if (so) so.classList.remove('open');
                 // Detach pricing listener to prevent unnecessary reads
                 if (typeof pricingListenerRef !== 'undefined') pricingListenerRef.off();
-                if (typeof subPricingRef !== 'undefined') subPricingRef.off();
                 // Clear village tiles (don't load tiles yet — signInAnonymously will trigger cookie fetch + tile load)
                 clearAllLayersOfType(villageOverlays);
                 villageTileStatus = Array(villageLayerData.length).fill(false);
@@ -2333,6 +2158,7 @@
                 document.cookie = `CloudFront-Signature=${data['CloudFront-Signature']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
                 document.cookie = `CloudFront-Key-Pair-Id=${data['CloudFront-Key-Pair-Id']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
 
+                // console.log('CloudFront cookies set, expires:', expires);
                 if (!cfCookiesReady) {
                     cfCookiesReady = true;
                     // Layer data already fetching in parallel — now cookies are set, trigger tile load
@@ -2355,11 +2181,14 @@
                 const refreshIn = data.expiresAt - Date.now() - 3600000; // 1 hour before
                 if (refreshIn > 0) {
                     cfCookieRefreshTimer = setTimeout(() => {
+                        // console.log('Auto-refreshing CloudFront cookies');
                         fetchCloudFrontCookies();
                     }, refreshIn);
                 }
             } catch (err) {
-                if (err.code !== 'permission-denied') {
+                if (err.code === 'permission-denied') {
+                    // console.log('No active purchase — tile access restricted');
+                } else {
                     console.error('Failed to fetch CloudFront cookies:', err);
                 }
             }
@@ -2390,7 +2219,6 @@
             currentSessionId = (typeof crypto !== 'undefined' && crypto.randomUUID)
                 ? crypto.randomUUID()
                 : (Date.now() + '-' + Math.random().toString(36).slice(2));
-            try { mmAnalytics.event('login', { method: 'google' }); } catch (e) {}
             const ref = firebase.database().ref('GISWebActiveSessions/' + emailKey);
 
             // Detach previous listener if any
@@ -2682,23 +2510,8 @@
             return m + 'm';
         }
 
-        function formatSubscriptionCountdown(expiry) {
-            if (!expiry || expiry - Date.now() <= 0) return 'Expired';
-            var renews = new Date(expiry).toLocaleDateString('en-GB', {
-                day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata'
-            });
-            return 'Renews on ' + renews;
-        }
-
         // Buy a 7-day pass
         async function buyRegion(productId, regionName) {
-            try {
-                mmAnalytics.event('select_item', {
-                    item_id: productId,
-                    item_name: regionName,
-                    item_category: 'dp_7day'
-                });
-            } catch (e) {}
             if (!currentUser || currentUser.isAnonymous) {
                 // Show login dialog — store purchase intent so we can resume after sign-in
                 pendingPurchase = { productId, regionName };
@@ -2744,15 +2557,6 @@
                                 productId: productId,
                                 regionName: regionName
                             });
-                            try {
-                                mmAnalytics.event('purchase', {
-                                    transaction_id: response.razorpay_payment_id,
-                                    value: (data.amount || 0) / 100,
-                                    currency: data.currency || 'INR',
-                                    items: [{ item_id: productId, item_name: regionName, item_category: 'dp_7day' }]
-                                });
-                                mmAnalytics.clarityTag('plan', 'paid');
-                            } catch (e) {}
                             await fetchPurchaseStatus(true);
                             // Clear and reload tiles so they use the new access token
                             clearAllLayersOfType(dpOverlays);
@@ -2798,25 +2602,7 @@
                         document.head.appendChild(s);
                     });
                 }
-                try {
-                    mmAnalytics.event('begin_checkout', {
-                        currency: data.currency || 'INR',
-                        value: (data.amount || 0) / 100,
-                        items: [{ item_id: productId, item_name: regionName, item_category: 'dp_7day' }]
-                    });
-                } catch (e) {}
                 const rzp = new Razorpay(options);
-                try {
-                    rzp.on('payment.failed', function(resp) {
-                        var err = (resp && resp.error) || {};
-                        mmAnalytics.event('payment_failed', {
-                            item_id: productId,
-                            item_category: 'dp_7day',
-                            code: String(err.code || '').slice(0, 60),
-                            reason: String(err.reason || err.description || '').slice(0, 120)
-                        });
-                    });
-                } catch (e) {}
                 rzp.open();
             } catch (error) {
                 loadingOverlay.classList.remove('open');
@@ -2837,13 +2623,6 @@
 
         // Subscribe to a weekly auto-renewing plan
         async function subscribeRegion(productId, regionName) {
-            try {
-                mmAnalytics.event('select_item', {
-                    item_id: productId,
-                    item_name: regionName,
-                    item_category: 'subscription'
-                });
-            } catch (e) {}
             if (!currentUser || currentUser.isAnonymous) {
                 pendingPurchase = { productId, regionName, purchaseType: 'subscription' };
                 document.getElementById('auth-dialog-desc').textContent =
@@ -2877,14 +2656,6 @@
                         await fetchPurchaseStatus(true);
                         if (hasPurchase(pid)) {
                             // Webhook confirmed — subscription is active
-                            try {
-                                mmAnalytics.event('purchase', {
-                                    transaction_id: subId,
-                                    currency: 'INR',
-                                    items: [{ item_id: pid, item_name: regionName, item_category: 'subscription' }]
-                                });
-                                mmAnalytics.clarityTag('plan', 'paid');
-                            } catch (e) {}
                             await fetchSubscriptionStatus();
                             clearAllLayersOfType(dpOverlays);
                             dpTileStatus = Array(dpLayerData.length).fill(false);
@@ -2943,24 +2714,7 @@
                         document.head.appendChild(s);
                     });
                 }
-                try {
-                    mmAnalytics.event('begin_checkout', {
-                        currency: 'INR',
-                        items: [{ item_id: productId, item_name: regionName, item_category: 'subscription' }]
-                    });
-                } catch (e) {}
                 var rzp = new Razorpay(options);
-                try {
-                    rzp.on('payment.failed', function(resp) {
-                        var err = (resp && resp.error) || {};
-                        mmAnalytics.event('payment_failed', {
-                            item_id: productId,
-                            item_category: 'subscription',
-                            code: String(err.code || '').slice(0, 60),
-                            reason: String(err.reason || err.description || '').slice(0, 120)
-                        });
-                    });
-                } catch (e) {}
                 rzp.open();
             } catch (error) {
                 loadingOverlay.classList.remove('open');
@@ -3046,10 +2800,6 @@
             overlay.classList.add('open');
         }
 
-        // Debounce for checkFirebasePurchaseEntry — prevents rapid DB reads on zoom
-        let _lastFirebaseCheckPid = null;
-        let _lastFirebaseCheckTime = 0;
-
         // Global variables
         let map;
         let markers = [];
@@ -3087,13 +2837,6 @@
         const SOLAPUR_FADE_MIN_ZOOM = 12;   // at/below this zoom labels are fully opaque
         const SOLAPUR_HIDE_ZOOM     = 17;   // at/above this zoom labels are hidden
         const SOLAPUR_HIDE_OPACITY  = 0.15; // floor opacity that the ease-out approaches
-
-        // Low-memory device gate — skip heavy GeoJSON + Solapur overlays on < 8 GB devices.
-        // navigator.deviceMemory is Chrome/Edge/Opera/Samsung Internet (covers most
-        // Android traffic). Returns GiB rounded to nearest power-of-two bucket
-        // (0.25, 0.5, 1, 2, 4, 8). Undefined on Firefox/Safari → treated as capable.
-        const IS_LOW_MEMORY_DEVICE = (navigator.deviceMemory || 8) < 8;
-        let isVillageBoundaryEnabled = !IS_LOW_MEMORY_DEVICE;
 
         // ---------- Static district bounds index (for viewport-based loading) ----------
         // Pre-computed bounding boxes for all 37 Maharashtra district GeoJSON files.
@@ -3160,6 +2903,7 @@
         let selectedMeasureId = null;     // Currently selected saved measurement
         let measureDeleteIW = null;       // InfoWindow for delete button
         let MeasureLabelOverlay = null;   // Class, assigned in initMap after API loads
+        let createSolapurLabelGroundOverlay = null;   // Factory, assigned in initMap after API loads
         let VertexHandleOverlay = null;   // Class, assigned in initMap after API loads
         let activeVertexHandle = null;    // Current visible vertex handle overlay
         let magnifierMap = null;          // Secondary map for magnifier loupe
@@ -3552,7 +3296,6 @@
                 localStorage.setItem('gis_measurements', JSON.stringify(savedMeasurements));
             } catch (e) { /* localStorage full */ }
             renderSavedMeasurement(m);
-            updateClearMeasurementsButton();
             updateStatus('Measurement saved');
         }
 
@@ -3565,7 +3308,6 @@
             } catch (e) {
                 savedMeasurements = [];
             }
-            updateClearMeasurementsButton();
         }
 
         function renderSavedMeasurement(m) {
@@ -3754,40 +3496,7 @@
                 localStorage.setItem('gis_measurements', JSON.stringify(savedMeasurements));
             } catch (e) { /* ignore */ }
             deselectMeasurement();
-            updateClearMeasurementsButton();
             updateStatus('Measurement deleted');
-        }
-
-        function clearMeasurementsByType(type) {
-            deselectMeasurement();
-            hideVertexHandle();
-            var idsToRemove = new Set();
-            savedMeasurements.forEach(function(m) { if (m.type === type) idsToRemove.add(m.id); });
-            savedMeasureOverlays.forEach(function(ov) {
-                if (!idsToRemove.has(ov.id)) return;
-                ov.shapes.forEach(function(s) { s.setMap(null); });
-                ov.markers.forEach(function(m) { m.setMap(null); });
-                ov.labels.forEach(function(l) { l.setMap(null); });
-            });
-            savedMeasureOverlays = savedMeasureOverlays.filter(function(ov) { return !idsToRemove.has(ov.id); });
-            savedMeasurements = savedMeasurements.filter(function(m) { return m.type !== type; });
-            try {
-                if (savedMeasurements.length > 0) {
-                    localStorage.setItem('gis_measurements', JSON.stringify(savedMeasurements));
-                } else {
-                    localStorage.removeItem('gis_measurements');
-                }
-            } catch (e) {}
-            updateClearMeasurementsButton();
-        }
-
-        function updateClearMeasurementsButton() {
-            var hasArea = savedMeasurements.some(function(m) { return m.type === 'area'; });
-            var hasLength = savedMeasurements.some(function(m) { return m.type === 'length'; });
-            var ax = document.getElementById('clear-area-x');
-            var lx = document.getElementById('clear-length-x');
-            if (ax) ax.style.display = hasArea ? 'inline-block' : 'none';
-            if (lx) lx.style.display = hasLength ? 'inline-block' : 'none';
         }
 
         // Point-in-polygon test (ray casting) — used on main thread for region detection
@@ -3860,6 +3569,8 @@
                             bestMatch = district;
                             bestArea = area;
                             bestTile = tile;
+                        } else {
+                            // console.log('[RegionDetect] Tile hit but no menuGIS match. tile.id:', tile.id, 'tile.productPurchaseID:', tile.productPurchaseID);
                         }
                     }
                 }
@@ -4336,10 +4047,9 @@
         const VILLAGE_PLAN = "Village Plans";
         const OLD_DP_PLAN = "Old Development Plan";
 
-        const DP_URL_DATABASE_NAME = "d1";
-        const VILLAGE_URL_DATABASE_NAME = "d2";
-        const OLD_DP_URL_DATABASE_NAME = "d3";
-        const LAYER_JSON_BASE = "data/database";
+        const DP_URL_DATABASE_NAME = "MahaGIS";
+        const VILLAGE_URL_DATABASE_NAME = "MahaVillage";
+        const OLD_DP_URL_DATABASE_NAME = "oldDPPlanGIS";
 
         // Map settings
         const MAX_ZOOM_FOR_DP = 18;
@@ -4502,6 +4212,7 @@
             if (existing) {
                 const villages = await getVillagesForDistrict(districtName);
                 if (villages && villages.length > 0) {
+                    // console.log('[geojson] cache hit for', districtName, '—', villages.length, 'villages');
                     return villages;
                 }
             }
@@ -4512,6 +4223,7 @@
                 try {
                     const fileName = _districtFileName(districtName);
                     const url = GEOJSON_BASE_PATH + fileName + '.zip';
+                    // console.log('[geojson] fetching', url);
                     const res = await fetch(url);
                     if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
                     const blob = await res.blob();
@@ -4542,6 +4254,7 @@
                         featureCount: villageRecords.length,
                         downloadedAt: Date.now()
                     });
+                    // console.log('[geojson] loaded', districtName, '—', villageRecords.length, 'villages');
                     // Re-read to get records with their auto-generated IDs
                     return await getVillagesForDistrict(districtName);
                 } finally {
@@ -4740,153 +4453,46 @@
             return path;
         }
 
-        // Builds ONE google.maps.GroundOverlay containing all Solapur village labels
-        // pre-rendered into a single canvas. Collapsing 26 overlays to 1 is what makes
-        // Solapur zoom smooth — each GroundOverlay costs a CSS transform reproject per
-        // frame of the zoom animation, and 26 of them compound noticeably.
-        //
-        // Text drawing (font, stroke, padding, line height, baseline formula, rotation
-        // direction) matches the Android source of truth byte-for-byte, just translated
-        // to consolidated-canvas coordinates via a per-label design-unit → pixel factor.
-        function buildSolapurLabelsConsolidatedOverlay(labels) {
-            if (!labels || !labels.length) return null;
-
-            // 1. Label center bbox, padded by the widest label's extent.
-            let minLat = Infinity, maxLat = -Infinity;
-            let minLng = Infinity, maxLng = -Infinity;
-            let maxLabelMeters = 0;
-            labels.forEach(function(l) {
-                if (l.lat < minLat) minLat = l.lat;
-                if (l.lat > maxLat) maxLat = l.lat;
-                if (l.lng < minLng) minLng = l.lng;
-                if (l.lng > maxLng) maxLng = l.lng;
-                const w = 1500 * (l.scale || 1);
-                if (w > maxLabelMeters) maxLabelMeters = w;
-            });
-            const latMid = (minLat + maxLat) / 2;
-            const mPerDegLat = 111320;
-            const mPerDegLng = 111320 * Math.cos(latMid * Math.PI / 180);
-            const padLat = maxLabelMeters / mPerDegLat;
-            const padLng = maxLabelMeters / mPerDegLng;
-            minLat -= padLat; maxLat += padLat;
-            minLng -= padLng; maxLng += padLng;
-            const bboxW_m = (maxLng - minLng) * mPerDegLng;
-            const bboxH_m = (maxLat - minLat) * mPerDegLat;
-
-            // 2. Canvas sized so the longer side = 4096 px (~5 m/px at ~20 km bbox).
-            const MAX_SIDE_PX = 4096;
-            let canvasW, canvasH;
-            if (bboxW_m >= bboxH_m) {
-                canvasW = MAX_SIDE_PX;
-                canvasH = Math.max(2, Math.round(MAX_SIDE_PX * bboxH_m / bboxW_m));
-            } else {
-                canvasH = MAX_SIDE_PX;
-                canvasW = Math.max(2, Math.round(MAX_SIDE_PX * bboxW_m / bboxH_m));
-            }
-            const pxPerMeter = canvasW / bboxW_m;
-
-            const canvas = document.createElement('canvas');
-            canvas.width = canvasW;
-            canvas.height = canvasH;
-            const ctx = canvas.getContext('2d');
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'alphabetic';
-            ctx.fillStyle = '#FFFFFF';
-            ctx.strokeStyle = '#000000';
-            ctx.lineJoin = 'round';
-            ctx.miterLimit = 2;
-
-            // 3. Draw each label at its world position, rotated in-place.
-            const FONT_SIZE = 100;
-            const LINE_H = 120;
-            const PAD_X = 24;
-            const PAD_Y = 20;
-
-            labels.forEach(function(lbl) {
-                const text = String(lbl.text || '');
-                const lines = text.split('\n');
-                const maxChars = lines.reduce(function(m, l) { return Math.max(m, l.length); }, 0);
-                const vbW = Math.max(160, Math.round(maxChars * FONT_SIZE * 0.58) + PAD_X * 2);
-                const vbH = lines.length * LINE_H + PAD_Y * 2;
-                const widthMeters = 1500 * (lbl.scale || 1);
-
-                // design unit → meter = widthMeters / vbW; meter → canvas px = pxPerMeter.
-                const designToPx = (widthMeters / vbW) * pxPerMeter;
-
-                const cx_m = (lbl.lng - minLng) * mPerDegLng;
-                const cy_m = (maxLat - lbl.lat) * mPerDegLat;
-                const cx_px = cx_m * pxPerMeter;
-                const cy_px = cy_m * pxPerMeter;
-
-                ctx.save();
-                ctx.translate(cx_px, cy_px);
-                if (lbl.rotation) ctx.rotate(lbl.rotation * Math.PI / 180);
-
-                ctx.font = '700 ' + (FONT_SIZE * designToPx) + 'px sans-serif';
-                ctx.lineWidth = FONT_SIZE * 0.22 * designToPx;
-
-                for (let i = 0; i < lines.length; i++) {
-                    const yDesign = (PAD_Y + LINE_H * (i + 0.82)) - vbH / 2;
-                    const y = yDesign * designToPx;
-                    ctx.strokeText(lines[i], 0, y);
-                    ctx.fillText(lines[i], 0, y);
-                }
-
-                ctx.restore();
-            });
-
-            const dataUrl = canvas.toDataURL('image/png');
-            const bounds = { north: maxLat, south: minLat, east: maxLng, west: minLng };
-            return new google.maps.GroundOverlay(dataUrl, bounds, {
-                clickable: false,
-                opacity: 1
-            });
-        }
-
-        // Bump when data/solapur_overlay.json changes — invalidates the localStorage cache.
-        const SOLAPUR_OVERLAY_CACHE_KEY = 'solapur_overlay_v1';
-
         async function loadSolapurOverlayIfNeeded() {
             if (solapurOverlayLoadStarted || !map) return;
+            if (!createSolapurLabelGroundOverlay) return; // factory not yet defined (API still loading)
             solapurOverlayLoadStarted = true;
             try {
-                let data = null;
-                try {
-                    const raw = localStorage.getItem(SOLAPUR_OVERLAY_CACHE_KEY);
-                    if (raw) data = JSON.parse(raw);
-                } catch (e) { /* ignore corrupt cache */ }
-                if (!data) {
-                    const resp = await fetch('data/solapur_overlay.json');
-                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                    data = await resp.json();
-                    try {
-                        localStorage.setItem(SOLAPUR_OVERLAY_CACHE_KEY, JSON.stringify(data));
-                    } catch (e) { /* quota */ }
-                }
+                const resp = await fetch('data/solapur_overlay.json');
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
 
-                // 1. Labels → ONE consolidated google.maps.GroundOverlay (all 26 villages
-                //    pre-rendered into a single canvas — see buildSolapurLabelsConsolidatedOverlay
-                //    above for why 26→1 is what makes Solapur zoom smooth).
-                if ((data.labels || []).length) {
-                    const ov = buildSolapurLabelsConsolidatedOverlay(data.labels);
-                    if (ov) {
-                        ov.setMap(map);
-                        solapurLabelOverlays.push(ov);
-                    }
-                }
+                // 1. Labels → real google.maps.GroundOverlay (smooth zoom, basemap-locked).
+                //    Width in meters = 1200 * scale (matches Android GroundOverlayOptions.position(loc, 1200f*scale))
+                //    Rotation bearing (e.g. Salgarwadi -50°) is baked into the canvas bitmap.
+                (data.labels || []).forEach(function(lbl) {
+                    const ov = createSolapurLabelGroundOverlay({
+                        lat: lbl.lat, lng: lbl.lng,
+                        text: lbl.text,
+                        scale: lbl.scale,
+                        rotation: lbl.rotation
+                    });
+                    ov.setMap(map);
+                    solapurLabelOverlays.push(ov);
+                });
 
-                // 2. TP Scheme boundaries → thin solid white polylines.
-                // (Was: repeated SVG symbol "dash" icons at 16px repeat — Google Maps had
-                // to reposition thousands of symbol instances every zoom frame, which was
-                // the main cause of Solapur zoom lag.)
+                // 2. TP Scheme boundaries → dashed white polylines
+                // Google Maps dashes: invisible main stroke + repeating dash icon.
+                const dashSymbol = {
+                    path: 'M 0,-1 0,1',
+                    strokeColor: '#FFFFFF',
+                    strokeOpacity: 1,
+                    strokeWeight: 3,
+                    scale: 3
+                };
                 (data.tpSchemeKml || []).forEach(function(kml) {
                     const path = _parseKmlPolyline(kml);
                     if (path.length < 2) return;
                     const pl = new google.maps.Polyline({
                         path: path,
-                        strokeColor: '#FFFFFF',
-                        strokeOpacity: 0.85,
-                        strokeWeight: 2,
+                        strokeOpacity: 0,
+                        strokeWeight: 3,
+                        icons: [{ icon: dashSymbol, offset: '0', repeat: '16px' }],
                         clickable: false,
                         zIndex: 20000,
                         map: map
@@ -4922,7 +4528,6 @@
         }
 
         function maybeLoadSolapurOverlay() {
-            if (!isVillageBoundaryEnabled) return;
             if (solapurOverlayLoadStarted || !map) return;
             const vp = map.getBounds();
             if (!vp) return;
@@ -4938,7 +4543,6 @@
         // ---------- Viewport-based district loading ----------
         let _geojsonViewportDebounce = null;
         function loadGeoJsonForViewport() {
-            if (!isVillageBoundaryEnabled) return;
             if (!map) return;
             if (!tilesInitiated) return; // Defer GeoJSON until tiles are initiated
             if (map.getZoom() < MIN_ZOOM_FOR_GEOJSON) {
@@ -5121,44 +4725,12 @@
             oldDP: [MIN_ZOOM_FOR_OLD_DP, MAX_ZOOM_FOR_OLD_DP]
         };
 
-        // Analytics: track how long each DP district has been continuously visible.
-        // Emit `district_viewed` once per district per session after >=3s of continuous visibility.
-        var _mmDistrictVisibleSince = {}; // id -> firstSeenTs
-        var _mmDistrictReported = {};     // id -> true (once-per-session)
-        function _mmTrackDistrictVisibility(decisions, layerData) {
-            try {
-                var now = Date.now();
-                var seen = {};
-                for (var i = 0; i < decisions.length; i++) {
-                    if (decisions[i] && layerData[i]) {
-                        var id = layerData[i].id;
-                        seen[id] = true;
-                        if (!_mmDistrictVisibleSince[id]) _mmDistrictVisibleSince[id] = now;
-                        if (!_mmDistrictReported[id] && (now - _mmDistrictVisibleSince[id]) >= 3000) {
-                            _mmDistrictReported[id] = true;
-                            mmAnalytics.event('district_viewed', {
-                                district_id: String(id).slice(0, 60),
-                                pid: String(layerData[i].productPurchaseID || '').slice(0, 60)
-                            });
-                        }
-                    }
-                }
-                // Reset visibility timer for districts that left viewport
-                for (var k in _mmDistrictVisibleSince) {
-                    if (!seen[k]) delete _mmDistrictVisibleSince[k];
-                }
-            } catch (e) {}
-        }
-
         // Worker sends results back -- apply on main thread (fast: just show/hide overlays)
         tileWorker.onmessage = function(e) {
             const { generation, results } = e.data;
 
             // CANCEL stale results: if user has zoomed/panned since, discard
             if (generation !== currentGeneration) return;
-
-            // Analytics: track DP-district visibility (the primary product context)
-            if (results.dp) _mmTrackDistrictVisibility(results.dp, dpLayerData);
 
             // Apply decisions for each layer
             if (results.dp) applyTileDecisions(results.dp, dpLayerData, dpTileStatus, dpOverlays, "dp");
@@ -5355,20 +4927,6 @@
             // Places Autocomplete (New API)
             // Google Places — new API (Place class)
 
-            // Analytics: map_ready (first idle) + debounced map_pan on subsequent idles
-            var _mmMapReady = false;
-            var _mmLastCenter = null;
-            var _mmLastZoom = null;
-            var _mmPanDebounce = null;
-            function _mmDistanceKm(a, b) {
-                if (!a || !b) return 0;
-                var R = 6371;
-                var dLat = (b.lat - a.lat) * Math.PI / 180;
-                var dLng = (b.lng - a.lng) * Math.PI / 180;
-                var s1 = Math.sin(dLat/2), s2 = Math.sin(dLng/2);
-                var h = s1*s1 + Math.cos(a.lat*Math.PI/180) * Math.cos(b.lat*Math.PI/180) * s2*s2;
-                return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
-            }
             // Single debounced handler for all viewport changes
             map.addListener('idle', function() {
                 const z = map.getZoom();
@@ -5376,31 +4934,6 @@
                 document.getElementById('zoom-level').textContent = `Z=${z}`;
                 document.getElementById('center-coord').textContent =
                     `${c.lat().toFixed(5)}, ${c.lng().toFixed(5)}`;
-                // Analytics: map_ready (once) + throttled map_pan (2s debounce)
-                try {
-                    if (!_mmMapReady) {
-                        _mmMapReady = true;
-                        mmAnalytics.event('map_ready', { zoom: z });
-                        // Set initial state for village boundary toggle
-                        var _vbCheckbox = document.getElementById('village-boundary-layer');
-                        if (_vbCheckbox) _vbCheckbox.checked = isVillageBoundaryEnabled;
-                    }
-                    var curr = { lat: c.lat(), lng: c.lng() };
-                    var prev = _mmLastCenter;
-                    _mmLastCenter = curr;
-                    if (_mmPanDebounce) clearTimeout(_mmPanDebounce);
-                    _mmPanDebounce = setTimeout(function() {
-                        var dist = _mmDistanceKm(prev, curr);
-                        if (dist > 0.05) {
-                            mmAnalytics.event('map_pan', {
-                                distance_km: Math.round(dist * 100) / 100,
-                                zoom: z,
-                                lat: Math.round(curr.lat * 1000) / 1000,
-                                lng: Math.round(curr.lng * 1000) / 1000
-                            });
-                        }
-                    }, 2000);
-                } catch (e) {}
                 debouncedLoadTiles();
                 // Update region subscription status in bottom bar
                 updateRegionStatus();
@@ -5418,23 +4951,6 @@
                 maybeLoadSolapurOverlay();
                 // Keep Solapur label opacity in sync with current zoom
                 updateSolapurLabelOpacity(z);
-                // Show/hide village boundary toggle based on district availability
-                var _vbToggle = document.getElementById('village-boundary-toggle');
-                if (_vbToggle) {
-                    var _hasGeoJson = false;
-                    var _vp = map.getBounds();
-                    if (_vp && z >= MIN_ZOOM_FOR_GEOJSON) {
-                        var _vpN = _vp.getNorthEast().lat(), _vpS = _vp.getSouthWest().lat();
-                        var _vpE = _vp.getNorthEast().lng(), _vpW = _vp.getSouthWest().lng();
-                        for (var _di = 0; _di < GEOJSON_DISTRICT_INDEX.length; _di++) {
-                            var _dd = GEOJSON_DISTRICT_INDEX[_di];
-                            if (_dd.s <= _vpN && _dd.n >= _vpS && _dd.w <= _vpE && _dd.e >= _vpW) {
-                                _hasGeoJson = true; break;
-                            }
-                        }
-                    }
-                    _vbToggle.style.display = _hasGeoJson ? '' : 'none';
-                }
                 // Persist last map position so the next visit opens at the same spot
                 try {
                     localStorage.setItem(LAST_MAP_POS_KEY, JSON.stringify({
@@ -5454,32 +4970,11 @@
                 checkRegionOnMove();
             });
 
-            // Analytics: map_zoom — debounced 1.5s so rapid scroll-wheel zoom fires once
-            var _mmZoomDebounce = null;
-            map.addListener('zoom_changed', function() {
-                try {
-                    var zNow = map.getZoom();
-                    if (_mmZoomDebounce) clearTimeout(_mmZoomDebounce);
-                    _mmZoomDebounce = setTimeout(function() {
-                        var prev = _mmLastZoom;
-                        _mmLastZoom = zNow;
-                        mmAnalytics.event('map_zoom', {
-                            from: prev || 0,
-                            to: zNow,
-                            bucket: zNow > 14 ? 'premium' : 'free'
-                        });
-                    }, 1500);
-                } catch (e) {}
-            });
             // Show purchase dialog when user hits zoom 14 in unpurchased region, hide when they zoom out
             map.addListener('zoom_changed', function() {
                 // Fade Solapur decorative labels smoothly as the zoom changes
                 updateSolapurLabelOpacity(map.getZoom());
                 if (zoomBypassActive || mapInteractionDisabled) return;
-                // Don't make any access decision until layer data is loaded —
-                // otherwise a cold reload at a saved premium zoom flashes the
-                // "No Map Data Available" dialog while MahaGIS.json is still landing.
-                if (!dpDataLoaded || !villageDataLoaded) return;
                 const z = map.getZoom();
                 const overlay = document.getElementById('zoom-restrict-overlay');
                 const district = findDistrictAtCenter();
@@ -5497,47 +4992,21 @@
                     dialogTriggeredByRegionEntry = true;
                     showNoDataDialog();
                 } else if (z >= MAX_FREE_ZOOM && district && !hasPurchase(district.productPurchaseID)) {
-                    // Clamp zoom so the in-flight wheel/pinch animation stops cleanly at 14.
+                    // At zoom limit in unpurchased region — lock zoom, then verify against Firebase before showing dialog
                     map.setOptions({ maxZoom: MAX_FREE_ZOOM });
                     dialogTriggeredByRegionEntry = true;
-
-                    // Parallel Firebase re-check — safety net for cross-device purchases (e.g.
-                    // bought on the Android app) where the local hasPurchase() cache isn't synced.
-                    // The flag lets the idle handler below short-circuit if we turn out to be paid.
-                    // Debounced: skip if same productId checked within 2s (prevents rapid zoom spam).
-                    var unlockedByFirebase = false;
-                    var _fbNow = Date.now();
-                    if (district.productPurchaseID !== _lastFirebaseCheckPid || _fbNow - _lastFirebaseCheckTime > 2000) {
-                    _lastFirebaseCheckPid = district.productPurchaseID;
-                    _lastFirebaseCheckTime = _fbNow;
                     checkFirebasePurchaseEntry(district.productPurchaseID).then(function(found) {
-                        if (!found) return;
-                        unlockedByFirebase = true;
-                        var ov = document.getElementById('zoom-restrict-overlay');
-                        if (ov && ov.classList.contains('open')) {
-                            ov.classList.remove('open');
-                            enableMapInteraction();
+                        if (found) {
+                            // Purchase exists in Firebase (e.g. bought on mobile) — unlock
+                            map.setOptions({ maxZoom: 21 });
+                            showUnlockToast(district.districtName);
+                            lastCheckedRegionId = null;
+                            stickyTile = null;
+                            stickyDistrict = null;
+                            checkRegionOnMove();
+                        } else {
+                            showZoomRestrictionDialog(district);
                         }
-                        map.setOptions({ maxZoom: 21 });
-                        showUnlockToast(district.districtName);
-                        lastCheckedRegionId = null;
-                        stickyTile = null;
-                        stickyDistrict = null;
-                        checkRegionOnMove();
-                    }).catch(function() { /* network failed — defer to the idle handler */ });
-                    } // end debounce guard
-
-                    // Defer the dialog until the camera animation settles at 14. zoom_changed
-                    // fires on the input tick with the target zoom, but the visual animation
-                    // takes another ~150–300 ms — showing the dialog now would catch the map
-                    // mid-flight and make it look like the paywall appeared at zoom 13.
-                    google.maps.event.addListenerOnce(map, 'idle', function() {
-                        if (unlockedByFirebase) return;
-                        if (map.getZoom() < MAX_FREE_ZOOM) return;
-                        var stillLocked = findDistrictAtCenter();
-                        if (!stillLocked) return;
-                        if (hasPurchase(stillLocked.productPurchaseID)) return;
-                        showZoomRestrictionDialog(stillLocked);
                     });
                 } else if (z < MAX_FREE_ZOOM && overlay.classList.contains('open')) {
                     // Zoomed out — auto-dismiss dialog
@@ -5626,6 +5095,94 @@
                         this._div = null;
                     }
                 }
+            };
+
+            // Build a google.maps.GroundOverlay for a Solapur village label. The label text
+            // is pre-rendered into a transparent canvas at design resolution; the GroundOverlay
+            // is then anchored to a LatLngBounds whose extent represents 1200 m × scale of
+            // real-world width (matching Android's GroundOverlayOptions.position(loc, 1200f*scale)).
+            // Because GroundOverlay is interpolated by Google Maps in lockstep with the basemap,
+            // labels scale smoothly during zoom animation instead of popping at the end.
+            //
+            // Rotation bearing (e.g. Salgarwadi -50°) is baked directly into the bitmap and the
+            // bounds are sized to the rotated rectangle's axis-aligned bounding box, so we don't
+            // need any non-axis-aligned overlay primitive.
+            createSolapurLabelGroundOverlay = function(opts) {
+                const lat = opts.lat;
+                const lng = opts.lng;
+                const text = String(opts.text || '');
+                // Android source of truth: GeoJsonOverlayManager.kt uses `1500f * scale`.
+                const widthMeters = 1500 * (opts.scale || 1);
+                const rotationDeg = opts.rotation || 0;
+
+                // Design metrics — identical to the previous SVG so visual sizing is unchanged.
+                const lines = text.split('\n');
+                const fontSize = 100;
+                const lineH = 120;
+                const padX = 24;
+                const padY = 20;
+                const maxChars = lines.reduce(function(m, l) { return Math.max(m, l.length); }, 0);
+                const vbW = Math.max(160, Math.round(maxChars * fontSize * 0.58) + padX * 2);
+                const vbH = lines.length * lineH + padY * 2;
+                const heightMeters = widthMeters * (vbH / vbW);
+
+                // Axis-aligned bbox of the rotated rectangle (collapses to W×H when rotation=0).
+                const theta = rotationDeg * Math.PI / 180;
+                const absCos = Math.abs(Math.cos(theta));
+                const absSin = Math.abs(Math.sin(theta));
+                const bboxW_m = absCos * widthMeters + absSin * heightMeters;
+                const bboxH_m = absSin * widthMeters + absCos * heightMeters;
+
+                // Canvas pixels = design units (1:1). For rotation=0 the canvas is exactly
+                // vbW × vbH; for rotation≠0 it grows to the rotated bbox while staying in
+                // the same design coordinate system, so the text-drawing code below can use
+                // the raw fontSize/padding constants without any extra scaling.
+                const canvasW = Math.max(2, Math.round(bboxW_m * (vbW / widthMeters)));
+                const canvasH = Math.max(2, Math.round(bboxH_m * (vbW / widthMeters)));
+
+                const canvas = document.createElement('canvas');
+                canvas.width = canvasW;
+                canvas.height = canvasH;
+                const ctx = canvas.getContext('2d');
+
+                // Origin at canvas center, then rotate. Drawing happens in design units —
+                // matches the SVG `viewBox` mental model 1:1.
+                ctx.translate(canvasW / 2, canvasH / 2);
+                if (rotationDeg) ctx.rotate(theta);
+
+                ctx.font = '700 ' + fontSize + 'px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'alphabetic';
+                ctx.fillStyle = '#FFFFFF';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = fontSize * 0.22;
+                ctx.lineJoin = 'round';
+                ctx.miterLimit = 2;
+
+                for (let i = 0; i < lines.length; i++) {
+                    // Same baseline formula as the SVG: y = padY + lineH*(i + 0.82),
+                    // measured from the top of the design viewBox. Recenter to canvas origin.
+                    const y = (padY + lineH * (i + 0.82)) - vbH / 2;
+                    // strokeText before fillText reproduces SVG `paint-order="stroke"`.
+                    ctx.strokeText(lines[i], 0, y);
+                    ctx.fillText(lines[i], 0, y);
+                }
+
+                const dataUrl = canvas.toDataURL('image/png');
+
+                const dLat = (bboxH_m / 2) / 111320;
+                const dLng = (bboxW_m / 2) / (111320 * Math.cos(lat * Math.PI / 180));
+                const bounds = {
+                    north: lat + dLat,
+                    south: lat - dLat,
+                    east: lng + dLng,
+                    west: lng - dLng
+                };
+
+                return new google.maps.GroundOverlay(dataUrl, bounds, {
+                    clickable: false,
+                    opacity: 1
+                });
             };
 
             // Define VertexHandleOverlay (move handle + delete button above a vertex)
@@ -5990,13 +5547,9 @@
                             isPurchased = true;
                             var exp = getPurchaseExpiry(item.productPurchaseID);
                             var plan = getPurchasePlan(item.productPurchaseID);
-                            if (plan === 'subscription') {
-                                badgeHtml = '<div class="region-card-badge purchased">Subscription &middot; ' + formatSubscriptionCountdown(exp) + '</div>';
-                            } else {
-                                var days = calcDaysLeft(exp);
-                                var planTag = plan === 'professional' ? 'Pro' : plan === 'web' ? 'Web' : plan === 'override' ? 'Override' : '7 Day';
-                                badgeHtml = '<div class="region-card-badge purchased">' + planTag + ' Pass - ' + days + ' left</div>';
-                            }
+                            var days = calcDaysLeft(exp);
+                            var planTag = plan === 'professional' ? 'Pro' : plan === 'web' ? 'Web' : plan === 'override' ? 'Override' : '7 Day';
+                            badgeHtml = '<div class="region-card-badge purchased">' + planTag + ' Pass - ' + days + ' left</div>';
                             card.classList.add('has-purchase');
                         } else {
                             badgeHtml = '<div class="region-card-badge buy" data-pid="' + item.productPurchaseID + '" data-name="' + item.name + '">Buy</div>';
@@ -6054,8 +5607,7 @@
             }
 
             function openStateInBrowser(stateName) {
-                var districts = menuData.filter(function(m) { return m.state === stateName && m.district; })
-                    .sort(function(a, b) { return a.district.localeCompare(b.district); });
+                var districts = menuData.filter(function(m) { return m.state === stateName && m.district; });
                 var stateItem = menuData.find(function(m) { return m.state === stateName && !m.district; });
 
                 if (districts.length === 1) {
@@ -6237,13 +5789,9 @@
                         if (hasPurchase(item.productPurchaseID)) {
                             const expiry = getPurchaseExpiry(item.productPurchaseID);
                             const plan = getPurchasePlan(item.productPurchaseID);
-                            if (plan === 'subscription') {
-                                badge = '<span style="font-size:9px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0" title="Subscriptions renew at the start of the day">Sub \u00b7 ' + formatSubscriptionCountdown(expiry) + '</span>';
-                            } else {
-                                const daysLeft = calcDaysLeft(expiry);
-                                const planTag = plan === 'professional' ? 'Pro' : plan === 'web' ? 'Web' : plan === 'override' ? 'Override' : '7 Day';
-                                badge = '<span style="font-size:9px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0">' + planTag + ' \u00b7 ' + daysLeft + ' left</span>';
-                            }
+                            const daysLeft = calcDaysLeft(expiry);
+                            const planTag = plan === 'professional' ? 'Pro' : plan === 'web' ? 'Web' : plan === 'override' ? 'Override' : '7 Day';
+                            badge = '<span style="font-size:9px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0">' + planTag + ' \u00b7 ' + daysLeft + ' left</span>';
                         } else {
                             badge = '<span style="font-size:9px;background:#FF9800;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0;cursor:pointer" class="buy-badge" data-pid="' + item.productPurchaseID + '" data-name="' + item.name + '">Buy 7-Day Pass</span>';
                         }
@@ -7115,7 +6663,7 @@
                                 '</div>' +
                                 cancelBtn +
                             '</div>' +
-                            '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';" title="Subscriptions renew at the start of the day">' + formatSubscriptionCountdown(val.expiry) + '</span>',
+                            '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>',
                             onClick: gotoHandler
                         });
                     } else if (val.plan === 'professional') {
@@ -7292,12 +6840,7 @@
                         req.onsuccess = resolve; req.onerror = resolve; req.onblocked = resolve;
                     }),
                     new Promise(function(resolve) {
-                        try {
-                            localStorage.removeItem('layer_dp');
-                            localStorage.removeItem('layer_village');
-                            localStorage.removeItem('layer_olddp');
-                            localStorage.removeItem('solapur_overlay_v1');
-                        } catch(e) {}
+                        try { localStorage.removeItem('mm_geocoder_cache'); } catch(e) {}
                         resolve();
                     })
                 ]).then(function() {
@@ -7307,6 +6850,25 @@
                     alert('Cache cleared! The page will reload.');
                     location.reload(true);
                 });
+            });
+
+            // Admin-only: force-refresh cached layer registries from Firebase without reloading the page.
+            // The live version listener already auto-refetches when appConfig/dataVersions changes,
+            // so this button is a manual override for the rare case where you want to re-pull data
+            // without bumping a version.
+            var refreshDbBtn = document.getElementById('settings-refresh-db');
+            if (refreshDbBtn) refreshDbBtn.addEventListener('click', function() {
+                ['layer_dp', 'layer_village', 'layer_olddp'].forEach(function(k) {
+                    try { localStorage.removeItem(k); } catch (e) {}
+                });
+                layerDataFetched = false;
+                dpDataLoaded = false;
+                villageDataLoaded = false;
+                oldDPDataLoaded = false;
+                fetchLayerData();
+                var original = refreshDbBtn.innerHTML;
+                refreshDbBtn.innerHTML = '<span style="color:#2E7D32;">&#10003; Refreshed</span>';
+                setTimeout(function() { refreshDbBtn.innerHTML = original; }, 1500);
             });
 
             // Layer panel open/close
@@ -7532,22 +7094,6 @@
                 } else {
                     villageMarkers.forEach(function(m) { m.setMap(null); });
                     updateAddonButtonVisibility();
-                }
-            });
-
-            document.getElementById('village-boundary-layer').addEventListener('change', function() {
-                isVillageBoundaryEnabled = this.checked;
-                if (isVillageBoundaryEnabled) {
-                    loadGeoJsonForViewport();
-                    maybeLoadSolapurOverlay();
-                } else {
-                    _removeAllVillagePolylines();
-                    solapurLabelOverlays.forEach(function(ov) { ov.setMap(null); });
-                    solapurLabelOverlays = [];
-                    solapurTpSchemeLines.forEach(function(pl) { pl.setMap(null); });
-                    solapurTpSchemeLines = [];
-                    solapurOverlayLoadStarted = false;
-                    solapurOverlayLoaded = false;
                 }
             });
 
@@ -7858,14 +7404,6 @@
                     stopListening();
                     unlockCompassOrientation();
                 });
-                // Back button on mobile exits fullscreen first (browser default),
-                // leaving compass open. Auto-close compass when fullscreen exits.
-                document.addEventListener('fullscreenchange', function() {
-                    if (!document.fullscreenElement && !document.webkitFullscreenElement && overlay.classList.contains('open')) {
-                        overlay.classList.remove('open');
-                        stopListening();
-                    }
-                });
             })();
 
             // ===== Measurement event listeners =====
@@ -7891,30 +7429,6 @@
             });
             document.getElementById('measure-cancel').addEventListener('click', function() {
                 stopMeasureMode(false);
-            });
-            var _clearMeasureType = null;
-            var _clearDialog = document.getElementById('clear-measure-dialog-overlay');
-            var _clearText = document.getElementById('clear-measure-dialog-text');
-            document.getElementById('clear-area-x').addEventListener('click', function(e) {
-                e.stopPropagation();
-                _clearMeasureType = 'area';
-                _clearText.textContent = 'Clear all area measurements?';
-                _clearDialog.classList.add('open');
-            });
-            document.getElementById('clear-length-x').addEventListener('click', function(e) {
-                e.stopPropagation();
-                _clearMeasureType = 'length';
-                _clearText.textContent = 'Clear all length measurements?';
-                _clearDialog.classList.add('open');
-            });
-            document.getElementById('clear-measure-confirm').addEventListener('click', function() {
-                if (_clearMeasureType) clearMeasurementsByType(_clearMeasureType);
-                _clearMeasureType = null;
-                _clearDialog.classList.remove('open');
-            });
-            document.getElementById('clear-measure-cancel').addEventListener('click', function() {
-                _clearMeasureType = null;
-                _clearDialog.classList.remove('open');
             });
             document.getElementById('measure-unit-length').addEventListener('change', function() {
                 if (measureMode === 'length') updateMeasureVisuals();
@@ -8000,6 +7514,7 @@
 
         function applyLayerData(data, label) {
             const processed = processLayerData(data);
+            // console.log(`Loaded ${processed.length} ${label} layer definitions`);
             return processed;
         }
 
@@ -8013,7 +7528,6 @@
         let _currentDataVersions = null;
         let _dataVersionsReady = null;
         const _layerFetchers = {}; // versionKey -> { cacheKey, refetch }
-        const _inFlightLayerFetches = {}; // cacheKey -> Promise (dedupe racing callers)
 
         function loadDataVersions() {
             if (_dataVersionsReady) return _dataVersionsReady;
@@ -8051,62 +7565,28 @@
         // manual Refresh button.
         function getCachedOrFetchLayer(cacheKey, dbPath, versionKey, refetch) {
             if (refetch) _layerFetchers[versionKey] = { cacheKey: cacheKey, refetch: refetch };
-
-            // Synchronous cache read — return stale data instantly, verify in background.
-            let cached = null;
-            try {
-                const raw = localStorage.getItem(cacheKey);
-                if (raw) cached = JSON.parse(raw);
-            } catch (e) { /* ignore corrupt cache */ }
-
-            if (cached && cached.d) {
-                loadDataVersions().then(versions => {
-                    const liveVersion = versions[versionKey];
-                    const normLive = liveVersion === undefined ? null : liveVersion;
-                    const normCached = cached.v === undefined ? null : cached.v;
-                    if (normLive !== normCached) {
-                        try { localStorage.removeItem(cacheKey); } catch (e) {}
-                        if (refetch) refetch();
-                    }
-                }).catch(() => { /* offline: keep stale data, don't refetch */ });
-                return Promise.resolve(cached.d);
-            }
-
-            if (_inFlightLayerFetches[cacheKey]) {
-                return _inFlightLayerFetches[cacheKey];
-            }
-
-            const p = loadDataVersions().then(versions => {
+            return loadDataVersions().then(versions => {
                 const liveVersion = versions[versionKey];
-                const vParam = encodeURIComponent(liveVersion == null ? '0' : String(liveVersion));
-                const url = LAYER_JSON_BASE + '/' + dbPath + '.bin?v=' + vParam;
-                return fetch(url, { cache: 'no-store' })
-                    .then(r => {
-                        if (!r.ok) throw new Error('layer fetch ' + dbPath + ' -> ' + r.status);
-                        return r.json();
-                    })
-                    .then(data => {
-                        if (data) {
-                            try {
-                                localStorage.setItem(cacheKey, JSON.stringify({
-                                    v: liveVersion === undefined ? null : liveVersion,
-                                    d: data
-                                }));
-                            } catch (e) { /* quota */ }
-                        }
-                        return data;
-                    });
-            })
-            .catch(err => {
-                console.error('[layer] fetch failed for', dbPath, err);
-                return null;
-            })
-            .then(result => {
-                delete _inFlightLayerFetches[cacheKey];
-                return result;
+                let cached = null;
+                try {
+                    const raw = localStorage.getItem(cacheKey);
+                    if (raw) cached = JSON.parse(raw);
+                } catch (e) { /* ignore corrupt cache */ }
+
+                if (cached && 'v' in cached && cached.v === liveVersion && cached.d) {
+                    return cached.d;
+                }
+
+                return database.ref(dbPath).once('value').then(snap => {
+                    const data = snap.val();
+                    if (data) {
+                        try {
+                            localStorage.setItem(cacheKey, JSON.stringify({ v: liveVersion === undefined ? null : liveVersion, d: data }));
+                        } catch (e) { /* quota */ }
+                    }
+                    return data;
+                });
             });
-            _inFlightLayerFetches[cacheKey] = p;
-            return p;
         }
 
         function fetchDPLayerData() {
@@ -8118,13 +7598,6 @@
                 stickyDistrict = null;
                 dpDataLoaded = true;
                 loadTilesBasedOnViewport();
-                // If village markers were created before DP data arrived, isInsideDPRegion
-                // returned false for every village and markers leaked into DP regions.
-                // Re-create now that dpLayerData is populated so the filter applies.
-                if (isVillageLayerVisible && villageLayerData.length > 0) {
-                    createVillageMarkers();
-                }
-                maybeRerunZoomCheck();
             }).catch(error => console.error("Error fetching DP data:", error));
         }
 
@@ -8136,22 +7609,7 @@
                 villageDataLoaded = true;
                 loadTilesBasedOnViewport();
                 if (isVillageLayerVisible && villageMarkers.size === 0) createVillageMarkers();
-                maybeRerunZoomCheck();
             }).catch(error => console.error("Error fetching Village data:", error));
-        }
-
-        // After a layer fetcher completes, if both DP and village data are now
-        // loaded AND the user is already at a premium zoom from a restored
-        // position, re-dispatch zoom_changed so the listener can correctly
-        // decide whether to show the access dialog or unlock tiles.
-        function maybeRerunZoomCheck() {
-            if (!dpDataLoaded || !villageDataLoaded) return;
-            if (!map) return;
-            try {
-                if (map.getZoom() >= MAX_FREE_ZOOM) {
-                    google.maps.event.trigger(map, 'zoom_changed');
-                }
-            } catch (e) { /* ignore */ }
         }
 
         // Show "Load Old Maps" only when crosshair is inside an oldDPPlanGIS polygon
@@ -8159,22 +7617,20 @@
         let oldDPGISLoaded = false;
 
         function loadOldDPGISRegions() {
-            getCachedOrFetchLayer('layer_olddp', OLD_DP_URL_DATABASE_NAME, 'layer_olddp', fetchOldDPLayerData)
-                .then(data => {
-                    data = data || {};
-                    for (const key in data) {
-                        const item = data[key];
-                        if (item && item.kml) {
-                            try {
-                                const polygon = parseKML(item.kml);
-                                if (polygon) oldDPGISPolygons.push(polygon);
-                            } catch (e) { /* skip bad entries */ }
-                        }
+            database.ref('oldDPPlanGIS').once('value').then(snapshot => {
+                const data = snapshot.val() || {};
+                for (const key in data) {
+                    const item = data[key];
+                    if (item && item.kml) {
+                        try {
+                            const polygon = parseKML(item.kml);
+                            if (polygon) oldDPGISPolygons.push(polygon);
+                        } catch (e) { /* skip bad entries */ }
                     }
-                    oldDPGISLoaded = true;
-                    updateOldMapsButtonVisibility();
-                })
-                .catch(err => { console.error('loadOldDPGISRegions', err); oldDPGISLoaded = true; });
+                }
+                oldDPGISLoaded = true;
+                updateOldMapsButtonVisibility();
+            });
         }
 
         function updateOldMapsButtonVisibility() {
@@ -8787,15 +8243,6 @@
                                 purchaseType: 'village',
                                 villageName: villageName
                             });
-                            try {
-                                mmAnalytics.event('purchase', {
-                                    transaction_id: response.razorpay_payment_id,
-                                    value: (data.amount || 0) / 100,
-                                    currency: data.currency || 'INR',
-                                    items: [{ item_id: 'villagePlanDefault', item_name: villageName, item_category: 'village' }]
-                                });
-                                mmAnalytics.clarityTag('plan', 'paid');
-                            } catch (e) {}
                             await fetchVillagePurchases();
                             // Reload village tiles
                             clearAllLayersOfType(villageOverlays);
@@ -8825,25 +8272,7 @@
                         document.head.appendChild(s);
                     });
                 }
-                try {
-                    mmAnalytics.event('begin_checkout', {
-                        currency: data.currency || 'INR',
-                        value: (data.amount || 0) / 100,
-                        items: [{ item_id: 'villagePlanDefault', item_name: villageName, item_category: 'village' }]
-                    });
-                } catch (e) {}
                 var rzp = new Razorpay(options);
-                try {
-                    rzp.on('payment.failed', function(resp) {
-                        var err = (resp && resp.error) || {};
-                        mmAnalytics.event('payment_failed', {
-                            item_id: 'villagePlanDefault',
-                            item_category: 'village',
-                            code: String(err.code || '').slice(0, 60),
-                            reason: String(err.reason || err.description || '').slice(0, 120)
-                        });
-                    });
-                } catch (e) {}
                 rzp.open();
             } catch (error) {
                 loadingOverlay.classList.remove('open');
@@ -9026,34 +8455,11 @@
             // Off-DOM Image: not in document tree, so Save As / Ctrl+S can't see its src.
             // Browser auto-sends CloudFront signed cookies (same-site subdomain).
             var img = new Image();
-            var _mmLayerType = this.layerType;
-            var _mmPid = (this.layerDef && this.layerDef.productPurchaseID) || '';
             img.onload = function() {
                 // Tile may have been released while loading -- skip if detached.
                 if (div.parentNode) ctx.drawImage(img, 0, 0, 256, 256);
-                // Analytics: 5% sample of successful tile loads to cap GA4 event volume
-                if (Math.random() < 0.05) {
-                    try {
-                        mmAnalytics.event('tile_loaded', {
-                            layer_type: _mmLayerType,
-                            zoom: zoom,
-                            bucket: zoom > 14 ? 'premium' : 'free',
-                            pid: _mmPid
-                        });
-                    } catch (e) {}
-                }
             };
-            img.onerror = function() {
-                /* 404/auth -- leave tile blank */
-                try {
-                    mmAnalytics.event('tile_load_failure', {
-                        layer_type: _mmLayerType,
-                        zoom: zoom,
-                        bucket: zoom > 14 ? 'premium' : 'free',
-                        pid: _mmPid
-                    });
-                } catch (e) {}
-            };
+            img.onerror = function() { /* 404/auth -- leave tile blank */ };
             img.src = this.urlPrefix_ + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
 
             div._tileImg = img;
