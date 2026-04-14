@@ -2683,16 +2683,11 @@
         }
 
         function formatSubscriptionCountdown(expiry) {
-            var ms = expiry - Date.now();
-            if (ms <= 0) return 'Expired';
-            if (ms < 60 * 60 * 1000) return 'Expiring soon';
-            if (ms < 24 * 60 * 60 * 1000) return 'Expires today';
-            var d = Math.floor(ms / 86400000);
-            var h = Math.floor((ms % 86400000) / 3600000);
+            if (!expiry || expiry - Date.now() <= 0) return 'Expired';
             var renews = new Date(expiry).toLocaleDateString('en-GB', {
                 day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata'
             });
-            return d + 'd ' + h + 'h left (renews on ' + renews + ')';
+            return 'Renews on ' + renews;
         }
 
         // Buy a 7-day pass
