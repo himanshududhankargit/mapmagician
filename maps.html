@@ -909,7 +909,7 @@
         <h2>What You Can Do</h2>
         <p>Overlay official draft and final Development Plans on satellite imagery, measure distance and area, search by place or coordinates, view village-boundary outlines, and export map views. All regions are updated with the latest draft and notification maps released by state and city planning authorities including Town Planning departments, PMRDA, NAINA, MSRDC, HMDA, BBMP and more. Coverage expanding across Indian states.</p>
     </section>
-    <div id="map"></div>
+    <div id="map" data-clarity-mask="true"></div>
 
     <!-- Expanded sidebar panel -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
@@ -8097,12 +8097,23 @@
             if (layerDataFetched) return;
             layerDataFetched = true;
             if (isDPLayerVisible) fetchDPLayerData();
-            // Village layer on by default — fetch village data at startup
-            if (isVillageLayerVisible) fetchVillageLayerData();
             // Always fetch old DP to check availability (shows button if data exists)
             fetchOldDPLayerData();
             // Load oldDPPlanGIS region list to check button visibility
             loadOldDPGISRegions();
+            // Village metadata is ~576 KB and only used at zoom >= MIN_ZOOM_FOR_VILLAGEMAP
+            // (11). Defer to browser idle so the base map can paint and DP tiles can
+            // start downloading first. maybeRerunZoomCheck() inside fetchVillageLayerData
+            // re-fires zoom_changed when data lands, so a cold-reload at a high zoom
+            // still unlocks correctly.
+            var deferVillage = function() {
+                if (isVillageLayerVisible && !villageDataLoaded) fetchVillageLayerData();
+            };
+            if (typeof window.requestIdleCallback === 'function') {
+                window.requestIdleCallback(deferVillage, { timeout: 2000 });
+            } else {
+                setTimeout(deferVillage, 500);
+            }
         }
 
         function applyLayerData(data, label) {
@@ -9081,10 +9092,17 @@
 
             if (activeTypes.length === 0) return;
 
-            // First time tiles have data ready — unblock deferred GeoJSON loading
+            // First time tiles have data ready — unblock deferred GeoJSON loading.
+            // Village-boundary geojson zips are up to ~2 MB per district and parsing
+            // them on the main thread competes with the first tile paint; defer to
+            // browser idle so the map pixels land first.
             if (!tilesInitiated) {
                 tilesInitiated = true;
-                loadGeoJsonForViewport();
+                if (typeof window.requestIdleCallback === 'function') {
+                    window.requestIdleCallback(function() { loadGeoJsonForViewport(); }, { timeout: 2000 });
+                } else {
+                    setTimeout(loadGeoJsonForViewport, 300);
+                }
             }
 
             // Send to Web Worker -- polygon math runs in background thread
