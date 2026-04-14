@@ -2682,6 +2682,19 @@
             return m + 'm';
         }
 
+        function formatSubscriptionCountdown(expiry) {
+            var ms = expiry - Date.now();
+            if (ms <= 0) return 'Expired';
+            if (ms < 60 * 60 * 1000) return 'Expiring soon';
+            if (ms < 24 * 60 * 60 * 1000) return 'Expires today';
+            var d = Math.floor(ms / 86400000);
+            var h = Math.floor((ms % 86400000) / 3600000);
+            var renews = new Date(expiry).toLocaleDateString('en-GB', {
+                day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata'
+            });
+            return d + 'd ' + h + 'h left (renews on ' + renews + ')';
+        }
+
         // Buy a 7-day pass
         async function buyRegion(productId, regionName) {
             try {
@@ -5982,9 +5995,13 @@
                             isPurchased = true;
                             var exp = getPurchaseExpiry(item.productPurchaseID);
                             var plan = getPurchasePlan(item.productPurchaseID);
-                            var days = calcDaysLeft(exp);
-                            var planTag = plan === 'professional' ? 'Pro' : plan === 'web' ? 'Web' : plan === 'override' ? 'Override' : '7 Day';
-                            badgeHtml = '<div class="region-card-badge purchased">' + planTag + ' Pass - ' + days + ' left</div>';
+                            if (plan === 'subscription') {
+                                badgeHtml = '<div class="region-card-badge purchased">Subscription &middot; ' + formatSubscriptionCountdown(exp) + '</div>';
+                            } else {
+                                var days = calcDaysLeft(exp);
+                                var planTag = plan === 'professional' ? 'Pro' : plan === 'web' ? 'Web' : plan === 'override' ? 'Override' : '7 Day';
+                                badgeHtml = '<div class="region-card-badge purchased">' + planTag + ' Pass - ' + days + ' left</div>';
+                            }
                             card.classList.add('has-purchase');
                         } else {
                             badgeHtml = '<div class="region-card-badge buy" data-pid="' + item.productPurchaseID + '" data-name="' + item.name + '">Buy</div>';
@@ -6225,9 +6242,13 @@
                         if (hasPurchase(item.productPurchaseID)) {
                             const expiry = getPurchaseExpiry(item.productPurchaseID);
                             const plan = getPurchasePlan(item.productPurchaseID);
-                            const daysLeft = calcDaysLeft(expiry);
-                            const planTag = plan === 'professional' ? 'Pro' : plan === 'web' ? 'Web' : plan === 'override' ? 'Override' : '7 Day';
-                            badge = '<span style="font-size:9px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0">' + planTag + ' \u00b7 ' + daysLeft + ' left</span>';
+                            if (plan === 'subscription') {
+                                badge = '<span style="font-size:9px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0" title="Subscriptions renew at the start of the day">Sub \u00b7 ' + formatSubscriptionCountdown(expiry) + '</span>';
+                            } else {
+                                const daysLeft = calcDaysLeft(expiry);
+                                const planTag = plan === 'professional' ? 'Pro' : plan === 'web' ? 'Web' : plan === 'override' ? 'Override' : '7 Day';
+                                badge = '<span style="font-size:9px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0">' + planTag + ' \u00b7 ' + daysLeft + ' left</span>';
+                            }
                         } else {
                             badge = '<span style="font-size:9px;background:#FF9800;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0;cursor:pointer" class="buy-badge" data-pid="' + item.productPurchaseID + '" data-name="' + item.name + '">Buy 7-Day Pass</span>';
                         }
@@ -7099,7 +7120,7 @@
                                 '</div>' +
                                 cancelBtn +
                             '</div>' +
-                            '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';">' + daysLeft + ' left</span>',
+                            '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';" title="Subscriptions renew at the start of the day">' + formatSubscriptionCountdown(val.expiry) + '</span>',
                             onClick: gotoHandler
                         });
                     } else if (val.plan === 'professional') {
