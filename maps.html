@@ -2608,13 +2608,13 @@
             if (!currentUser || currentUser.isAnonymous) return;
             const district = findDistrictAtCenter();
             if (district && hasPurchase(district.productPurchaseID)) {
-                map.setOptions({ maxZoom: 21 });
+                setMapMaxZoom(21);
                 enableMapInteraction();
                 document.getElementById('zoom-restrict-overlay').classList.remove('open');
                 updateRegionStatus();
                 showUnlockToast(district.districtName);
             } else {
-                map.setOptions({ maxZoom: MAX_FREE_ZOOM });
+                setMapMaxZoom(MAX_FREE_ZOOM);
             }
         }
 
@@ -2762,7 +2762,7 @@
                             loadTilesBasedOnViewport();
                             enableMapInteraction();
                             document.getElementById('zoom-restrict-overlay').classList.remove('open');
-                            map.setOptions({ maxZoom: 21 }); // unlock zoom after purchase
+                            setMapMaxZoom(21); // unlock zoom after purchase
                             lastCheckedRegionId = null; // force re-evaluate
                             stickyTile = null;
                             stickyDistrict = null;
@@ -2826,7 +2826,7 @@
                 if (error.code === 'already-exists') {
                     // Already purchased — unlock the region and close paywall
                     await fetchPurchaseStatus(true);
-                    map.setOptions({ maxZoom: 21 });
+                    setMapMaxZoom(21);
                     enableMapInteraction();
                     document.getElementById('zoom-restrict-overlay').classList.remove('open');
                     showUnlockToast(regionName);
@@ -2893,7 +2893,7 @@
                             loadTilesBasedOnViewport();
                             enableMapInteraction();
                             document.getElementById('zoom-restrict-overlay').classList.remove('open');
-                            map.setOptions({ maxZoom: 21 });
+                            setMapMaxZoom(21);
                             lastCheckedRegionId = null;
                             stickyTile = null;
                             stickyDistrict = null;
@@ -2970,7 +2970,7 @@
                 if (error.code === 'already-exists') {
                     await fetchPurchaseStatus(true);
                     if (hasPurchase(productId)) {
-                        map.setOptions({ maxZoom: 21 });
+                        setMapMaxZoom(21);
                         enableMapInteraction();
                         document.getElementById('zoom-restrict-overlay').classList.remove('open');
                         showUnlockToast(regionName);
@@ -3078,6 +3078,22 @@
         let bannerDismissedForRegion = null; // track dismissed region to avoid re-showing
         let dialogTriggeredByRegionEntry = false; // distinguish region-entry vs zoom triggers
         const MAX_FREE_ZOOM = 14;
+
+        // Guarded wrapper — avoids redundant map.setOptions({maxZoom}) calls during
+        // continuous wheel/pinch zoom. Each setOptions triggers a sync map state
+        // recompile, so calling it 30x per gesture with the same value causes jank.
+        let _currentMaxZoom = null;
+        function setMapMaxZoom(z) {
+            if (_currentMaxZoom === z) return;
+            _currentMaxZoom = z;
+            map.setOptions({ maxZoom: z });
+        }
+
+        // Guards for the locked-region zoom_changed branch. Previously each zoom tick
+        // queued a fresh addListenerOnce('idle',...) and re-scanned all district
+        // polygons; a 30-tick gesture queued 30 handlers that all fired at gesture end.
+        let _pendingLockedIdle = false;
+        let _unlockedByFirebase = false;
 
         // Village-boundary geojson (ported from Android pipeline)
         const MIN_ZOOM_FOR_GEOJSON = 12;
@@ -3884,6 +3900,22 @@
             return null;
         }
 
+        // Gesture-level memoization of findDistrictAtCenter. zoom_changed and
+        // center_changed (via checkRegionOnMove) both call this, plus the idle
+        // re-check at the end of a locked gesture — that's 3+ full polygon scans
+        // per tick on the main thread. Cache is keyed on center+zoom rounded to
+        // ~10 m so real pans invalidate it immediately.
+        let _districtCache = { key: null, value: null };
+        function findDistrictAtCenterCached() {
+            if (!map) return null;
+            const c = map.getCenter();
+            const key = c.lat().toFixed(4) + ',' + c.lng().toFixed(4) + '@' + map.getZoom();
+            if (_districtCache.key === key) return _districtCache.value;
+            const v = findDistrictAtCenter();
+            _districtCache = { key: key, value: v };
+            return v;
+        }
+
         // Look up a productPurchaseID in menuData to get district name and purchase info
         function findDistrictByPurchaseId(purchaseId) {
             if (!purchaseId) return null;
@@ -4237,7 +4269,7 @@
         function checkRegionOnMove() {
             if (zoomBypassActive || mapInteractionDisabled) return;
 
-            const district = findDistrictAtCenter();
+            const district = findDistrictAtCenterCached();
             const regionId = district ? district.productPurchaseID : null;
 
             // When no tiles are loaded at center (null), don't treat as a region change —
@@ -4285,7 +4317,7 @@
 
             if (hasPurchase(district.productPurchaseID)) {
                 // Purchased region — unlock zoom, dismiss dialog, show confirmation
-                map.setOptions({ maxZoom: 21 });
+                setMapMaxZoom(21);
                 if (regionChanged && dialogTriggeredByRegionEntry && overlay.classList.contains('open')) {
                     overlay.classList.remove('open');
                     enableMapInteraction();
@@ -4299,7 +4331,7 @@
 
             // Unpurchased region — always enforce zoom lock
             lastToastedRegionId = null;
-            map.setOptions({ maxZoom: MAX_FREE_ZOOM });
+            setMapMaxZoom(MAX_FREE_ZOOM);
         }
 
         // Layer visibility and data
@@ -5491,43 +5523,43 @@
                 if (!dpDataLoaded || !villageDataLoaded) return;
                 const z = map.getZoom();
                 const overlay = document.getElementById('zoom-restrict-overlay');
-                const district = findDistrictAtCenter();
+                const district = findDistrictAtCenterCached();
 
                 if (z >= MAX_FREE_ZOOM && !district) {
                     // Check if we're in a village area — allow zoom for village purchase via markers
                     var villageHere = findVillageAtCenter();
                     if (villageHere) {
                         // In village area — unlock zoom so user can see markers and purchase
-                        map.setOptions({ maxZoom: MAX_ZOOM_FOR_VILLAGEMAP });
+                        setMapMaxZoom(MAX_ZOOM_FOR_VILLAGEMAP);
                         return;
                     }
                     // At zoom limit but no tile data here — lock zoom and show "no data" message
-                    map.setOptions({ maxZoom: MAX_FREE_ZOOM });
+                    setMapMaxZoom(MAX_FREE_ZOOM);
                     dialogTriggeredByRegionEntry = true;
                     showNoDataDialog();
                 } else if (z >= MAX_FREE_ZOOM && district && !hasPurchase(district.productPurchaseID)) {
                     // Clamp zoom so the in-flight wheel/pinch animation stops cleanly at 14.
-                    map.setOptions({ maxZoom: MAX_FREE_ZOOM });
+                    setMapMaxZoom(MAX_FREE_ZOOM);
                     dialogTriggeredByRegionEntry = true;
 
                     // Parallel Firebase re-check — safety net for cross-device purchases (e.g.
                     // bought on the Android app) where the local hasPurchase() cache isn't synced.
-                    // The flag lets the idle handler below short-circuit if we turn out to be paid.
+                    // _unlockedByFirebase is module-scoped so the single idle listener below can
+                    // see a late-arriving unlock even if it was registered on an earlier tick.
                     // Debounced: skip if same productId checked within 2s (prevents rapid zoom spam).
-                    var unlockedByFirebase = false;
                     var _fbNow = Date.now();
                     if (district.productPurchaseID !== _lastFirebaseCheckPid || _fbNow - _lastFirebaseCheckTime > 2000) {
                     _lastFirebaseCheckPid = district.productPurchaseID;
                     _lastFirebaseCheckTime = _fbNow;
                     checkFirebasePurchaseEntry(district.productPurchaseID).then(function(found) {
                         if (!found) return;
-                        unlockedByFirebase = true;
+                        _unlockedByFirebase = true;
                         var ov = document.getElementById('zoom-restrict-overlay');
                         if (ov && ov.classList.contains('open')) {
                             ov.classList.remove('open');
                             enableMapInteraction();
                         }
-                        map.setOptions({ maxZoom: 21 });
+                        setMapMaxZoom(21);
                         showUnlockToast(district.districtName);
                         lastCheckedRegionId = null;
                         stickyTile = null;
@@ -5540,14 +5572,20 @@
                     // fires on the input tick with the target zoom, but the visual animation
                     // takes another ~150–300 ms — showing the dialog now would catch the map
                     // mid-flight and make it look like the paywall appeared at zoom 13.
-                    google.maps.event.addListenerOnce(map, 'idle', function() {
-                        if (unlockedByFirebase) return;
-                        if (map.getZoom() < MAX_FREE_ZOOM) return;
-                        var stillLocked = findDistrictAtCenter();
-                        if (!stillLocked) return;
-                        if (hasPurchase(stillLocked.productPurchaseID)) return;
-                        showZoomRestrictionDialog(stillLocked);
-                    });
+                    // Guarded so only one idle listener is queued per gesture, not per tick.
+                    if (!_pendingLockedIdle) {
+                        _pendingLockedIdle = true;
+                        _unlockedByFirebase = false;
+                        google.maps.event.addListenerOnce(map, 'idle', function() {
+                            _pendingLockedIdle = false;
+                            if (_unlockedByFirebase) return;
+                            if (map.getZoom() < MAX_FREE_ZOOM) return;
+                            var stillLocked = findDistrictAtCenterCached();
+                            if (!stillLocked) return;
+                            if (hasPurchase(stillLocked.productPurchaseID)) return;
+                            showZoomRestrictionDialog(stillLocked);
+                        });
+                    }
                 } else if (z < MAX_FREE_ZOOM && overlay.classList.contains('open')) {
                     // Zoomed out — auto-dismiss dialog
                     overlay.classList.remove('open');
@@ -6318,7 +6356,7 @@
             function goToLocation(lat, lng, name, districtProductId) {
                 zoomBypassActive = true;
                 if (districtProductId && hasPurchase(districtProductId)) {
-                    map.setOptions({ maxZoom: 21 });
+                    setMapMaxZoom(21);
                 }
                 map.panTo({ lat, lng });
                 var targetZoom = (districtProductId && hasPurchase(districtProductId)) ? 15 : MAX_FREE_ZOOM - 1;
