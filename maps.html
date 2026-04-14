@@ -3029,6 +3029,10 @@
                             '<p style="margin:8px 0 0;font-size:13px;color:rgba(255,255,255,0.9);line-height:1.5;">Your access continues until <strong>' + dateStr + '</strong>.<br>No more charges will be made.</p>' +
                         '</div>' +
                         '<div style="padding:20px;">' +
+                            '<div style="background:#FFF8E1;border-left:4px solid #FFA000;border-radius:6px;padding:12px 14px;margin-bottom:16px;">' +
+                                '<div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:6px;">One more step — revoke the UPI Autopay mandate</div>' +
+                                '<div style="font-size:12px;color:#5D4037;line-height:1.5;">Open your UPI app (PhonePe / GPay / Paytm / BHIM) → <strong>Autopay</strong> or <strong>Mandates</strong> → find this mandate and cancel it. Otherwise it will keep showing as active in your bank app even though we will never charge it again.</div>' +
+                            '</div>' +
                             '<button id="cancel-sub-done" style="width:100%;padding:14px;font-size:14px;font-weight:600;border:none;border-radius:10px;background:#00796B;color:#fff;cursor:pointer;">Done</button>' +
                         '</div>';
                     document.getElementById('cancel-sub-done').addEventListener('click', function() {
