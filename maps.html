@@ -2682,12 +2682,13 @@
             return m + 'm';
         }
 
-        function formatSubscriptionCountdown(expiry) {
+        function formatSubscriptionCountdown(expiry, status) {
             if (!expiry || expiry - Date.now() <= 0) return 'Expired';
-            var renews = new Date(expiry).toLocaleDateString('en-GB', {
+            var date = new Date(expiry).toLocaleDateString('en-GB', {
                 day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata'
             });
-            return 'Renews on ' + renews;
+            var verb = (status && status !== 'active') ? 'Expires on ' : 'Renews on ';
+            return verb + date;
         }
 
         // Buy a 7-day pass
@@ -5991,7 +5992,8 @@
                             var exp = getPurchaseExpiry(item.productPurchaseID);
                             var plan = getPurchasePlan(item.productPurchaseID);
                             if (plan === 'subscription') {
-                                badgeHtml = '<div class="region-card-badge purchased">Subscription &middot; ' + formatSubscriptionCountdown(exp) + '</div>';
+                                var cardSub = activeSubscriptions.get(item.productPurchaseID);
+                                badgeHtml = '<div class="region-card-badge purchased">Subscription &middot; ' + formatSubscriptionCountdown(exp, cardSub && cardSub.status) + '</div>';
                             } else {
                                 var days = calcDaysLeft(exp);
                                 var planTag = plan === 'professional' ? 'Pro' : plan === 'web' ? 'Web' : plan === 'override' ? 'Override' : '7 Day';
@@ -6238,7 +6240,8 @@
                             const expiry = getPurchaseExpiry(item.productPurchaseID);
                             const plan = getPurchasePlan(item.productPurchaseID);
                             if (plan === 'subscription') {
-                                badge = '<span style="font-size:9px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0" title="Subscriptions renew at the start of the day">Sub \u00b7 ' + formatSubscriptionCountdown(expiry) + '</span>';
+                                const listSub = activeSubscriptions.get(item.productPurchaseID);
+                                badge = '<span style="font-size:9px;background:#4CAF50;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;flex-shrink:0" title="Subscriptions renew at the start of the day">Sub \u00b7 ' + formatSubscriptionCountdown(expiry, listSub && listSub.status) + '</span>';
                             } else {
                                 const daysLeft = calcDaysLeft(expiry);
                                 const planTag = plan === 'professional' ? 'Pro' : plan === 'web' ? 'Web' : plan === 'override' ? 'Override' : '7 Day';
@@ -7115,7 +7118,7 @@
                                 '</div>' +
                                 cancelBtn +
                             '</div>' +
-                            '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';" title="Subscriptions renew at the start of the day">' + formatSubscriptionCountdown(val.expiry) + '</span>',
+                            '<span style="font-size:11px;font-weight:600;color:' + daysColor + ';" title="Subscriptions renew at the start of the day">' + formatSubscriptionCountdown(val.expiry, sub && sub.status) + '</span>',
                             onClick: gotoHandler
                         });
                     } else if (val.plan === 'professional') {
