@@ -3834,11 +3834,30 @@
             var center = { lat: c.lat(), lng: c.lng() };
             for (var i = 0; i < villageLayerData.length; i++) {
                 var item = villageLayerData[i];
-                if (item.polygon && pointInPolygon(center, item.polygon)) {
-                    return item;
-                }
+                if (!item.polygon) continue;
+                // Bbox prefilter — cheap reject for the ~99% of villages the center
+                // isn't inside. pointInPolygon over ~400 village rings was the
+                // dominant main-thread cost during fast zoom/pan gestures.
+                var b = item.bbox;
+                if (b && (center.lat < b.minLat || center.lat > b.maxLat ||
+                          center.lng < b.minLng || center.lng > b.maxLng)) continue;
+                if (pointInPolygon(center, item.polygon)) return item;
             }
             return null;
+        }
+
+        // Gesture-level memoization — mirrors findDistrictAtCenterCached. Zoom
+        // and pan listeners call findVillageAtCenter multiple times per tick;
+        // cache by center+zoom rounded to ~10 m so real pans invalidate fast.
+        let _villageCache = { key: null, value: null };
+        function findVillageAtCenterCached() {
+            if (!map) return null;
+            const c = map.getCenter();
+            const key = c.lat().toFixed(4) + ',' + c.lng().toFixed(4) + '@' + map.getZoom();
+            if (_villageCache.key === key) return _villageCache.value;
+            const v = findVillageAtCenter();
+            _villageCache = { key: key, value: v };
+            return v;
         }
 
         function findDistrictAtCenter() {
@@ -5140,20 +5159,42 @@
                     doesPolygonIntersectBounds(polygon, vp);
             }
 
+            // Layer data is cached inside the worker to avoid structured-cloning
+            // the full ~576 KB village polygon set on every 200 ms pan. Main thread
+            // pushes data once via { kind:'loadLayer' } (and again if the backing
+            // array reference changes — e.g. a cache-version refetch). Subsequent
+            // 'compute' messages carry only viewport + active types.
+            const layerCache = {};
+
             self.onmessage = function(e) {
-                const { generation, layers, currentZoom, centerPoint, vp } = e.data;
+                const msg = e.data;
+                if (msg.kind === 'loadLayer') {
+                    layerCache[msg.type] = msg.data;
+                    return;
+                }
+                // kind: 'compute'
+                const { generation, activeTypes, currentZoom, centerPoint, vp } = msg;
                 const results = {};
-                for (const layer of layers) {
-                    const decisions = [];
-                    for (let i = 0; i < layer.data.length; i++) {
-                        decisions.push(shouldLoadTile(layer.data[i], currentZoom, centerPoint, vp, layer.zoomLimits));
+                for (let k = 0; k < activeTypes.length; k++) {
+                    const at = activeTypes[k];
+                    const data = layerCache[at.type];
+                    if (!data) continue;
+                    const decisions = new Array(data.length);
+                    for (let i = 0; i < data.length; i++) {
+                        decisions[i] = shouldLoadTile(data[i], currentZoom, centerPoint, vp, at.zoomLimits);
                     }
-                    results[layer.type] = decisions;
+                    results[at.type] = decisions;
                 }
                 self.postMessage({ generation, results });
             };
         `;
         const tileWorker = new Worker(URL.createObjectURL(new Blob([workerCode], { type: 'application/javascript' })));
+
+        // Tracks which array reference has already been pushed to the worker's
+        // layerCache. Identity comparison — a cache-version refetch assigns a
+        // fresh array to dpLayerData/villageLayerData/oldDPLayerData, which
+        // triggers an automatic resend on the next loadTilesBasedOnViewport.
+        const _workerSentRefs = { dp: null, village: null, oldDP: null };
 
         // Zoom limits per layer type
         const ZOOM_LIMITS = {
@@ -5527,7 +5568,7 @@
 
                 if (z >= MAX_FREE_ZOOM && !district) {
                     // Check if we're in a village area — allow zoom for village purchase via markers
-                    var villageHere = findVillageAtCenter();
+                    var villageHere = findVillageAtCenterCached();
                     if (villageHere) {
                         // In village area — unlock zoom so user can see markers and purchase
                         setMapMaxZoom(MAX_ZOOM_FOR_VILLAGEMAP);
@@ -9012,20 +9053,33 @@
                 maxLng: currentBounds.getNorthEast().lng()
             };
 
-            // Build list of visible layers to send to worker
-            const layers = [];
-            // DP: show new OR old, never both (controlled by isShowingOldMaps toggle)
-            if (isDPLayerVisible && !isShowingOldMaps && dpDataLoaded && dpLayerData.length) {
-                layers.push({ type: 'dp', data: dpLayerData, zoomLimits: ZOOM_LIMITS.dp });
-            }
-            if (isDPLayerVisible && isShowingOldMaps && oldDPDataLoaded && oldDPLayerData.length) {
-                layers.push({ type: 'oldDP', data: oldDPLayerData, zoomLimits: ZOOM_LIMITS.oldDP });
-            }
-            if (isVillageLayerVisible && villageDataLoaded && villageLayerData.length) {
-                layers.push({ type: 'village', data: villageLayerData, zoomLimits: ZOOM_LIMITS.village });
+            // Build list of visible layers to send to worker. The full polygon
+            // data is cached inside the worker (see `layerCache` above) and only
+            // resent when the main-thread array reference changes, e.g. after a
+            // cache-version refetch. This keeps the per-pan message tiny.
+            //
+            // Zoom-gate: if the current zoom is outside a layer's range, skip
+            // it entirely — no clone, no worker work, and existing overlays stay
+            // put (they honor their own zMin_/zMax_ so no tiles render anyway).
+            const activeTypes = [];
+            const zl = ZOOM_LIMITS;
+
+            function considerLayer(type, data, dataLoaded, visible, limits) {
+                if (!visible || !dataLoaded || !data || !data.length) return;
+                if (currentZoom < limits[0] || currentZoom > limits[1]) return;
+                if (_workerSentRefs[type] !== data) {
+                    tileWorker.postMessage({ kind: 'loadLayer', type: type, data: data });
+                    _workerSentRefs[type] = data;
+                }
+                activeTypes.push({ type: type, zoomLimits: limits });
             }
 
-            if (layers.length === 0) return;
+            // DP: show new OR old, never both (controlled by isShowingOldMaps toggle)
+            considerLayer('dp', dpLayerData, dpDataLoaded, isDPLayerVisible && !isShowingOldMaps, zl.dp);
+            considerLayer('oldDP', oldDPLayerData, oldDPDataLoaded, isDPLayerVisible && isShowingOldMaps, zl.oldDP);
+            considerLayer('village', villageLayerData, villageDataLoaded, isVillageLayerVisible, zl.village);
+
+            if (activeTypes.length === 0) return;
 
             // First time tiles have data ready — unblock deferred GeoJSON loading
             if (!tilesInitiated) {
@@ -9034,7 +9088,7 @@
             }
 
             // Send to Web Worker -- polygon math runs in background thread
-            tileWorker.postMessage({ generation: currentGeneration, layers, currentZoom, centerPoint, vp });
+            tileWorker.postMessage({ kind: 'compute', generation: currentGeneration, activeTypes: activeTypes, currentZoom: currentZoom, centerPoint: centerPoint, vp: vp });
         }
 
         // Initialize a cache for tile loading
