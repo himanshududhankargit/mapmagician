@@ -9430,6 +9430,24 @@
             return { lat: latRad * 180 / Math.PI, lng: lng };
         }
 
+        // PERF (maps10 fix): full tile bbox in lat/lng. Needed because a tile
+        // can straddle a sub-sheet boundary — its CENTER might be outside a
+        // sub-sheet polygon while half its pixels are still inside. We use
+        // bbox intersection instead of point-in-polygon to dispatch.
+        function _tileCoordToBoundsLatLng(x, y, z) {
+            var n = Math.pow(2, z);
+            var minLng = (x / n) * 360 - 180;
+            var maxLng = ((x + 1) / n) * 360 - 180;
+            var maxLatRad = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n)));
+            var minLatRad = Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 1) / n)));
+            return {
+                minLat: minLatRad * 180 / Math.PI,
+                maxLat: maxLatRad * 180 / Math.PI,
+                minLng: minLng,
+                maxLng: maxLng
+            };
+        }
+
         function CanvasMapType(layerDef, layerType, opacity) {
             this.tileSize = new google.maps.Size(256, 256);
             this.maxZoom = 22;
@@ -9489,27 +9507,31 @@
             // Zoom out of range: return empty div (matches old getTileUrl returning null).
             if (zoom < this.zMin_ || zoom > this.zMax_) return div;
 
-            // PERF (maps10): merged-entry dispatch. Find which sub-sheet
-            // contains this tile's center and use that sub-sheet's URL.
-            // If no sub-sheet covers this tile (we're inside the merged
-            // bbox but outside the actual coverage), return a blank div
-            // and skip the fetch entirely.
+            // PERF (maps10 fix): merged-entry dispatch. Use tile bbox vs
+            // sub-sheet bbox INTERSECTION (not point-in-polygon on the
+            // tile center) to pick a sub-sheet URL. The original code had
+            // no polygon check at all — it fetched every viewport tile
+            // unconditionally and let 404s handle dead zones. Bbox
+            // intersection is the natural "coverage" test that keeps the
+            // dispatch fast without dropping legitimate tiles whose center
+            // happens to fall outside a sub-sheet's polygon.
             var resolvedUrlPrefix;
             if (this._merged) {
-                var center = _tileCoordToCenterLatLng(tileCoord.x, tileCoord.y, zoom);
+                var tb = _tileCoordToBoundsLatLng(tileCoord.x, tileCoord.y, zoom);
                 var matched = null;
                 for (var si = 0; si < this._subSheets.length; si++) {
                     var sub = this._subSheets[si];
                     if (typeof sub.minZoom === 'number' && zoom < sub.minZoom) continue;
                     if (typeof sub.maxZoom === 'number' && zoom > sub.maxZoom) continue;
                     var sb = sub.bbox;
-                    if (sb && (center.lat < sb.minLat || center.lat > sb.maxLat ||
-                               center.lng < sb.minLng || center.lng > sb.maxLng)) continue;
-                    if (sub.polygon && !pointInPolygon(center, sub.polygon)) continue;
+                    if (!sb) { matched = sub; break; }
+                    // Tile bbox vs sub-sheet bbox overlap (rectangles intersect)
+                    if (tb.maxLat < sb.minLat || tb.minLat > sb.maxLat ||
+                        tb.maxLng < sb.minLng || tb.minLng > sb.maxLng) continue;
                     matched = sub;
                     break;
                 }
-                if (!matched) return div;   // no coverage here — blank tile, no fetch
+                if (!matched) return div;   // no sub-sheet bbox overlaps this tile
                 resolvedUrlPrefix = matched.urlPrefix;
             } else {
                 resolvedUrlPrefix = this.urlPrefix_;
