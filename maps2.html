@@ -3118,7 +3118,7 @@
         // Android traffic). Returns GiB rounded to nearest power-of-two bucket
         // (0.25, 0.5, 1, 2, 4, 8). Undefined on Firefox/Safari → treated as capable.
         const IS_LOW_MEMORY_DEVICE = (navigator.deviceMemory || 8) < 8;
-        let isVillageBoundaryEnabled = !IS_LOW_MEMORY_DEVICE;
+        let isVillageBoundaryEnabled = false; // AB-DISABLED: A/B test, was !IS_LOW_MEMORY_DEVICE
 
         // ---------- Static district bounds index (for viewport-based loading) ----------
         // Pre-computed bounding boxes for all 37 Maharashtra district GeoJSON files.
@@ -4358,7 +4358,7 @@
         var tilesInitiated = false; // Gate GeoJSON until tiles have started loading
         var layerDataFetched = false; // Prevent duplicate fetchLayerData() calls
         let isDPLayerVisible = true;
-        let isVillageLayerVisible = true;
+        let isVillageLayerVisible = false; // AB-DISABLED: A/B test, was true
         let isShowingOldMaps = false;
         let oldDPDataAvailable = false;
 
@@ -4718,6 +4718,7 @@
             _removeAllVillagePolylines();
         }
         function updateVillagePolylines() {
+            return; // AB-DISABLED: A/B test, full village polyline rebuild on every idle
             if (!map || renderedDistricts.size === 0) return;
             const zoom = map.getZoom();
             if (zoom < MIN_ZOOM_FOR_GEOJSON) {
@@ -5490,12 +5491,12 @@
                 updateOldMapsButtonVisibility();
                 // Warn user when current zoom exceeds the maxZoom of every active overlay covering the center
                 checkOverlayZoomLimit(z, c);
-                // Refresh viewport-filtered village polylines
-                updateVillagePolylines();
-                // Primary geojson loader: geocode current center → fetch district zip
-                loadGeoJsonForViewport();
-                // Show/hide village markers based on zoom
-                updateVillageMarkerVisibility();
+                // AB-DISABLED: village polyline rebuild on every idle
+                // updateVillagePolylines();
+                // AB-DISABLED: village boundary geojson loader (district zip fetch + parse)
+                // loadGeoJsonForViewport();
+                // AB-DISABLED: village marker visibility toggle
+                // updateVillageMarkerVisibility();
                 // Lazy-load Solapur decorative overlay when its bounds come into view
                 maybeLoadSolapurOverlay();
                 // Keep Solapur label opacity in sync with current zoom
@@ -8495,6 +8496,7 @@
         }
 
         function createVillageMarkers() {
+            return; // AB-DISABLED: A/B test, no village markers spawned at all
             // Clear existing markers
             villageMarkers.forEach(function(marker) { marker.setMap(null); });
             villageMarkers.clear();
@@ -8696,6 +8698,7 @@
         }
 
         function updateVillageMarkerVisibility() {
+            return; // AB-DISABLED: A/B test, no per-idle marker visibility toggling
             var zoom = map ? map.getZoom() : 0;
             var shouldShow = isVillageLayerVisible && zoom >= MIN_ZOOM_FOR_VILLAGE_MARKERS;
             villageMarkers.forEach(function(marker) {
