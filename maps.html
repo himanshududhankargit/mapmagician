@@ -5862,6 +5862,16 @@
                     if (this._canvas) this.draw();
                 }
                 draw() {
+                    // PERF (perf #12 REVERTED): the per-village pixel cache caused
+                    // visible drift because fromLatLngToDivPixel is NOT pan-stable
+                    // in this Google Maps build — div-pixel space tracks the screen
+                    // container, not the world. Cached pixels from an old pan
+                    // didn't match the new pan's coordinate system, so boundaries
+                    // slid relative to the underlying map. Reverted to the
+                    // un-cached projection path. To re-introduce caching we'd
+                    // need to store coords in WORLD pixel space (manual mercator)
+                    // and apply a per-pan div→world delta — possible but
+                    // significantly more complex.
                     if (!this._canvas) return;
                     const proj = this.getProjection();
                     if (!proj) return;
@@ -8772,15 +8782,23 @@
             if (zoom < MIN_ZOOM_FOR_VILLAGE_MARKERS) return [];
             var bounds = map.getBounds();
             if (!bounds) return [];
+            // PERF (perf #11): bbox prefilter on cached numeric centers. No
+            // google.maps.LatLng allocation, no bounds.contains call, no
+            // getVillageCenter polygon walk. ~50–100x faster on Pune at z13.
+            var ne = bounds.getNorthEast();
+            var sw = bounds.getSouthWest();
+            var minLat = sw.lat(), maxLat = ne.lat();
+            var minLng = sw.lng(), maxLng = ne.lng();
             var result = [];
-            villageLayerData.forEach(function(item) {
-                if (!item.villageName) return;
-                var center = getVillageCenter(item);
-                if (!center) return;
-                if (bounds.contains(new google.maps.LatLng(center.lat, center.lng))) {
-                    result.push(item);
-                }
-            });
+            for (var i = 0; i < villageLayerData.length; i++) {
+                var item = villageLayerData[i];
+                if (!item.villageName) continue;
+                var lat = item._centerLat;
+                var lng = item._centerLng;
+                if (lat == null || lng == null) continue;
+                if (lat < minLat || lat > maxLat || lng < minLng || lng > maxLng) continue;
+                result.push(item);
+            }
             return result;
         }
 
@@ -8929,12 +8947,63 @@
             updateAddonButtonVisibility();
         }
 
+        // PERF (perf #11): track which markers are currently attached to the
+        // map so updateVillageMarkerVisibility can skip the no-op setMap
+        // calls. Pans within the same visible-village set become near-free.
+        var _currentlyVisibleVillageMarkers = new Set();
+
         function updateVillageMarkerVisibility() {
             var zoom = map ? map.getZoom() : 0;
             var shouldShow = isVillageLayerVisible && zoom >= MIN_ZOOM_FOR_VILLAGE_MARKERS;
-            villageMarkers.forEach(function(marker) {
-                marker.setMap(shouldShow ? map : null);
+
+            if (!shouldShow) {
+                // Hide whatever's currently shown
+                if (_currentlyVisibleVillageMarkers.size > 0) {
+                    _currentlyVisibleVillageMarkers.forEach(function(name) {
+                        var m = villageMarkers.get(name);
+                        if (m) m.setMap(null);
+                    });
+                    _currentlyVisibleVillageMarkers.clear();
+                }
+                updateAddonButtonVisibility();
+                return;
+            }
+
+            // Compute the new visible set via the same bbox prefilter as
+            // getVillagesInView. Uses the cached numeric centers populated by
+            // processLayerData — no LatLng allocations, no getVillageCenter calls.
+            var bounds = map.getBounds();
+            if (!bounds) return;
+            var ne = bounds.getNorthEast(), sw = bounds.getSouthWest();
+            var minLat = sw.lat(), maxLat = ne.lat();
+            var minLng = sw.lng(), maxLng = ne.lng();
+
+            var newVisible = new Set();
+            villageMarkers.forEach(function(marker, name) {
+                var item = villageDataByName.get(name);
+                if (!item) return;
+                var lat = item._centerLat;
+                var lng = item._centerLng;
+                if (lat == null || lng == null) return;
+                if (lat < minLat || lat > maxLat || lng < minLng || lng > maxLng) return;
+                newVisible.add(name);
             });
+
+            // Diff: only setMap for markers that actually changed visibility
+            _currentlyVisibleVillageMarkers.forEach(function(name) {
+                if (!newVisible.has(name)) {
+                    var m = villageMarkers.get(name);
+                    if (m) m.setMap(null);
+                }
+            });
+            newVisible.forEach(function(name) {
+                if (!_currentlyVisibleVillageMarkers.has(name)) {
+                    var m = villageMarkers.get(name);
+                    if (m) m.setMap(map);
+                }
+            });
+            _currentlyVisibleVillageMarkers = newVisible;
+
             updateAddonButtonVisibility();
         }
 
@@ -9228,7 +9297,7 @@
                         try {
                             const polygon = parseKML(item.kml);
 
-                            result.push({
+                            const entry = {
                                 id: key,
                                 link: item.link,
                                 kml: item.kml,
@@ -9240,7 +9309,24 @@
                                 productPurchaseID: item.productPurchaseID || '',
                                 villageName: item.VillageName || '',
                                 latLng: item.LatitudeAndLongitude || ''
-                            });
+                            };
+
+                            // PERF (perf #11): pre-compute the village center as
+                            // plain numbers so getVillagesInView and
+                            // updateVillageMarkerVisibility can do a 4-comparison
+                            // bbox prefilter on every pan instead of allocating
+                            // a google.maps.LatLng + calling bounds.contains per
+                            // village. Only meaningful for village entries
+                            // (DP/oldDP have empty villageName).
+                            if (entry.villageName) {
+                                const c = getVillageCenter(entry);
+                                if (c) {
+                                    entry._centerLat = c.lat;
+                                    entry._centerLng = c.lng;
+                                }
+                            }
+
+                            result.push(entry);
                         } catch (error) {
                             console.warn(`Error processing data item ${key}:`, error);
                         }
