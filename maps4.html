@@ -5209,6 +5209,7 @@
         var _mmDistrictVisibleSince = {}; // id -> firstSeenTs
         var _mmDistrictReported = {};     // id -> true (once-per-session)
         function _mmTrackDistrictVisibility(decisions, layerData) {
+            return; // AB-DISABLED: per-pan analytics loop over decisions array
             try {
                 var now = Date.now();
                 var seen = {};
@@ -5258,6 +5259,7 @@
         };
 
         function applyTileDecisions(decisions, layerData, tileStatus, overlayMap, layerType) {
+            return; // AB-DISABLED: no overlay add/remove churn on pan. Existing overlays stay put.
             // Unload first (frees HTTP connections for new tiles)
             for (let i = 0; i < decisions.length; i++) {
                 if (!decisions[i] && tileStatus[i]) {
@@ -5665,6 +5667,7 @@
                 _zoomToastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
             }
             function checkOverlayZoomLimit(z, centerLatLng) {
+                return; // AB-DISABLED: triple-nested loop with pointInPolygon per overlay
                 if (zoomBypassActive || mapInteractionDisabled) return;
                 if (!centerLatLng) return;
                 const centerPoint = { lat: centerLatLng.lat(), lng: centerLatLng.lng() };
@@ -9162,60 +9165,44 @@
         }
 
         CanvasMapType.prototype.getTile = function(tileCoord, zoom, ownerDocument) {
+            // AB-DISABLED: stubbed to bare minimum — return empty 256x256 div, no canvas,
+            // no Image fetch, no drawImage, no analytics. If pan now feels smooth, the
+            // per-tile DOM/Image/canvas/fetch work was the dominant cost. DP/village tile
+            // overlays will appear blank; the base satellite layer still renders.
             var div = ownerDocument.createElement('div');
             div.style.width = '256px';
             div.style.height = '256px';
-            div.style.opacity = this.opacity_;
-
-            // Zoom out of range: return empty div (matches old getTileUrl returning null).
-            if (zoom < this.zMin_ || zoom > this.zMax_) return div;
-
-            var canvas = ownerDocument.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            canvas.style.width = '256px';
-            canvas.style.height = '256px';
-            canvas.style.display = 'block';
-            div.appendChild(canvas);
-
-            var ctx = canvas.getContext('2d');
-
-            // Off-DOM Image: not in document tree, so Save As / Ctrl+S can't see its src.
-            // Browser auto-sends CloudFront signed cookies (same-site subdomain).
-            var img = new Image();
-            var _mmLayerType = this.layerType;
-            var _mmPid = (this.layerDef && this.layerDef.productPurchaseID) || '';
-            img.onload = function() {
-                // Tile may have been released while loading -- skip if detached.
-                if (div.parentNode) ctx.drawImage(img, 0, 0, 256, 256);
-                // Analytics: 5% sample of successful tile loads to cap GA4 event volume
-                if (Math.random() < 0.05) {
-                    try {
-                        mmAnalytics.event('tile_loaded', {
-                            layer_type: _mmLayerType,
-                            zoom: zoom,
-                            bucket: zoom > 14 ? 'premium' : 'free',
-                            pid: _mmPid
-                        });
-                    } catch (e) {}
-                }
-            };
-            img.onerror = function() {
-                /* 404/auth -- leave tile blank */
-                try {
-                    mmAnalytics.event('tile_load_failure', {
-                        layer_type: _mmLayerType,
-                        zoom: zoom,
-                        bucket: zoom > 14 ? 'premium' : 'free',
-                        pid: _mmPid
-                    });
-                } catch (e) {}
-            };
-            img.src = this.urlPrefix_ + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
-
-            div._tileImg = img;
-            this.tiles_.add(div);
             return div;
+            // --- original body kept below for revert ---
+            // var div = ownerDocument.createElement('div');
+            // div.style.width = '256px';
+            // div.style.height = '256px';
+            // div.style.opacity = this.opacity_;
+            // if (zoom < this.zMin_ || zoom > this.zMax_) return div;
+            // var canvas = ownerDocument.createElement('canvas');
+            // canvas.width = 256;
+            // canvas.height = 256;
+            // canvas.style.width = '256px';
+            // canvas.style.height = '256px';
+            // canvas.style.display = 'block';
+            // div.appendChild(canvas);
+            // var ctx = canvas.getContext('2d');
+            // var img = new Image();
+            // var _mmLayerType = this.layerType;
+            // var _mmPid = (this.layerDef && this.layerDef.productPurchaseID) || '';
+            // img.onload = function() {
+            //     if (div.parentNode) ctx.drawImage(img, 0, 0, 256, 256);
+            //     if (Math.random() < 0.05) {
+            //         try { mmAnalytics.event('tile_loaded', { layer_type:_mmLayerType, zoom:zoom, bucket:zoom>14?'premium':'free', pid:_mmPid }); } catch (e) {}
+            //     }
+            // };
+            // img.onerror = function() {
+            //     try { mmAnalytics.event('tile_load_failure', { layer_type:_mmLayerType, zoom:zoom, bucket:zoom>14?'premium':'free', pid:_mmPid }); } catch (e) {}
+            // };
+            // img.src = this.urlPrefix_ + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
+            // div._tileImg = img;
+            // this.tiles_.add(div);
+            // return div;
         };
 
         CanvasMapType.prototype.releaseTile = function(tile) {
