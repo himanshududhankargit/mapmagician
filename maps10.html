@@ -8348,9 +8348,13 @@
             }
         }
 
-        function applyLayerData(data, label) {
+        function applyLayerData(data, label, shouldMerge) {
             const processed = processLayerData(data);
-            return processed;
+            // PERF (maps10 fix #5): the productPurchaseID merge only applies
+            // to DP/oldDP layers. Villages have their own productPurchaseIDs
+            // but each village entry is independent and the marker/addon code
+            // depends on per-entry villageName/latLng fields the merge clears.
+            return shouldMerge ? _mergeByProductPurchaseID(processed) : processed;
         }
 
         // --- Layer-registry cache with live version-stamp listener ---
@@ -8462,7 +8466,7 @@
         function fetchDPLayerData() {
             getCachedOrFetchLayer('layer_dp', DP_URL_DATABASE_NAME, 'layer_dp', fetchDPLayerData).then(data => {
                 if (!data) { dpDataLoaded = true; return; }
-                dpLayerData = applyLayerData(data, "Development Plan");
+                dpLayerData = applyLayerData(data, "Development Plan", true);
                 dpTileStatus = Array(dpLayerData.length).fill(false);
                 stickyTile = null;
                 stickyDistrict = null;
@@ -8556,7 +8560,7 @@
                     updateOldMapsButtonVisibility();
                     return;
                 }
-                oldDPLayerData = applyLayerData(data, "Old Development Plan");
+                oldDPLayerData = applyLayerData(data, "Old Development Plan", true);
                 oldDPTileStatus = Array(oldDPLayerData.length).fill(false);
                 oldDPDataLoaded = true;
                 onOldDPReady();
@@ -9239,13 +9243,11 @@
                 }
             }
 
-            // PERF (maps10): merge entries that share a productPurchaseID into
-            // a single virtual entry. Pune has ~50 entries with productPurchaseID
-            // "punedpplan"; collapsing them into one CanvasMapType reduces
-            // per-tile getTile() overhead by ~10x. Sub-sheet polygons + URLs are
-            // preserved inside `subSheets[]` so each tile request still dispatches
-            // to the correct sub-sheet URL via a polygon-in-tile check.
-            return _mergeByProductPurchaseID(result);
+            // PERF (maps10): productPurchaseID merge moved into applyLayerData
+            // and gated by a shouldMerge flag — DP/oldDP get merged, villages
+            // do NOT (the village marker/addon code depends on per-entry
+            // villageName/latLng fields the merge clears). See maps10 fix #5.
+            return result;
         }
 
         function _mergeByProductPurchaseID(entries) {
