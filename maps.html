@@ -5600,8 +5600,15 @@
                 updateOldMapsButtonVisibility();
                 // Warn user when current zoom exceeds the maxZoom of every active overlay covering the center
                 checkOverlayZoomLimit(z, c);
-                // Refresh viewport-filtered village polylines
-                updateVillagePolylines();
+                // PERF (perf #2 of next round): updateVillagePolylines() removed
+                // from the per-idle path. Google Maps already calls
+                // VillageBoundaryOverlay.draw() automatically on every viewport
+                // change, and the function's only effect was to call
+                // requestRedraw() — which manually re-fires the same draw().
+                // We were drawing the canvas TWICE per pan. The function still
+                // exists and is still called from _loadAndRenderDistrict.then
+                // when new district data lands (where Google Maps wouldn't know
+                // to redraw on its own).
                 // Primary geojson loader: geocode current center → fetch district zip
                 loadGeoJsonForViewport();
                 // Show/hide village markers based on zoom
