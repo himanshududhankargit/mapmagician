@@ -3860,6 +3860,38 @@
             return v;
         }
 
+        // PERF (maps10 fix #2): merged dpLayerData entries store a 4-corner
+        // rectangle as their .polygon (covering the union bbox of all
+        // sub-sheets), which is too permissive for the main-thread
+        // "which region am I in?" check. This helper looks at the actual
+        // sub-sheet polygons for merged entries and returns both the
+        // inside-flag and the SMALLEST matching sub-sheet's bbox area for
+        // tie-breaking. Un-merged entries are unchanged.
+        function _checkLayerEntryAtPoint(entry, point) {
+            if (!entry || !entry.polygon) return { inside: false, area: Infinity };
+            if (!entry.isMerged) {
+                if (!pointInPolygon(point, entry.polygon)) return { inside: false, area: Infinity };
+                var bb = entry.bbox;
+                var area = bb ? (bb.maxLat - bb.minLat) * (bb.maxLng - bb.minLng) : Infinity;
+                return { inside: true, area: area };
+            }
+            // Merged: walk sub-sheets, find the smallest one whose REAL
+            // polygon contains the point. The merged rectangle is ignored.
+            if (!entry.subSheets) return { inside: false, area: Infinity };
+            var bestArea = Infinity;
+            for (var i = 0; i < entry.subSheets.length; i++) {
+                var sub = entry.subSheets[i];
+                if (!sub.polygon) continue;
+                var sb = sub.bbox;
+                if (sb && (point.lat < sb.minLat || point.lat > sb.maxLat ||
+                           point.lng < sb.minLng || point.lng > sb.maxLng)) continue;
+                if (!pointInPolygon(point, sub.polygon)) continue;
+                var sba = sb ? (sb.maxLat - sb.minLat) * (sb.maxLng - sb.minLng) : Infinity;
+                if (sba < bestArea) bestArea = sba;
+            }
+            return { inside: bestArea !== Infinity, area: bestArea };
+        }
+
         function findDistrictAtCenter() {
             if (!map) return null;
             const c = map.getCenter();
@@ -3874,19 +3906,19 @@
                 let bestMatch = null;
                 let bestArea = Infinity;
                 let bestTile = null;
-                if (stickyTile && stickyTile.polygon && pointInPolygon(center, stickyTile.polygon)) {
-                    bestMatch = stickyDistrict;
-                    bestArea = stickyTile.bbox
-                        ? (stickyTile.bbox.maxLat - stickyTile.bbox.minLat) * (stickyTile.bbox.maxLng - stickyTile.bbox.minLng)
-                        : Infinity;
-                    bestTile = stickyTile;
+                if (stickyTile) {
+                    var stickyCheck = _checkLayerEntryAtPoint(stickyTile, center);
+                    if (stickyCheck.inside) {
+                        bestMatch = stickyDistrict;
+                        bestArea = stickyCheck.area;
+                        bestTile = stickyTile;
+                    }
                 }
                 for (const tile of dpLayerData) {
                     if (tile === bestTile) continue; // skip sticky tile, already seeded
-                    if (tile.polygon && pointInPolygon(center, tile.polygon)) {
-                        const area = tile.bbox
-                            ? (tile.bbox.maxLat - tile.bbox.minLat) * (tile.bbox.maxLng - tile.bbox.minLng)
-                            : Infinity;
+                    var check = _checkLayerEntryAtPoint(tile, center);
+                    if (check.inside) {
+                        const area = check.area;
                         if (area >= bestArea) continue;
                         // Try productPurchaseID first (from Firebase dpURLlink data)
                         let district = findDistrictByPurchaseId(tile.productPurchaseID);
@@ -5739,9 +5771,15 @@
                     for (const ov of arr) {
                         const bb = ov.bbox;
                         if (!bb) continue;
+                        // Cheap outer-bbox reject (works for merged + un-merged)
                         if (centerPoint.lat < bb.minLat || centerPoint.lat > bb.maxLat ||
                             centerPoint.lng < bb.minLng || centerPoint.lng > bb.maxLng) continue;
-                        if (!ov.polygon || !pointInPolygon(centerPoint, ov.polygon)) continue;
+                        // PERF (maps10 fix #2): for merged entries this walks
+                        // sub-sheet polygons rather than the merged rectangle
+                        // so PMRDA's wide bbox doesn't falsely cover Pune-only
+                        // points.
+                        var ovCheck = _checkLayerEntryAtPoint(ov, centerPoint);
+                        if (!ovCheck.inside) continue;
                         const m = (typeof ov.maxZoom === 'number') ? ov.maxZoom : 22;
                         if (m > overlayMax) overlayMax = m;
                     }
