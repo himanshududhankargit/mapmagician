@@ -5869,16 +5869,24 @@
                     if (this._canvas) this.draw();
                 }
                 draw() {
-                    // PERF (perf #12 REVERTED): the per-village pixel cache caused
-                    // visible drift because fromLatLngToDivPixel is NOT pan-stable
-                    // in this Google Maps build — div-pixel space tracks the screen
-                    // container, not the world. Cached pixels from an old pan
-                    // didn't match the new pan's coordinate system, so boundaries
-                    // slid relative to the underlying map. Reverted to the
-                    // un-cached projection path. To re-introduce caching we'd
-                    // need to store coords in WORLD pixel space (manual mercator)
-                    // and apply a per-pan div→world delta — possible but
-                    // significantly more complex.
+                    // PERF (perf #12 v2 REVERTED): tried caching projected
+                    // vertices in WORLD pixel space (manual mercator) and
+                    // applying a per-draw world->div translation delta.
+                    // Worked on pure pans but caused boundaries to "shift then
+                    // snap" during zoom animations. Root cause: Google Maps'
+                    // zoom animation appears to apply a CSS transform to the
+                    // OverlayView pane during the transition, which is not a
+                    // pure translation. A single-reference-point delta can't
+                    // capture a CSS scale, so the cached coords don't line up
+                    // with the visually-animating tiles until the animation
+                    // settles. The original un-cached path doesn't have this
+                    // issue because proj.fromLatLngToDivPixel is reactive to
+                    // the in-progress animation state.
+                    //
+                    // For now: re-project every visible vertex per draw via
+                    // the native projection. Costs ~2500 native crossings per
+                    // pan but stays correct under all conditions including
+                    // zoom animations.
                     if (!this._canvas) return;
                     const proj = this.getProjection();
                     if (!proj) return;
@@ -9567,6 +9575,13 @@
             var latRad = Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 0.5) / n)));
             return { lat: latRad * 180 / Math.PI, lng: lng };
         }
+
+        // PERF (perf #12 v2 REVERTED): _latLngToWorldPx removed. The world-pixel
+        // vertex cache caused boundaries to shift during Google Maps' zoom
+        // animations because the animation appears to use a CSS transform
+        // (not a pure translation) that a single-reference-point delta
+        // calculation can't capture. Reverted to the un-cached projection
+        // path in VillageBoundaryOverlay.draw().
 
         // PERF (maps10 fix): full tile bbox in lat/lng. Needed because a tile
         // can straddle a sub-sheet boundary — its CENTER might be outside a
