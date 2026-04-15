@@ -9545,29 +9545,48 @@
             // Zoom out of range: return empty div (matches old getTileUrl returning null).
             if (zoom < this.zMin_ || zoom > this.zMax_) return div;
 
-            // PERF (maps10 fix): merged-entry dispatch. Use tile bbox vs
-            // sub-sheet bbox INTERSECTION (not point-in-polygon on the
-            // tile center) to pick a sub-sheet URL. The original code had
-            // no polygon check at all — it fetched every viewport tile
-            // unconditionally and let 404s handle dead zones. Bbox
-            // intersection is the natural "coverage" test that keeps the
-            // dispatch fast without dropping legitimate tiles whose center
-            // happens to fall outside a sub-sheet's polygon.
+            // PERF (maps10 fix #3): merged-entry dispatch. The previous
+            // versions had two failure modes:
+            //   - point-in-polygon on tile center: too strict, dropped edge tiles
+            //   - bbox intersection + first-match-wins: picked the wrong URL
+            //     when nearby sub-sheet bboxes overlapped each other (very
+            //     common in Pune, where sub-sheet bboxes are rectangles around
+            //     irregular polygons), causing many tiles to 404 and leaving
+            //     "loading in parts" gaps.
+            //
+            // This version scores every sub-sheet that overlaps the tile bbox
+            // and picks the WINNER. Score = (huge polygon-containment bonus
+            // when the tile center is actually inside the sub-sheet polygon)
+            // + (bbox overlap area as tie-breaker for edge tiles where no
+            // polygon contains the center).
             var resolvedUrlPrefix;
             if (this._merged) {
+                var tCenter = _tileCoordToCenterLatLng(tileCoord.x, tileCoord.y, zoom);
                 var tb = _tileCoordToBoundsLatLng(tileCoord.x, tileCoord.y, zoom);
                 var matched = null;
+                var bestScore = -1;
                 for (var si = 0; si < this._subSheets.length; si++) {
                     var sub = this._subSheets[si];
                     if (typeof sub.minZoom === 'number' && zoom < sub.minZoom) continue;
                     if (typeof sub.maxZoom === 'number' && zoom > sub.maxZoom) continue;
                     var sb = sub.bbox;
-                    if (!sb) { matched = sub; break; }
-                    // Tile bbox vs sub-sheet bbox overlap (rectangles intersect)
-                    if (tb.maxLat < sb.minLat || tb.minLat > sb.maxLat ||
-                        tb.maxLng < sb.minLng || tb.minLng > sb.maxLng) continue;
-                    matched = sub;
-                    break;
+                    if (!sb) continue;
+                    // Bbox overlap area (0 if no overlap)
+                    var ovLat = Math.min(tb.maxLat, sb.maxLat) - Math.max(tb.minLat, sb.minLat);
+                    var ovLng = Math.min(tb.maxLng, sb.maxLng) - Math.max(tb.minLng, sb.minLng);
+                    if (ovLat <= 0 || ovLng <= 0) continue;
+                    var score = ovLat * ovLng;
+                    // Polygon containment bonus: if the tile center is actually
+                    // inside this sub-sheet's polygon, this sub-sheet has real
+                    // data for the tile — boost its score so it wins regardless
+                    // of bbox-overlap tie-breaking.
+                    if (sub.polygon && pointInPolygon(tCenter, sub.polygon)) {
+                        score += 1e10;
+                    }
+                    if (score > bestScore) {
+                        bestScore = score;
+                        matched = sub;
+                    }
                 }
                 if (!matched) return div;   // no sub-sheet bbox overlaps this tile
                 resolvedUrlPrefix = matched.urlPrefix;
