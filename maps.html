@@ -3860,6 +3860,38 @@
             return v;
         }
 
+        // PERF (maps10 fix #2): merged dpLayerData entries store a 4-corner
+        // rectangle as their .polygon (covering the union bbox of all
+        // sub-sheets), which is too permissive for the main-thread
+        // "which region am I in?" check. This helper looks at the actual
+        // sub-sheet polygons for merged entries and returns both the
+        // inside-flag and the SMALLEST matching sub-sheet's bbox area for
+        // tie-breaking. Un-merged entries are unchanged.
+        function _checkLayerEntryAtPoint(entry, point) {
+            if (!entry || !entry.polygon) return { inside: false, area: Infinity };
+            if (!entry.isMerged) {
+                if (!pointInPolygon(point, entry.polygon)) return { inside: false, area: Infinity };
+                var bb = entry.bbox;
+                var area = bb ? (bb.maxLat - bb.minLat) * (bb.maxLng - bb.minLng) : Infinity;
+                return { inside: true, area: area };
+            }
+            // Merged: walk sub-sheets, find the smallest one whose REAL
+            // polygon contains the point. The merged rectangle is ignored.
+            if (!entry.subSheets) return { inside: false, area: Infinity };
+            var bestArea = Infinity;
+            for (var i = 0; i < entry.subSheets.length; i++) {
+                var sub = entry.subSheets[i];
+                if (!sub.polygon) continue;
+                var sb = sub.bbox;
+                if (sb && (point.lat < sb.minLat || point.lat > sb.maxLat ||
+                           point.lng < sb.minLng || point.lng > sb.maxLng)) continue;
+                if (!pointInPolygon(point, sub.polygon)) continue;
+                var sba = sb ? (sb.maxLat - sb.minLat) * (sb.maxLng - sb.minLng) : Infinity;
+                if (sba < bestArea) bestArea = sba;
+            }
+            return { inside: bestArea !== Infinity, area: bestArea };
+        }
+
         function findDistrictAtCenter() {
             if (!map) return null;
             const c = map.getCenter();
@@ -3874,19 +3906,19 @@
                 let bestMatch = null;
                 let bestArea = Infinity;
                 let bestTile = null;
-                if (stickyTile && stickyTile.polygon && pointInPolygon(center, stickyTile.polygon)) {
-                    bestMatch = stickyDistrict;
-                    bestArea = stickyTile.bbox
-                        ? (stickyTile.bbox.maxLat - stickyTile.bbox.minLat) * (stickyTile.bbox.maxLng - stickyTile.bbox.minLng)
-                        : Infinity;
-                    bestTile = stickyTile;
+                if (stickyTile) {
+                    var stickyCheck = _checkLayerEntryAtPoint(stickyTile, center);
+                    if (stickyCheck.inside) {
+                        bestMatch = stickyDistrict;
+                        bestArea = stickyCheck.area;
+                        bestTile = stickyTile;
+                    }
                 }
                 for (const tile of dpLayerData) {
                     if (tile === bestTile) continue; // skip sticky tile, already seeded
-                    if (tile.polygon && pointInPolygon(center, tile.polygon)) {
-                        const area = tile.bbox
-                            ? (tile.bbox.maxLat - tile.bbox.minLat) * (tile.bbox.maxLng - tile.bbox.minLng)
-                            : Infinity;
+                    var check = _checkLayerEntryAtPoint(tile, center);
+                    if (check.inside) {
+                        const area = check.area;
                         if (area >= bestArea) continue;
                         // Try productPurchaseID first (from Firebase dpURLlink data)
                         let district = findDistrictByPurchaseId(tile.productPurchaseID);
@@ -4377,6 +4409,23 @@
         let villageOverlays = new Map();
         let oldDPOverlays = new Map();
 
+        // PERF (maps9): tile-cancellation glue. Iterates every CanvasMapType
+        // currently on the map and aborts every Image fetch belonging to a
+        // zoom level that isn't `currentZoom`.
+        let _mmLastSeenZoom = -1;
+        function _mmCancelStaleZoomTiles(currentZoom) {
+            const all = [dpOverlays, villageOverlays, oldDPOverlays];
+            for (let i = 0; i < all.length; i++) {
+                const m = all[i];
+                if (!m || typeof m.forEach !== 'function') continue;
+                m.forEach(function(overlay) {
+                    if (overlay && typeof overlay.cancelTilesNotAtZoom === 'function') {
+                        overlay.cancelTilesNotAtZoom(currentZoom);
+                    }
+                });
+            }
+        }
+
         // Tile loading status tracking
         let dpTileStatus = [];
         let villageTileStatus = [];
@@ -4555,29 +4604,73 @@
                 polygons: rings
             };
         }
-        async function loadDistrictGeoJson(districtName) {
-            if (!districtName) throw new Error('districtName required');
-            // Cache hit → load from IDB
-            const existing = await getDistrict(districtName);
-            if (existing) {
-                const villages = await getVillagesForDistrict(districtName);
-                if (villages && villages.length > 0) {
-                    return villages;
+        // ---------- Geojson Web Worker (maps8: maps7 canvas overlay + maps6 worker) ----------
+        // Multi-part Pune was the remaining bottleneck: many sub-region zips, each
+        // requiring main-thread fetch + JSZip + JSON.parse + feature parsing, all
+        // gated through a semaphore that capped concurrency to 3. This worker moves
+        // ALL of that off the main thread. Multiple postMessage calls run in parallel
+        // inside the worker (each onmessage is its own async chain), so the browser's
+        // HTTP/2 limits become the real bound — no main-thread blocking, no semaphore.
+        const _geojsonWorkerCode = `
+            importScripts('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+
+            function _ringToLatLngs(ring) {
+                const out = new Array(ring.length);
+                for (let i = 0; i < ring.length; i++) {
+                    out[i] = { lat: ring[i][1], lng: ring[i][0] };
                 }
+                return out;
             }
-            // Dedup in-flight
-            if (_geojsonInFlight.has(districtName)) return _geojsonInFlight.get(districtName);
-            const p = (async () => {
-                await _geojsonAcquire();
+            function _computeBboxFromRings(rings) {
+                let n = -Infinity, s = Infinity, e = -Infinity, w = Infinity;
+                for (const ring of rings) {
+                    for (const pt of ring) {
+                        if (pt.lat > n) n = pt.lat;
+                        if (pt.lat < s) s = pt.lat;
+                        if (pt.lng > e) e = pt.lng;
+                        if (pt.lng < w) w = pt.lng;
+                    }
+                }
+                return { n: n, s: s, e: e, w: w };
+            }
+            function _parseGeoJsonFeature(feat) {
+                const props = feat.properties || {};
+                const villageName = props.VILLAGE || props.NAME || props.village || 'Unknown';
+                const talukaName = props.TALUKA || props.TEHSIL || props.taluka || '';
+                const geom = feat.geometry;
+                if (!geom) return null;
+                const rings = [];
+                if (geom.type === 'Polygon' && Array.isArray(geom.coordinates) && geom.coordinates.length > 0) {
+                    rings.push(_ringToLatLngs(geom.coordinates[0]));
+                } else if (geom.type === 'MultiPolygon' && Array.isArray(geom.coordinates)) {
+                    for (const poly of geom.coordinates) {
+                        if (Array.isArray(poly) && poly.length > 0) rings.push(_ringToLatLngs(poly[0]));
+                    }
+                } else {
+                    return null;
+                }
+                if (rings.length === 0) return null;
+                const bounds = _computeBboxFromRings(rings);
+                return {
+                    villageName: villageName,
+                    talukaName: talukaName,
+                    centerLat: (bounds.n + bounds.s) / 2,
+                    centerLng: (bounds.e + bounds.w) / 2,
+                    bounds: bounds,
+                    polygons: rings
+                };
+            }
+
+            self.onmessage = async function(e) {
+                const msg = e.data;
+                const requestId = msg.requestId;
                 try {
-                    const fileName = _districtFileName(districtName);
-                    const url = GEOJSON_BASE_PATH + fileName + '.zip';
-                    const res = await fetch(url);
-                    if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+                    const res = await fetch(msg.url);
+                    if (!res.ok) throw new Error('HTTP ' + res.status + ' for ' + msg.url);
                     const blob = await res.blob();
                     const zip = await JSZip.loadAsync(blob);
-                    const entry = Object.values(zip.files).find(f => !f.dir && f.name.toLowerCase().endsWith('.geojson'));
-                    if (!entry) throw new Error('No .geojson file inside ' + fileName + '.zip');
+                    const entry = Object.values(zip.files).find(function(f) { return !f.dir && f.name.toLowerCase().endsWith('.geojson'); });
+                    if (!entry) throw new Error('No .geojson file inside ' + msg.districtName);
                     const text = await entry.async('string');
                     const geojson = JSON.parse(text);
                     const features = (geojson && geojson.features) || [];
@@ -4592,20 +4685,84 @@
                             if (rec.bounds.e > de) de = rec.bounds.e;
                             if (rec.bounds.w < dw) dw = rec.bounds.w;
                         }
-                        // Yield every 50 features to keep UI responsive (Android yields every 20)
-                        if (i % 50 === 49) await new Promise(r => setTimeout(r, 0));
                     }
+                    self.postMessage({
+                        requestId: requestId,
+                        ok: true,
+                        villageRecords: villageRecords,
+                        districtBounds: { n: dn, s: ds, e: de, w: dw }
+                    });
+                } catch (err) {
+                    self.postMessage({
+                        requestId: requestId,
+                        ok: false,
+                        error: String((err && err.message) || err)
+                    });
+                }
+            };
+        `;
+        const _geojsonWorker = new Worker(URL.createObjectURL(new Blob([_geojsonWorkerCode], { type: 'application/javascript' })));
+        const _geojsonWorkerPending = new Map(); // requestId -> { resolve, reject }
+        let _geojsonWorkerNextId = 1;
+        _geojsonWorker.onmessage = function(e) {
+            const data = e.data || {};
+            const pending = _geojsonWorkerPending.get(data.requestId);
+            if (!pending) return;
+            _geojsonWorkerPending.delete(data.requestId);
+            if (data.ok) {
+                pending.resolve({ villageRecords: data.villageRecords, districtBounds: data.districtBounds });
+            } else {
+                pending.reject(new Error(data.error || 'geojson worker failed'));
+            }
+        };
+        _geojsonWorker.onerror = function(e) {
+            console.error('[geojson worker] error:', (e && (e.message || e.filename)) || e);
+        };
+        function _runGeojsonWorker(districtName, url) {
+            const requestId = _geojsonWorkerNextId++;
+            return new Promise(function(resolve, reject) {
+                _geojsonWorkerPending.set(requestId, { resolve: resolve, reject: reject });
+                _geojsonWorker.postMessage({ requestId: requestId, districtName: districtName, url: url });
+            });
+        }
+
+        async function loadDistrictGeoJson(districtName) {
+            if (!districtName) throw new Error('districtName required');
+            // Cache hit → load from IDB
+            const existing = await getDistrict(districtName);
+            if (existing) {
+                const villages = await getVillagesForDistrict(districtName);
+                if (villages && villages.length > 0) {
+                    return villages;
+                }
+            }
+            // Dedup in-flight
+            if (_geojsonInFlight.has(districtName)) return _geojsonInFlight.get(districtName);
+            const p = (async () => {
+                // PERF (maps8): semaphore acquire/release REMOVED. The worker handles
+                // its own concurrency, and the browser already caps HTTP/2 streams
+                // per origin. The 3-deep semaphore was forcing multi-part Pune
+                // sub-regions into sequential batches of 3, which was the dominant
+                // remaining cost. Now all sub-regions start fetching at once.
+                try {
+                    const fileName = _districtFileName(districtName);
+                    const url = GEOJSON_BASE_PATH + fileName + '.zip';
+                    // PERF (maps8): fetch + JSZip + JSON.parse + _parseGeoJsonFeature
+                    // loop run inside _geojsonWorker. Main thread stays responsive
+                    // even when 5+ Pune sub-regions are loading in parallel.
+                    const result = await _runGeojsonWorker(districtName, url);
+                    const villageRecords = result.villageRecords;
+                    const districtBounds = result.districtBounds;
                     await putVillages(districtName, villageRecords);
                     await putDistrict({
                         name: districtName,
-                        bounds: { n: dn, s: ds, e: de, w: dw },
+                        bounds: districtBounds,
                         featureCount: villageRecords.length,
                         downloadedAt: Date.now()
                     });
                     // Re-read to get records with their auto-generated IDs
                     return await getVillagesForDistrict(districtName);
                 } finally {
-                    _geojsonRelease();
                     _geojsonInFlight.delete(districtName);
                 }
             })();
@@ -4698,84 +4855,37 @@
 
         // ---------- Multi-district viewport rendering (mirrors Android GeoJsonOverlayManager) ----------
         // Each visible district gets its own color from GEOJSON_DISTRICT_COLORS.
-        // Map<file, {districtName, villages[], colorIndex, polylineMap: Map<villageId, Polyline[]>, loading}>
+        // Map<file, {districtName, villages[], colorIndex, polylineMap: Map (kept empty in maps7), loading}>
         const renderedDistricts = new Map();
+
+        // PERF (maps7): single canvas-backed OverlayView replaces thousands of
+        // google.maps.Polyline. The class itself is defined inside initMap so
+        // google.maps.OverlayView is loaded by then; this is the reference the
+        // rest of the geojson code uses to trigger redraws when data changes.
+        let villageBoundaryOverlay = null;
+
         function _bboxIntersectsViewport(bounds, ne, sw) {
             // bounds: {n,s,e,w}; ne/sw are LatLng
             return bounds.s <= ne.lat() && bounds.n >= sw.lat() &&
                    bounds.w <= ne.lng() && bounds.e >= sw.lng();
         }
         function _removeAllVillagePolylines() {
-            for (const entry of renderedDistricts.values()) {
-                for (const arr of entry.polylineMap.values()) {
-                    for (const pl of arr) pl.setMap(null);
-                }
-                entry.polylineMap.clear();
-            }
+            // PERF (maps7): no per-village Polylines to tear down — just clear
+            // the data Map and let the canvas overlay redraw an empty viewport.
             renderedDistricts.clear();
+            if (villageBoundaryOverlay) villageBoundaryOverlay.requestRedraw();
         }
         function clearDistrictVillages() {
             _removeAllVillagePolylines();
         }
         function updateVillagePolylines() {
-            if (!map || renderedDistricts.size === 0) return;
-            const zoom = map.getZoom();
-            if (zoom < MIN_ZOOM_FOR_GEOJSON) {
-                if (renderedDistricts.size > 0) _removeAllVillagePolylines();
-                return;
-            }
-            const vp = map.getBounds();
-            if (!vp) return;
-            const ne = vp.getNorthEast();
-            const sw = vp.getSouthWest();
-
-            for (const [file, entry] of renderedDistricts) {
-                if (entry.loading || !entry.villages.length) continue;
-                const color = GEOJSON_DISTRICT_COLORS[entry.colorIndex % GEOJSON_DISTRICT_COLORS.length];
-                const shouldBeVisible = new Set();
-                const toAdd = [];
-                for (const v of entry.villages) {
-                    if (!v.bounds) continue;
-                    if (_bboxIntersectsViewport(v.bounds, ne, sw)) {
-                        shouldBeVisible.add(v.id);
-                        if (!entry.polylineMap.has(v.id)) toAdd.push(v);
-                    }
-                }
-                // Remove out-of-viewport villages for this district
-                const toRemove = [];
-                for (const id of entry.polylineMap.keys()) {
-                    if (!shouldBeVisible.has(id)) toRemove.push(id);
-                }
-                for (const id of toRemove) {
-                    const arr = entry.polylineMap.get(id);
-                    if (arr) { for (const pl of arr) pl.setMap(null); }
-                    entry.polylineMap.delete(id);
-                }
-                // Add newly-visible villages (batched via rAF)
-                if (toAdd.length > 0) {
-                    const addChunk = () => {
-                        const batch = toAdd.splice(0, 20);
-                        for (const v of batch) {
-                            const polylines = [];
-                            for (const ring of v.polygons) {
-                                const pl = new google.maps.Polyline({
-                                    path: ring,
-                                    strokeColor: color,
-                                    strokeOpacity: 1.0,
-                                    strokeWeight: 2.0,
-                                    clickable: false,
-                                    zIndex: 900,
-                                    map: map
-                                });
-                                polylines.push(pl);
-                            }
-                            entry.polylineMap.set(v.id, polylines);
-                        }
-                        if (toAdd.length > 0) requestAnimationFrame(addChunk);
-                    };
-                    addChunk();
-                }
-            }
+            // PERF (maps7): per-village google.maps.Polyline replaced by a
+            // single VillageBoundaryOverlay (canvas). Google Maps already calls
+            // the overlay's draw() automatically on every pan/zoom; this
+            // function only needs to nudge the canvas when the underlying
+            // renderedDistricts data changed (e.g. after an async district
+            // load completes or the user toggled the boundary layer).
+            if (villageBoundaryOverlay) villageBoundaryOverlay.requestRedraw();
         }
 
         // ---------- Solapur decorative overlay (labels + TP scheme + archaeological) ----------
@@ -5661,9 +5771,15 @@
                     for (const ov of arr) {
                         const bb = ov.bbox;
                         if (!bb) continue;
+                        // Cheap outer-bbox reject (works for merged + un-merged)
                         if (centerPoint.lat < bb.minLat || centerPoint.lat > bb.maxLat ||
                             centerPoint.lng < bb.minLng || centerPoint.lng > bb.maxLng) continue;
-                        if (!ov.polygon || !pointInPolygon(centerPoint, ov.polygon)) continue;
+                        // PERF (maps10 fix #2): for merged entries this walks
+                        // sub-sheet polygons rather than the merged rectangle
+                        // so PMRDA's wide bbox doesn't falsely cover Pune-only
+                        // points.
+                        var ovCheck = _checkLayerEntryAtPoint(ov, centerPoint);
+                        if (!ovCheck.inside) continue;
                         const m = (typeof ov.maxZoom === 'number') ? ov.maxZoom : 22;
                         if (m > overlayMax) overlayMax = m;
                     }
@@ -5715,6 +5831,122 @@
                     }
                 }
             };
+
+            // PERF (maps7): single canvas-backed OverlayView for ALL village
+            // boundaries. Replaces ~3000 google.maps.Polyline objects per district
+            // with one <canvas> + one draw() loop. Eliminates the multi-second
+            // pan stall observed when Pune's geojson was overlaid.
+            const VillageBoundaryOverlayClass = class extends google.maps.OverlayView {
+                constructor() {
+                    super();
+                    this._canvas = null;
+                }
+                onAdd() {
+                    const c = document.createElement('canvas');
+                    c.style.position = 'absolute';
+                    c.style.pointerEvents = 'none';
+                    c.style.left = '0';
+                    c.style.top = '0';
+                    this._canvas = c;
+                    this.getPanes().overlayLayer.appendChild(c);
+                }
+                onRemove() {
+                    if (this._canvas && this._canvas.parentNode) {
+                        this._canvas.parentNode.removeChild(this._canvas);
+                    }
+                    this._canvas = null;
+                }
+                requestRedraw() {
+                    // Force a draw() outside of Google Maps' usual viewport-change
+                    // schedule (e.g. when district data lands async).
+                    if (this._canvas) this.draw();
+                }
+                draw() {
+                    if (!this._canvas) return;
+                    const proj = this.getProjection();
+                    if (!proj) return;
+                    const m = this.getMap();
+                    if (!m) return;
+                    const bounds = m.getBounds();
+                    if (!bounds) return;
+                    const zoom = m.getZoom();
+
+                    // Below MIN_ZOOM_FOR_GEOJSON or no data → empty canvas
+                    if (zoom < MIN_ZOOM_FOR_GEOJSON || renderedDistricts.size === 0) {
+                        if (this._canvas.width !== 0) {
+                            this._canvas.width = 0;
+                            this._canvas.height = 0;
+                        }
+                        return;
+                    }
+
+                    const ne = bounds.getNorthEast();
+                    const sw = bounds.getSouthWest();
+                    const nePx = proj.fromLatLngToDivPixel(ne);
+                    const swPx = proj.fromLatLngToDivPixel(sw);
+                    if (!nePx || !swPx) return;
+
+                    const w = Math.max(1, Math.ceil(nePx.x - swPx.x));
+                    const h = Math.max(1, Math.ceil(swPx.y - nePx.y));
+
+                    // Resize-and-clear (writing width clears the canvas)
+                    if (this._canvas.width !== w) this._canvas.width = w;
+                    if (this._canvas.height !== h) this._canvas.height = h;
+                    this._canvas.style.left = swPx.x + 'px';
+                    this._canvas.style.top = nePx.y + 'px';
+                    this._canvas.style.width = w + 'px';
+                    this._canvas.style.height = h + 'px';
+
+                    const ctx = this._canvas.getContext('2d');
+                    ctx.clearRect(0, 0, w, h);
+                    ctx.lineWidth = 2;
+                    ctx.lineJoin = 'round';
+                    ctx.lineCap = 'round';
+
+                    const vpN = ne.lat();
+                    const vpS = sw.lat();
+                    const vpE = ne.lng();
+                    const vpW = sw.lng();
+                    const offX = swPx.x;
+                    const offY = nePx.y;
+
+                    for (const entry of renderedDistricts.values()) {
+                        if (entry.loading || !entry.villages || entry.villages.length === 0) continue;
+                        ctx.strokeStyle = GEOJSON_DISTRICT_COLORS[entry.colorIndex % GEOJSON_DISTRICT_COLORS.length];
+                        ctx.beginPath();
+                        let pathHas = false;
+
+                        for (let vi = 0; vi < entry.villages.length; vi++) {
+                            const v = entry.villages[vi];
+                            const vb = v.bounds;
+                            if (!vb) continue;
+                            // Cheap bbox cull — skip villages outside viewport
+                            if (vb.s > vpN || vb.n < vpS || vb.w > vpE || vb.e < vpW) continue;
+
+                            const polys = v.polygons;
+                            if (!polys) continue;
+                            for (let pi = 0; pi < polys.length; pi++) {
+                                const ring = polys[pi];
+                                if (!ring || ring.length < 2) continue;
+                                const first = proj.fromLatLngToDivPixel(ring[0]);
+                                if (!first) continue;
+                                ctx.moveTo(first.x - offX, first.y - offY);
+                                for (let i = 1; i < ring.length; i++) {
+                                    const p = proj.fromLatLngToDivPixel(ring[i]);
+                                    if (!p) continue;
+                                    ctx.lineTo(p.x - offX, p.y - offY);
+                                }
+                                // Close ring back to first vertex
+                                ctx.lineTo(first.x - offX, first.y - offY);
+                                pathHas = true;
+                            }
+                        }
+                        if (pathHas) ctx.stroke();
+                    }
+                }
+            };
+            villageBoundaryOverlay = new VillageBoundaryOverlayClass();
+            villageBoundaryOverlay.setMap(map);
 
             // Define VertexHandleOverlay (move handle + delete button above a vertex)
             VertexHandleOverlay = class extends google.maps.OverlayView {
@@ -8116,9 +8348,13 @@
             }
         }
 
-        function applyLayerData(data, label) {
+        function applyLayerData(data, label, shouldMerge) {
             const processed = processLayerData(data);
-            return processed;
+            // PERF (maps10 fix #5): the productPurchaseID merge only applies
+            // to DP/oldDP layers. Villages have their own productPurchaseIDs
+            // but each village entry is independent and the marker/addon code
+            // depends on per-entry villageName/latLng fields the merge clears.
+            return shouldMerge ? _mergeByProductPurchaseID(processed) : processed;
         }
 
         // --- Layer-registry cache with live version-stamp listener ---
@@ -8230,7 +8466,7 @@
         function fetchDPLayerData() {
             getCachedOrFetchLayer('layer_dp', DP_URL_DATABASE_NAME, 'layer_dp', fetchDPLayerData).then(data => {
                 if (!data) { dpDataLoaded = true; return; }
-                dpLayerData = applyLayerData(data, "Development Plan");
+                dpLayerData = applyLayerData(data, "Development Plan", true);
                 dpTileStatus = Array(dpLayerData.length).fill(false);
                 stickyTile = null;
                 stickyDistrict = null;
@@ -8324,7 +8560,7 @@
                     updateOldMapsButtonVisibility();
                     return;
                 }
-                oldDPLayerData = applyLayerData(data, "Old Development Plan");
+                oldDPLayerData = applyLayerData(data, "Old Development Plan", true);
                 oldDPTileStatus = Array(oldDPLayerData.length).fill(false);
                 oldDPDataLoaded = true;
                 onOldDPReady();
@@ -8367,8 +8603,13 @@
         function isInsideDPRegion(center) {
             if (!dpLayerData || dpLayerData.length === 0) return false;
             var pt = { lat: center.lat, lng: center.lng };
+            // PERF (maps10 fix #6): use _checkLayerEntryAtPoint so merged
+            // entries walk their actual sub-sheet polygons instead of the
+            // 4-corner union rectangle. Without this, every village near a
+            // merged DP region (e.g. Pune) gets a false-positive "inside DP"
+            // and createVillageMarkers skips it — so no marker shows up.
             for (var i = 0; i < dpLayerData.length; i++) {
-                if (dpLayerData[i].polygon && pointInPolygon(pt, dpLayerData[i].polygon)) return true;
+                if (_checkLayerEntryAtPoint(dpLayerData[i], pt).inside) return true;
             }
             return false;
         }
@@ -8379,10 +8620,10 @@
             if (!center) return null;
             var pt = { lat: center.lat, lng: center.lng };
 
-            // Check current DP polygons
+            // Check current DP polygons (merged-entry safe via _checkLayerEntryAtPoint)
             if (dpLayerData && dpLayerData.length > 0) {
                 for (var i = 0; i < dpLayerData.length; i++) {
-                    if (dpLayerData[i].polygon && pointInPolygon(pt, dpLayerData[i].polygon)) {
+                    if (_checkLayerEntryAtPoint(dpLayerData[i], pt).inside) {
                         return dpLayerData[i].productPurchaseID || null;
                     }
                 }
@@ -8391,7 +8632,7 @@
             // Check old DP polygons (like Android's oldDPPolygonArraylist)
             if (typeof oldDPLayerData !== 'undefined' && oldDPLayerData && oldDPLayerData.length > 0) {
                 for (var j = 0; j < oldDPLayerData.length; j++) {
-                    if (oldDPLayerData[j].polygon && pointInPolygon(pt, oldDPLayerData[j].polygon)) {
+                    if (_checkLayerEntryAtPoint(oldDPLayerData[j], pt).inside) {
                         return oldDPLayerData[j].productPurchaseID || null;
                     }
                 }
@@ -9007,7 +9248,105 @@
                 }
             }
 
+            // PERF (maps10): productPurchaseID merge moved into applyLayerData
+            // and gated by a shouldMerge flag — DP/oldDP get merged, villages
+            // do NOT (the village marker/addon code depends on per-entry
+            // villageName/latLng fields the merge clears). See maps10 fix #5.
             return result;
+        }
+
+        function _mergeByProductPurchaseID(entries) {
+            // 1. Count entries per productPurchaseID
+            const counts = new Map();
+            for (let i = 0; i < entries.length; i++) {
+                const pid = entries[i].productPurchaseID;
+                if (!pid) continue;
+                counts.set(pid, (counts.get(pid) || 0) + 1);
+            }
+
+            // 2. Collect entries that need merging (any pid with count > 1)
+            const groups = new Map();
+            for (let i = 0; i < entries.length; i++) {
+                const e = entries[i];
+                const pid = e.productPurchaseID;
+                if (!pid || counts.get(pid) === 1) continue;
+                if (!groups.has(pid)) groups.set(pid, []);
+                groups.get(pid).push(e);
+            }
+
+            if (groups.size === 0) return entries;  // nothing to merge
+
+            // 3. Build one merged virtual entry per group
+            const mergedByPid = new Map();
+            groups.forEach(function(group, pid) {
+                let n = -Infinity, s = Infinity, e = -Infinity, w = Infinity;
+                let minZ = Infinity, maxZ = -Infinity;
+                let zIdxMax = -Infinity;
+                const subSheets = [];
+                for (let i = 0; i < group.length; i++) {
+                    const sub = group[i];
+                    if (sub.bbox) {
+                        if (sub.bbox.maxLat > n) n = sub.bbox.maxLat;
+                        if (sub.bbox.minLat < s) s = sub.bbox.minLat;
+                        if (sub.bbox.maxLng > e) e = sub.bbox.maxLng;
+                        if (sub.bbox.minLng < w) w = sub.bbox.minLng;
+                    }
+                    if (typeof sub.minZoom === 'number' && sub.minZoom < minZ) minZ = sub.minZoom;
+                    if (typeof sub.maxZoom === 'number' && sub.maxZoom > maxZ) maxZ = sub.maxZoom;
+                    if (typeof sub.zIndex === 'number' && sub.zIndex > zIdxMax) zIdxMax = sub.zIndex;
+                    subSheets.push({
+                        id: sub.id,
+                        link: sub.link,
+                        polygon: sub.polygon,
+                        bbox: sub.bbox,
+                        minZoom: sub.minZoom,
+                        maxZoom: sub.maxZoom
+                    });
+                }
+                const mergedBbox = { minLat: s, maxLat: n, minLng: w, maxLng: e };
+                // Polygon = bbox rectangle (4 corners). Rough but sufficient for
+                // worker visibility tests + findDistrictAtCenter; per-tile
+                // accuracy is enforced inside CanvasMapType.getTile.
+                const mergedPolygon = [
+                    { lat: s, lng: w },
+                    { lat: n, lng: w },
+                    { lat: n, lng: e },
+                    { lat: s, lng: e }
+                ];
+                mergedByPid.set(pid, {
+                    id: 'merged_' + pid,
+                    link: '',
+                    kml: '',
+                    polygon: mergedPolygon,
+                    bbox: mergedBbox,
+                    minZoom: minZ === Infinity ? 0 : minZ,
+                    maxZoom: maxZ === -Infinity ? 22 : maxZ,
+                    zIndex: zIdxMax === -Infinity ? 0 : zIdxMax,
+                    productPurchaseID: pid,
+                    villageName: '',
+                    latLng: '',
+                    isMerged: true,
+                    subSheets: subSheets
+                });
+            });
+
+            // 4. Walk the original array, emit ungrouped entries as-is and
+            //    emit each merged entry once at the position of its first
+            //    sub-sheet so layering order is roughly preserved.
+            const out = [];
+            const emittedPids = new Set();
+            for (let i = 0; i < entries.length; i++) {
+                const e = entries[i];
+                const pid = e.productPurchaseID;
+                if (!pid || counts.get(pid) === 1) {
+                    out.push(e);
+                    continue;
+                }
+                if (emittedPids.has(pid)) continue;
+                emittedPids.add(pid);
+                out.push(mergedByPid.get(pid));
+            }
+            return out;
         }
 
         function parseKML(kml) {
@@ -9055,6 +9394,15 @@
             currentGeneration++;
 
             const currentZoom = map.getZoom();
+
+            // PERF (maps9): cancel every tile fetch that's not at the current
+            // zoom across all DP/village/oldDP overlays. Stops bandwidth + decode
+            // races between stale-zoom and new-zoom requests when the user
+            // zooms 11 -> 12 -> 13 in quick succession.
+            if (currentZoom !== _mmLastSeenZoom) {
+                _mmLastSeenZoom = currentZoom;
+                _mmCancelStaleZoomTiles(currentZoom);
+            }
             const center = map.getCenter();
             const centerPoint = { lat: center.lat(), lng: center.lng() };
             const vp = {
@@ -9118,6 +9466,33 @@
         // Off-DOM Images are never in the DOM tree, so Save As can't see them;
         // canvas pixel data is runtime-only, so saved pages show blank tiles.
         // No CORS needed -- tainted canvas still displays, we just can't read pixels.
+        // PERF (maps10): tile coord -> tile-center lat/lng (Web Mercator).
+        // Used by CanvasMapType.getTile for merged-entry sub-sheet dispatch.
+        function _tileCoordToCenterLatLng(x, y, z) {
+            var n = Math.pow(2, z);
+            var lng = ((x + 0.5) / n) * 360 - 180;
+            var latRad = Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 0.5) / n)));
+            return { lat: latRad * 180 / Math.PI, lng: lng };
+        }
+
+        // PERF (maps10 fix): full tile bbox in lat/lng. Needed because a tile
+        // can straddle a sub-sheet boundary — its CENTER might be outside a
+        // sub-sheet polygon while half its pixels are still inside. We use
+        // bbox intersection instead of point-in-polygon to dispatch.
+        function _tileCoordToBoundsLatLng(x, y, z) {
+            var n = Math.pow(2, z);
+            var minLng = (x / n) * 360 - 180;
+            var maxLng = ((x + 1) / n) * 360 - 180;
+            var maxLatRad = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n)));
+            var minLatRad = Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 1) / n)));
+            return {
+                minLat: minLatRad * 180 / Math.PI,
+                maxLat: maxLatRad * 180 / Math.PI,
+                minLng: minLng,
+                maxLng: maxLng
+            };
+        }
+
         function CanvasMapType(layerDef, layerType, opacity) {
             this.tileSize = new google.maps.Size(256, 256);
             this.maxZoom = 22;
@@ -9127,6 +9502,11 @@
             this.layerType = layerType;
             this.opacity_ = opacity;
             this.tiles_ = new Set();
+            // PERF (maps9): per-zoom tile registry so we can explicitly cancel
+            // every in-flight fetch for a zoom level that's no longer current.
+            // Google Maps' own releaseTile fires lazily during zoom transitions
+            // and leaves orphan fetches racing the new-zoom requests.
+            this._tilesByZoom = Object.create(null);
 
             // Resolve layer-specific zoom bounds (mirrors old ImageMapType logic).
             var def = layerDef;
@@ -9137,9 +9517,30 @@
                 default:        this.zMin_ = 0; this.zMax_ = 22;
             }
 
-            // Build tile URL prefix once.
-            var link = def.link || '';
-            this.urlPrefix_ = tileBaseUrl + (link.endsWith('/') ? link : link + '/');
+            // PERF (maps10): merged entries store their sub-sheet URLs +
+            // polygons separately. Each tile request dispatches to the
+            // matching sub-sheet via a point-in-polygon check on the tile
+            // center. urlPrefix_ stays empty for merged entries.
+            if (def.isMerged && def.subSheets && def.subSheets.length > 0) {
+                this._merged = true;
+                this._subSheets = def.subSheets.map(function(sub) {
+                    var lk = sub.link || '';
+                    return {
+                        bbox: sub.bbox,
+                        polygon: sub.polygon,
+                        minZoom: sub.minZoom,
+                        maxZoom: sub.maxZoom,
+                        urlPrefix: tileBaseUrl + (lk.endsWith('/') ? lk : lk + '/')
+                    };
+                });
+                this.urlPrefix_ = '';
+            } else {
+                this._merged = false;
+                this._subSheets = null;
+                // Build tile URL prefix once.
+                var link = def.link || '';
+                this.urlPrefix_ = tileBaseUrl + (link.endsWith('/') ? link : link + '/');
+            }
         }
 
         CanvasMapType.prototype.getTile = function(tileCoord, zoom, ownerDocument) {
@@ -9158,14 +9559,80 @@
             canvas.style.height = '256px';
             canvas.style.display = 'block';
             div.appendChild(canvas);
-
             var ctx = canvas.getContext('2d');
 
-            // Off-DOM Image: not in document tree, so Save As / Ctrl+S can't see its src.
-            // Browser auto-sends CloudFront signed cookies (same-site subdomain).
-            var img = new Image();
             var _mmLayerType = this.layerType;
             var _mmPid = (this.layerDef && this.layerDef.productPurchaseID) || '';
+
+            // PERF (maps10 fix #4): for merged entries, the tile may be covered
+            // by MULTIPLE overlapping sub-sheets. Picking just one and 404-ing
+            // the rest leaves "loading in parts" gaps in overlap zones (which
+            // only resolve at very high zoom because then a tile fits inside a
+            // single sub-sheet). Fix: fetch from EVERY sub-sheet whose bbox
+            // overlaps the tile, and drawImage each one as it lands. PNG tiles
+            // have transparent pixels where each sub-sheet doesn't have data,
+            // so layering them composites correctly into a union.
+            //
+            // Cost: ~1-3 fetches per tile in overlap zones, ~1 fetch elsewhere.
+            // Compared to the original un-merged ~50 overlays × every tile,
+            // still a 10x+ improvement.
+            if (this._merged) {
+                var tb = _tileCoordToBoundsLatLng(tileCoord.x, tileCoord.y, zoom);
+                var matches = [];
+                for (var si = 0; si < this._subSheets.length; si++) {
+                    var sub = this._subSheets[si];
+                    if (typeof sub.minZoom === 'number' && zoom < sub.minZoom) continue;
+                    if (typeof sub.maxZoom === 'number' && zoom > sub.maxZoom) continue;
+                    var sb = sub.bbox;
+                    if (!sb) continue;
+                    // Bbox overlap test (rectangles intersect)
+                    if (tb.maxLat < sb.minLat || tb.minLat > sb.maxLat ||
+                        tb.maxLng < sb.minLng || tb.minLng > sb.maxLng) continue;
+                    matches.push(sub);
+                }
+
+                if (matches.length === 0) {
+                    return div;   // no coverage, blank tile
+                }
+
+                var imgs = new Array(matches.length);
+                var firedAnalytics = false;
+                for (var mi = 0; mi < matches.length; mi++) {
+                    (function(sub, idx) {
+                        var img = new Image();
+                        img.onload = function() {
+                            if (div.parentNode) {
+                                ctx.drawImage(img, 0, 0, 256, 256);
+                            }
+                            if (!firedAnalytics && Math.random() < 0.05) {
+                                firedAnalytics = true;
+                                try {
+                                    mmAnalytics.event('tile_loaded', {
+                                        layer_type: _mmLayerType,
+                                        zoom: zoom,
+                                        bucket: zoom > 14 ? 'premium' : 'free',
+                                        pid: _mmPid
+                                    });
+                                } catch (e) {}
+                            }
+                        };
+                        img.onerror = function() {
+                            /* 404/auth — sub-sheet doesn't actually cover this tile, leave that layer blank */
+                        };
+                        img.src = sub.urlPrefix + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
+                        imgs[idx] = img;
+                    })(matches[mi], mi);
+                }
+                div._tileImgs = imgs;
+                div._tileZoom = zoom;
+                this.tiles_.add(div);
+                if (!this._tilesByZoom[zoom]) this._tilesByZoom[zoom] = new Set();
+                this._tilesByZoom[zoom].add(div);
+                return div;
+            }
+
+            // Un-merged path: single Image fetch (unchanged from maps9).
+            var img = new Image();
             img.onload = function() {
                 // Tile may have been released while loading -- skip if detached.
                 if (div.parentNode) ctx.drawImage(img, 0, 0, 256, 256);
@@ -9195,18 +9662,61 @@
             img.src = this.urlPrefix_ + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
 
             div._tileImg = img;
+            div._tileZoom = zoom;
             this.tiles_.add(div);
+            // Register in the per-zoom bucket so cancelTilesNotAtZoom can find it.
+            if (!this._tilesByZoom[zoom]) this._tilesByZoom[zoom] = new Set();
+            this._tilesByZoom[zoom].add(div);
             return div;
         };
 
-        CanvasMapType.prototype.releaseTile = function(tile) {
-            this.tiles_.delete(tile);
+        // Helper: cancel all in-flight Image fetches owned by a tile div.
+        // Handles both single-image (un-merged) and multi-image (merged maps10) cases.
+        function _abortTileImages(tile) {
             var img = tile && tile._tileImg;
             if (img) {
                 img.onload = null;
                 img.onerror = null;
-                img.src = '';   // aborts in-flight fetch
+                img.src = '';
                 tile._tileImg = null;
+            }
+            var imgs = tile && tile._tileImgs;
+            if (imgs) {
+                for (var i = 0; i < imgs.length; i++) {
+                    var im = imgs[i];
+                    if (im) {
+                        im.onload = null;
+                        im.onerror = null;
+                        im.src = '';
+                    }
+                }
+                tile._tileImgs = null;
+            }
+        }
+
+        CanvasMapType.prototype.releaseTile = function(tile) {
+            this.tiles_.delete(tile);
+            // Drop from the per-zoom bucket too.
+            if (tile && tile._tileZoom != null && this._tilesByZoom[tile._tileZoom]) {
+                this._tilesByZoom[tile._tileZoom].delete(tile);
+            }
+            _abortTileImages(tile);
+        };
+
+        // PERF (maps9): on zoom change we explicitly tear down every tile
+        // belonging to a zoom level that isn't the current one. Google Maps
+        // calls releaseTile lazily during zoom transitions; without this,
+        // dozens of stale-zoom Image fetches keep streaming bytes and racing
+        // the new-zoom requests for HTTP connections + decode time.
+        CanvasMapType.prototype.cancelTilesNotAtZoom = function(currentZoom) {
+            for (var z in this._tilesByZoom) {
+                if (parseInt(z, 10) === currentZoom) continue;
+                var bucket = this._tilesByZoom[z];
+                if (!bucket) continue;
+                bucket.forEach(function(tile) {
+                    _abortTileImages(tile);
+                });
+                bucket.clear();
             }
         };
 
