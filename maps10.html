@@ -9545,55 +9545,6 @@
             // Zoom out of range: return empty div (matches old getTileUrl returning null).
             if (zoom < this.zMin_ || zoom > this.zMax_) return div;
 
-            // PERF (maps10 fix #3): merged-entry dispatch. The previous
-            // versions had two failure modes:
-            //   - point-in-polygon on tile center: too strict, dropped edge tiles
-            //   - bbox intersection + first-match-wins: picked the wrong URL
-            //     when nearby sub-sheet bboxes overlapped each other (very
-            //     common in Pune, where sub-sheet bboxes are rectangles around
-            //     irregular polygons), causing many tiles to 404 and leaving
-            //     "loading in parts" gaps.
-            //
-            // This version scores every sub-sheet that overlaps the tile bbox
-            // and picks the WINNER. Score = (huge polygon-containment bonus
-            // when the tile center is actually inside the sub-sheet polygon)
-            // + (bbox overlap area as tie-breaker for edge tiles where no
-            // polygon contains the center).
-            var resolvedUrlPrefix;
-            if (this._merged) {
-                var tCenter = _tileCoordToCenterLatLng(tileCoord.x, tileCoord.y, zoom);
-                var tb = _tileCoordToBoundsLatLng(tileCoord.x, tileCoord.y, zoom);
-                var matched = null;
-                var bestScore = -1;
-                for (var si = 0; si < this._subSheets.length; si++) {
-                    var sub = this._subSheets[si];
-                    if (typeof sub.minZoom === 'number' && zoom < sub.minZoom) continue;
-                    if (typeof sub.maxZoom === 'number' && zoom > sub.maxZoom) continue;
-                    var sb = sub.bbox;
-                    if (!sb) continue;
-                    // Bbox overlap area (0 if no overlap)
-                    var ovLat = Math.min(tb.maxLat, sb.maxLat) - Math.max(tb.minLat, sb.minLat);
-                    var ovLng = Math.min(tb.maxLng, sb.maxLng) - Math.max(tb.minLng, sb.minLng);
-                    if (ovLat <= 0 || ovLng <= 0) continue;
-                    var score = ovLat * ovLng;
-                    // Polygon containment bonus: if the tile center is actually
-                    // inside this sub-sheet's polygon, this sub-sheet has real
-                    // data for the tile — boost its score so it wins regardless
-                    // of bbox-overlap tie-breaking.
-                    if (sub.polygon && pointInPolygon(tCenter, sub.polygon)) {
-                        score += 1e10;
-                    }
-                    if (score > bestScore) {
-                        bestScore = score;
-                        matched = sub;
-                    }
-                }
-                if (!matched) return div;   // no sub-sheet bbox overlaps this tile
-                resolvedUrlPrefix = matched.urlPrefix;
-            } else {
-                resolvedUrlPrefix = this.urlPrefix_;
-            }
-
             var canvas = ownerDocument.createElement('canvas');
             canvas.width = 256;
             canvas.height = 256;
@@ -9601,14 +9552,80 @@
             canvas.style.height = '256px';
             canvas.style.display = 'block';
             div.appendChild(canvas);
-
             var ctx = canvas.getContext('2d');
 
-            // Off-DOM Image: not in document tree, so Save As / Ctrl+S can't see its src.
-            // Browser auto-sends CloudFront signed cookies (same-site subdomain).
-            var img = new Image();
             var _mmLayerType = this.layerType;
             var _mmPid = (this.layerDef && this.layerDef.productPurchaseID) || '';
+
+            // PERF (maps10 fix #4): for merged entries, the tile may be covered
+            // by MULTIPLE overlapping sub-sheets. Picking just one and 404-ing
+            // the rest leaves "loading in parts" gaps in overlap zones (which
+            // only resolve at very high zoom because then a tile fits inside a
+            // single sub-sheet). Fix: fetch from EVERY sub-sheet whose bbox
+            // overlaps the tile, and drawImage each one as it lands. PNG tiles
+            // have transparent pixels where each sub-sheet doesn't have data,
+            // so layering them composites correctly into a union.
+            //
+            // Cost: ~1-3 fetches per tile in overlap zones, ~1 fetch elsewhere.
+            // Compared to the original un-merged ~50 overlays × every tile,
+            // still a 10x+ improvement.
+            if (this._merged) {
+                var tb = _tileCoordToBoundsLatLng(tileCoord.x, tileCoord.y, zoom);
+                var matches = [];
+                for (var si = 0; si < this._subSheets.length; si++) {
+                    var sub = this._subSheets[si];
+                    if (typeof sub.minZoom === 'number' && zoom < sub.minZoom) continue;
+                    if (typeof sub.maxZoom === 'number' && zoom > sub.maxZoom) continue;
+                    var sb = sub.bbox;
+                    if (!sb) continue;
+                    // Bbox overlap test (rectangles intersect)
+                    if (tb.maxLat < sb.minLat || tb.minLat > sb.maxLat ||
+                        tb.maxLng < sb.minLng || tb.minLng > sb.maxLng) continue;
+                    matches.push(sub);
+                }
+
+                if (matches.length === 0) {
+                    return div;   // no coverage, blank tile
+                }
+
+                var imgs = new Array(matches.length);
+                var firedAnalytics = false;
+                for (var mi = 0; mi < matches.length; mi++) {
+                    (function(sub, idx) {
+                        var img = new Image();
+                        img.onload = function() {
+                            if (div.parentNode) {
+                                ctx.drawImage(img, 0, 0, 256, 256);
+                            }
+                            if (!firedAnalytics && Math.random() < 0.05) {
+                                firedAnalytics = true;
+                                try {
+                                    mmAnalytics.event('tile_loaded', {
+                                        layer_type: _mmLayerType,
+                                        zoom: zoom,
+                                        bucket: zoom > 14 ? 'premium' : 'free',
+                                        pid: _mmPid
+                                    });
+                                } catch (e) {}
+                            }
+                        };
+                        img.onerror = function() {
+                            /* 404/auth — sub-sheet doesn't actually cover this tile, leave that layer blank */
+                        };
+                        img.src = sub.urlPrefix + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
+                        imgs[idx] = img;
+                    })(matches[mi], mi);
+                }
+                div._tileImgs = imgs;
+                div._tileZoom = zoom;
+                this.tiles_.add(div);
+                if (!this._tilesByZoom[zoom]) this._tilesByZoom[zoom] = new Set();
+                this._tilesByZoom[zoom].add(div);
+                return div;
+            }
+
+            // Un-merged path: single Image fetch (unchanged from maps9).
+            var img = new Image();
             img.onload = function() {
                 // Tile may have been released while loading -- skip if detached.
                 if (div.parentNode) ctx.drawImage(img, 0, 0, 256, 256);
@@ -9635,7 +9652,7 @@
                     });
                 } catch (e) {}
             };
-            img.src = resolvedUrlPrefix + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
+            img.src = this.urlPrefix_ + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
 
             div._tileImg = img;
             div._tileZoom = zoom;
@@ -9646,19 +9663,37 @@
             return div;
         };
 
+        // Helper: cancel all in-flight Image fetches owned by a tile div.
+        // Handles both single-image (un-merged) and multi-image (merged maps10) cases.
+        function _abortTileImages(tile) {
+            var img = tile && tile._tileImg;
+            if (img) {
+                img.onload = null;
+                img.onerror = null;
+                img.src = '';
+                tile._tileImg = null;
+            }
+            var imgs = tile && tile._tileImgs;
+            if (imgs) {
+                for (var i = 0; i < imgs.length; i++) {
+                    var im = imgs[i];
+                    if (im) {
+                        im.onload = null;
+                        im.onerror = null;
+                        im.src = '';
+                    }
+                }
+                tile._tileImgs = null;
+            }
+        }
+
         CanvasMapType.prototype.releaseTile = function(tile) {
             this.tiles_.delete(tile);
             // Drop from the per-zoom bucket too.
             if (tile && tile._tileZoom != null && this._tilesByZoom[tile._tileZoom]) {
                 this._tilesByZoom[tile._tileZoom].delete(tile);
             }
-            var img = tile && tile._tileImg;
-            if (img) {
-                img.onload = null;
-                img.onerror = null;
-                img.src = '';   // aborts in-flight fetch
-                tile._tileImg = null;
-            }
+            _abortTileImages(tile);
         };
 
         // PERF (maps9): on zoom change we explicitly tear down every tile
@@ -9672,13 +9707,7 @@
                 var bucket = this._tilesByZoom[z];
                 if (!bucket) continue;
                 bucket.forEach(function(tile) {
-                    var img = tile && tile._tileImg;
-                    if (img) {
-                        img.onload = null;
-                        img.onerror = null;
-                        img.src = '';
-                        tile._tileImg = null;
-                    }
+                    _abortTileImages(tile);
                 });
                 bucket.clear();
             }
