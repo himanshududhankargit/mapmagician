@@ -5847,6 +5847,15 @@
                 constructor() {
                     super();
                     this._canvas = null;
+                    // PERF (perf #12 v2): per-village vertex cache in WORLD
+                    // pixel space (pan-stable). Each entry is a list of rings,
+                    // each ring is a regular Array of [x0,y0,x1,y1,...] in
+                    // WORLD pixel coordinates at this._cacheZoom. We use a
+                    // regular Array (not Float32Array) because at high zooms
+                    // world pixel values exceed Float32 precision — Float32
+                    // lost ~3 pixels per coord at z18 in test math.
+                    this._pixelCache = new Map();
+                    this._cacheZoom = -1;
                 }
                 onAdd() {
                     const c = document.createElement('canvas');
@@ -5862,6 +5871,8 @@
                         this._canvas.parentNode.removeChild(this._canvas);
                     }
                     this._canvas = null;
+                    this._pixelCache.clear();
+                    this._cacheZoom = -1;
                 }
                 requestRedraw() {
                     // Force a draw() outside of Google Maps' usual viewport-change
@@ -5869,16 +5880,12 @@
                     if (this._canvas) this.draw();
                 }
                 draw() {
-                    // PERF (perf #12 REVERTED): the per-village pixel cache caused
-                    // visible drift because fromLatLngToDivPixel is NOT pan-stable
-                    // in this Google Maps build — div-pixel space tracks the screen
-                    // container, not the world. Cached pixels from an old pan
-                    // didn't match the new pan's coordinate system, so boundaries
-                    // slid relative to the underlying map. Reverted to the
-                    // un-cached projection path. To re-introduce caching we'd
-                    // need to store coords in WORLD pixel space (manual mercator)
-                    // and apply a per-pan div→world delta — possible but
-                    // significantly more complex.
+                    // PERF (perf #12 v2): cache projected vertices in WORLD
+                    // pixel space (pan-stable). Apply a per-pan world->div
+                    // delta computed via ONE reference projection call per
+                    // draw to translate cached coords into the current div
+                    // coordinate system. Replaces ~2500 native projection
+                    // calls per pan with ~1, while staying numerically exact.
                     if (!this._canvas) return;
                     const proj = this.getProjection();
                     if (!proj) return;
@@ -5895,6 +5902,13 @@
                             this._canvas.height = 0;
                         }
                         return;
+                    }
+
+                    // Zoom changed → world-pixel coords are zoom-dependent,
+                    // invalidate the cache.
+                    if (zoom !== this._cacheZoom) {
+                        this._pixelCache.clear();
+                        this._cacheZoom = zoom;
                     }
 
                     const ne = bounds.getNorthEast();
@@ -5924,8 +5938,21 @@
                     const vpS = sw.lat();
                     const vpE = ne.lng();
                     const vpW = sw.lng();
-                    const offX = swPx.x;
-                    const offY = nePx.y;
+
+                    // PERF (perf #12 v2): compute world->div transform via a
+                    // single reference projection. The transform is a uniform
+                    // translation at any given pan: divPx(L) - worldPx(L) is
+                    // the same for any lat/lng L. We use the viewport NE
+                    // corner as the reference (already projected for canvas
+                    // positioning above, so technically free). Then any
+                    // cached worldX -> drawX = worldX - (offX - transformX).
+                    // Pre-compute the combined offset once.
+                    const refWorld = _latLngToWorldPx(vpN, vpE, zoom);
+                    const transformX = nePx.x - refWorld.x;
+                    const transformY = nePx.y - refWorld.y;
+                    const drawOffsetX = swPx.x - transformX;  // = offX - transformX
+                    const drawOffsetY = nePx.y - transformY;  // = offY - transformY
+                    const pixelCache = this._pixelCache;
 
                     for (const entry of renderedDistricts.values()) {
                         if (entry.loading || !entry.villages || entry.villages.length === 0) continue;
@@ -5940,21 +5967,39 @@
                             // Cheap bbox cull — skip villages outside viewport
                             if (vb.s > vpN || vb.n < vpS || vb.w > vpE || vb.e < vpW) continue;
 
-                            const polys = v.polygons;
-                            if (!polys) continue;
-                            for (let pi = 0; pi < polys.length; pi++) {
-                                const ring = polys[pi];
-                                if (!ring || ring.length < 2) continue;
-                                const first = proj.fromLatLngToDivPixel(ring[0]);
-                                if (!first) continue;
-                                ctx.moveTo(first.x - offX, first.y - offY);
-                                for (let i = 1; i < ring.length; i++) {
-                                    const p = proj.fromLatLngToDivPixel(ring[i]);
-                                    if (!p) continue;
-                                    ctx.lineTo(p.x - offX, p.y - offY);
+                            // Cache lookup on (v.id). On hit: pure arithmetic
+                            // over cached world coords. On miss: project once
+                            // via manual mercator and store.
+                            let cachedRings = pixelCache.get(v.id);
+                            if (!cachedRings) {
+                                const polys = v.polygons;
+                                if (!polys) continue;
+                                cachedRings = [];
+                                for (let pi = 0; pi < polys.length; pi++) {
+                                    const ring = polys[pi];
+                                    if (!ring || ring.length < 2) continue;
+                                    const buf = new Array(ring.length * 2);
+                                    for (let i = 0; i < ring.length; i++) {
+                                        const wp = _latLngToWorldPx(ring[i].lat, ring[i].lng, zoom);
+                                        buf[i * 2] = wp.x;
+                                        buf[i * 2 + 1] = wp.y;
+                                    }
+                                    cachedRings.push(buf);
+                                }
+                                pixelCache.set(v.id, cachedRings);
+                            }
+
+                            // Draw using cached world coords + per-pan offset.
+                            // canvasX = worldX - drawOffsetX (pure arithmetic).
+                            for (let ri = 0; ri < cachedRings.length; ri++) {
+                                const buf = cachedRings[ri];
+                                if (!buf || buf.length < 4) continue;
+                                ctx.moveTo(buf[0] - drawOffsetX, buf[1] - drawOffsetY);
+                                for (let i = 2; i < buf.length; i += 2) {
+                                    ctx.lineTo(buf[i] - drawOffsetX, buf[i + 1] - drawOffsetY);
                                 }
                                 // Close ring back to first vertex
-                                ctx.lineTo(first.x - offX, first.y - offY);
+                                ctx.lineTo(buf[0] - drawOffsetX, buf[1] - drawOffsetY);
                                 pathHas = true;
                             }
                         }
@@ -9566,6 +9611,23 @@
             var lng = ((x + 0.5) / n) * 360 - 180;
             var latRad = Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 0.5) / n)));
             return { lat: latRad * 180 / Math.PI, lng: lng };
+        }
+
+        // PERF (perf #12 v2): manual web-mercator lat/lng -> world pixel.
+        // World pixels are pan-stable (anchored to the world, not the screen),
+        // unlike proj.fromLatLngToDivPixel which is screen-anchored. This lets
+        // VillageBoundaryOverlay cache projected vertices once per zoom and
+        // reuse across pans by applying a single per-pan world->div delta.
+        // Standard EPSG:3857 spherical mercator, matches Google's projection.
+        function _latLngToWorldPx(lat, lng, zoom) {
+            var n = 256 * Math.pow(2, zoom);
+            var x = (lng + 180) / 360 * n;
+            var sinLat = Math.sin(lat * Math.PI / 180);
+            // Clamp to avoid log(0) at the poles
+            if (sinLat > 0.99999) sinLat = 0.99999;
+            else if (sinLat < -0.99999) sinLat = -0.99999;
+            var y = (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * n;
+            return { x: x, y: y };
         }
 
         // PERF (maps10 fix): full tile bbox in lat/lng. Needed because a tile
