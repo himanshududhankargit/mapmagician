@@ -4998,15 +4998,16 @@
         // ---------- Viewport-based district loading ----------
         let _geojsonViewportDebounce = null;
         function loadGeoJsonForViewport() {
-            if (!isVillageBoundaryEnabled) return;
-            if (!map) return;
-            if (!tilesInitiated) return; // Defer GeoJSON until tiles are initiated
-            if (map.getZoom() < MIN_ZOOM_FOR_GEOJSON) {
-                if (renderedDistricts.size > 0) _removeAllVillagePolylines();
-                return;
-            }
-            clearTimeout(_geojsonViewportDebounce);
-            _geojsonViewportDebounce = setTimeout(_doLoadGeoJsonForViewport, 150);
+            return; // AB-DISABLED: A/B test, geojson village boundary loader off entirely in maps4
+            // if (!isVillageBoundaryEnabled) return;
+            // if (!map) return;
+            // if (!tilesInitiated) return; // Defer GeoJSON until tiles are initiated
+            // if (map.getZoom() < MIN_ZOOM_FOR_GEOJSON) {
+            //     if (renderedDistricts.size > 0) _removeAllVillagePolylines();
+            //     return;
+            // }
+            // clearTimeout(_geojsonViewportDebounce);
+            // _geojsonViewportDebounce = setTimeout(_doLoadGeoJsonForViewport, 150);
         }
         async function _doLoadGeoJsonForViewport() {
             if (!map) return;
