@@ -5840,13 +5840,6 @@
                 constructor() {
                     super();
                     this._canvas = null;
-                    // PERF (perf #12): per-village pixel cache. Pixel coords in
-                    // div space are zoom-dependent but pan-independent, so cache
-                    // them at the current zoom and reuse across pans.
-                    // Map<v.id, Float32Array[]> — one Float32Array per ring,
-                    // packed as [x0,y0,x1,y1,...] in DIV pixel space.
-                    this._pixelCache = new Map();
-                    this._cacheZoom = -1;
                 }
                 onAdd() {
                     const c = document.createElement('canvas');
@@ -5862,18 +5855,23 @@
                         this._canvas.parentNode.removeChild(this._canvas);
                     }
                     this._canvas = null;
-                    this._pixelCache.clear();
-                    this._cacheZoom = -1;
                 }
                 requestRedraw() {
                     // Force a draw() outside of Google Maps' usual viewport-change
-                    // schedule (e.g. when district data lands async). New data
-                    // means the cache might be missing villages, but draw() lazily
-                    // populates entries as it encounters them, so no explicit
-                    // invalidation is needed.
+                    // schedule (e.g. when district data lands async).
                     if (this._canvas) this.draw();
                 }
                 draw() {
+                    // PERF (perf #12 REVERTED): the per-village pixel cache caused
+                    // visible drift because fromLatLngToDivPixel is NOT pan-stable
+                    // in this Google Maps build — div-pixel space tracks the screen
+                    // container, not the world. Cached pixels from an old pan
+                    // didn't match the new pan's coordinate system, so boundaries
+                    // slid relative to the underlying map. Reverted to the
+                    // un-cached projection path. To re-introduce caching we'd
+                    // need to store coords in WORLD pixel space (manual mercator)
+                    // and apply a per-pan div→world delta — possible but
+                    // significantly more complex.
                     if (!this._canvas) return;
                     const proj = this.getProjection();
                     if (!proj) return;
@@ -5890,14 +5888,6 @@
                             this._canvas.height = 0;
                         }
                         return;
-                    }
-
-                    // PERF (perf #12): zoom changed → invalidate cache. Pixel
-                    // coords are only valid at one zoom level; on zoom change
-                    // every village needs to be re-projected.
-                    if (zoom !== this._cacheZoom) {
-                        this._pixelCache.clear();
-                        this._cacheZoom = zoom;
                     }
 
                     const ne = bounds.getNorthEast();
@@ -5929,7 +5919,6 @@
                     const vpW = sw.lng();
                     const offX = swPx.x;
                     const offY = nePx.y;
-                    const pixelCache = this._pixelCache;
 
                     for (const entry of renderedDistricts.values()) {
                         if (entry.loading || !entry.villages || entry.villages.length === 0) continue;
@@ -5944,43 +5933,21 @@
                             // Cheap bbox cull — skip villages outside viewport
                             if (vb.s > vpN || vb.n < vpS || vb.w > vpE || vb.e < vpW) continue;
 
-                            // PERF (perf #12): pixel-cache lookup. On a pan at
-                            // the same zoom, this hits the cache and skips ALL
-                            // proj.fromLatLngToDivPixel calls — the dominant
-                            // per-pan cost. On a cache miss (first time at this
-                            // zoom or a newly-rendered village), we project once
-                            // and store as Float32Array per ring.
-                            let cachedRings = pixelCache.get(v.id);
-                            if (!cachedRings) {
-                                const polys = v.polygons;
-                                if (!polys) continue;
-                                cachedRings = [];
-                                for (let pi = 0; pi < polys.length; pi++) {
-                                    const ring = polys[pi];
-                                    if (!ring || ring.length < 2) continue;
-                                    const buf = new Float32Array(ring.length * 2);
-                                    for (let i = 0; i < ring.length; i++) {
-                                        const p = proj.fromLatLngToDivPixel(ring[i]);
-                                        if (!p) continue;
-                                        buf[i * 2] = p.x;
-                                        buf[i * 2 + 1] = p.y;
-                                    }
-                                    cachedRings.push(buf);
-                                }
-                                pixelCache.set(v.id, cachedRings);
-                            }
-
-                            // Draw using cached pixels — pure number arithmetic,
-                            // no native API calls.
-                            for (let ri = 0; ri < cachedRings.length; ri++) {
-                                const buf = cachedRings[ri];
-                                if (!buf || buf.length < 4) continue;
-                                ctx.moveTo(buf[0] - offX, buf[1] - offY);
-                                for (let i = 2; i < buf.length; i += 2) {
-                                    ctx.lineTo(buf[i] - offX, buf[i + 1] - offY);
+                            const polys = v.polygons;
+                            if (!polys) continue;
+                            for (let pi = 0; pi < polys.length; pi++) {
+                                const ring = polys[pi];
+                                if (!ring || ring.length < 2) continue;
+                                const first = proj.fromLatLngToDivPixel(ring[0]);
+                                if (!first) continue;
+                                ctx.moveTo(first.x - offX, first.y - offY);
+                                for (let i = 1; i < ring.length; i++) {
+                                    const p = proj.fromLatLngToDivPixel(ring[i]);
+                                    if (!p) continue;
+                                    ctx.lineTo(p.x - offX, p.y - offY);
                                 }
                                 // Close ring back to first vertex
-                                ctx.lineTo(buf[0] - offX, buf[1] - offY);
+                                ctx.lineTo(first.x - offX, first.y - offY);
                                 pathHas = true;
                             }
                         }
