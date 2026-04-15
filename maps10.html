@@ -8603,8 +8603,13 @@
         function isInsideDPRegion(center) {
             if (!dpLayerData || dpLayerData.length === 0) return false;
             var pt = { lat: center.lat, lng: center.lng };
+            // PERF (maps10 fix #6): use _checkLayerEntryAtPoint so merged
+            // entries walk their actual sub-sheet polygons instead of the
+            // 4-corner union rectangle. Without this, every village near a
+            // merged DP region (e.g. Pune) gets a false-positive "inside DP"
+            // and createVillageMarkers skips it — so no marker shows up.
             for (var i = 0; i < dpLayerData.length; i++) {
-                if (dpLayerData[i].polygon && pointInPolygon(pt, dpLayerData[i].polygon)) return true;
+                if (_checkLayerEntryAtPoint(dpLayerData[i], pt).inside) return true;
             }
             return false;
         }
@@ -8615,10 +8620,10 @@
             if (!center) return null;
             var pt = { lat: center.lat, lng: center.lng };
 
-            // Check current DP polygons
+            // Check current DP polygons (merged-entry safe via _checkLayerEntryAtPoint)
             if (dpLayerData && dpLayerData.length > 0) {
                 for (var i = 0; i < dpLayerData.length; i++) {
-                    if (dpLayerData[i].polygon && pointInPolygon(pt, dpLayerData[i].polygon)) {
+                    if (_checkLayerEntryAtPoint(dpLayerData[i], pt).inside) {
                         return dpLayerData[i].productPurchaseID || null;
                     }
                 }
@@ -8627,7 +8632,7 @@
             // Check old DP polygons (like Android's oldDPPolygonArraylist)
             if (typeof oldDPLayerData !== 'undefined' && oldDPLayerData && oldDPLayerData.length > 0) {
                 for (var j = 0; j < oldDPLayerData.length; j++) {
-                    if (oldDPLayerData[j].polygon && pointInPolygon(pt, oldDPLayerData[j].polygon)) {
+                    if (_checkLayerEntryAtPoint(oldDPLayerData[j], pt).inside) {
                         return oldDPLayerData[j].productPurchaseID || null;
                     }
                 }
