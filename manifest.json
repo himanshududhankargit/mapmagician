@@ -5,7 +5,6 @@
   "start_url": "/maps.html",
   "scope": "/",
   "display": "standalone",
-  "orientation": "any",
   "theme_color": "#008577",
   "background_color": "#ffffff",
   "categories": ["utilities", "navigation"],
