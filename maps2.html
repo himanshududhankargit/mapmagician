@@ -4533,7 +4533,6 @@
         let _tileDBPromise = null;
         let _tileCacheBytes = 0;
         let _tileCacheBytesInitialized = false;
-        let _tileCacheFetchBroken = false;
 
         function openTileDB() {
             if (_tileDBPromise) return _tileDBPromise;
@@ -4683,9 +4682,10 @@
 
         // Returns a blob URL for the tile (cached or freshly fetched), or null
         // on any failure. Caller uses null as the signal to fall back to a
-        // direct img.src = url assignment (pre-cache behavior).
+        // direct img.src = url assignment (pre-cache behavior). Each call
+        // attempts independently — a transient failure does not disable the
+        // cache for future tiles.
         async function loadTileWithCache(url, zoom) {
-            if (_tileCacheFetchBroken) return null;
             const cached = await getTileFromDB(url);
             if (cached && cached.blob) {
                 try { return URL.createObjectURL(cached.blob); }
@@ -4706,10 +4706,6 @@
                 });
                 return URL.createObjectURL(blob);
             } catch (e) {
-                // Likely CORS or network. Disable cache for the session so
-                // we don't pay the fetch cost on every tile — direct img.src
-                // path is still fine.
-                _tileCacheFetchBroken = true;
                 return null;
             }
         }
