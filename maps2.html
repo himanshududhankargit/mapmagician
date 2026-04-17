@@ -9573,9 +9573,9 @@
                                 kml: item.kml,
                                 polygon: polygon,
                                 bbox: computeBBox(polygon),
-                                minZoom: parseInt(item.minZoom) || 0,
-                                maxZoom: parseInt(item.maxZoom) || 22,
-                                zIndex: parseFloat(item.zIndex) || 0,
+                                minZoom: parseInt(item.MinZoom || item.minZoom) || 0,
+                                maxZoom: parseInt(item.MaxZoom || item.maxZoom) || 22,
+                                zIndex: parseFloat(item.ZIndex || item.zIndex) || 0,
                                 productPurchaseID: item.productPurchaseID || '',
                                 villageName: item.VillageName || '',
                                 latLng: item.LatitudeAndLongitude || ''
