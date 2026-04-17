@@ -2642,24 +2642,62 @@
             return entry !== null && !entry.refunded;
         }
 
-        // Check Firebase DB directly for a purchase entry (handles mobile→web sync lag)
+        // Check Firebase DB directly for a purchase entry (handles mobile→web sync lag,
+        // just-issued admin overrides, and cross-device purchases). Mirrors the
+        // three-source filter in getPurchaseStatus/getActiveProductIntIds — if any
+        // source has a live entry, we consider it an unlock.
         async function checkFirebasePurchaseEntry(productId) {
             if (!currentUser || currentUser.isAnonymous || !currentUser.email || !productId) return false;
             try {
                 const emailKey = currentUser.email.replace(/\./g, ',');
-                const snap = await firebase.database()
-                    .ref('GISWebOneTimePurchases/' + emailKey + '/' + productId)
-                    .once('value');
-                const raw = snap.val();
-                if (!raw) return false;
-                const expiry = typeof raw === 'number' ? raw : (raw && raw.expiry ? raw.expiry : 0);
-                const plan = (typeof raw === 'object' && raw) ? (raw.plan || '') : '';
-                // Skip mobile-only purchases (same filter as cloud function)
-                if (plan === 'onetime' || plan === '') return false;
-                if (expiry <= Date.now()) return false;
-                // Valid web-compatible purchase found — update in-memory cache
-                activePurchases.set(productId, { expiry, plan });
-                // Trigger full sync in background (for access token + other purchases)
+                const now = Date.now();
+                const [webSnap, overrideSnap, androidSnap] = await Promise.all([
+                    firebase.database().ref('GISWebOneTimePurchases/' + emailKey + '/' + productId).once('value'),
+                    firebase.database().ref('overrideGISMaharashtra/' + emailKey + '/districts/' + productId).once('value'),
+                    firebase.database().ref('GISAPPOneTimePurchase/' + emailKey + '/' + productId).once('value'),
+                ]);
+
+                var entry = null;
+
+                var webRaw = webSnap.val();
+                if (webRaw) {
+                    var webExp = typeof webRaw === 'number' ? webRaw : (webRaw.expiry || 0);
+                    var webPlan = (typeof webRaw === 'object') ? (webRaw.plan || '') : '';
+                    var webRef = (typeof webRaw === 'object') ? (webRaw.refunded === true) : false;
+                    if (!webRef && webExp > now && webPlan !== 'onetime' && webPlan !== '') {
+                        entry = { expiry: webExp, plan: webPlan };
+                    }
+                }
+
+                if (!entry) {
+                    var ovRaw = overrideSnap.val();
+                    if (ovRaw && ovRaw.expiry) {
+                        var ovExp = new Date(ovRaw.expiry).getTime();
+                        if (ovExp > now) entry = { expiry: ovExp, plan: 'override' };
+                    }
+                }
+
+                if (!entry) {
+                    var aRaw = androidSnap.val();
+                    if (aRaw) {
+                        var aExp = typeof aRaw === 'number' ? aRaw : (aRaw.expiry || 0);
+                        var aPlan = (typeof aRaw === 'object') ? (aRaw.plan || '') : '';
+                        var aRef = (typeof aRaw === 'object') ? (aRaw.refunded === true) : false;
+                        if (!aRef && aExp > now && aPlan !== 'onetime' && aPlan !== '') {
+                            entry = { expiry: aExp, plan: aPlan };
+                        }
+                    }
+                }
+
+                if (!entry) return false;
+
+                // Valid entry found — update in-memory cache and refresh mmp-token so
+                // the edge gate lets the newly-allowed district's tiles through.
+                activePurchases.set(productId, entry);
+                // Await the cookie refresh — otherwise the caller will re-trigger tile
+                // loads before the new JWT is installed, and tiles 403 at the edge.
+                try { await fetchCloudFrontCookies(); } catch (e) { /* non-fatal; fall back to TTL-based refresh */ }
+                // Full sync in background (covers other purchases + keeps activePurchases honest)
                 fetchPurchaseStatus(true);
                 return true;
             } catch (e) {
