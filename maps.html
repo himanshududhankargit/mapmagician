@@ -2495,6 +2495,11 @@
                     }
                 });
                 refreshSidebarIfOpen();
+                // Evict cached tiles for districts the user no longer has access
+                // to (refunds, expiries). Free tiles and still-purchased districts
+                // are preserved. Fire-and-forget — cache correctness is eventually
+                // consistent with purchase state.
+                revokeTilesNotInFolderSet(_computeAllowedTileFolders());
                 // Only re-enable map and force re-check after an actual purchase (force=true),
                 // not on routine region-change polls which would cause spurious unlock toasts
                 if (force) {
@@ -3146,7 +3151,10 @@
 
         // Village-boundary geojson (ported from Android pipeline)
         const MIN_ZOOM_FOR_GEOJSON = 12;
-        const GEOJSON_BASE_PATH = 'data/geojson/';
+        // CloudFront-hosted zips. Folder name is an upload-pipeline marker,
+        // not a file-format hint — contents are still .zip, unzipped client-side.
+        // Served through signed cookies — same auth as tiles.
+        const GEOJSON_BASE_PATH = 'https://tiles.mapmagician.in/dpplans/0geojson_dontUnzip/';
         const GEOJSON_MAX_CONCURRENT_DOWNLOADS = 3;
         const GEOJSON_GEOCODER_CACHE_MAX = 500;
 
@@ -4512,6 +4520,196 @@
         // tileProxyUrl removed — tiles served directly from CloudFront with signed cookies
         const tileBaseUrl = "https://tiles.mapmagician.in";
 
+        // ---------- Tile cache: IndexedDB (byte-level persistent cache) ----------
+        // Stores PNG blobs keyed by full URL so repeat views bypass CloudFront.
+        // Revocation: on fetchPurchaseStatus(), evict tiles whose folder is no
+        // longer in the caller's active-purchase set (zoom > 14 only).
+        // Graceful degradation: if IDB or cross-origin fetch fails, callers fall
+        // back to a direct img.src assignment — same behavior as pre-cache.
+        const TILE_DB_NAME = 'mapmagician_tiles';
+        const TILE_DB_VERSION = 1;
+        const TILE_CACHE_MAX_BYTES = 500 * 1024 * 1024;
+        const TILE_CACHE_EVICT_TO = 400 * 1024 * 1024;
+        let _tileDBPromise = null;
+        let _tileCacheBytes = 0;
+        let _tileCacheBytesInitialized = false;
+
+        function openTileDB() {
+            if (_tileDBPromise) return _tileDBPromise;
+            _tileDBPromise = new Promise(function(resolve, reject) {
+                const req = indexedDB.open(TILE_DB_NAME, TILE_DB_VERSION);
+                req.onupgradeneeded = function(e) {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('tiles')) {
+                        const store = db.createObjectStore('tiles', { keyPath: 'url' });
+                        store.createIndex('by_cachedAt', 'cachedAt', { unique: false });
+                        store.createIndex('by_folder', 'folder', { unique: false });
+                    }
+                };
+                req.onsuccess = function() { resolve(req.result); };
+                req.onerror = function() { reject(req.error); };
+            }).catch(function(err) {
+                _tileDBPromise = null;
+                throw err;
+            });
+            return _tileDBPromise;
+        }
+
+        async function _initTileCacheBytes() {
+            if (_tileCacheBytesInitialized) return;
+            try {
+                const db = await openTileDB();
+                const store = db.transaction(['tiles'], 'readonly').objectStore('tiles');
+                await new Promise(function(resolve) {
+                    let total = 0;
+                    const cur = store.openCursor();
+                    cur.onsuccess = function(e) {
+                        const c = e.target.result;
+                        if (c) { total += (c.value.size || 0); c.continue(); }
+                        else { _tileCacheBytes = total; _tileCacheBytesInitialized = true; resolve(); }
+                    };
+                    cur.onerror = function() { resolve(); };
+                });
+            } catch (e) { /* IDB unavailable; stay at 0 */ }
+        }
+
+        async function getTileFromDB(url) {
+            try {
+                const db = await openTileDB();
+                const store = db.transaction(['tiles'], 'readonly').objectStore('tiles');
+                return await new Promise(function(resolve) {
+                    const req = store.get(url);
+                    req.onsuccess = function() { resolve(req.result || null); };
+                    req.onerror = function() { resolve(null); };
+                });
+            } catch (e) { return null; }
+        }
+
+        async function putTileInDB(record) {
+            try {
+                await _initTileCacheBytes();
+                const db = await openTileDB();
+                const tx = db.transaction(['tiles'], 'readwrite');
+                tx.objectStore('tiles').put(record);
+                _tileCacheBytes += record.size;
+                await new Promise(function(resolve, reject) {
+                    tx.oncomplete = resolve;
+                    tx.onerror = function() { reject(tx.error); };
+                });
+                if (_tileCacheBytes > TILE_CACHE_MAX_BYTES) _evictOldestTiles();
+            } catch (e) { /* opportunistic — swallow */ }
+        }
+
+        async function _evictOldestTiles() {
+            try {
+                const db = await openTileDB();
+                const store = db.transaction(['tiles'], 'readwrite').objectStore('tiles');
+                const index = store.index('by_cachedAt');
+                await new Promise(function(resolve) {
+                    const cur = index.openCursor();
+                    cur.onsuccess = function(e) {
+                        const c = e.target.result;
+                        if (!c || _tileCacheBytes <= TILE_CACHE_EVICT_TO) return resolve();
+                        _tileCacheBytes -= (c.value.size || 0);
+                        c.delete();
+                        c.continue();
+                    };
+                    cur.onerror = function() { resolve(); };
+                });
+            } catch (e) {}
+        }
+
+        async function revokeTilesNotInFolderSet(allowedFolders) {
+            try {
+                const db = await openTileDB();
+                const store = db.transaction(['tiles'], 'readwrite').objectStore('tiles');
+                let freed = 0;
+                await new Promise(function(resolve) {
+                    const cur = store.openCursor();
+                    cur.onsuccess = function(e) {
+                        const c = e.target.result;
+                        if (!c) return resolve();
+                        const v = c.value;
+                        if (v.zoom > 14 && !allowedFolders.has(v.folder)) {
+                            freed += (v.size || 0);
+                            c.delete();
+                        }
+                        c.continue();
+                    };
+                    cur.onerror = function() { resolve(); };
+                });
+                _tileCacheBytes = Math.max(0, _tileCacheBytes - freed);
+            } catch (e) {}
+        }
+
+        function _tileFolderFromUrl(url) {
+            const m = url.match(/\/dpplans\/([^/]+)\//);
+            return m ? m[1] : '';
+        }
+
+        // Walk layer data and return folders the user currently has access to.
+        // Free layers (no productPurchaseID) are always included so cached free
+        // tiles never get evicted on purchase-status refresh. Premium folders are
+        // only included when activePurchases has a live entry for their pid.
+        function _computeAllowedTileFolders() {
+            const allowed = new Set();
+            const layers = [
+                typeof dpLayerData === 'undefined' ? [] : dpLayerData,
+                typeof villageLayerData === 'undefined' ? [] : villageLayerData,
+                typeof oldDPLayerData === 'undefined' ? [] : oldDPLayerData
+            ];
+            for (let li = 0; li < layers.length; li++) {
+                const arr = layers[li] || [];
+                for (let i = 0; i < arr.length; i++) {
+                    const d = arr[i];
+                    if (!d) continue;
+                    const pid = d.productPurchaseID;
+                    const isFree = !pid;
+                    const isLive = pid && typeof hasPurchase === 'function' && hasPurchase(pid);
+                    if (!isFree && !isLive) continue;
+                    const m = (d.link || '').match(/\/dpplans\/([^/]+)\/?/);
+                    if (m) allowed.add(m[1]);
+                    if (d.subSheets) {
+                        for (let si = 0; si < d.subSheets.length; si++) {
+                            const sm = (d.subSheets[si].urlPrefix || '').match(/\/dpplans\/([^/]+)\/?/);
+                            if (sm) allowed.add(sm[1]);
+                        }
+                    }
+                }
+            }
+            return allowed;
+        }
+
+        // Returns a blob URL for the tile (cached or freshly fetched), or null
+        // on any failure. Caller uses null as the signal to fall back to a
+        // direct img.src = url assignment (pre-cache behavior). Each call
+        // attempts independently — a transient failure does not disable the
+        // cache for future tiles.
+        async function loadTileWithCache(url, zoom) {
+            const cached = await getTileFromDB(url);
+            if (cached && cached.blob) {
+                try { return URL.createObjectURL(cached.blob); }
+                catch (e) { return null; }
+            }
+            try {
+                const resp = await fetch(url, { credentials: 'include' });
+                if (resp.status !== 200) return null;
+                const blob = await resp.blob();
+                const folder = _tileFolderFromUrl(url);
+                putTileInDB({
+                    url: url,
+                    blob: blob,
+                    size: blob.size,
+                    folder: folder,
+                    zoom: zoom,
+                    cachedAt: Date.now()
+                });
+                return URL.createObjectURL(blob);
+            } catch (e) {
+                return null;
+            }
+        }
+
         // ---------- Village-boundary GeoJSON: IndexedDB wrapper ----------
         // Mirrors the Android Room schema (districts + villages). Polygons are stored
         // inline on each village record (IDB has no JOINs) — one getAll per district.
@@ -4716,7 +4914,7 @@
                 const msg = e.data;
                 const requestId = msg.requestId;
                 try {
-                    const res = await fetch(msg.url);
+                    const res = await fetch(msg.url, { credentials: 'include' });
                     if (!res.ok) throw new Error('HTTP ' + res.status + ' for ' + msg.url);
                     const blob = await res.blob();
                     const zip = await JSZip.loadAsync(blob);
@@ -4797,9 +4995,9 @@
                 // remaining cost. Now all sub-regions start fetching at once.
                 try {
                     const fileName = _districtFileName(districtName);
-                    // Absolute URL — blob-URL workers can't resolve relative paths against
-                    // their blob: self.location. Must absolutize on main thread before postMessage.
-                    const url = new URL(GEOJSON_BASE_PATH + fileName + '.zip', location.href).href;
+                    // CloudFront-hosted zip. URL is already absolute; worker
+                    // fetches with credentials to pass signed-cookie check.
+                    const url = GEOJSON_BASE_PATH + fileName + '.zip';
                     // PERF (maps8): fetch + JSZip + JSON.parse + _parseGeoJsonFeature
                     // loop run inside _geojsonWorker. Main thread stays responsive
                     // even when 5+ Pune sub-regions are loading in parallel.
@@ -7709,6 +7907,10 @@
                         req.onsuccess = resolve; req.onerror = resolve; req.onblocked = resolve;
                     }),
                     new Promise(function(resolve) {
+                        var req = indexedDB.deleteDatabase('mapmagician_tiles');
+                        req.onsuccess = resolve; req.onerror = resolve; req.onblocked = resolve;
+                    }),
+                    new Promise(function(resolve) {
                         try {
                             localStorage.removeItem('layer_dp');
                             localStorage.removeItem('layer_village');
@@ -9371,9 +9573,9 @@
                                 kml: item.kml,
                                 polygon: polygon,
                                 bbox: computeBBox(polygon),
-                                minZoom: parseInt(item.minZoom) || 0,
-                                maxZoom: parseInt(item.maxZoom) || 22,
-                                zIndex: parseFloat(item.zIndex) || 0,
+                                minZoom: parseInt(item.MinZoom || item.minZoom) || 0,
+                                maxZoom: parseInt(item.MaxZoom || item.maxZoom) || 22,
+                                zIndex: parseFloat(item.ZIndex || item.zIndex) || 0,
                                 productPurchaseID: item.productPurchaseID || '',
                                 villageName: item.VillageName || '',
                                 latLng: item.LatitudeAndLongitude || ''
@@ -9780,7 +9982,25 @@
                         img.onerror = function() {
                             /* 404/auth — sub-sheet doesn't actually cover this tile, leave that layer blank */
                         };
-                        img.src = sub.urlPrefix + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
+                        var subUrl = sub.urlPrefix + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
+                        loadTileWithCache(subUrl, zoom).then(function(blobUrl) {
+                            if (blobUrl) {
+                                var origOnload = img.onload;
+                                var origOnerror = img.onerror;
+                                img._mmBlobUrl = blobUrl;
+                                img.onload = function() {
+                                    if (origOnload) origOnload.call(img);
+                                    if (img._mmBlobUrl) { try { URL.revokeObjectURL(img._mmBlobUrl); } catch (e) {} img._mmBlobUrl = null; }
+                                };
+                                img.onerror = function() {
+                                    if (origOnerror) origOnerror.call(img);
+                                    if (img._mmBlobUrl) { try { URL.revokeObjectURL(img._mmBlobUrl); } catch (e) {} img._mmBlobUrl = null; }
+                                };
+                                img.src = blobUrl;
+                            } else {
+                                img.src = subUrl;
+                            }
+                        }).catch(function() { img.src = subUrl; });
                         imgs[idx] = img;
                     })(matches[mi], mi);
                 }
@@ -9820,7 +10040,25 @@
                     });
                 } catch (e) {}
             };
-            img.src = this.urlPrefix_ + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
+            var tileUrl = this.urlPrefix_ + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
+            loadTileWithCache(tileUrl, zoom).then(function(blobUrl) {
+                if (blobUrl) {
+                    var origOnload = img.onload;
+                    var origOnerror = img.onerror;
+                    img._mmBlobUrl = blobUrl;
+                    img.onload = function() {
+                        if (origOnload) origOnload.call(img);
+                        if (img._mmBlobUrl) { try { URL.revokeObjectURL(img._mmBlobUrl); } catch (e) {} img._mmBlobUrl = null; }
+                    };
+                    img.onerror = function() {
+                        if (origOnerror) origOnerror.call(img);
+                        if (img._mmBlobUrl) { try { URL.revokeObjectURL(img._mmBlobUrl); } catch (e) {} img._mmBlobUrl = null; }
+                    };
+                    img.src = blobUrl;
+                } else {
+                    img.src = tileUrl;
+                }
+            }).catch(function() { img.src = tileUrl; });
 
             div._tileImg = img;
             div._tileZoom = zoom;
@@ -9836,6 +10074,7 @@
         function _abortTileImages(tile) {
             var img = tile && tile._tileImg;
             if (img) {
+                if (img._mmBlobUrl) { try { URL.revokeObjectURL(img._mmBlobUrl); } catch (e) {} img._mmBlobUrl = null; }
                 img.onload = null;
                 img.onerror = null;
                 img.src = '';
@@ -9846,6 +10085,7 @@
                 for (var i = 0; i < imgs.length; i++) {
                     var im = imgs[i];
                     if (im) {
+                        if (im._mmBlobUrl) { try { URL.revokeObjectURL(im._mmBlobUrl); } catch (e) {} im._mmBlobUrl = null; }
                         im.onload = null;
                         im.onerror = null;
                         im.src = '';
