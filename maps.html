@@ -2312,6 +2312,7 @@
                 document.cookie = 'CloudFront-Policy=; domain=.mapmagician.in; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
                 document.cookie = 'CloudFront-Signature=; domain=.mapmagician.in; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
                 document.cookie = 'CloudFront-Key-Pair-Id=; domain=.mapmagician.in; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                document.cookie = 'mmp-token=; domain=.mapmagician.in; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 
                 // Sign in anonymously for free tile access
                 firebase.auth().signInAnonymously().catch(err => {
@@ -2336,6 +2337,9 @@
                 document.cookie = `CloudFront-Policy=${data['CloudFront-Policy']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
                 document.cookie = `CloudFront-Signature=${data['CloudFront-Signature']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
                 document.cookie = `CloudFront-Key-Pair-Id=${data['CloudFront-Key-Pair-Id']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
+                if (data['mmp-token']) {
+                    document.cookie = `mmp-token=${data['mmp-token']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
+                }
 
                 if (!cfCookiesReady) {
                     cfCookiesReady = true;
@@ -2759,6 +2763,10 @@
                                 mmAnalytics.clarityTag('plan', 'paid');
                             } catch (e) {}
                             await fetchPurchaseStatus(true);
+                            // Refresh CloudFront cookies + mmp-token so the new purchase's
+                            // district is in the edge-verified claims cookie immediately
+                            // (otherwise zoom 15+ tiles would 403 until the next TTL refresh).
+                            await fetchCloudFrontCookies();
                             // Clear and reload tiles so they use the new access token
                             clearAllLayersOfType(dpOverlays);
                             dpTileStatus = Array(dpLayerData.length).fill(false);
