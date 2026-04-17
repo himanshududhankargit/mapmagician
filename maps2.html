@@ -4757,7 +4757,9 @@
                 // remaining cost. Now all sub-regions start fetching at once.
                 try {
                     const fileName = _districtFileName(districtName);
-                    const url = GEOJSON_BASE_PATH + fileName + '.zip';
+                    // Absolute URL — blob-URL workers can't resolve relative paths against
+                    // their blob: self.location. Must absolutize on main thread before postMessage.
+                    const url = new URL(GEOJSON_BASE_PATH + fileName + '.zip', location.href).href;
                     // PERF (maps8): fetch + JSZip + JSON.parse + _parseGeoJsonFeature
                     // loop run inside _geojsonWorker. Main thread stays responsive
                     // even when 5+ Pune sub-regions are loading in parallel.
