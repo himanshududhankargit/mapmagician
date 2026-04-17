@@ -3151,7 +3151,9 @@
 
         // Village-boundary geojson (ported from Android pipeline)
         const MIN_ZOOM_FOR_GEOJSON = 12;
-        const GEOJSON_BASE_PATH = 'data/geojson/';
+        // CloudFront: files stored unzipped as .geojson (folder name is a signal
+        // to uploaders). Served through signed cookies — same auth as tiles.
+        const GEOJSON_BASE_PATH = 'https://tiles.mapmagician.in/dpplans/0geojson_dontUnzip/';
         const GEOJSON_MAX_CONCURRENT_DOWNLOADS = 3;
         const GEOJSON_GEOCODER_CACHE_MAX = 500;
 
@@ -4915,13 +4917,18 @@
                 const msg = e.data;
                 const requestId = msg.requestId;
                 try {
-                    const res = await fetch(msg.url);
+                    const res = await fetch(msg.url, { credentials: 'include' });
                     if (!res.ok) throw new Error('HTTP ' + res.status + ' for ' + msg.url);
-                    const blob = await res.blob();
-                    const zip = await JSZip.loadAsync(blob);
-                    const entry = Object.values(zip.files).find(function(f) { return !f.dir && f.name.toLowerCase().endsWith('.geojson'); });
-                    if (!entry) throw new Error('No .geojson file inside ' + msg.districtName);
-                    const text = await entry.async('string');
+                    let text;
+                    if (/\\.geojson($|\\?)/i.test(msg.url)) {
+                        text = await res.text();
+                    } else {
+                        const blob = await res.blob();
+                        const zip = await JSZip.loadAsync(blob);
+                        const entry = Object.values(zip.files).find(function(f) { return !f.dir && f.name.toLowerCase().endsWith('.geojson'); });
+                        if (!entry) throw new Error('No .geojson file inside ' + msg.districtName);
+                        text = await entry.async('string');
+                    }
                     const geojson = JSON.parse(text);
                     const features = (geojson && geojson.features) || [];
                     const villageRecords = [];
@@ -4996,9 +5003,9 @@
                 // remaining cost. Now all sub-regions start fetching at once.
                 try {
                     const fileName = _districtFileName(districtName);
-                    // Absolute URL — blob-URL workers can't resolve relative paths against
-                    // their blob: self.location. Must absolutize on main thread before postMessage.
-                    const url = new URL(GEOJSON_BASE_PATH + fileName + '.zip', location.href).href;
+                    // CloudFront-hosted plain .geojson files. URL is already absolute;
+                    // worker fetches with credentials to pass signed-cookie check.
+                    const url = GEOJSON_BASE_PATH + fileName + '.geojson';
                     // PERF (maps8): fetch + JSZip + JSON.parse + _parseGeoJsonFeature
                     // loop run inside _geojsonWorker. Main thread stays responsive
                     // even when 5+ Pune sub-regions are loading in parallel.
