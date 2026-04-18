@@ -6263,15 +6263,19 @@
                 var menuEl   = document.getElementById('map-ctx-menu');
                 var coordEl  = document.getElementById('map-ctx-menu-coord');
                 var copyBtn  = document.getElementById('map-ctx-menu-copy');
+                var shareBtn = document.getElementById('map-ctx-menu-share');
                 var currentCoord = '';
+                var currentLat = 0, currentLng = 0;
 
                 function hideMenu() { menuEl.classList.remove('visible'); }
                 function showMenuAt(clientX, clientY, latLng) {
-                    currentCoord = latLng.lat().toFixed(5) + ', ' + latLng.lng().toFixed(5);
+                    currentLat = latLng.lat();
+                    currentLng = latLng.lng();
+                    currentCoord = currentLat.toFixed(5) + ', ' + currentLng.toFixed(5);
                     coordEl.textContent = currentCoord;
                     // Clamp to viewport so the menu is never clipped off-screen.
                     menuEl.style.left = Math.min(clientX, window.innerWidth  - 220) + 'px';
-                    menuEl.style.top  = Math.min(clientY, window.innerHeight - 80)  + 'px';
+                    menuEl.style.top  = Math.min(clientY, window.innerHeight - 120) + 'px';
                     menuEl.classList.add('visible');
                 }
 
@@ -6295,6 +6299,54 @@
                         document.body.removeChild(ta);
                     }
                     hideMenu();
+                });
+
+                // Share location — opens OS-native share sheet on Android/iOS/Windows where
+                // supported (navigator.share), falls back to clipboard + toast otherwise.
+                // URL format is the same one maps.html already parses on load
+                // (?lat=X&lng=Y&zoom=Z), so the recipient opens straight to this spot.
+                function showShareToast(text) {
+                    var toast = document.getElementById('unlock-toast');
+                    var toastText = document.getElementById('unlock-toast-text');
+                    if (!toast || !toastText) return;
+                    toastText.textContent = text;
+                    toast.classList.add('show');
+                    setTimeout(function(){ toast.classList.remove('show'); }, 2400);
+                }
+                function buildShareUrl() {
+                    var zoom = (typeof map !== 'undefined' && map.getZoom) ? map.getZoom() : 15;
+                    var base = window.location.origin + window.location.pathname;
+                    return base + '?lat=' + currentLat.toFixed(6) + '&lng=' + currentLng.toFixed(6) + '&zoom=' + zoom;
+                }
+                shareBtn.addEventListener('click', function() {
+                    hideMenu();
+                    var url = buildShareUrl();
+                    var shareData = {
+                        title: 'MapMagician — shared location',
+                        text: 'Location on MapMagician: ' + currentCoord,
+                        url: url
+                    };
+                    if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+                        navigator.share(shareData).catch(function(){ /* user cancelled or share failed */ });
+                    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(url).then(function(){
+                            showShareToast('Link copied to clipboard');
+                        }).catch(function(){
+                            showShareToast('Copy failed');
+                        });
+                    } else {
+                        var ta = document.createElement('textarea');
+                        ta.value = url;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        try {
+                            document.execCommand('copy');
+                            showShareToast('Link copied to clipboard');
+                        } catch (err) {
+                            showShareToast('Unable to copy');
+                        }
+                        document.body.removeChild(ta);
+                    }
                 });
 
                 // Dismiss menu on any outside click or Escape.
@@ -10739,6 +10791,7 @@
     <div class="map-ctx-menu" id="map-ctx-menu">
         <div class="map-ctx-menu-coord" id="map-ctx-menu-coord"></div>
         <div class="map-ctx-menu-item" id="map-ctx-menu-copy">Copy coordinates</div>
+        <div class="map-ctx-menu-item" id="map-ctx-menu-share">Share this location</div>
     </div>
 
     <!-- Load Google Maps API -->
