@@ -1420,17 +1420,12 @@
             <!-- Header -->
             <div class="pd-header">
                 <div class="pd-kicker">Choose Your Plan</div>
-                <h3 id="zoom-restrict-title" class="pd-title">Unlock Region</h3>
+                <h3 id="zoom-restrict-title" class="pd-title">Web Unlock Region</h3>
                 <div id="zoom-restrict-region" style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;display:none;"></div>
             </div>
             <!-- Body: side-by-side plan cards -->
             <div class="pd-body" style="padding:16px 16px 4px;">
                 <p class="pd-desc" id="zoom-restrict-desc" style="margin-bottom:14px;">Access high-resolution development plan maps directly in your browser.</p>
-                <!-- Scope note: web unlock also covers the Windows PWA. Android app is separate. -->
-                <div style="display:flex;gap:8px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:8px 10px;margin-bottom:14px;font-size:11px;color:#64748B;line-height:1.5;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#94A3B8" style="flex-shrink:0;margin-top:2px;" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                    <div><span style="color:#334155;font-weight:600;">Web + Windows PWA.</span> Access map.mapmagician.in and Windows app with same login. Android app purchases are separate and don't transfer.</div>
-                </div>
                 <!-- Plan cards with navigation -->
                 <div class="pd-carousel-wrap" id="pd-plan-tabs">
                     <button class="pd-carousel-arrow pd-arrow-left" id="pd-arrow-left" onclick="document.getElementById('pd-cards-scroll').scrollBy({left:-260,behavior:'smooth'})">&#8249;</button>
@@ -1527,11 +1522,6 @@
                     <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Get access to all development plan maps in the region</div>
                     <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Then purchase individual village add-on plans</div>
                 </div>
-                <!-- Scope note: web unlock also covers the Windows PWA. Android app is separate. -->
-                <div style="display:flex;gap:8px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:8px 10px;margin-bottom:16px;font-size:11px;color:#64748B;line-height:1.5;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#94A3B8" style="flex-shrink:0;margin-top:2px;" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                    <div><span style="color:#334155;font-weight:600;">Web + Windows PWA.</span> Access map.mapmagician.in and Windows app with same login. Android app purchases are separate and don't transfer.</div>
-                </div>
                 <button class="pd-cta" id="baseplan-subscribe-btn">Subscribe to Region</button>
                 <button class="pd-cancel" id="baseplan-cancel-btn">Not now</button>
             </div>
@@ -1551,11 +1541,6 @@
                 <div id="village-purchase-price" style="background:#FAFAFA;border:1px solid #E0E0E0;border-radius:12px;padding:16px;text-align:center;margin-bottom:16px;">
                     <span style="font-size:36px;font-weight:800;color:#212121;" id="village-price-amount">&#8377;--</span>
                     <div style="font-size:13px;color:#888;margin-top:4px;">for 7 Days Access</div>
-                </div>
-                <!-- Scope note: web unlock also covers the Windows PWA. Android app is separate. -->
-                <div style="display:flex;gap:8px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:8px 10px;margin-bottom:16px;font-size:11px;color:#64748B;line-height:1.5;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#94A3B8" style="flex-shrink:0;margin-top:2px;" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                    <div><span style="color:#334155;font-weight:600;">Web + Windows PWA.</span> Access map.mapmagician.in and Windows app with same login. Android app purchases are separate and don't transfer.</div>
                 </div>
                 <button class="zoom-dialog-btn zoom-btn-access" id="village-purchase-action" style="width:100%;padding:14px;font-size:15px;border-radius:12px;margin-bottom:8px;background:#1565C0;color:#fff;border:none;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(21,101,192,0.3);">Purchase Village Plan</button>
                 <button id="village-purchase-cancel" style="width:100%;padding:10px;border:none;background:none;color:#aaa;font-size:13px;cursor:pointer;font-weight:500;">Not now</button>
@@ -4085,12 +4070,12 @@
             document.getElementById('pd-plan-tabs').style.display = '';
 
             if (district) {
-                title.textContent = 'Unlock ' + district.districtName;
+                title.textContent = 'Web Unlock ' + district.districtName;
                 desc.textContent = 'Access high-resolution development plan maps for ' + district.districtName + '.';
                 regionInfo.textContent = district.districtName + ' Region';
                 regionInfo.style.display = 'block';
             } else {
-                title.textContent = 'Unlock Premium Maps';
+                title.textContent = 'Web Unlock Premium Maps';
                 desc.textContent = 'Access high-resolution development plan maps directly in your browser.';
                 regionInfo.style.display = 'none';
             }
