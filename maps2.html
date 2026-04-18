@@ -847,7 +847,7 @@
                 radial-gradient(ellipse at top left, rgba(16,185,129,0.4) 0%, transparent 50%),
                 radial-gradient(ellipse at bottom right, rgba(30,64,175,0.4) 0%, transparent 50%),
                 linear-gradient(135deg, #064E3B 0%, #0F3A3A 50%, #1E3A8A 100%);
-            padding: 28px 24px 22px; text-align: center; color: #fff;
+            padding: 22px 24px 18px; text-align: center; color: #fff;
             position: relative; overflow: hidden;
         }
         .pd-header::before {
@@ -884,7 +884,7 @@
             word-break: break-word;
             text-shadow: 0 1px 2px rgba(0,0,0,0.18);
         }
-        .pd-body { padding: 22px 24px 6px; }
+        .pd-body { padding: 18px 24px 4px; }
         .pd-region-label {
             font-size: 10px; font-weight: 800; letter-spacing: 1.4px;
             text-transform: uppercase; color: var(--mm-teal-deep);
@@ -918,14 +918,14 @@
         .pd-cards-row::-webkit-scrollbar { display: none; }
         .pd-plan-card {
             flex: 0 0 calc(50% - 6px); min-width: 240px;
-            background: var(--mm-surface); border-radius: 18px;
-            border: 1px solid var(--mm-hair); padding: 20px 18px;
+            background: var(--mm-surface); border-radius: 16px;
+            border: 1px solid var(--mm-hair); padding: 16px 14px;
             display: flex; flex-direction: column; scroll-snap-align: start;
-            box-shadow: var(--mm-shadow-2);
+            box-shadow: var(--mm-shadow-1);
             position: relative;
             transition: transform var(--mm-dur) var(--mm-ease), box-shadow var(--mm-dur) var(--mm-ease);
         }
-        .pd-plan-card:hover { transform: translateY(-2px); box-shadow: var(--mm-shadow-3); }
+        .pd-plan-card:hover { transform: translateY(-1px); box-shadow: var(--mm-shadow-2); }
         .pd-carousel-arrow {
             display: none; position: absolute; top: 50%; transform: translateY(-60%);
             width: 36px; height: 36px; border-radius: 50%;
@@ -963,8 +963,8 @@
         .pd-card-benefits { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; flex: 1; }
         .pd-card-benefit { font-size: 12px; color: var(--mm-ink-2); line-height: 1.4; }
         .pd-card-cta {
-            width: 100%; padding: 13px; font-size: 14px; font-weight: 700;
-            border: none; border-radius: 11px; color: #fff; cursor: pointer;
+            width: 100%; padding: 11px; font-size: 14px; font-weight: 700;
+            border: none; border-radius: 10px; color: #fff; cursor: pointer;
             font-family: inherit; letter-spacing: 0.2px;
             transition: transform var(--mm-dur) var(--mm-ease), box-shadow var(--mm-dur) var(--mm-ease);
             box-shadow: 0 2px 4px rgba(15,23,42,0.12), inset 0 1px 0 rgba(255,255,255,0.2);
@@ -998,7 +998,7 @@
             transition: background var(--mm-dur) var(--mm-ease);
         }
         .pd-cancel:hover { color: var(--mm-ink-2); background: var(--mm-hair-soft); }
-        .pd-footer { padding: 16px 24px 20px; border-top: 1px solid var(--mm-hair-soft); background: linear-gradient(180deg, transparent, rgba(15,23,42,0.02)); }
+        .pd-footer { padding: 12px 24px 16px; border-top: 1px solid var(--mm-hair-soft); background: linear-gradient(180deg, transparent, rgba(15,23,42,0.02)); }
         .pd-mobile-hint {
             display: flex; align-items: center; gap: 12px;
             background: var(--mm-surface); border: 1px solid var(--mm-hair);
@@ -2014,10 +2014,10 @@
                 <!-- Hidden price containers for JS price loading (not displayed) -->
                 <div id="zoom-restrict-price" style="display:none;"></div>
                 <div id="zoom-restrict-sub-price" style="display:none;"></div>
+                <button class="pd-cancel" id="zoom-restrict-cancel">Not now</button>
             </div>
-            <!-- Footer: Not Now (always visible) + mobile hints + support -->
+            <!-- Footer: mobile hint + support -->
             <div class="pd-footer">
-                <button class="pd-cancel" id="zoom-restrict-cancel" style="margin:0 0 10px;">Not now</button>
                 <div class="pd-app-hints-row" id="pd-app-hints-scroll">
                     <div class="pd-mobile-hint">
                         <img class="pd-app-icon" src="AssetsGIS/image-1.png" alt="MapMagician app icon">
