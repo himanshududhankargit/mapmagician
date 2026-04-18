@@ -12,7 +12,7 @@ anyone who downloads one and opens it in a text editor sees readable JSON.
 | `d3.bin` | `oldDPPlanGIS.json`    | Old/legacy DP layer metadata — polygons for regions where old development plans are available. |
 
 Served at `https://www.mapmagician.in/data/database/{d1,d2,d3}.bin` and
-fetched by `maps2.html` via `getCachedOrFetchLayer`. Responses are cached
+fetched by `maps.html` via `getCachedOrFetchLayer`. Responses are cached
 in `localStorage` under keys `layer_dp`, `layer_village`, `layer_olddp`
 with a `{v, d}` envelope where `v` matches `appConfig/dataVersions/layer_*`
 in Firebase RTDB.
@@ -26,7 +26,7 @@ in Firebase RTDB.
 3. Open the Android admin panel → App Config → **Web Cache Versions** →
    tap the Bump button for the layer you updated. This writes a new
    timestamp to `appConfig/dataVersions/{layer_dp|layer_village|layer_olddp}`
-   in Firebase RTDB. Every open `maps2.html` tab detects the change via
+   in Firebase RTDB. Every open `maps.html` tab detects the change via
    its live listener, evicts its localStorage cache for that layer, and
    refetches the new `.bin` within ~1s.
 
@@ -34,7 +34,7 @@ in Firebase RTDB.
 
 GitHub Pages serves these as `application/octet-stream` by default, which
 means DevTools shows them as binary blobs rather than pretty-printed JSON.
-A determined scraper can still read the JS source of `maps2.html`, find
+A determined scraper can still read the JS source of `maps.html`, find
 the URL, and download them — this is deterrence, not protection. The
 actual content gate for tile imagery is the CloudFront signed-cookie
 policy on `tiles.mapmagician.in/*`.
