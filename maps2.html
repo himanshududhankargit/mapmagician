@@ -10451,6 +10451,7 @@
             }
             PrintPlan.state.captureZoom = map.getZoom();
             PrintPlan.state.captureCenter = map.getCenter();
+            PrintPlan.state.captureBounds = map.getBounds();
             PrintPlan.state.caption = PrintPlan.DEFAULT_CAPTION;
             try { document.getElementById('settings-panel').classList.remove('open'); } catch (e) {}
             showQualityDialog();
@@ -10522,18 +10523,35 @@
             return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * Math.pow(2, z);
         }
 
-        function computeTileGrid(centerLatLng, zoom, pxW, pxH) {
-            var cx = lngToTileX(centerLatLng.lng(), zoom);
-            var cy = latToTileY(centerLatLng.lat(), zoom);
-            var halfW = pxW / 2 / 256;
-            var halfH = pxH / 2 / 256;
-            var minX = Math.floor(cx - halfW);
-            var maxX = Math.floor(cx + halfW);
-            var minY = Math.floor(cy - halfH);
-            var maxY = Math.floor(cy + halfH);
-            var offsetX = -(cx - minX - halfW) * 256;
-            var offsetY = -(cy - minY - halfH) * 256;
-            return { minX: minX, maxX: maxX, minY: minY, maxY: maxY, offsetX: offsetX, offsetY: offsetY, z: zoom };
+        // Tile-pixel coordinates of a bounds rectangle at a given zoom.
+        function boundsToTilePixels(bounds, zoom) {
+            var sw = bounds.getSouthWest();
+            var ne = bounds.getNorthEast();
+            return {
+                fxMin: lngToTileX(sw.lng(), zoom) * 256,
+                fxMax: lngToTileX(ne.lng(), zoom) * 256,
+                fyMin: latToTileY(ne.lat(), zoom) * 256,
+                fyMax: latToTileY(sw.lat(), zoom) * 256
+            };
+        }
+
+        // Pick the lowest zoom where the user-framed bounds covers at least the
+        // target canvas size in pixels. Prefer the user's captureZoom; step up
+        // if their zoom doesn't give enough resolution for a sharp A4 render.
+        function pickRenderZoom(bounds, targetW, targetH, preferredZoom, maxZoom) {
+            maxZoom = maxZoom || 19;
+            var start = Math.min(Math.max(preferredZoom || 15, 10), maxZoom);
+            for (var z = start; z <= maxZoom; z++) {
+                var p = boundsToTilePixels(bounds, z);
+                if ((p.fxMax - p.fxMin) >= targetW && (p.fyMax - p.fyMin) >= targetH) return z;
+            }
+            return maxZoom;
+        }
+
+        function bboxIntersects(a, b) {
+            if (!a || !b) return true;
+            return !(a.maxLat < b.minLat || a.minLat > b.maxLat ||
+                     a.maxLng < b.minLng || a.minLng > b.maxLng);
         }
 
         // Returns HTMLImageElement (CORS-clean) or ImageBitmap, or null on failure.
@@ -10555,22 +10573,32 @@
             });
         }
 
-        async function drawGrid(ctx, grid, urlFn, useCreds, concurrency, onProgress) {
+        // Draws a rectangle of tiles (minX..maxX, minY..maxY at zoom) onto ctx,
+        // with each tile placed at ((x-minX)*256, (y-minY)*256). Optional
+        // bbox filter skips tiles whose geographic extent falls entirely
+        // outside `layerBbox`.
+        async function drawTilesToGrid(ctx, range, urlFn, useCreds, concurrency, onProgress, layerBbox) {
             concurrency = concurrency || 6;
             var jobs = [];
-            for (var x = grid.minX; x <= grid.maxX; x++) {
-                for (var y = grid.minY; y <= grid.maxY; y++) jobs.push({ x: x, y: y });
+            for (var x = range.minX; x <= range.maxX; x++) {
+                for (var y = range.minY; y <= range.maxY; y++) {
+                    if (layerBbox) {
+                        var tileBbox = tileXYZToBbox(x, y, range.z);
+                        if (!bboxIntersects(tileBbox, layerBbox)) continue;
+                    }
+                    jobs.push({ x: x, y: y });
+                }
             }
             var i = 0, done = 0, total = jobs.length;
             async function worker() {
                 while (i < jobs.length) {
                     var j = jobs[i++];
-                    var url = urlFn(grid.z, j.x, j.y);
+                    var url = urlFn(range.z, j.x, j.y);
                     if (url) {
                         var img = await fetchTile(url, useCreds);
                         if (img) {
-                            var px = grid.offsetX + (j.x - grid.minX) * 256;
-                            var py = grid.offsetY + (j.y - grid.minY) * 256;
+                            var px = (j.x - range.minX) * 256;
+                            var py = (j.y - range.minY) * 256;
                             ctx.drawImage(img, px, py, 256, 256);
                         }
                     }
@@ -10583,34 +10611,71 @@
             await Promise.all(ws);
         }
 
-        function collectPurchasedOverlayPrefixes() {
+        function tileXYZToBbox(x, y, z) {
+            var n = Math.pow(2, z);
+            var lonMin = x / n * 360 - 180;
+            var lonMax = (x + 1) / n * 360 - 180;
+            var latMax = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))) * 180 / Math.PI;
+            var latMin = Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 1) / n))) * 180 / Math.PI;
+            return { minLat: latMin, maxLat: latMax, minLng: lonMin, maxLng: lonMax };
+        }
+
+        // Collect every DP-layer tile prefix whose bbox intersects the capture
+        // bounds. We do NOT filter by activePurchases — CloudFront signed
+        // cookies enforce access, so unpurchased layers simply 403 and are
+        // silently skipped. This makes the feature resilient to client-side
+        // purchase-detection edge cases.
+        function collectOverlayPrefixesByBounds(captureBounds) {
             if (typeof dpLayerData === 'undefined' || !dpLayerData || !dpLayerData.length) return [];
-            var prefixes = [];
-            var seen = Object.create(null);
             var baseHost = 'https://tiles.mapmagician.in';
+            var captureBbox = {
+                minLat: captureBounds.getSouthWest().lat(),
+                maxLat: captureBounds.getNorthEast().lat(),
+                minLng: captureBounds.getSouthWest().lng(),
+                maxLng: captureBounds.getNorthEast().lng()
+            };
+            var out = [];
+            var seen = Object.create(null);
+            function push(link, bbox, minZ, maxZ) {
+                if (!link) return;
+                var pfx = (link.indexOf('http') === 0 ? '' : baseHost) + (link.charAt(0) === '/' ? link : '/' + link);
+                if (pfx.charAt(pfx.length - 1) !== '/') pfx += '/';
+                if (seen[pfx]) return;
+                seen[pfx] = 1;
+                out.push({ prefix: pfx, bbox: bbox || null, minZ: minZ || 12, maxZ: maxZ || 22 });
+            }
             for (var i = 0; i < dpLayerData.length; i++) {
                 var d = dpLayerData[i];
                 if (!d) continue;
-                var pid = d.productPurchaseID || d.districtName || '';
-                if (!pid) continue;
-                var hasPurchase = false;
-                try {
-                    if (typeof activePurchases !== 'undefined' && activePurchases.size) {
-                        hasPurchase = !!(activePurchases.get(pid) ||
-                                         activePurchases.get('district' + pid) ||
-                                         activePurchases.get(pid.replace(/^district/i, '')));
+                if (d.isMerged && d.subSheets && d.subSheets.length) {
+                    for (var si = 0; si < d.subSheets.length; si++) {
+                        var sub = d.subSheets[si];
+                        if (!bboxIntersects(sub.bbox, captureBbox)) continue;
+                        push(sub.link, sub.bbox, sub.minZoom, sub.maxZoom);
                     }
-                } catch (e) {}
-                if (!hasPurchase) continue;
-                var link = d.link || '';
-                if (!link) continue;
-                var pfx = (link.indexOf('http') === 0 ? '' : baseHost) + (link.charAt(0) === '/' ? link : '/' + link);
-                if (pfx.charAt(pfx.length - 1) !== '/') pfx += '/';
-                if (seen[pfx]) continue;
-                seen[pfx] = 1;
-                prefixes.push({ prefix: pfx, minZ: d.minZoom || 12, maxZ: d.maxZoom || 20 });
+                } else {
+                    // Simple entry — best-effort bbox filter using kmlPolygonCoords if present.
+                    var sbbox = null;
+                    if (d.kmlPolygonCoords && d.kmlPolygonCoords.length) {
+                        var minLa = Infinity, maxLa = -Infinity, minLo = Infinity, maxLo = -Infinity;
+                        for (var p = 0; p < d.kmlPolygonCoords.length; p++) {
+                            var pt = d.kmlPolygonCoords[p];
+                            var la = pt.lat != null ? pt.lat : (Array.isArray(pt) ? pt[1] : null);
+                            var lo = pt.lng != null ? pt.lng : (Array.isArray(pt) ? pt[0] : null);
+                            if (la != null && lo != null) {
+                                if (la < minLa) minLa = la;
+                                if (la > maxLa) maxLa = la;
+                                if (lo < minLo) minLo = lo;
+                                if (lo > maxLo) maxLo = lo;
+                            }
+                        }
+                        if (minLa !== Infinity) sbbox = { minLat: minLa, maxLat: maxLa, minLng: minLo, maxLng: maxLo };
+                    }
+                    if (sbbox && !bboxIntersects(sbbox, captureBbox)) continue;
+                    push(d.link, sbbox, d.minZoom, d.maxZoom);
+                }
             }
-            return prefixes;
+            return out;
         }
 
         async function composeFullBitmap(caption, forPreview, onProgress) {
@@ -10626,30 +10691,61 @@
             inner.width = ma.w;
             inner.height = ma.h;
             var ictx = inner.getContext('2d');
+            ictx.imageSmoothingEnabled = true;
+            ictx.imageSmoothingQuality = 'high';
             ictx.fillStyle = '#b0bec5';
             ictx.fillRect(0, 0, ma.w, ma.h);
 
-            var zoom = Math.min(19, Math.max(11, PrintPlan.state.captureZoom || 17));
-            if (forPreview) zoom = Math.max(11, zoom - 3); // low-res preview prevents right-click theft
-            var center = PrintPlan.state.captureCenter;
-            var grid = computeTileGrid(center, zoom, ma.w, ma.h);
+            // WYSIWYG framing: show exactly what the user has in the browser viewport.
+            // Preview uses a lower target resolution so the saved PNG is useless for print.
+            var bounds = PrintPlan.state.captureBounds || (map && map.getBounds && map.getBounds());
+            if (!bounds) throw new Error('No map bounds captured.');
+            var captureZ = PrintPlan.state.captureZoom || 17;
+            var targetW = forPreview ? Math.max(240, Math.floor(ma.w / 3)) : ma.w;
+            var targetH = forPreview ? Math.max(180, Math.floor(ma.h / 3)) : ma.h;
+            var zoom = pickRenderZoom(bounds, targetW, targetH, captureZ, /*maxZoom*/ 19);
 
-            // Base — ESRI World Imagery (CORS-enabled)
-            await drawGrid(ictx, grid, function (z, x, y) {
+            // Pixel rect of the bounds inside the tile grid at the chosen zoom.
+            var pb = boundsToTilePixels(bounds, zoom);
+            var minTileX = Math.floor(pb.fxMin / 256);
+            var maxTileX = Math.floor((pb.fxMax - 0.0001) / 256);
+            var minTileY = Math.floor(pb.fyMin / 256);
+            var maxTileY = Math.floor((pb.fyMax - 0.0001) / 256);
+            var range = { minX: minTileX, maxX: maxTileX, minY: minTileY, maxY: maxTileY, z: zoom };
+            var gridW = (maxTileX - minTileX + 1) * 256;
+            var gridH = (maxTileY - minTileY + 1) * 256;
+            var cropX = pb.fxMin - minTileX * 256;
+            var cropY = pb.fyMin - minTileY * 256;
+            var cropW = pb.fxMax - pb.fxMin;
+            var cropH = pb.fyMax - pb.fyMin;
+
+            var gridCanvas = document.createElement('canvas');
+            gridCanvas.width = gridW;
+            gridCanvas.height = gridH;
+            var gctx = gridCanvas.getContext('2d');
+            gctx.fillStyle = '#b0bec5';
+            gctx.fillRect(0, 0, gridW, gridH);
+
+            // Base — ESRI World Imagery (CORS-enabled), rendered onto the grid.
+            await drawTilesToGrid(gctx, range, function (z, x, y) {
                 return PrintPlan.ESRI_URL.replace('{z}', z).replace('{y}', y).replace('{x}', x);
             }, false, 6, onProgress ? function (d, t) { onProgress('base', d, t); } : null);
 
-            // Overlay — purchased DP layers from CloudFront (signed-cookie access)
-            var prefixes = collectPurchasedOverlayPrefixes();
-            for (var pi = 0; pi < prefixes.length; pi++) {
-                var pfx = prefixes[pi];
-                if (zoom < pfx.minZ || zoom > pfx.maxZ) continue;
+            // Overlay — DP tiles from CloudFront. Filtered by bbox so we don't
+            // spam the CDN with 404s for districts far from the capture area.
+            var overlays = collectOverlayPrefixesByBounds(bounds);
+            for (var pi = 0; pi < overlays.length; pi++) {
+                var ov = overlays[pi];
+                if (zoom < ov.minZ || zoom > ov.maxZ) continue;
                 /* eslint-disable no-loop-func */
-                await drawGrid(ictx, grid, function (z, x, y) {
-                    return pfx.prefix + z + '/' + x + '/' + y + '.png';
-                }, true, 4, onProgress ? function (d, t) { onProgress('overlay', d, t); } : null);
+                await drawTilesToGrid(gctx, range, function (z, x, y) {
+                    return ov.prefix + z + '/' + x + '/' + y + '.png';
+                }, true, 4, onProgress ? function (d, t) { onProgress('overlay', d, t); } : null, ov.bbox);
                 /* eslint-enable no-loop-func */
             }
+
+            // Crop the bounds rect from the grid canvas into the A4 map area.
+            ictx.drawImage(gridCanvas, cropX, cropY, cropW, cropH, 0, 0, ma.w, ma.h);
 
             // ESRI attribution (required by ToS)
             ictx.font = '14px sans-serif';
