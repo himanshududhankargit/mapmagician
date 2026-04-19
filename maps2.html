@@ -1023,6 +1023,7 @@
     <!-- Horizontal toolbar pills -->
     <div class="toolbar-scroll">
         <button class="pill-btn" id="btn-addon-maps" style="display:none;background:#2E7D32;color:#fff;font-weight:600;">0 Add-On Maps</button>
+        <button class="pill-btn" id="btn-print-plan" style="background:#00796B;color:#fff;font-weight:600;">Download A4 Plan&nbsp;<span id="btn-print-plan-price" style="opacity:0.85;font-weight:500;">&#8377;&mdash;</span></button>
         <button class="pill-btn" id="btn-old-maps" style="display:none">Load Old Maps</button>
         <button class="pill-btn" id="btn-measure-area">Measure Area<span class="measure-clear-x" id="clear-area-x">✕</span></button>
         <button class="pill-btn" id="btn-measure-length">Measure Length<span class="measure-clear-x" id="clear-length-x">✕</span></button>
@@ -10409,8 +10410,10 @@
 
         // ---------- boot ----------
         function init() {
-            var btn = document.getElementById('settings-print-plan-btn');
-            if (btn) btn.addEventListener('click', openFlow);
+            var sbtn = document.getElementById('settings-print-plan-btn');
+            if (sbtn) sbtn.addEventListener('click', openFlow);
+            var pbtn = document.getElementById('btn-print-plan');
+            if (pbtn) pbtn.addEventListener('click', openFlow);
             wireDialogs();
             observePricing();
         }
@@ -10421,9 +10424,11 @@
                 var price = cachedPricing.get(PrintPlan.PRODUCT_ID);
                 var p1 = document.getElementById('settings-print-plan-price');
                 var p2 = document.getElementById('printplan-price-badge');
+                var p3 = document.getElementById('btn-print-plan-price');
                 var txt = price ? ('\u20B9' + price) : '\u20B9\u2014';
                 if (p1) p1.innerHTML = txt;
                 if (p2) p2.innerHTML = txt;
+                if (p3) p3.innerHTML = txt;
             }
             refresh();
             var tries = 0;
