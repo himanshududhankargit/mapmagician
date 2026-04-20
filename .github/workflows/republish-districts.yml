@@ -9,6 +9,8 @@ name: Republish districts
 #   FIREBASE_SA_KEY    service-account JSON with Cloud Functions Admin on sodium-hour-256110
 #   AWS_ACCESS_KEY_ID  IAM user scoped to cloudfront:DescribeFunction/UpdateFunction/PublishFunction
 #   AWS_SECRET_ACCESS_KEY
+#   NOTIFY_GMAIL_USER  Gmail address for sending notifications (same one can live in Firebase as SUPPORT_GMAIL_USER)
+#   NOTIFY_GMAIL_PASS  Gmail 16-char app password (NOT the account password)
 #
 # Required repo variable (Settings → Variables → Actions):
 #   GIS_WEB_REPO       "<owner>/<gis-web-repo>" — the repo that holds functions/
@@ -57,11 +59,19 @@ jobs:
         run: npm ci
 
       - name: Regenerate tileFolderMap + patch cloudfront-gate
+        id: regen
         working-directory: gis-web/functions
         # Generator reads ../mapmagician-main/data/database/{d1,d3}.bin;
         # our layout above puts both checkouts as siblings so the relative
         # path the generator expects resolves correctly.
-        run: node generateTileFolderMap.js
+        # Capture stdout so the notification email can include the summary.
+        run: |
+          node generateTileFolderMap.js | tee regen.log
+          {
+            echo "summary<<__EOF__"
+            cat regen.log
+            echo "__EOF__"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Commit regenerated files back to GIS web
         id: commit
@@ -99,3 +109,48 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SA_KEY }}' > "$GOOGLE_APPLICATION_CREDENTIALS"
           npx firebase-tools deploy --only functions:getCloudFrontCookies \
             --project sodium-hour-256110 --non-interactive
+
+      - name: Notify — success
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.NOTIFY_GMAIL_USER }}
+          password: ${{ secrets.NOTIFY_GMAIL_PASS }}
+          from: Map Magician CI <${{ secrets.NOTIFY_GMAIL_USER }}>
+          to: himanshududhankar@gmail.com
+          subject: "[mmp] Districts republished — ${{ github.event.head_commit.message && github.event.head_commit.id || github.sha }}"
+          body: |
+            Republish succeeded.
+
+            Trigger: ${{ github.event_name }} on ${{ github.ref_name }}
+            Commit (mapmagician-main): ${{ github.sha }}
+            Gis-web files changed: ${{ steps.commit.outputs.changed }}
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Generator summary:
+            ${{ steps.regen.outputs.summary }}
+
+      - name: Notify — failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.NOTIFY_GMAIL_USER }}
+          password: ${{ secrets.NOTIFY_GMAIL_PASS }}
+          from: Map Magician CI <${{ secrets.NOTIFY_GMAIL_USER }}>
+          to: himanshududhankar@gmail.com
+          subject: "[mmp] Districts republish FAILED — ${{ github.sha }}"
+          body: |
+            Republish FAILED.
+
+            Trigger: ${{ github.event_name }} on ${{ github.ref_name }}
+            Commit (mapmagician-main): ${{ github.sha }}
+            Run (has full log): ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Generator summary (if it ran):
+            ${{ steps.regen.outputs.summary }}
