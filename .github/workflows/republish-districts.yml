@@ -1,0 +1,96 @@
+name: Republish districts
+
+# Fires when the Android admin app pushes d1.bin / d3.bin updates. Regenerates
+# tileFolderMap.json + cloudfront-gate.js in the GIS web repo and redeploys
+# both Firebase (getCloudFrontCookies) and CloudFront (mmp-tile-gate).
+#
+# Required repo secrets (configure in Settings → Secrets and variables → Actions):
+#   GIS_WEB_PAT        fine-grained PAT with contents:write on the GIS web repo
+#   FIREBASE_SA_KEY    service-account JSON with Cloud Functions Admin on sodium-hour-256110
+#   AWS_ACCESS_KEY_ID  IAM user scoped to cloudfront:DescribeFunction/UpdateFunction/PublishFunction
+#   AWS_SECRET_ACCESS_KEY
+#
+# Required repo variable (Settings → Variables → Actions):
+#   GIS_WEB_REPO       "<owner>/<gis-web-repo>" — the repo that holds functions/
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'data/database/d1.bin'
+      - 'data/database/d3.bin'
+  workflow_dispatch:
+
+concurrency:
+  group: republish-districts
+  cancel-in-progress: false
+
+jobs:
+  republish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout mapmagician-main
+        uses: actions/checkout@v4
+        with:
+          path: mapmagician-main
+
+      - name: Checkout GIS web
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.GIS_WEB_REPO }}
+          token: ${{ secrets.GIS_WEB_PAT }}
+          path: gis-web
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: gis-web/functions/package-lock.json
+
+      - name: Install functions deps
+        working-directory: gis-web/functions
+        run: npm ci
+
+      - name: Regenerate tileFolderMap + patch cloudfront-gate
+        working-directory: gis-web/functions
+        # Generator reads ../mapmagician-main/data/database/{d1,d3}.bin;
+        # our layout above puts both checkouts as siblings so the relative
+        # path the generator expects resolves correctly.
+        run: node generateTileFolderMap.js
+
+      - name: Commit regenerated files back to GIS web
+        id: commit
+        working-directory: gis-web
+        run: |
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes — tileFolderMap + cloudfront-gate already up-to-date"
+            exit 0
+          fi
+          git config user.name  mmp-bot
+          git config user.email mmp-bot@users.noreply.github.com
+          git add functions/tileFolderMap.json functions/cloudfront-gate.js
+          git commit -m "chore: republish districts [skip ci]
+
+          Triggered by mapmagician-main@${{ github.sha }}"
+          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: CloudFront deploy
+        working-directory: gis-web/functions
+        run: bash scripts/publish-cloudfront.sh
+
+      - name: Firebase deploy
+        working-directory: gis-web
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: |
+          printf '%s' '${{ secrets.FIREBASE_SA_KEY }}' > "$GOOGLE_APPLICATION_CREDENTIALS"
+          npx firebase-tools deploy --only functions:getCloudFrontCookies \
+            --project sodium-hour-256110 --non-interactive
