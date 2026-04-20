@@ -29,17 +29,22 @@ jobs:
   republish:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout mapmagician-main
-        uses: actions/checkout@v4
-        with:
-          path: mapmagician-main
-
+      # gis-web and mapmagician-main must sit as siblings inside the same parent,
+      # because generateTileFolderMap.js:21 resolves d1.bin/d3.bin via
+      # path.resolve(__dirname, "..", "mapmagician-main", ...). Mirror the local
+      # C:/MyData/GIS web/ layout by nesting mapmagician-main inside the gis-web
+      # checkout so ../mapmagician-main resolves correctly from functions/.
       - name: Checkout GIS web
         uses: actions/checkout@v4
         with:
           repository: ${{ vars.GIS_WEB_REPO }}
           token: ${{ secrets.GIS_WEB_PAT }}
           path: gis-web
+
+      - name: Checkout mapmagician-main (inside gis-web)
+        uses: actions/checkout@v4
+        with:
+          path: gis-web/mapmagician-main
 
       - uses: actions/setup-node@v4
         with:
