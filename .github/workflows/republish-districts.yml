@@ -98,10 +98,14 @@ jobs:
           aws-region: us-east-1
 
       - name: CloudFront deploy
+        if: steps.commit.outputs.changed == 'true'
         working-directory: gis-web/functions
         run: bash scripts/publish-cloudfront.sh
 
+      # Skip when regenerate was a no-op — identical tileFolderMap.json means
+      # getCloudFrontCookies would redeploy byte-identical code. Saves ~2 min.
       - name: Firebase deploy
+        if: steps.commit.outputs.changed == 'true'
         working-directory: gis-web
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
