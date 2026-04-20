@@ -115,7 +115,7 @@ jobs:
             --project sodium-hour-256110 --non-interactive
 
       - name: Notify — success
-        if: success() && steps.commit.outputs.changed == 'true'
+        if: success()
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
