@@ -2942,6 +2942,13 @@
                                 mmAnalytics.clarityTag('plan', 'paid');
                             } catch (e) {}
                             await fetchSubscriptionStatus();
+                            // Refresh CloudFront cookies + mmp-token so the new
+                            // subscription's productPurchaseID lands in the
+                            // edge-verified claims cookie immediately — otherwise
+                            // zoom 15+ tiles would 403 at the CF edge until the
+                            // user refreshes the tab. Mirrors the one-time path
+                            // at handler: callback above.
+                            try { await fetchCloudFrontCookies(); } catch (e) { /* non-fatal; TTL refresh will catch up */ }
                             clearAllLayersOfType(dpOverlays);
                             dpTileStatus = Array(dpLayerData.length).fill(false);
                             loadTilesBasedOnViewport();
@@ -2969,22 +2976,41 @@
                         name: currentUser.displayName || ''
                     },
                     theme: { color: '#008577' },
-                    handler: function(response) {
-                        // Payment went through Razorpay UI — show processing and poll
+                    handler: async function(response) {
+                        // Payment went through Razorpay UI — show processing.
                         document.getElementById('payment-loading-text').textContent = 'Processing subscription...';
                         document.getElementById('payment-loading-sub').textContent = regionName;
                         loadingOverlay.classList.add('open');
                         updateStatus('Processing subscription...');
+                        // Primary path: call confirmSubscription directly so
+                        // access syncs even if the Razorpay webhook is delayed
+                        // or rejected. The function is idempotent, so if the
+                        // webhook already ran this is a cheap no-op.
+                        try {
+                            var confirmSub = functions.httpsCallable('confirmSubscription');
+                            await confirmSub({ subscriptionId: subscriptionId, productId: productId });
+                        } catch (e) {
+                            // Expected when Razorpay hasn't flipped status to
+                            // "active" yet (UPI AutoPay can lag a few seconds
+                            // between authorization and first charge). Polling
+                            // below waits for the webhook in that case.
+                            console.warn('confirmSubscription fallback:', e && (e.message || e.code) || e);
+                        }
                         pollForSubscriptionActivation(productId, subscriptionId, 0, 10);
                     },
                     modal: {
-                        ondismiss: function() {
-                            // User closed Razorpay modal — payment may still have gone through
-                            // Poll a few times to check if webhook activated it
+                        ondismiss: async function() {
+                            // User closed Razorpay modal — payment may still have gone through.
                             document.getElementById('payment-loading-text').textContent = 'Checking payment status...';
                             document.getElementById('payment-loading-sub').textContent = regionName;
                             loadingOverlay.classList.add('open');
                             updateStatus('Checking payment status...');
+                            try {
+                                var confirmSub = functions.httpsCallable('confirmSubscription');
+                                await confirmSub({ subscriptionId: subscriptionId, productId: productId });
+                            } catch (e) {
+                                console.warn('confirmSubscription (ondismiss) fallback:', e && (e.message || e.code) || e);
+                            }
                             pollForSubscriptionActivation(productId, subscriptionId, 0, 5);
                         }
                     }
