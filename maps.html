@@ -1352,10 +1352,14 @@
             <div id="support-success-section" style="display:none;">
                 <h3 style="text-align:center;margin-bottom:16px;color:#2E7D32;">Message Sent</h3>
                 <p style="font-size:14px;line-height:1.5;color:#333;margin:0 0 12px 0;">Thank you for contacting Map Magician. We have received your request and typically reply within <strong>24 hours</strong>.</p>
+                <p style="font-size:14px;line-height:1.5;color:#333;margin:0 0 12px 0;">Our reply will be sent to your registered login email:</p>
+                <div style="background:#e8f5e9;padding:10px 12px;border-radius:8px;border-left:3px solid #2E7D32;margin:0 0 12px 0;font-size:13px;color:#1b5e20;word-break:break-all;">
+                    <strong id="support-success-email">&nbsp;</strong>
+                </div>
                 <div style="background:#fff8e1;padding:12px;border-radius:8px;border-left:3px solid #f9a825;margin:12px 0;font-size:13px;line-height:1.5;color:#5d4037;">
                     <strong>Please also check your Junk / Spam folder</strong> if you do not see our reply in your inbox within 24 hours.
                 </div>
-                <button class="auth-dialog-btn" id="support-success-close-btn" style="width:100%;justify-content:center;margin-bottom:0;">Close</button>
+                <button type="button" class="auth-dialog-btn" id="support-success-close-btn" style="width:100%;justify-content:center;margin-bottom:0;">Close</button>
             </div>
         </div>
     </div>
@@ -2637,6 +2641,7 @@
                     userAgent: navigator.userAgent,
                     activeSubscriptions: activeEntries
                 });
+                document.getElementById('support-success-email').textContent = (currentUser && currentUser.email) ? currentUser.email : '';
                 document.getElementById('support-form-section').style.display = 'none';
                 document.getElementById('support-success-section').style.display = '';
                 supportReturnToPaywall = false;
@@ -2652,7 +2657,14 @@
             closeSupportForm();
         });
 
-        document.getElementById('support-success-close-btn').addEventListener('click', () => {
+        document.getElementById('support-success-close-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Push a sacrificial history entry so the overlay-dismiss observer's
+            // history.back() pops this instead of navigating away from maps.html.
+            // Without this, a PWA/standalone launch or freshly-opened tab with no
+            // prior history treats back-from-dialog as "close the tab".
+            try { history.pushState({ mmDialog: 'support-close-shim' }, ''); } catch (_) {}
             closeSupportForm();
         });
 
