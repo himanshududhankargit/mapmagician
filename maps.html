@@ -1336,17 +1336,27 @@
     <!-- Support form dialog -->
     <div class="auth-dialog-overlay" id="support-dialog-overlay" data-dismiss="support-cancel-btn" style="z-index:4000;">
         <div class="auth-dialog" style="max-width:400px;text-align:left;">
-            <h3 style="text-align:center;margin-bottom:16px;">Contact Support</h3>
-            <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">To</label>
-            <input type="text" value="support@mapmagician.in" readonly style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#333;background:#f5f5f5;margin-bottom:12px;box-sizing:border-box;">
-            <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Your Email</label>
-            <input type="text" id="support-email" readonly style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#333;background:#f5f5f5;margin-bottom:12px;box-sizing:border-box;">
-            <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Region</label>
-            <input type="text" id="support-region" readonly style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#333;background:#f5f5f5;margin-bottom:12px;box-sizing:border-box;">
-            <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Your Message</label>
-            <textarea id="support-message" rows="4" placeholder="Describe your issue..." style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;resize:vertical;margin-bottom:16px;box-sizing:border-box;font-family:inherit;"></textarea>
-            <button class="auth-dialog-btn" id="support-send-btn" style="width:100%;justify-content:center;margin-bottom:0;">Send Message</button>
-            <button class="auth-dialog-cancel" id="support-cancel-btn">Cancel</button>
+            <div id="support-form-section">
+                <h3 style="text-align:center;margin-bottom:16px;">Contact Support</h3>
+                <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">To</label>
+                <input type="text" value="support@mapmagician.in" readonly style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#333;background:#f5f5f5;margin-bottom:12px;box-sizing:border-box;">
+                <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Your Email</label>
+                <input type="text" id="support-email" readonly style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#333;background:#f5f5f5;margin-bottom:12px;box-sizing:border-box;">
+                <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Region</label>
+                <input type="text" id="support-region" readonly style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#333;background:#f5f5f5;margin-bottom:12px;box-sizing:border-box;">
+                <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Your Message</label>
+                <textarea id="support-message" rows="4" placeholder="Describe your issue..." style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;resize:vertical;margin-bottom:16px;box-sizing:border-box;font-family:inherit;"></textarea>
+                <button class="auth-dialog-btn" id="support-send-btn" style="width:100%;justify-content:center;margin-bottom:0;">Send Message</button>
+                <button class="auth-dialog-cancel" id="support-cancel-btn">Cancel</button>
+            </div>
+            <div id="support-success-section" style="display:none;">
+                <h3 style="text-align:center;margin-bottom:16px;color:#2E7D32;">Message Sent</h3>
+                <p style="font-size:14px;line-height:1.5;color:#333;margin:0 0 12px 0;">Thank you for contacting Map Magician. We have received your request and typically reply within <strong>24 hours</strong>.</p>
+                <div style="background:#fff8e1;padding:12px;border-radius:8px;border-left:3px solid #f9a825;margin:12px 0;font-size:13px;line-height:1.5;color:#5d4037;">
+                    <strong>Please also check your Junk / Spam folder</strong> if you do not see our reply in your inbox within 24 hours.
+                </div>
+                <button class="auth-dialog-btn" id="support-success-close-btn" style="width:100%;justify-content:center;margin-bottom:0;">Close</button>
+            </div>
         </div>
     </div>
 
@@ -2562,6 +2572,8 @@
             document.getElementById('support-message').value = '';
             document.getElementById('support-send-btn').disabled = false;
             document.getElementById('support-send-btn').textContent = 'Send Message';
+            document.getElementById('support-form-section').style.display = '';
+            document.getElementById('support-success-section').style.display = 'none';
             document.getElementById('support-dialog-overlay').classList.add('open');
         }
 
@@ -2584,22 +2596,51 @@
             btn.textContent = 'Sending...';
 
             const district = findDistrictAtCenter();
+
+            function planLabelFor(plan) {
+                if (plan === 'subscription') return 'Subscription';
+                if (plan === 'professional') return 'Pro Pass (Android)';
+                if (plan === 'web') return 'Web Pass (7-day)';
+                if (plan === 'override') return 'Admin Override';
+                return '7-Day Pass';
+            }
+            const activeEntries = [];
+            activePurchases.forEach(function(val, pid) {
+                const districtMatch = findDistrictByPurchaseId(pid);
+                const entry = {
+                    productId: pid,
+                    name: districtMatch ? districtMatch.districtName : pid,
+                    plan: val.plan || '',
+                    planLabel: planLabelFor(val.plan),
+                    expiry: val.expiry || 0,
+                    refunded: !!val.refunded
+                };
+                if (val.plan === 'subscription') {
+                    const sub = activeSubscriptions.get(pid);
+                    if (sub) {
+                        entry.status = sub.status || 'active';
+                        entry.currentPeriodStart = sub.currentPeriodStart || null;
+                        entry.currentPeriodEnd = sub.currentPeriodEnd || null;
+                    }
+                }
+                activeEntries.push(entry);
+            });
+
             try {
                 const sendSupportRequest = functions.httpsCallable('sendSupportRequest');
                 await sendSupportRequest({
                     message: msg,
+                    senderName: (currentUser && currentUser.displayName) ? currentUser.displayName : '',
                     region: document.getElementById('support-region').value,
                     regionPid: district ? district.productPurchaseID : '',
                     zoom: map ? map.getZoom() : 0,
-                    userAgent: navigator.userAgent
+                    userAgent: navigator.userAgent,
+                    activeSubscriptions: activeEntries
                 });
-                btn.textContent = 'Sent!';
+                document.getElementById('support-form-section').style.display = 'none';
+                document.getElementById('support-success-section').style.display = '';
                 supportReturnToPaywall = false;
                 supportPaywallDistrict = null;
-                setTimeout(() => {
-                    document.getElementById('support-dialog-overlay').classList.remove('open');
-                    enableMapInteraction();
-                }, 1500);
             } catch (e) {
                 btn.disabled = false;
                 btn.textContent = 'Send Message';
@@ -2608,6 +2649,10 @@
         });
 
         document.getElementById('support-cancel-btn').addEventListener('click', () => {
+            closeSupportForm();
+        });
+
+        document.getElementById('support-success-close-btn').addEventListener('click', () => {
             closeSupportForm();
         });
 
