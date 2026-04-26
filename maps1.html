@@ -5289,6 +5289,84 @@
         // rest of the geojson code uses to trigger redraws when data changes.
         let villageBoundaryOverlay = null;
 
+        // ===== Douglas-Peucker simplification, keyed by integer zoom =====
+        // The dominant cost in VillageBoundaryOverlayClass.draw() is
+        // proj.fromLatLngToDivPixel() — one native crossing per vertex. Cutting
+        // vertex count 3-10× at low/mid zoom is the cheapest way to make pan
+        // feel light. Tolerance is set to ~1.5 screen pixels — visually
+        // indistinguishable, dramatically fewer crossings.
+        const _DP_PIXEL_TOLERANCE = 1.5;
+        const _DP_MIN_RING_LENGTH = 12; // skip tiny rings — already cheap
+        const _DP_DISABLE_AT_OR_ABOVE_ZOOM = 17; // high zoom: keep originals
+        const _DP_CACHE_PER_VILLAGE = 2;
+
+        function _zoomPixelDeg(zoom) {
+            // Web Mercator world width = 256 * 2^zoom px = 360°.
+            return 360 / (256 * Math.pow(2, zoom));
+        }
+        function _perpDistSq(p, a, b) {
+            const dx = b.lng - a.lng, dy = b.lat - a.lat;
+            const denom = dx * dx + dy * dy;
+            if (denom === 0) {
+                const ex0 = p.lng - a.lng, ey0 = p.lat - a.lat;
+                return ex0 * ex0 + ey0 * ey0;
+            }
+            let t = ((p.lng - a.lng) * dx + (p.lat - a.lat) * dy) / denom;
+            if (t < 0) t = 0; else if (t > 1) t = 1;
+            const projX = a.lng + t * dx, projY = a.lat + t * dy;
+            const ex = p.lng - projX, ey = p.lat - projY;
+            return ex * ex + ey * ey;
+        }
+        function _douglasPeucker(points, tolSq) {
+            const n = points.length;
+            if (n < 3) return points;
+            const keep = new Uint8Array(n);
+            keep[0] = 1; keep[n - 1] = 1;
+            const stack = [[0, n - 1]];
+            while (stack.length) {
+                const top = stack.pop();
+                const s = top[0], e = top[1];
+                let maxD = 0, idx = -1;
+                const a = points[s], b = points[e];
+                for (let i = s + 1; i < e; i++) {
+                    const d = _perpDistSq(points[i], a, b);
+                    if (d > maxD) { maxD = d; idx = i; }
+                }
+                if (maxD > tolSq && idx !== -1) {
+                    keep[idx] = 1;
+                    stack.push([s, idx]);
+                    stack.push([idx, e]);
+                }
+            }
+            const out = [];
+            for (let i = 0; i < n; i++) if (keep[i]) out.push(points[i]);
+            return out;
+        }
+        function _getSimplifiedPolygons(v, zoom) {
+            if (!v.polygons) return null;
+            const z = Math.floor(zoom);
+            if (z >= _DP_DISABLE_AT_OR_ABOVE_ZOOM) return v.polygons;
+            if (!v._simpCache) v._simpCache = new Map();
+            const cached = v._simpCache.get(z);
+            if (cached) return cached;
+            const tolDeg = _DP_PIXEL_TOLERANCE * _zoomPixelDeg(z);
+            const tolSq = tolDeg * tolDeg;
+            const out = new Array(v.polygons.length);
+            for (let i = 0; i < v.polygons.length; i++) {
+                const ring = v.polygons[i];
+                out[i] = (ring && ring.length >= _DP_MIN_RING_LENGTH)
+                    ? _douglasPeucker(ring, tolSq)
+                    : ring;
+            }
+            if (v._simpCache.size >= _DP_CACHE_PER_VILLAGE) {
+                // Drop oldest entry (Map preserves insertion order).
+                const firstKey = v._simpCache.keys().next().value;
+                v._simpCache.delete(firstKey);
+            }
+            v._simpCache.set(z, out);
+            return out;
+        }
+
         function _bboxIntersectsViewport(bounds, ne, sw) {
             // bounds: {n,s,e,w}; ne/sw are LatLng
             return bounds.s <= ne.lat() && bounds.n >= sw.lat() &&
@@ -6425,7 +6503,10 @@
                             // Cheap bbox cull — skip villages outside viewport
                             if (vb.s > vpN || vb.n < vpS || vb.w > vpE || vb.e < vpW) continue;
 
-                            const polys = v.polygons;
+                            // PERF: zoom-keyed Douglas-Peucker simplification.
+                            // Cuts proj.fromLatLngToDivPixel() crossings at low
+                            // zoom by 3-10×; tolerance ~1.5px is visually identical.
+                            const polys = _getSimplifiedPolygons(v, zoom);
                             if (!polys) continue;
                             for (let pi = 0; pi < polys.length; pi++) {
                                 const ring = polys[pi];
