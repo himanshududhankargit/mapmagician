@@ -3239,7 +3239,6 @@
         // Served through signed cookies — same auth as tiles.
         const GEOJSON_BASE_PATH = 'https://tiles.mapmagician.in/dpplans/0geojson_dontUnzip/';
         const GEOJSON_MAX_CONCURRENT_DOWNLOADS = 3;
-        const GEOJSON_GEOCODER_CACHE_MAX = 500;
 
         // Solapur decorative overlay (labels, TP scheme dashed polygons, archaeological
         // magenta buffer lines) — ported from Android Constants.kt. Quadratic ease-out
@@ -3260,48 +3259,91 @@
         const IS_LOW_MEMORY_DEVICE = (navigator.deviceMemory || 8) < 8;
         let isVillageBoundaryEnabled = !IS_LOW_MEMORY_DEVICE;
 
-        // ---------- Static district bounds index (for viewport-based loading) ----------
-        // Pre-computed bounding boxes for all 37 Maharashtra district GeoJSON files.
-        // Used to determine which districts intersect the current viewport without downloading.
-        const GEOJSON_DISTRICT_INDEX = [
-            { name: "Ahmadnagar", file: "ahilyanagar", n: 19.9951, s: 18.3298, e: 75.5832, w: 73.615 },
-            { name: "Akola", file: "akola", n: 21.248, s: 20.2753, e: 77.6197, w: 76.6912 },
-            { name: "Amravati", file: "amravati", n: 21.7701, s: 20.5381, e: 78.4494, w: 76.622 },
-            { name: "Beed", file: "beed", n: 19.4423, s: 18.542, e: 76.734, w: 74.8084 },
-            { name: "Bhandara", file: "bhandara", n: 21.6045, s: 20.6416, e: 80.1021, w: 79.448 },
-            { name: "Buldana", file: "buldhana", n: 21.2896, s: 19.8376, e: 76.8262, w: 75.9232 },
-            { name: "Chandrapur", file: "chandrapur", n: 20.7351, s: 19.4592, e: 79.9922, w: 78.7987 },
-            { name: "Chh. Sambhajinagar", file: "chhatrapati_sambhajinagar", n: 20.6685, s: 19.3776, e: 76.0428, w: 74.5889 },
-            { name: "Dharashiv", file: "dharashiv", n: 18.6979, s: 17.6417, e: 76.7907, w: 75.2842 },
-            { name: "Dhule", file: "dhule", n: 21.634, s: 20.6277, e: 75.2053, w: 73.8507 },
-            { name: "Gadchiroli", file: "gadchiroli", n: 20.8349, s: 18.689, e: 80.8979, w: 79.7406 },
-            { name: "Gondia", file: "gondia", n: 21.6361, s: 20.655, e: 80.682, w: 79.7961 },
-            { name: "Hingoli", file: "hingoli", n: 20.0177, s: 19.2218, e: 77.4898, w: 76.512 },
-            { name: "Jalgaon", file: "jalgaon", n: 21.4152, s: 20.2701, e: 76.3986, w: 74.7603 },
-            { name: "Jalna", file: "jalna", n: 20.5609, s: 19.2769, e: 76.5346, w: 75.5584 },
-            { name: "Kolhapur", file: "kolhapur", n: 17.1817, s: 15.7405, e: 74.7006, w: 73.6885 },
-            { name: "Latur", file: "latur", n: 18.839, s: 17.8712, e: 77.3421, w: 76.2038 },
-            { name: "Mumbai", file: "mumbai", n: 19.2695, s: 18.8788, e: 72.9821, w: 72.7748 },
-            { name: "Mumbai City", file: "mumbai_city", n: 19.2702, s: 18.894, e: 72.9797, w: 72.7763 },
-            { name: "Mumbai Suburban", file: "mumbai_suburban", n: 19.2702, s: 18.894, e: 72.9797, w: 72.7763 },
-            { name: "Nagpur", file: "nagpur", n: 21.7226, s: 20.583, e: 79.6571, w: 78.2497 },
-            { name: "Nanded", file: "nanded", n: 19.9244, s: 18.2629, e: 78.3651, w: 76.9296 },
-            { name: "Nandurbar", file: "nandurbar", n: 22.0099, s: 20.9961, e: 74.7713, w: 73.576 },
-            { name: "Nashik", file: "nashik", n: 20.8649, s: 19.5859, e: 74.9351, w: 73.2483 },
-            { name: "Osmanabad", file: "osmanabad", n: 18.6979, s: 17.6417, e: 76.7907, w: 75.2842 },
-            { name: "Parbhani", file: "parbhani", n: 19.8306, s: 18.7496, e: 77.1926, w: 76.2071 },
-            { name: "Pune", file: "pune", n: 19.3947, s: 17.8948, e: 75.1629, w: 73.323 },
-            { name: "Raigad", file: "raigad", n: 19.1354, s: 17.8503, e: 73.6665, w: 72.811 },
-            { name: "Ratnagiri", file: "ratnagiri", n: 18.071, s: 16.4934, e: 73.8638, w: 73.0288 },
-            { name: "Sangli", file: "sangli", n: 17.6299, s: 16.7159, e: 75.6796, w: 73.6909 },
-            { name: "Satara", file: "satara", n: 18.1826, s: 17.0898, e: 74.9067, w: 73.5326 },
-            { name: "Sindhudurg", file: "sindhudurg", n: 16.6651, s: 15.6059, e: 74.2087, w: 73.3109 },
-            { name: "Solapur", file: "solapur", n: 18.5539, s: 17.1455, e: 76.4279, w: 74.6071 },
-            { name: "Thane", file: "thane", n: 20.228, s: 18.9868, e: 73.795, w: 72.6426 },
-            { name: "Wardha", file: "wardha", n: 21.3593, s: 20.2938, e: 79.2224, w: 78.0523 },
-            { name: "Washim", file: "washim", n: 20.7572, s: 19.8471, e: 77.6908, w: 76.6057 },
-            { name: "Yavatmal", file: "yavatmal", n: 20.6979, s: 19.4306, e: 79.1494, w: 77.2827 },
-        ];
+        // ---------- District bounds index (Firebase-backed, localStorage-cached) ----------
+        // Source of truth is Firebase RTDB node `districtBboxes`, populated by the
+        // districtBboxPublisher AWS Lambda whenever a zip is uploaded/deleted to
+        // s3://www.mapdata.com/dpplans/0geojson_dontUnzip/. Cached in localStorage
+        // (`layer_district_bbox`) using the same version-gated pattern as DP plan;
+        // Lambda bumps `appConfig/dataVersions/layer_district_bbox` on every change
+        // so cached web users invalidate within one page-load cycle.
+        //
+        // Kept as `let` so the synchronous localStorage seed populates entries
+        // before the first viewport check on warm-cache loads. On cold cache
+        // the array starts empty; first call to _doLoadGeoJsonForViewport awaits
+        // loadDistrictBboxIndex() to guarantee data before iterating.
+        const DISTRICT_BBOX_CACHE_KEY = 'layer_district_bbox';
+        const DISTRICT_BBOX_VERSION_KEY = 'layer_district_bbox';
+        let GEOJSON_DISTRICT_INDEX = [];
+        let _districtBboxLoadPromise = null;
+
+        (function _seedDistrictBboxFromCache() {
+            try {
+                const raw = localStorage.getItem(DISTRICT_BBOX_CACHE_KEY);
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                if (parsed && Array.isArray(parsed.d)) GEOJSON_DISTRICT_INDEX = parsed.d;
+            } catch (e) { /* ignore */ }
+        })();
+
+        function loadDistrictBboxIndex() {
+            if (_districtBboxLoadPromise) return _districtBboxLoadPromise;
+            _districtBboxLoadPromise = (async function() {
+                let cached = null;
+                try {
+                    const raw = localStorage.getItem(DISTRICT_BBOX_CACHE_KEY);
+                    if (raw) cached = JSON.parse(raw);
+                } catch (e) { /* ignore */ }
+
+                let liveVersion = null;
+                try {
+                    liveVersion = await firebase.database()
+                        .ref('appConfig/dataVersions/' + DISTRICT_BBOX_VERSION_KEY)
+                        .once('value')
+                        .then(function(s) { return s.val(); });
+                } catch (e) {
+                    // Network/Firebase issue. If we have a cached array, keep it.
+                    console.warn('[districtBbox] version read failed:', e && e.message);
+                    if (cached && Array.isArray(cached.d)) return GEOJSON_DISTRICT_INDEX;
+                }
+
+                const cachedVersion = cached ? cached.v : null;
+                if (cached && Array.isArray(cached.d) && cached.d.length > 0
+                    && liveVersion === cachedVersion) {
+                    return GEOJSON_DISTRICT_INDEX;
+                }
+
+                // Cold cache OR stale OR empty: read full bbox node from Firebase.
+                const snap = await firebase.database().ref('districtBboxes').once('value');
+                const fresh = [];
+                snap.forEach(function(child) {
+                    const v = child.val();
+                    const b = v && v.bbox;
+                    if (!b || typeof b.north !== 'number') return;
+                    const fileName = v.fileName || (child.key + '.zip');
+                    fresh.push({
+                        name: v.name || child.key,
+                        file: fileName.replace(/\.zip$/i, ''),
+                        n: b.north, s: b.south, e: b.east, w: b.west,
+                    });
+                });
+
+                GEOJSON_DISTRICT_INDEX = fresh;
+                try {
+                    localStorage.setItem(DISTRICT_BBOX_CACHE_KEY, JSON.stringify({
+                        v: liveVersion === undefined ? null : liveVersion,
+                        d: fresh,
+                    }));
+                } catch (e) { /* quota — fine */ }
+                return fresh;
+            })();
+            return _districtBboxLoadPromise;
+        }
+
+        // Kick off the network revalidation in the background. Synchronous seed
+        // above already populated GEOJSON_DISTRICT_INDEX from cache for warm
+        // loads; this resolves the cold-cache case before the first viewport
+        // intersection runs (also enforced by an await in _doLoadGeoJsonForViewport).
+        loadDistrictBboxIndex();
         // 15-color palette — high contrast, no greys/white/black. Fully opaque so
         // boundaries stay visible on satellite + busy basemaps; prior 0.39 alpha
         // washed out against dense imagery.
@@ -5104,88 +5146,6 @@
             return p;
         }
 
-        // ---------- reverseGeocodeDistrict: fallback when polygon detection fails ----------
-        // LRU cache in memory (500 entries) + localStorage persistence. Mirrors Android's tier-4.
-        const _geocoderCache = new Map();             // Map<"lat,lng", districtName>
-        let _geocoderCacheLoaded = false;
-        function _loadGeocoderCache() {
-            if (_geocoderCacheLoaded) return;
-            _geocoderCacheLoaded = true;
-            try {
-                const raw = localStorage.getItem('geocoder_cache');
-                if (raw) {
-                    const arr = JSON.parse(raw);
-                    for (const [k, v] of arr) _geocoderCache.set(k, v);
-                }
-            } catch (e) { /* ignore */ }
-        }
-        function _saveGeocoderCache() {
-            try {
-                // Persist last N (most-recently-inserted)
-                const arr = Array.from(_geocoderCache.entries());
-                localStorage.setItem('geocoder_cache', JSON.stringify(arr));
-            } catch (e) { /* quota exceeded — ignore */ }
-        }
-        async function reverseGeocodeDistrict(lat, lng) {
-            _loadGeocoderCache();
-            const key = lat.toFixed(4) + ',' + lng.toFixed(4);
-            if (_geocoderCache.has(key)) {
-                // Refresh LRU position
-                const v = _geocoderCache.get(key);
-                _geocoderCache.delete(key);
-                _geocoderCache.set(key, v);
-                return v;
-            }
-            // Use client-side google.maps.Geocoder (piggybacks on Maps JS auth session,
-            // so the referrer-restricted Maps JS key works here — unlike the REST endpoint
-            // which rejects referrer-restricted keys with REQUEST_DENIED).
-            try {
-                if (!window.google || !google.maps || !google.maps.Geocoder) return null;
-                if (!_geocoderInstance) _geocoderInstance = new google.maps.Geocoder();
-                const response = await _geocoderInstance.geocode({ location: { lat, lng } });
-                const results = response && response.results;
-                if (!Array.isArray(results) || results.length === 0) return null;
-                // Prefer administrative_area_level_3 (taluka/tehsil in India → district-equivalent per Android)
-                // Fallback to level_2 (district) then locality
-                let name = null;
-                for (const result of results) {
-                    const comps = result.address_components || [];
-                    const a3 = comps.find(c => c.types.includes('administrative_area_level_3'));
-                    if (a3) { name = a3.long_name; break; }
-                }
-                if (!name) {
-                    for (const result of results) {
-                        const comps = result.address_components || [];
-                        const a2 = comps.find(c => c.types.includes('administrative_area_level_2'));
-                        if (a2) { name = a2.long_name; break; }
-                    }
-                }
-                if (!name) {
-                    for (const result of results) {
-                        const comps = result.address_components || [];
-                        const loc = comps.find(c => c.types.includes('locality'));
-                        if (loc) { name = loc.long_name; break; }
-                    }
-                }
-                if (name) {
-                    // Evict oldest entry if at cap
-                    while (_geocoderCache.size >= GEOJSON_GEOCODER_CACHE_MAX) {
-                        const firstKey = _geocoderCache.keys().next().value;
-                        _geocoderCache.delete(firstKey);
-                    }
-                    _geocoderCache.set(key, name);
-                    _saveGeocoderCache();
-                }
-                return name;
-            } catch (e) {
-                // ZERO_RESULTS is a normal "no match" case, not an error worth logging
-                if (e && e.code !== 'ZERO_RESULTS') {
-                    console.warn('[geojson] reverse geocode failed:', e.code || e.message);
-                }
-                return null;
-            }
-        }
-        let _geocoderInstance = null;
 
         // ---------- Multi-district viewport rendering (mirrors Android GeoJsonOverlayManager) ----------
         // Each visible district gets its own color from GEOJSON_DISTRICT_COLORS.
@@ -5455,6 +5415,9 @@
         async function _doLoadGeoJsonForViewport() {
             if (!map) return;
             if (map.getZoom() < MIN_ZOOM_FOR_GEOJSON) return;
+            // Defensive: cold-cache loads may not have GEOJSON_DISTRICT_INDEX
+            // populated yet. Loader is idempotent, so this is a no-op once warm.
+            if (GEOJSON_DISTRICT_INDEX.length === 0) await loadDistrictBboxIndex();
             const vp = map.getBounds();
             if (!vp) return;
             const vpN = vp.getNorthEast().lat(), vpS = vp.getSouthWest().lat();
@@ -8051,6 +8014,10 @@
                             localStorage.removeItem('layer_village');
                             localStorage.removeItem('layer_olddp');
                             localStorage.removeItem('solapur_overlay_v1');
+                            localStorage.removeItem('layer_district_bbox');
+                            // Stale entry from removed reverseGeocodeDistrict path —
+                            // sweep on existing users so the key doesn't linger.
+                            localStorage.removeItem('geocoder_cache');
                         } catch(e) {}
                         resolve();
                     })
