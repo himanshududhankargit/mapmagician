@@ -620,6 +620,7 @@
         .pd-app-hints-row::-webkit-scrollbar { display:none; }
         .pd-app-hints-row .pd-mobile-hint { flex:0 0 100%; scroll-snap-align:start; min-width:0; box-sizing:border-box; }
         @media (min-width:521px) { .pd-app-hints-row .pd-mobile-hint { flex:0 0 calc(50% - 5px); } }
+        @media (min-width:521px) { #pd-app-hint-dots { display:none; } }
         /* Village dialog is only 400px wide — force one-hint-at-a-time regardless of viewport */
         #village-app-hints-scroll .pd-mobile-hint { flex:0 0 100% !important; }
         .pd-support { display:block; margin:12px auto 0; padding:6px 14px; background:#E3F2FD; border:1px solid #90CAF9; border-radius:999px; color:#1565C0; font-size:12px; font-weight:600; cursor:pointer; width:fit-content; max-width:100%; text-align:center; transition:background 0.15s, border-color 0.15s; font-family:inherit; white-space:nowrap; }
