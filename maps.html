@@ -1920,6 +1920,12 @@
             });
         }
 
+        // Domain-based runtime switch — keeps mapmagician.in behavior identical
+        // while routing dpplans.com to its own tile host & cookie scope.
+        const ON_DPPLANS = location.hostname.endsWith('dpplans.com');
+        const TILE_HOST = ON_DPPLANS ? 'tiles.dpplans.com' : 'tiles.mapmagician.in';
+        const COOKIE_DOMAIN = ON_DPPLANS ? '.dpplans.com' : '.mapmagician.in';
+
         // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDUjHKQ3g2yz2o4ax61QS7dq5z0FV8k5Ss",
@@ -2324,10 +2330,10 @@
 
                 // Clear CloudFront cookies on sign-out
                 cfCookiesReady = false;
-                document.cookie = 'CloudFront-Policy=; domain=.mapmagician.in; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-                document.cookie = 'CloudFront-Signature=; domain=.mapmagician.in; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-                document.cookie = 'CloudFront-Key-Pair-Id=; domain=.mapmagician.in; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-                document.cookie = 'mmp-token=; domain=.mapmagician.in; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                document.cookie = `CloudFront-Policy=; domain=${COOKIE_DOMAIN}; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+                document.cookie = `CloudFront-Signature=; domain=${COOKIE_DOMAIN}; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+                document.cookie = `CloudFront-Key-Pair-Id=; domain=${COOKIE_DOMAIN}; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+                document.cookie = `mmp-token=; domain=${COOKIE_DOMAIN}; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 
                 // Sign in anonymously for free tile access
                 firebase.auth().signInAnonymously().catch(err => {
@@ -2349,11 +2355,11 @@
                 const data = result.data;
                 const expires = new Date(data.expiresAt).toUTCString();
 
-                document.cookie = `CloudFront-Policy=${data['CloudFront-Policy']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
-                document.cookie = `CloudFront-Signature=${data['CloudFront-Signature']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
-                document.cookie = `CloudFront-Key-Pair-Id=${data['CloudFront-Key-Pair-Id']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
+                document.cookie = `CloudFront-Policy=${data['CloudFront-Policy']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none; expires=${expires}`;
+                document.cookie = `CloudFront-Signature=${data['CloudFront-Signature']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none; expires=${expires}`;
+                document.cookie = `CloudFront-Key-Pair-Id=${data['CloudFront-Key-Pair-Id']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none; expires=${expires}`;
                 if (data['mmp-token']) {
-                    document.cookie = `mmp-token=${data['mmp-token']}; domain=.mapmagician.in; path=/; secure; samesite=none; expires=${expires}`;
+                    document.cookie = `mmp-token=${data['mmp-token']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none; expires=${expires}`;
                 }
 
                 if (!cfCookiesReady) {
@@ -3238,7 +3244,7 @@
         // CloudFront-hosted zips. Folder name is an upload-pipeline marker,
         // not a file-format hint — contents are still .zip, unzipped client-side.
         // Served through signed cookies — same auth as tiles.
-        const GEOJSON_BASE_PATH = 'https://tiles.mapmagician.in/dpplans/0geojson_dontUnzip/';
+        const GEOJSON_BASE_PATH = `https://${TILE_HOST}/dpplans/0geojson_dontUnzip/`;
         const GEOJSON_MAX_CONCURRENT_DOWNLOADS = 3;
 
         // Solapur decorative overlay (labels, TP scheme dashed polygons, archaeological
@@ -4644,7 +4650,7 @@
         const MIN_ZOOM_FOR_OLD_DP = 11;
         
         // tileProxyUrl removed — tiles served directly from CloudFront with signed cookies
-        const tileBaseUrl = "https://tiles.mapmagician.in";
+        const tileBaseUrl = `https://${TILE_HOST}`;
 
         // ---------- Tile cache: IndexedDB (byte-level persistent cache) ----------
         // Stores PNG blobs keyed by full URL so repeat views bypass CloudFront.
@@ -6474,7 +6480,7 @@
 
         // --- Left Sidebar: Firebase menuGIS navigation ---
         const MENU_DB_NAME = "menuGIS";
-        const ICON_BASE_PRELOAD = 'https://tiles.mapmagician.in/dpplans/0imagesGIS/';
+        const ICON_BASE_PRELOAD = `https://${TILE_HOST}/dpplans/0imagesGIS/`;
         let menuData = []; // all items from Firebase
         let stateList = []; // unique states for the rail
         let sidebarHistory = []; // breadcrumb: [{level, title, items}]
@@ -6563,7 +6569,7 @@
             const regionTitle = document.getElementById('region-browser-title');
             const regionSearch = document.getElementById('region-browser-search');
             let regionHistory = []; // [{title, items, type}]
-            const ICON_BASE = 'https://tiles.mapmagician.in/dpplans/0imagesGIS/';
+            const ICON_BASE = `https://${TILE_HOST}/dpplans/0imagesGIS/`;
 
             openRegionsBrowser = function() {
                 regionHistory = [];
@@ -9668,13 +9674,16 @@
 
                     if (item && item.kml && item.link) {
                         try {
-                            const polygon = parseKML(item.kml);
+                            const parsed = parseKML(item.kml);
+                            const polygon = parsed ? parsed.outer : null;
+                            const holes = parsed ? parsed.holes : [];
 
                             const entry = {
                                 id: key,
                                 link: item.link,
                                 kml: item.kml,
                                 polygon: polygon,
+                                holes: holes,
                                 bbox: computeBBox(polygon),
                                 minZoom: parseInt(item.MinZoom || item.minZoom) || 0,
                                 maxZoom: parseInt(item.MaxZoom || item.maxZoom) || 22,
@@ -9757,6 +9766,7 @@
                         id: sub.id,
                         link: sub.link,
                         polygon: sub.polygon,
+                        holes: sub.holes || [],
                         bbox: sub.bbox,
                         minZoom: sub.minZoom,
                         maxZoom: sub.maxZoom
@@ -9810,33 +9820,38 @@
 
         function parseKML(kml) {
             if (!kml) return null;
-            
+
             try {
-                // Split the KML coordinates string
+                // KML format: "lng,lat,0 lng,lat,0 ... close lng,lat,0 ..."
+                // The `close` keyword marks the end of one ring and the start
+                // of the next. The first ring is the outer boundary; every
+                // subsequent ring is a hole inside the outer (donut/polygon-
+                // with-holes semantic). E.g. Solapur NonCongested = whole DP
+                // outer + close + central congested area (drawn as a hole).
                 const coordinates = kml.trim().split(" ");
-                
-                // Create polygon vertices
-                const vertices = [];
-                
+                const rings = [];
+                let current = [];
+
                 for (const coord of coordinates) {
-                    if (coord.includes("close")) continue;
-                    
+                    if (coord.includes("close")) {
+                        if (current.length > 0) { rings.push(current); current = []; }
+                        continue;
+                    }
                     const parts = coord.replace(',0', '').split(',');
                     if (parts.length >= 2) {
                         try {
                             const lng = parseFloat(parts[0]);
                             const lat = parseFloat(parts[1]);
-                            
-                            if (!isNaN(lat) && !isNaN(lng)) {
-                                vertices.push({ lat, lng });
-                            }
+                            if (!isNaN(lat) && !isNaN(lng)) current.push({ lat, lng });
                         } catch (e) {
                             console.warn("Error parsing coordinate:", coord, e);
                         }
                     }
                 }
-                
-                return vertices.length > 2 ? vertices : null;
+                if (current.length > 0) rings.push(current);
+
+                if (rings.length === 0 || rings[0].length <= 2) return null;
+                return { outer: rings[0], holes: rings.slice(1).filter(r => r.length > 2) };
             } catch (error) {
                 console.error("Error parsing KML:", error);
                 return null;
@@ -9994,6 +10009,7 @@
                     return {
                         bbox: sub.bbox,
                         polygon: sub.polygon,
+                        holes: sub.holes || [],
                         minZoom: sub.minZoom,
                         maxZoom: sub.maxZoom,
                         urlPrefix: tileBaseUrl + (lk.endsWith('/') ? lk : lk + '/')
@@ -10051,9 +10067,60 @@
                     if (typeof sub.maxZoom === 'number' && zoom > sub.maxZoom) continue;
                     var sb = sub.bbox;
                     if (!sb) continue;
-                    // Bbox overlap test (rectangles intersect)
+                    // Bbox overlap test (rectangles intersect) — fast reject.
                     if (tb.maxLat < sb.minLat || tb.minLat > sb.maxLat ||
                         tb.maxLng < sb.minLng || tb.minLng > sb.maxLng) continue;
+                    // Polygon test — bbox overlap is necessary but not sufficient
+                    // when sub-sheets sit inside one another (e.g. a city-centre
+                    // congested-area polygon nested inside a non-congested
+                    // polygon sharing the same productPurchaseID). Without this
+                    // we fetch tiles for the inner sheet across its bbox
+                    // rectangle and 404 most of them. Cheap two-step test:
+                    // tile centre inside polygon, or any polygon vertex inside
+                    // the tile bbox.
+                    var poly = sub.polygon;
+                    if (poly && poly.length > 0) {
+                        var cLat = (tb.minLat + tb.maxLat) / 2;
+                        var cLng = (tb.minLng + tb.maxLng) / 2;
+                        var covers = pointInPolygon({ lat: cLat, lng: cLng }, poly);
+                        if (!covers) {
+                            for (var pvi = 0; pvi < poly.length; pvi++) {
+                                var pv = poly[pvi];
+                                if (pv.lat >= tb.minLat && pv.lat <= tb.maxLat &&
+                                    pv.lng >= tb.minLng && pv.lng <= tb.maxLng) {
+                                    covers = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!covers) continue;
+
+                        // Donut semantic: if the tile's centre sits inside any
+                        // hole AND no hole vertex lies in the tile bbox, the
+                        // tile is fully inside the hole and has no data — skip.
+                        // (If a hole vertex IS in the tile bbox, the tile
+                        // straddles the hole boundary so partial data exists.)
+                        var holes = sub.holes;
+                        if (holes && holes.length > 0) {
+                            var inHole = false;
+                            for (var hi = 0; hi < holes.length && !inHole; hi++) {
+                                var hole = holes[hi];
+                                if (!hole || hole.length < 3) continue;
+                                if (!pointInPolygon({ lat: cLat, lng: cLng }, hole)) continue;
+                                var holeVertexInTile = false;
+                                for (var hvi = 0; hvi < hole.length; hvi++) {
+                                    var hv = hole[hvi];
+                                    if (hv.lat >= tb.minLat && hv.lat <= tb.maxLat &&
+                                        hv.lng >= tb.minLng && hv.lng <= tb.maxLng) {
+                                        holeVertexInTile = true;
+                                        break;
+                                    }
+                                }
+                                if (!holeVertexInTile) inHole = true;
+                            }
+                            if (inHole) continue;
+                        }
+                    }
                     matches.push(sub);
                 }
 
@@ -10113,6 +10180,60 @@
                 if (!this._tilesByZoom[zoom]) this._tilesByZoom[zoom] = new Set();
                 this._tilesByZoom[zoom].add(div);
                 return div;
+            }
+
+            // PERF: per-tile polygon containment for un-merged layers.
+            // Mirrors the merged path above, for the case where two
+            // un-merged layers nest (e.g. a small KML entirely inside a
+            // larger KML with a different productPurchaseID). Without
+            // this, every tile in the viewport that overlaps the
+            // layer's bbox is fetched, including tiles whose 256x256
+            // footprint sits entirely outside the layer's polygon.
+            var _ldef = this.layerDef;
+            if (_ldef && _ldef.polygon && _ldef.polygon.length > 0) {
+                var tbU = _tileCoordToBoundsLatLng(tileCoord.x, tileCoord.y, zoom);
+                var sbU = _ldef.bbox;
+                if (sbU && (tbU.maxLat < sbU.minLat || tbU.minLat > sbU.maxLat ||
+                    tbU.maxLng < sbU.minLng || tbU.minLng > sbU.maxLng)) {
+                    return div;
+                }
+                var polyU = _ldef.polygon;
+                var cLatU = (tbU.minLat + tbU.maxLat) / 2;
+                var cLngU = (tbU.minLng + tbU.maxLng) / 2;
+                var coversU = pointInPolygon({ lat: cLatU, lng: cLngU }, polyU);
+                if (!coversU) {
+                    for (var pviU = 0; pviU < polyU.length; pviU++) {
+                        var pvU = polyU[pviU];
+                        if (pvU.lat >= tbU.minLat && pvU.lat <= tbU.maxLat &&
+                            pvU.lng >= tbU.minLng && pvU.lng <= tbU.maxLng) {
+                            coversU = true;
+                            break;
+                        }
+                    }
+                }
+                if (!coversU) return div;
+
+                // Donut semantic — see merged path above.
+                var holesU = _ldef.holes;
+                if (holesU && holesU.length > 0) {
+                    var inHoleU = false;
+                    for (var hiU = 0; hiU < holesU.length && !inHoleU; hiU++) {
+                        var holeU = holesU[hiU];
+                        if (!holeU || holeU.length < 3) continue;
+                        if (!pointInPolygon({ lat: cLatU, lng: cLngU }, holeU)) continue;
+                        var holeVertexInTileU = false;
+                        for (var hvU = 0; hvU < holeU.length; hvU++) {
+                            var pvHU = holeU[hvU];
+                            if (pvHU.lat >= tbU.minLat && pvHU.lat <= tbU.maxLat &&
+                                pvHU.lng >= tbU.minLng && pvHU.lng <= tbU.maxLng) {
+                                holeVertexInTileU = true;
+                                break;
+                            }
+                        }
+                        if (!holeVertexInTileU) inHoleU = true;
+                    }
+                    if (inHoleU) return div;
+                }
             }
 
             // Un-merged path: single Image fetch (unchanged from maps9).
