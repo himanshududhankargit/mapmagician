@@ -10146,6 +10146,38 @@
                 return div;
             }
 
+            // PERF: per-tile polygon containment for un-merged layers.
+            // Mirrors the merged path above, for the case where two
+            // un-merged layers nest (e.g. a small KML entirely inside a
+            // larger KML with a different productPurchaseID). Without
+            // this, every tile in the viewport that overlaps the
+            // layer's bbox is fetched, including tiles whose 256x256
+            // footprint sits entirely outside the layer's polygon.
+            var _ldef = this.layerDef;
+            if (_ldef && _ldef.polygon && _ldef.polygon.length > 0) {
+                var tbU = _tileCoordToBoundsLatLng(tileCoord.x, tileCoord.y, zoom);
+                var sbU = _ldef.bbox;
+                if (sbU && (tbU.maxLat < sbU.minLat || tbU.minLat > sbU.maxLat ||
+                    tbU.maxLng < sbU.minLng || tbU.minLng > sbU.maxLng)) {
+                    return div;
+                }
+                var polyU = _ldef.polygon;
+                var cLatU = (tbU.minLat + tbU.maxLat) / 2;
+                var cLngU = (tbU.minLng + tbU.maxLng) / 2;
+                var coversU = pointInPolygon({ lat: cLatU, lng: cLngU }, polyU);
+                if (!coversU) {
+                    for (var pviU = 0; pviU < polyU.length; pviU++) {
+                        var pvU = polyU[pviU];
+                        if (pvU.lat >= tbU.minLat && pvU.lat <= tbU.maxLat &&
+                            pvU.lng >= tbU.minLng && pvU.lng <= tbU.maxLng) {
+                            coversU = true;
+                            break;
+                        }
+                    }
+                }
+                if (!coversU) return div;
+            }
+
             // Un-merged path: single Image fetch (unchanged from maps9).
             var img = new Image();
             img.onload = function() {
