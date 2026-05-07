@@ -55,3 +55,14 @@ const redirects = [
 ].join('\n');
 fs.writeFileSync(path.join(OUT, '_redirects'), redirects);
 console.log('postbuild-copy: wrote out/_redirects (/ -> /maps.html 302)');
+
+// Google Search Console — HTML-file verification token. Single line, exact contents
+// from the file Google generated. Goes at the site root so the property
+// `https://dpplans.com/` can be verified by fetching
+// https://dpplans.com/google2e32ac843b23180f.html.
+const GOOGLE_VERIFY_FILE = 'google2e32ac843b23180f.html';
+fs.writeFileSync(
+  path.join(OUT, GOOGLE_VERIFY_FILE),
+  'google-site-verification: ' + GOOGLE_VERIFY_FILE + '\n'
+);
+console.log('postbuild-copy: wrote out/' + GOOGLE_VERIFY_FILE);
