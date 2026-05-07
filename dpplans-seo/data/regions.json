@@ -1,0 +1,4912 @@
+{
+  "generatedAt": "2026-05-07T14:16:02.056Z",
+  "count": 39,
+  "regions": [
+    {
+      "slug": "bengaluru-dp-plan",
+      "productPurchaseID": "bengaluru",
+      "menuKey": "Bengaluru",
+      "displayName": "Bengaluru",
+      "rawDistrictName": "",
+      "shortName": "Bengaluru",
+      "state": "Bengaluru (Draft)",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_banglore.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_banglore.png",
+      "centroid": {
+        "lat": 12.970689,
+        "lng": 77.593131,
+        "minZoom": 8,
+        "maxZoom": 18
+      },
+      "bbox": [
+        77.39264,
+        12.760077,
+        77.784508,
+        13.183823
+      ],
+      "villages": [
+        {
+          "name": "Bengaluru City",
+          "lat": 12.98919,
+          "lng": 77.57963
+        }
+      ],
+      "sourceLink": "http://www.dtcp.gov.in/en/approved-mp",
+      "price": "50",
+      "focal": {
+        "lat": 12.98919,
+        "lng": 77.57963,
+        "source": "village:Bengaluru City",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=12.98919&lng=77.57963&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=12.98919&lng=77.57963&zoom=13&embed=1",
+      "nearby": [],
+      "faqs": [
+        {
+          "q": "Where can I view the Bengaluru Development Plan online?",
+          "a": "You can view the Bengaluru DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Bengaluru, Bengaluru (Draft)."
+        },
+        {
+          "q": "Is the Bengaluru DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Bengaluru (Draft) Town Planning. The official PDFs are linked from the source: http://www.dtcp.gov.in/en/approved-mp"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Bengaluru?",
+          "a": "Yes — 1 sub-locations are indexed inside Bengaluru, including Bengaluru City and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Bengaluru region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Bengaluru DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Bengaluru Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Bengaluru",
+        "Measure distances and areas directly on the Bengaluru map",
+        "Mobile-friendly — view Bengaluru DP zones on the go",
+        "1 indexed sub-locations inside Bengaluru"
+      ]
+    },
+    {
+      "slug": "hyderabad-hmda-periphery-dp-plan",
+      "productPurchaseID": "hyderabad_new",
+      "menuKey": "Hyderabad",
+      "displayName": "Hyderabad HMDA Periphery",
+      "rawDistrictName": "",
+      "shortName": "Hyderabad HMDA Periphery",
+      "state": "Hyderabad HMDA Periphery (Draft)",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/hydrabad.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/hydrabad.png",
+      "centroid": {
+        "lat": 17.45362,
+        "lng": 78.478257,
+        "minZoom": 8,
+        "maxZoom": 18
+      },
+      "bbox": [
+        78.004312,
+        16.967978,
+        79.049735,
+        17.897048
+      ],
+      "villages": [
+        {
+          "name": "Bibinagar",
+          "lat": 17.4578,
+          "lng": 78.79541
+        },
+        {
+          "name": "Bommalaramaram",
+          "lat": 17.57464,
+          "lng": 78.7469
+        },
+        {
+          "name": "Buvanagiri",
+          "lat": 17.49856,
+          "lng": 78.91002
+        },
+        {
+          "name": "Chevella",
+          "lat": 17.31894,
+          "lng": 78.11464
+        },
+        {
+          "name": "Choutuppal",
+          "lat": 17.26335,
+          "lng": 78.87066
+        },
+        {
+          "name": "Faruqnagar",
+          "lat": 17.08686,
+          "lng": 78.20235
+        },
+        {
+          "name": "Ghatkesar",
+          "lat": 17.43692,
+          "lng": 78.70059
+        },
+        {
+          "name": "Hatnura",
+          "lat": 17.68506,
+          "lng": 78.20186
+        },
+        {
+          "name": "Hayathnagar",
+          "lat": 17.30812,
+          "lng": 78.685
+        },
+        {
+          "name": "Ibrahimpatnam Manchal",
+          "lat": 17.19131,
+          "lng": 78.66027
+        },
+        {
+          "name": "Jinnawaram FPLU",
+          "lat": 17.65156,
+          "lng": 78.34035
+        },
+        {
+          "name": "Kandukur",
+          "lat": 17.06247,
+          "lng": 78.48674
+        },
+        {
+          "name": "Kisara",
+          "lat": 17.53027,
+          "lng": 78.6659
+        },
+        {
+          "name": "Kothuru",
+          "lat": 17.12842,
+          "lng": 78.26582
+        },
+        {
+          "name": "Maheshwaram",
+          "lat": 17.13778,
+          "lng": 78.39352
+        },
+        {
+          "name": "Medchal Qutubullapur",
+          "lat": 17.64064,
+          "lng": 78.46674
+        },
+        {
+          "name": "Moinabad Rajendranagar",
+          "lat": 17.3248,
+          "lng": 78.28818
+        },
+        {
+          "name": "Mulug",
+          "lat": 17.71631,
+          "lng": 78.63889
+        },
+        {
+          "name": "Narsapur",
+          "lat": 17.75063,
+          "lng": 78.2638
+        },
+        {
+          "name": "Patancheruvu",
+          "lat": 17.54991,
+          "lng": 78.2163
+        },
+        {
+          "name": "Pochampalli",
+          "lat": 17.35717,
+          "lng": 78.81223
+        },
+        {
+          "name": "Sangareddy",
+          "lat": 17.586484,
+          "lng": 78.081933
+        },
+        {
+          "name": "Shahbad",
+          "lat": 17.17981,
+          "lng": 78.13107
+        },
+        {
+          "name": "Shahmirpet",
+          "lat": 17.62423,
+          "lng": 78.62416
+        },
+        {
+          "name": "Shamshabad",
+          "lat": 17.23315,
+          "lng": 78.3362
+        },
+        {
+          "name": "Shankarpalli Ramchandrapuram",
+          "lat": 17.43141,
+          "lng": 78.16524
+        },
+        {
+          "name": "Shivampet",
+          "lat": 17.79715,
+          "lng": 78.38087
+        },
+        {
+          "name": "Tupran",
+          "lat": 17.80339,
+          "lng": 78.47794
+        },
+        {
+          "name": "Wargal",
+          "lat": 17.79116,
+          "lng": 78.59261
+        },
+        {
+          "name": "Yacharam",
+          "lat": 17.07615,
+          "lng": 78.67112
+        }
+      ],
+      "sourceLink": "https://www.hmda.gov.in/masterplan-huda/",
+      "price": "50",
+      "focal": {
+        "lat": 17.4578,
+        "lng": 78.79541,
+        "source": "village:Bibinagar",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=17.4578&lng=78.79541&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=17.4578&lng=78.79541&zoom=13&embed=1",
+      "nearby": [],
+      "faqs": [
+        {
+          "q": "Where can I view the Hyderabad HMDA Periphery Development Plan online?",
+          "a": "You can view the Hyderabad HMDA Periphery DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Hyderabad HMDA Periphery, Hyderabad HMDA Periphery (Draft)."
+        },
+        {
+          "q": "Is the Hyderabad HMDA Periphery DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Hyderabad HMDA Periphery (Draft) Town Planning. The official PDFs are linked from the source: https://www.hmda.gov.in/masterplan-huda/"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Hyderabad HMDA Periphery?",
+          "a": "Yes — 30 sub-locations are indexed inside Hyderabad HMDA Periphery, including Bibinagar, Bommalaramaram, Buvanagiri, Chevella and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Hyderabad HMDA Periphery region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Hyderabad HMDA Periphery DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Hyderabad HMDA Periphery Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Hyderabad HMDA Periphery",
+        "Measure distances and areas directly on the Hyderabad HMDA Periphery map",
+        "Mobile-friendly — view Hyderabad HMDA Periphery DP zones on the go",
+        "30 indexed sub-locations inside Hyderabad HMDA Periphery"
+      ]
+    },
+    {
+      "slug": "ahmednagar-dp-plan",
+      "productPurchaseID": "ahmednagardp",
+      "menuKey": "AhmednagarMaharashtra",
+      "displayName": "Ahmednagar / Ahilyanagar",
+      "rawDistrictName": "Ahmednagar / Ahilyanagar (Part) (new maps)",
+      "shortName": "Ahmednagar",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_ahmednagar_it_part.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 19.348703,
+        "lng": 74.658668,
+        "minZoom": 11,
+        "maxZoom": 20
+      },
+      "bbox": [
+        74.19788,
+        19.020265,
+        75.212373,
+        19.77618
+      ],
+      "villages": [
+        {
+          "name": "Ahmednagar City (part)",
+          "lat": 19.10479423207404,
+          "lng": 74.7409545782568
+        },
+        {
+          "name": "Ahmednagar I.T. Park",
+          "lat": 19.1666801,
+          "lng": 74.6949405
+        },
+        {
+          "name": "Shirdi",
+          "lat": 19.766458538078524,
+          "lng": 74.47953669361726
+        },
+        {
+          "name": "Sangamner",
+          "lat": 19.574830310473807,
+          "lng": 74.20663809759354
+        },
+        {
+          "name": "Pathardi",
+          "lat": 19.172813490548062,
+          "lng": 75.17333495498171
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=ahmednagar",
+      "price": "50",
+      "focal": {
+        "lat": 19.10479423207404,
+        "lng": 74.7409545782568,
+        "source": "village:Ahmednagar City (part)",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=19.10479423207404&lng=74.7409545782568&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=19.10479423207404&lng=74.7409545782568&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "aurangabad-dp-plan",
+          "displayName": "Aurangabad/Chatrapati Sambhaji Nagar",
+          "shortName": "Aurangabad",
+          "distanceKm": 89.6
+        },
+        {
+          "slug": "pmrda-development-plan",
+          "displayName": "PMRDA",
+          "shortName": "PMRDA",
+          "distanceKm": 115.4
+        },
+        {
+          "slug": "nashik-dp-plan",
+          "displayName": "Nashik",
+          "shortName": "Nashik",
+          "distanceKm": 116.4
+        },
+        {
+          "slug": "pune-dp-plan",
+          "displayName": "Pune",
+          "shortName": "Pune",
+          "distanceKm": 118.8
+        },
+        {
+          "slug": "jalna-region-dp-plan",
+          "displayName": "Jalna Region",
+          "shortName": "Jalna Region",
+          "distanceKm": 147.3
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Ahmednagar Development Plan online?",
+          "a": "You can view the Ahmednagar / Ahilyanagar DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Ahmednagar, Maharashtra."
+        },
+        {
+          "q": "Is the Ahmednagar DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=ahmednagar"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Ahmednagar?",
+          "a": "Yes — 5 sub-locations are indexed inside Ahmednagar, including Ahmednagar City (part), Ahmednagar I.T. Park, Shirdi, Sangamner and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Ahmednagar region is free up to zoom level 14. High-detail (zoom 15–20) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Ahmednagar DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Ahmednagar Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Ahmednagar",
+        "Measure distances and areas directly on the Ahmednagar map",
+        "Mobile-friendly — view Ahmednagar DP zones on the go",
+        "5 indexed sub-locations inside Ahmednagar"
+      ]
+    },
+    {
+      "slug": "akola-dp-plan",
+      "productPurchaseID": "akola",
+      "menuKey": "AkolaMaharashtra",
+      "displayName": "Akola",
+      "rawDistrictName": "Akola",
+      "shortName": "Akola",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/akola_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 20.985922,
+        "lng": 77.044951,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        76.926278,
+        20.643088,
+        77.079489,
+        21.117797
+      ],
+      "villages": [
+        {
+          "name": "Akola",
+          "lat": 20.706103583409888,
+          "lng": 77.00715565439758
+        },
+        {
+          "name": "Akot",
+          "lat": 21.096950368939506,
+          "lng": 77.0553467893865
+        }
+      ],
+      "sourceLink": "dtp.maharashtra.gov.in/home/downloads/dp/?cities=akola",
+      "price": "50",
+      "focal": {
+        "lat": 20.706103583409888,
+        "lng": 77.00715565439758,
+        "source": "village:Akola",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=20.706103583409888&lng=77.00715565439758&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=20.706103583409888&lng=77.00715565439758&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "amravati-dp-plan",
+          "displayName": "Amravati",
+          "shortName": "Amravati",
+          "distanceKm": 40.6
+        },
+        {
+          "slug": "washim-region-dp-plan",
+          "displayName": "Washim Region",
+          "shortName": "Washim Region",
+          "distanceKm": 99.1
+        },
+        {
+          "slug": "buldhana-region-dp-plan",
+          "displayName": "Buldhana Region",
+          "shortName": "Buldhana Region",
+          "distanceKm": 102.2
+        },
+        {
+          "slug": "hingoli-dp-plan",
+          "displayName": "Hingoli",
+          "shortName": "Hingoli",
+          "distanceKm": 141.6
+        },
+        {
+          "slug": "jalgaon-region-dp-plan",
+          "displayName": "Jalgaon Region",
+          "shortName": "Jalgaon Region",
+          "distanceKm": 153.4
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Akola Development Plan online?",
+          "a": "You can view the Akola DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Akola, Maharashtra."
+        },
+        {
+          "q": "Is the Akola DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: dtp.maharashtra.gov.in/home/downloads/dp/?cities=akola"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Akola?",
+          "a": "Yes — 2 sub-locations are indexed inside Akola, including Akola, Akot and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Akola region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Akola DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Akola Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Akola",
+        "Measure distances and areas directly on the Akola map",
+        "Mobile-friendly — view Akola DP zones on the go",
+        "2 indexed sub-locations inside Akola"
+      ]
+    },
+    {
+      "slug": "amravati-dp-plan",
+      "productPurchaseID": "amaravati",
+      "menuKey": "AmaravatiMaharashtra",
+      "displayName": "Amravati",
+      "rawDistrictName": "Amravati (Updated)",
+      "shortName": "Amravati",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/amaravati_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 21.110501,
+        "lng": 77.412536,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        77.288846,
+        20.837099,
+        77.829327,
+        21.177212
+      ],
+      "villages": [
+        {
+          "name": "Amravati",
+          "lat": 20.935204045449645,
+          "lng": 77.7522308649469
+        },
+        {
+          "name": "Anjangaon Surji",
+          "lat": 21.166780432091986,
+          "lng": 77.30785991404251
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=amravati",
+      "price": "50",
+      "focal": {
+        "lat": 20.935204045449645,
+        "lng": 77.7522308649469,
+        "source": "village:Amravati",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=20.935204045449645&lng=77.7522308649469&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=20.935204045449645&lng=77.7522308649469&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "akola-dp-plan",
+          "displayName": "Akola",
+          "shortName": "Akola",
+          "distanceKm": 40.6
+        },
+        {
+          "slug": "washim-region-dp-plan",
+          "displayName": "Washim Region",
+          "shortName": "Washim Region",
+          "distanceKm": 116.3
+        },
+        {
+          "slug": "buldhana-region-dp-plan",
+          "displayName": "Buldhana Region",
+          "shortName": "Buldhana Region",
+          "distanceKm": 142.5
+        },
+        {
+          "slug": "hingoli-dp-plan",
+          "displayName": "Hingoli",
+          "shortName": "Hingoli",
+          "distanceKm": 157.6
+        },
+        {
+          "slug": "nagpur-metropolitan-region-dp-plan",
+          "displayName": "Nagpur Metropolitan Region",
+          "shortName": "Nagpur Metropolitan Region",
+          "distanceKm": 179.6
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Amravati Development Plan online?",
+          "a": "You can view the Amravati DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Amravati, Maharashtra."
+        },
+        {
+          "q": "Is the Amravati DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=amravati"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Amravati?",
+          "a": "Yes — 2 sub-locations are indexed inside Amravati, including Amravati, Anjangaon Surji and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Amravati region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Amravati DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Amravati Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Amravati",
+        "Measure distances and areas directly on the Amravati map",
+        "Mobile-friendly — view Amravati DP zones on the go",
+        "2 indexed sub-locations inside Amravati"
+      ]
+    },
+    {
+      "slug": "aurangabad-dp-plan",
+      "productPurchaseID": "districtaurangabad",
+      "menuKey": "AurangabadMaharashtra",
+      "displayName": "Aurangabad/Chatrapati Sambhaji Nagar",
+      "rawDistrictName": "Aurangabad/Chatrapati Sambhaji Nagar (updated)",
+      "shortName": "Aurangabad",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_aurangabad.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 19.832795,
+        "lng": 75.342583,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        75.242024,
+        19.457987,
+        75.439479,
+        19.950634
+      ],
+      "villages": [
+        {
+          "name": "Aurangabad",
+          "lat": 19.878389566652828,
+          "lng": 75.3250156132937
+        },
+        {
+          "name": "Paithan",
+          "lat": 19.47768,
+          "lng": 75.387317
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=aurangabad",
+      "price": "50",
+      "focal": {
+        "lat": 19.878389566652828,
+        "lng": 75.3250156132937,
+        "source": "village:Aurangabad",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=19.878389566652828&lng=75.3250156132937&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=19.878389566652828&lng=75.3250156132937&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "jalna-region-dp-plan",
+          "displayName": "Jalna Region",
+          "shortName": "Jalna Region",
+          "distanceKm": 64.9
+        },
+        {
+          "slug": "ahmednagar-dp-plan",
+          "displayName": "Ahmednagar / Ahilyanagar",
+          "shortName": "Ahmednagar",
+          "distanceKm": 89.6
+        },
+        {
+          "slug": "buldhana-region-dp-plan",
+          "displayName": "Buldhana Region",
+          "shortName": "Buldhana Region",
+          "distanceKm": 118
+        },
+        {
+          "slug": "jalgaon-region-dp-plan",
+          "displayName": "Jalgaon Region",
+          "shortName": "Jalgaon Region",
+          "distanceKm": 131.9
+        },
+        {
+          "slug": "dhule-dp-plan",
+          "displayName": "Dhule",
+          "shortName": "Dhule",
+          "distanceKm": 132.5
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Aurangabad Development Plan online?",
+          "a": "You can view the Aurangabad/Chatrapati Sambhaji Nagar DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Aurangabad, Maharashtra."
+        },
+        {
+          "q": "Is the Aurangabad DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=aurangabad"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Aurangabad?",
+          "a": "Yes — 2 sub-locations are indexed inside Aurangabad, including Aurangabad, Paithan and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Aurangabad region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Aurangabad DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Aurangabad Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Aurangabad",
+        "Measure distances and areas directly on the Aurangabad map",
+        "Mobile-friendly — view Aurangabad DP zones on the go",
+        "2 indexed sub-locations inside Aurangabad"
+      ]
+    },
+    {
+      "slug": "bhandara-region-dp-plan",
+      "productPurchaseID": "bhandara",
+      "menuKey": "BhandaraMaharashtra",
+      "displayName": "Bhandara Region",
+      "rawDistrictName": "Bhandara Region",
+      "shortName": "Bhandara Region",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/bhandara_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 21.175165,
+        "lng": 79.651871,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        79.634338,
+        21.145187,
+        79.680016,
+        21.197377
+      ],
+      "villages": [
+        {
+          "name": "Bhandara",
+          "lat": 21.17300277154789,
+          "lng": 79.65300834849111
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=bhandara",
+      "price": "50",
+      "focal": {
+        "lat": 21.17300277154789,
+        "lng": 79.65300834849111,
+        "source": "village:Bhandara",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=21.17300277154789&lng=79.65300834849111&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=21.17300277154789&lng=79.65300834849111&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "nagpur-metropolitan-region-dp-plan",
+          "displayName": "Nagpur Metropolitan Region",
+          "shortName": "Nagpur Metropolitan Region",
+          "distanceKm": 52.7
+        },
+        {
+          "slug": "chandrapur-region-dp-plan",
+          "displayName": "Chandrapur Region",
+          "shortName": "Chandrapur Region",
+          "distanceKm": 140.3
+        },
+        {
+          "slug": "amravati-dp-plan",
+          "displayName": "Amravati",
+          "shortName": "Amravati",
+          "distanceKm": 232.4
+        },
+        {
+          "slug": "akola-dp-plan",
+          "displayName": "Akola",
+          "shortName": "Akola",
+          "distanceKm": 271.3
+        },
+        {
+          "slug": "washim-region-dp-plan",
+          "displayName": "Washim Region",
+          "shortName": "Washim Region",
+          "distanceKm": 288.3
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Bhandara Region Development Plan online?",
+          "a": "You can view the Bhandara Region DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Bhandara Region, Maharashtra."
+        },
+        {
+          "q": "Is the Bhandara Region DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=bhandara"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Bhandara Region?",
+          "a": "Yes — 1 sub-locations are indexed inside Bhandara Region, including Bhandara and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Bhandara Region region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Bhandara Region DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Bhandara Region Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Bhandara Region",
+        "Measure distances and areas directly on the Bhandara Region map",
+        "Mobile-friendly — view Bhandara Region DP zones on the go",
+        "1 indexed sub-locations inside Bhandara Region"
+      ]
+    },
+    {
+      "slug": "buldhana-region-dp-plan",
+      "productPurchaseID": "buldhana",
+      "menuKey": "BuldhanaMaharashtra",
+      "displayName": "Buldhana Region",
+      "rawDistrictName": "Buldhana Region",
+      "shortName": "Buldhana Region",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/buldhana_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 20.540923,
+        "lng": 76.184384,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        76.163341,
+        20.519302,
+        76.206476,
+        20.555557
+      ],
+      "villages": [
+        {
+          "name": "Buldhana",
+          "lat": 20.535862476648475,
+          "lng": 76.17908100052459
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=buldhana",
+      "price": "50",
+      "focal": {
+        "lat": 20.535862476648475,
+        "lng": 76.17908100052459,
+        "source": "village:Buldhana",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=20.535862476648475&lng=76.17908100052459&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=20.535862476648475&lng=76.17908100052459&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "jalna-region-dp-plan",
+          "displayName": "Jalna Region",
+          "shortName": "Jalna Region",
+          "distanceKm": 81
+        },
+        {
+          "slug": "jalgaon-region-dp-plan",
+          "displayName": "Jalgaon Region",
+          "shortName": "Jalgaon Region",
+          "distanceKm": 82
+        },
+        {
+          "slug": "akola-dp-plan",
+          "displayName": "Akola",
+          "shortName": "Akola",
+          "distanceKm": 102.2
+        },
+        {
+          "slug": "washim-region-dp-plan",
+          "displayName": "Washim Region",
+          "shortName": "Washim Region",
+          "distanceKm": 110.3
+        },
+        {
+          "slug": "aurangabad-dp-plan",
+          "displayName": "Aurangabad/Chatrapati Sambhaji Nagar",
+          "shortName": "Aurangabad",
+          "distanceKm": 118
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Buldhana Region Development Plan online?",
+          "a": "You can view the Buldhana Region DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Buldhana Region, Maharashtra."
+        },
+        {
+          "q": "Is the Buldhana Region DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=buldhana"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Buldhana Region?",
+          "a": "Yes — 1 sub-locations are indexed inside Buldhana Region, including Buldhana and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Buldhana Region region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Buldhana Region DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Buldhana Region Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Buldhana Region",
+        "Measure distances and areas directly on the Buldhana Region map",
+        "Mobile-friendly — view Buldhana Region DP zones on the go",
+        "1 indexed sub-locations inside Buldhana Region"
+      ]
+    },
+    {
+      "slug": "chandrapur-region-dp-plan",
+      "productPurchaseID": "chandrapur",
+      "menuKey": "ChandrapurMaharashtra",
+      "displayName": "Chandrapur Region",
+      "rawDistrictName": "Chandrapur Region",
+      "shortName": "Chandrapur Region",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/chandrapur_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 19.956842,
+        "lng": 79.301633,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        79.266065,
+        19.898433,
+        79.34669,
+        19.999996
+      ],
+      "villages": [
+        {
+          "name": "Chandrapur",
+          "lat": 19.968831846098436,
+          "lng": 79.29562475891375
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=chandrapur",
+      "price": "50",
+      "focal": {
+        "lat": 19.968831846098436,
+        "lng": 79.29562475891375,
+        "source": "village:Chandrapur",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=19.968831846098436&lng=79.29562475891375&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=19.968831846098436&lng=79.29562475891375&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "nagpur-metropolitan-region-dp-plan",
+          "displayName": "Nagpur Metropolitan Region",
+          "shortName": "Nagpur Metropolitan Region",
+          "distanceKm": 135.8
+        },
+        {
+          "slug": "bhandara-region-dp-plan",
+          "displayName": "Bhandara Region",
+          "shortName": "Bhandara Region",
+          "distanceKm": 140.3
+        },
+        {
+          "slug": "nanded-waghala-municipal-corporation-dp-plan",
+          "displayName": "Nanded Waghala Municipal Corporation",
+          "shortName": "Nanded Waghala Municipal Corporation",
+          "distanceKm": 225.7
+        },
+        {
+          "slug": "washim-region-dp-plan",
+          "displayName": "Washim Region",
+          "shortName": "Washim Region",
+          "distanceKm": 227.3
+        },
+        {
+          "slug": "hingoli-dp-plan",
+          "displayName": "Hingoli",
+          "shortName": "Hingoli",
+          "distanceKm": 227.6
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Chandrapur Region Development Plan online?",
+          "a": "You can view the Chandrapur Region DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Chandrapur Region, Maharashtra."
+        },
+        {
+          "q": "Is the Chandrapur Region DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=chandrapur"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Chandrapur Region?",
+          "a": "Yes — 1 sub-locations are indexed inside Chandrapur Region, including Chandrapur and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Chandrapur Region region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Chandrapur Region DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Chandrapur Region Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Chandrapur Region",
+        "Measure distances and areas directly on the Chandrapur Region map",
+        "Mobile-friendly — view Chandrapur Region DP zones on the go",
+        "1 indexed sub-locations inside Chandrapur Region"
+      ]
+    },
+    {
+      "slug": "dhule-dp-plan",
+      "productPurchaseID": "dhuledistrict",
+      "menuKey": "DhuleMaharashtra",
+      "displayName": "Dhule",
+      "rawDistrictName": "Dhule",
+      "shortName": "Dhule",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/dhule.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 20.900495,
+        "lng": 74.778231,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        74.744432,
+        20.857097,
+        74.817255,
+        20.942584
+      ],
+      "villages": [
+        {
+          "name": "Dhule",
+          "lat": 20.904325,
+          "lng": 74.768495
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=dhule",
+      "price": "50",
+      "focal": {
+        "lat": 20.904325,
+        "lng": 74.768495,
+        "source": "village:Dhule",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=20.904325&lng=74.768495&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=20.904325&lng=74.768495&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "nandurbar-region-dp-plan",
+          "displayName": "Nandurbar Region",
+          "shortName": "Nandurbar Region",
+          "distanceKm": 75.4
+        },
+        {
+          "slug": "jalgaon-region-dp-plan",
+          "displayName": "Jalgaon Region",
+          "shortName": "Jalgaon Region",
+          "distanceKm": 82.7
+        },
+        {
+          "slug": "aurangabad-dp-plan",
+          "displayName": "Aurangabad/Chatrapati Sambhaji Nagar",
+          "shortName": "Aurangabad",
+          "distanceKm": 132.5
+        },
+        {
+          "slug": "nashik-dp-plan",
+          "displayName": "Nashik",
+          "shortName": "Nashik",
+          "distanceKm": 146.6
+        },
+        {
+          "slug": "buldhana-region-dp-plan",
+          "displayName": "Buldhana Region",
+          "shortName": "Buldhana Region",
+          "distanceKm": 151.6
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Dhule Development Plan online?",
+          "a": "You can view the Dhule DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Dhule, Maharashtra."
+        },
+        {
+          "q": "Is the Dhule DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=dhule"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Dhule?",
+          "a": "Yes — 1 sub-locations are indexed inside Dhule, including Dhule and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Dhule region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Dhule DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Dhule Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Dhule",
+        "Measure distances and areas directly on the Dhule map",
+        "Mobile-friendly — view Dhule DP zones on the go",
+        "1 indexed sub-locations inside Dhule"
+      ]
+    },
+    {
+      "slug": "hingoli-dp-plan",
+      "productPurchaseID": "hingoli",
+      "menuKey": "HingoliMaharashtra",
+      "displayName": "Hingoli",
+      "rawDistrictName": "Hingoli",
+      "shortName": "Hingoli",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/hingoli_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 19.715846,
+        "lng": 77.140829,
+        "minZoom": 11,
+        "maxZoom": 20
+      },
+      "bbox": [
+        77.12166,
+        19.68574,
+        77.177329,
+        19.748829
+      ],
+      "villages": [
+        {
+          "name": "Hingoli",
+          "lat": 19.71510493826503,
+          "lng": 77.13932997024246
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=hingoli",
+      "price": "50",
+      "focal": {
+        "lat": 19.71510493826503,
+        "lng": 77.13932997024246,
+        "source": "village:Hingoli",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=19.71510493826503&lng=77.13932997024246&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=19.71510493826503&lng=77.13932997024246&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "washim-region-dp-plan",
+          "displayName": "Washim Region",
+          "shortName": "Washim Region",
+          "distanceKm": 42.6
+        },
+        {
+          "slug": "parbhani-region-dp-plan",
+          "displayName": "Parbhani Region",
+          "shortName": "Parbhani Region",
+          "distanceKm": 63.5
+        },
+        {
+          "slug": "nanded-waghala-municipal-corporation-dp-plan",
+          "displayName": "Nanded Waghala Municipal Corporation",
+          "shortName": "Nanded Waghala Municipal Corporation",
+          "distanceKm": 64.4
+        },
+        {
+          "slug": "jalna-region-dp-plan",
+          "displayName": "Jalna Region",
+          "shortName": "Jalna Region",
+          "distanceKm": 124.1
+        },
+        {
+          "slug": "buldhana-region-dp-plan",
+          "displayName": "Buldhana Region",
+          "shortName": "Buldhana Region",
+          "distanceKm": 135.6
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Hingoli Development Plan online?",
+          "a": "You can view the Hingoli DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Hingoli, Maharashtra."
+        },
+        {
+          "q": "Is the Hingoli DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=hingoli"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Hingoli?",
+          "a": "Yes — 1 sub-locations are indexed inside Hingoli, including Hingoli and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Hingoli region is free up to zoom level 14. High-detail (zoom 15–20) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Hingoli DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Hingoli Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Hingoli",
+        "Measure distances and areas directly on the Hingoli map",
+        "Mobile-friendly — view Hingoli DP zones on the go",
+        "1 indexed sub-locations inside Hingoli"
+      ]
+    },
+    {
+      "slug": "jalgaon-region-dp-plan",
+      "productPurchaseID": "jalgaon",
+      "menuKey": "JalgaonMaharashtra",
+      "displayName": "Jalgaon Region",
+      "rawDistrictName": "Jalgaon Region",
+      "shortName": "Jalgaon Region",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/jalgaon_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 20.999847,
+        "lng": 75.567107,
+        "minZoom": 1,
+        "maxZoom": 21
+      },
+      "bbox": [
+        75.509717,
+        20.934909,
+        75.623805,
+        21.04117
+      ],
+      "villages": [
+        {
+          "name": "Jalgaon",
+          "lat": 20.998309996802792,
+          "lng": 75.57028198078685
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=jalgaon",
+      "price": "50",
+      "focal": {
+        "lat": 20.998309996802792,
+        "lng": 75.57028198078685,
+        "source": "village:Jalgaon",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=20.998309996802792&lng=75.57028198078685&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=20.998309996802792&lng=75.57028198078685&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "buldhana-region-dp-plan",
+          "displayName": "Buldhana Region",
+          "shortName": "Buldhana Region",
+          "distanceKm": 82
+        },
+        {
+          "slug": "dhule-dp-plan",
+          "displayName": "Dhule",
+          "shortName": "Dhule",
+          "distanceKm": 82.7
+        },
+        {
+          "slug": "aurangabad-dp-plan",
+          "displayName": "Aurangabad/Chatrapati Sambhaji Nagar",
+          "shortName": "Aurangabad",
+          "distanceKm": 131.9
+        },
+        {
+          "slug": "jalna-region-dp-plan",
+          "displayName": "Jalna Region",
+          "shortName": "Jalna Region",
+          "distanceKm": 135.1
+        },
+        {
+          "slug": "nandurbar-region-dp-plan",
+          "displayName": "Nandurbar Region",
+          "shortName": "Nandurbar Region",
+          "distanceKm": 142.8
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Jalgaon Region Development Plan online?",
+          "a": "You can view the Jalgaon Region DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Jalgaon Region, Maharashtra."
+        },
+        {
+          "q": "Is the Jalgaon Region DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=jalgaon"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Jalgaon Region?",
+          "a": "Yes — 1 sub-locations are indexed inside Jalgaon Region, including Jalgaon and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Jalgaon Region region is free up to zoom level 14. High-detail (zoom 15–21) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Jalgaon Region DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Jalgaon Region Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Jalgaon Region",
+        "Measure distances and areas directly on the Jalgaon Region map",
+        "Mobile-friendly — view Jalgaon Region DP zones on the go",
+        "1 indexed sub-locations inside Jalgaon Region"
+      ]
+    },
+    {
+      "slug": "jalna-region-dp-plan",
+      "productPurchaseID": "jalna",
+      "menuKey": "JalnaMaharashtra",
+      "displayName": "Jalna Region",
+      "rawDistrictName": "Jalna Region",
+      "shortName": "Jalna Region",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/jalna_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 19.843122,
+        "lng": 75.962917,
+        "minZoom": 11,
+        "maxZoom": 20
+      },
+      "bbox": [
+        75.738986,
+        19.488018,
+        76.401471,
+        20.280336
+      ],
+      "villages": [
+        {
+          "name": "Jalna",
+          "lat": 19.850129764054397,
+          "lng": 75.87050830392342
+        },
+        {
+          "name": "Ambad",
+          "lat": 19.607852,
+          "lng": 75.79156
+        },
+        {
+          "name": "Bhokardan",
+          "lat": 20.2552185,
+          "lng": 75.768015
+        },
+        {
+          "name": "Ghansangvi",
+          "lat": 19.51591,
+          "lng": 75.987436
+        },
+        {
+          "name": "Mantha",
+          "lat": 19.649279,
+          "lng": 76.389205
+        },
+        {
+          "name": "Partur",
+          "lat": 19.597734,
+          "lng": 76.214285
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=jalna",
+      "price": "50",
+      "focal": {
+        "lat": 19.850129764054397,
+        "lng": 75.87050830392342,
+        "source": "village:Jalna",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=19.850129764054397&lng=75.87050830392342&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=19.850129764054397&lng=75.87050830392342&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "aurangabad-dp-plan",
+          "displayName": "Aurangabad/Chatrapati Sambhaji Nagar",
+          "shortName": "Aurangabad",
+          "distanceKm": 64.9
+        },
+        {
+          "slug": "buldhana-region-dp-plan",
+          "displayName": "Buldhana Region",
+          "shortName": "Buldhana Region",
+          "distanceKm": 81
+        },
+        {
+          "slug": "parbhani-region-dp-plan",
+          "displayName": "Parbhani Region",
+          "shortName": "Parbhani Region",
+          "distanceKm": 96.2
+        },
+        {
+          "slug": "hingoli-dp-plan",
+          "displayName": "Hingoli",
+          "shortName": "Hingoli",
+          "distanceKm": 124.1
+        },
+        {
+          "slug": "washim-region-dp-plan",
+          "displayName": "Washim Region",
+          "shortName": "Washim Region",
+          "distanceKm": 125.3
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Jalna Region Development Plan online?",
+          "a": "You can view the Jalna Region DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Jalna Region, Maharashtra."
+        },
+        {
+          "q": "Is the Jalna Region DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=jalna"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Jalna Region?",
+          "a": "Yes — 6 sub-locations are indexed inside Jalna Region, including Jalna, Ambad, Bhokardan, Ghansangvi and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Jalna Region region is free up to zoom level 14. High-detail (zoom 15–20) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Jalna Region DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Jalna Region Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Jalna Region",
+        "Measure distances and areas directly on the Jalna Region map",
+        "Mobile-friendly — view Jalna Region DP zones on the go",
+        "6 indexed sub-locations inside Jalna Region"
+      ]
+    },
+    {
+      "slug": "karjat-msrdc-corridor",
+      "productPurchaseID": "msrdc_karjat",
+      "menuKey": "MSRDCKarjat",
+      "displayName": "Karjat – MSRDC Corridor",
+      "rawDistrictName": "Karjat – MSRDC Corridor (New)",
+      "shortName": "Karjat - MSRDC Corridor",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/msrdc_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 18.899163,
+        "lng": 73.273738,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        73.166912,
+        18.816128,
+        73.344027,
+        19.000365
+      ],
+      "villages": [
+        {
+          "name": "Karjat – MSRDC Corridor",
+          "lat": 18.928428,
+          "lng": 73.26452
+        }
+      ],
+      "sourceLink": "https://msrdc.in/Site/Upload/Event/Modified%20Draft%20Development%20plan%20of%20MSRDC%20SPA%20U.pdf",
+      "price": "",
+      "focal": {
+        "lat": 18.928428,
+        "lng": 73.26452,
+        "source": "village:Karjat – MSRDC Corridor",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=18.928428&lng=73.26452&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=18.928428&lng=73.26452&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "pune-mumbai-msrdc-corridor",
+          "displayName": "Pune–Mumbai – MSRDC Corridor",
+          "shortName": "Pune-Mumbai - MSRDC Corridor",
+          "distanceKm": 6.1
+        },
+        {
+          "slug": "naina-development-plan",
+          "displayName": "NAINA Region",
+          "shortName": "NAINA Region",
+          "distanceKm": 14.6
+        },
+        {
+          "slug": "kharghar-dp-plan",
+          "displayName": "Kharghar / Panvel Municipal Corporation",
+          "shortName": "Kharghar",
+          "distanceKm": 24.2
+        },
+        {
+          "slug": "navi-mumbai-municipal-corporation-dp-plan",
+          "displayName": "Navi Mumbai Municipal Corporation",
+          "shortName": "Navi Mumbai Municipal Corporation",
+          "distanceKm": 34.6
+        },
+        {
+          "slug": "mumbai-eastern-suburbs-dp-plan",
+          "displayName": "Mumbai Eastern Suburbs",
+          "shortName": "Mumbai Eastern Suburbs",
+          "distanceKm": 44.8
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Karjat - MSRDC Corridor Development Plan online?",
+          "a": "You can view the Karjat – MSRDC Corridor DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Karjat - MSRDC Corridor, Maharashtra."
+        },
+        {
+          "q": "Is the Karjat - MSRDC Corridor DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://msrdc.in/Site/Upload/Event/Modified%20Draft%20Development%20plan%20of%20MSRDC%20SPA%20U.pdf"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Karjat - MSRDC Corridor?",
+          "a": "Yes — 1 sub-locations are indexed inside Karjat - MSRDC Corridor, including Karjat – MSRDC Corridor and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Karjat - MSRDC Corridor region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Karjat - MSRDC Corridor DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Karjat - MSRDC Corridor Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Karjat - MSRDC Corridor",
+        "Measure distances and areas directly on the Karjat - MSRDC Corridor map",
+        "Mobile-friendly — view Karjat - MSRDC Corridor DP zones on the go",
+        "1 indexed sub-locations inside Karjat - MSRDC Corridor"
+      ]
+    },
+    {
+      "slug": "kharghar-dp-plan",
+      "productPurchaseID": "panveldevelopmentplan",
+      "menuKey": "PanvelMaharashtra",
+      "displayName": "Kharghar / Panvel Municipal Corporation",
+      "rawDistrictName": "Kharghar / Panvel Municipal Corporation",
+      "shortName": "Kharghar",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_palghar.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 19.045856,
+        "lng": 73.103727,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        73.043807,
+        18.968074,
+        73.154451,
+        19.114769
+      ],
+      "villages": [
+        {
+          "name": "Panvel",
+          "lat": 18.98700839611837,
+          "lng": 73.11562180670944
+        },
+        {
+          "name": "Kharghar",
+          "lat": 19.044407,
+          "lng": 73.0718974
+        }
+      ],
+      "sourceLink": "",
+      "price": "50",
+      "focal": {
+        "lat": 18.98700839611837,
+        "lng": 73.11562180670944,
+        "source": "village:Panvel",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=18.98700839611837&lng=73.11562180670944&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=18.98700839611837&lng=73.11562180670944&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "navi-mumbai-municipal-corporation-dp-plan",
+          "displayName": "Navi Mumbai Municipal Corporation",
+          "shortName": "Navi Mumbai Municipal Corporation",
+          "distanceKm": 10.8
+        },
+        {
+          "slug": "naina-development-plan",
+          "displayName": "NAINA Region",
+          "shortName": "NAINA Region",
+          "distanceKm": 12.3
+        },
+        {
+          "slug": "mumbai-eastern-suburbs-dp-plan",
+          "displayName": "Mumbai Eastern Suburbs",
+          "shortName": "Mumbai Eastern Suburbs",
+          "distanceKm": 21.1
+        },
+        {
+          "slug": "thane-dp-plan",
+          "displayName": "Thane/Dombivali",
+          "shortName": "Thane",
+          "distanceKm": 22.2
+        },
+        {
+          "slug": "karjat-msrdc-corridor",
+          "displayName": "Karjat – MSRDC Corridor",
+          "shortName": "Karjat - MSRDC Corridor",
+          "distanceKm": 24.2
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Kharghar Development Plan online?",
+          "a": "You can view the Kharghar / Panvel Municipal Corporation DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Kharghar, Maharashtra."
+        },
+        {
+          "q": "Is the Kharghar DP map official?",
+          "a": "The Development Plan referenced here mirrors the latest publication from the local planning authority for Kharghar."
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Kharghar?",
+          "a": "Yes — 2 sub-locations are indexed inside Kharghar, including Panvel, Kharghar and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Kharghar region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Kharghar DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Kharghar Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Kharghar",
+        "Measure distances and areas directly on the Kharghar map",
+        "Mobile-friendly — view Kharghar DP zones on the go",
+        "2 indexed sub-locations inside Kharghar"
+      ]
+    },
+    {
+      "slug": "kolhapur-dp-plan",
+      "productPurchaseID": "kolhapurdpplan",
+      "menuKey": "KolhapurMaharashtra",
+      "displayName": "Kolhapur",
+      "rawDistrictName": "Kolhapur",
+      "shortName": "Kolhapur",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_kolhapur.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 16.50644,
+        "lng": 74.34758,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        74.17707,
+        16.159657,
+        74.568841,
+        16.794073
+      ],
+      "villages": [
+        {
+          "name": "Kolhapur City",
+          "lat": 16.69777840591886,
+          "lng": 74.24247224488576
+        },
+        {
+          "name": "Jaysingpur",
+          "lat": 16.7748866312652,
+          "lng": 74.55387639776286
+        },
+        {
+          "name": "Murgud",
+          "lat": 16.397057234807797,
+          "lng": 74.19014562282686
+        },
+        {
+          "name": "Gadhinglaj",
+          "lat": 16.225881765540613,
+          "lng": 74.34903745654265
+        },
+        {
+          "name": "Ichalkaranji (Regional Plan)",
+          "lat": 16.71657628057906,
+          "lng": 74.44757126093243
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=kolhapur",
+      "price": "50",
+      "focal": {
+        "lat": 16.69777840591886,
+        "lng": 74.24247224488576,
+        "source": "village:Kolhapur City",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=16.69777840591886&lng=74.24247224488576&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=16.69777840591886&lng=74.24247224488576&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "sangli-dp-plan",
+          "displayName": "Sangli/Miraj Region",
+          "shortName": "Sangli",
+          "distanceKm": 66.1
+        },
+        {
+          "slug": "mahabaleshwar-msrdc-corridor",
+          "displayName": "Mahabaleshwar – MSRDC Corridor",
+          "shortName": "Mahabaleshwar - MSRDC Corridor",
+          "distanceKm": 134.4
+        },
+        {
+          "slug": "satara-region-dp-plan",
+          "displayName": "Satara Region",
+          "shortName": "Satara Region",
+          "distanceKm": 135.4
+        },
+        {
+          "slug": "solapur-dp-plan",
+          "displayName": "Solapur",
+          "shortName": "Solapur",
+          "distanceKm": 196.4
+        },
+        {
+          "slug": "pmrda-development-plan",
+          "displayName": "PMRDA",
+          "shortName": "PMRDA",
+          "distanceKm": 236.6
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Kolhapur Development Plan online?",
+          "a": "You can view the Kolhapur DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Kolhapur, Maharashtra."
+        },
+        {
+          "q": "Is the Kolhapur DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=kolhapur"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Kolhapur?",
+          "a": "Yes — 5 sub-locations are indexed inside Kolhapur, including Kolhapur City, Jaysingpur, Murgud, Gadhinglaj and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Kolhapur region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Kolhapur DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Kolhapur Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Kolhapur",
+        "Measure distances and areas directly on the Kolhapur map",
+        "Mobile-friendly — view Kolhapur DP zones on the go",
+        "5 indexed sub-locations inside Kolhapur"
+      ]
+    },
+    {
+      "slug": "latur-region-dp-plan",
+      "productPurchaseID": "laturdistrict",
+      "menuKey": "LaturMaharashtra",
+      "displayName": "Latur Region",
+      "rawDistrictName": "Latur Region",
+      "shortName": "Latur Region",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_latur.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 18.39056,
+        "lng": 76.755647,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        76.488323,
+        18.088417,
+        77.130661,
+        18.728767
+      ],
+      "villages": [
+        {
+          "name": "Latur",
+          "lat": 18.405602,
+          "lng": 76.562333
+        },
+        {
+          "name": "Udgir",
+          "lat": 18.385129361885575,
+          "lng": 77.11353693488982
+        },
+        {
+          "name": "Ausa",
+          "lat": 18.246877526819407,
+          "lng": 76.4943852892714
+        },
+        {
+          "name": "Ahamadpur",
+          "lat": 18.705458884212305,
+          "lng": 76.93685894494249
+        },
+        {
+          "name": "Nilanga",
+          "lat": 18.125218059684915,
+          "lng": 76.75574165631468
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=latur",
+      "price": "50",
+      "focal": {
+        "lat": 18.405602,
+        "lng": 76.562333,
+        "source": "village:Latur",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=18.405602&lng=76.562333&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=18.405602&lng=76.562333&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "osmanabad-dp-plan",
+          "displayName": "Osmanabad/Dharashiv Region",
+          "shortName": "Osmanabad",
+          "distanceKm": 68.5
+        },
+        {
+          "slug": "parbhani-region-dp-plan",
+          "displayName": "Parbhani Region",
+          "shortName": "Parbhani Region",
+          "distanceKm": 104.1
+        },
+        {
+          "slug": "nanded-waghala-municipal-corporation-dp-plan",
+          "displayName": "Nanded Waghala Municipal Corporation",
+          "shortName": "Nanded Waghala Municipal Corporation",
+          "distanceKm": 104.3
+        },
+        {
+          "slug": "solapur-dp-plan",
+          "displayName": "Solapur",
+          "shortName": "Solapur",
+          "distanceKm": 134.7
+        },
+        {
+          "slug": "hingoli-dp-plan",
+          "displayName": "Hingoli",
+          "shortName": "Hingoli",
+          "distanceKm": 152.8
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Latur Region Development Plan online?",
+          "a": "You can view the Latur Region DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Latur Region, Maharashtra."
+        },
+        {
+          "q": "Is the Latur Region DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=latur"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Latur Region?",
+          "a": "Yes — 5 sub-locations are indexed inside Latur Region, including Latur, Udgir, Ausa, Ahamadpur and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Latur Region region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Latur Region DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Latur Region Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Latur Region",
+        "Measure distances and areas directly on the Latur Region map",
+        "Mobile-friendly — view Latur Region DP zones on the go",
+        "5 indexed sub-locations inside Latur Region"
+      ]
+    },
+    {
+      "slug": "mahabaleshwar-msrdc-corridor",
+      "productPurchaseID": "mahabaleshwar_msrdc",
+      "menuKey": "MahabaleshwarMSRDC",
+      "displayName": "Mahabaleshwar – MSRDC Corridor",
+      "rawDistrictName": "Mahabaleshwar – MSRDC Corridor (New)",
+      "shortName": "Mahabaleshwar - MSRDC Corridor",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/mahabaleshwarMSDRC_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 17.580581,
+        "lng": 73.766964,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        73.566173,
+        17.147547,
+        73.946259,
+        17.905905
+      ],
+      "villages": [
+        {
+          "name": "Mahabaleshwar – MSRDC Corridor (New)",
+          "lat": 17.4532,
+          "lng": 73.816
+        }
+      ],
+      "sourceLink": "https://www.satara.gov.in/en/document/development-plan-msrdc-of-new-mahabaleshwar-project-to-be-implemented-in-four-talukas-namely-satara-javali-mahabaleshwar-and-patan-in-satara-district/",
+      "price": "",
+      "focal": {
+        "lat": 17.4532,
+        "lng": 73.816,
+        "source": "village:Mahabaleshwar – MSRDC Corridor (New)",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=17.4532&lng=73.816&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=17.4532&lng=73.816&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "satara-region-dp-plan",
+          "displayName": "Satara Region",
+          "shortName": "Satara Region",
+          "distanceKm": 28.3
+        },
+        {
+          "slug": "pmrda-development-plan",
+          "displayName": "PMRDA",
+          "shortName": "PMRDA",
+          "distanceKm": 113.5
+        },
+        {
+          "slug": "sangli-dp-plan",
+          "displayName": "Sangli/Miraj Region",
+          "shortName": "Sangli",
+          "distanceKm": 113.7
+        },
+        {
+          "slug": "pune-dp-plan",
+          "displayName": "Pune",
+          "shortName": "Pune",
+          "distanceKm": 117.9
+        },
+        {
+          "slug": "kolhapur-dp-plan",
+          "displayName": "Kolhapur",
+          "shortName": "Kolhapur",
+          "distanceKm": 134.4
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Mahabaleshwar - MSRDC Corridor Development Plan online?",
+          "a": "You can view the Mahabaleshwar – MSRDC Corridor DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Mahabaleshwar - MSRDC Corridor, Maharashtra."
+        },
+        {
+          "q": "Is the Mahabaleshwar - MSRDC Corridor DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://www.satara.gov.in/en/document/development-plan-msrdc-of-new-mahabaleshwar-project-to-be-implemented-in-four-talukas-namely-satara-javali-mahabaleshwar-and-patan-in-satara-district/"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Mahabaleshwar - MSRDC Corridor?",
+          "a": "Yes — 1 sub-locations are indexed inside Mahabaleshwar - MSRDC Corridor, including Mahabaleshwar – MSRDC Corridor (New) and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Mahabaleshwar - MSRDC Corridor region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Mahabaleshwar - MSRDC Corridor DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Mahabaleshwar - MSRDC Corridor Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Mahabaleshwar - MSRDC Corridor",
+        "Measure distances and areas directly on the Mahabaleshwar - MSRDC Corridor map",
+        "Mobile-friendly — view Mahabaleshwar - MSRDC Corridor DP zones on the go",
+        "1 indexed sub-locations inside Mahabaleshwar - MSRDC Corridor"
+      ]
+    },
+    {
+      "slug": "mira-bhayandar-dp-plan",
+      "productPurchaseID": "mirabhayandar",
+      "menuKey": "MiraBhayandar",
+      "displayName": "Mira-Bhayandar",
+      "rawDistrictName": "Mira-Bhayandar",
+      "shortName": "Mira-Bhayandar",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_mirabhayandar.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 19.275649,
+        "lng": 72.864137,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        72.806203,
+        19.229569,
+        72.937998,
+        19.320421
+      ],
+      "villages": [
+        {
+          "name": "Mira-Bhayandar",
+          "lat": 19.27327,
+          "lng": 72.85866
+        }
+      ],
+      "sourceLink": "https://mbmc.gov.in/en/mbmc/town-planning",
+      "price": "50",
+      "focal": {
+        "lat": 19.27327,
+        "lng": 72.85866,
+        "source": "village:Mira-Bhayandar",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=19.27327&lng=72.85866&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=19.27327&lng=72.85866&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "mumbai-western-suburbs-dp-plan",
+          "displayName": "Mumbai Western Suburbs",
+          "shortName": "Mumbai Western Suburbs",
+          "distanceKm": 13.2
+        },
+        {
+          "slug": "thane-dp-plan",
+          "displayName": "Thane/Dombivali",
+          "shortName": "Thane",
+          "distanceKm": 14.8
+        },
+        {
+          "slug": "mumbai-eastern-suburbs-dp-plan",
+          "displayName": "Mumbai Eastern Suburbs",
+          "shortName": "Mumbai Eastern Suburbs",
+          "distanceKm": 17.7
+        },
+        {
+          "slug": "palghar-dp-plan",
+          "displayName": "Palghar/Vasai-Virar",
+          "shortName": "Palghar",
+          "distanceKm": 24.6
+        },
+        {
+          "slug": "navi-mumbai-municipal-corporation-dp-plan",
+          "displayName": "Navi Mumbai Municipal Corporation",
+          "shortName": "Navi Mumbai Municipal Corporation",
+          "distanceKm": 26.3
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Mira-Bhayandar Development Plan online?",
+          "a": "You can view the Mira-Bhayandar DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Mira-Bhayandar, Maharashtra."
+        },
+        {
+          "q": "Is the Mira-Bhayandar DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://mbmc.gov.in/en/mbmc/town-planning"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Mira-Bhayandar?",
+          "a": "Yes — 1 sub-locations are indexed inside Mira-Bhayandar, including Mira-Bhayandar and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Mira-Bhayandar region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Mira-Bhayandar DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Mira-Bhayandar Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Mira-Bhayandar",
+        "Measure distances and areas directly on the Mira-Bhayandar map",
+        "Mobile-friendly — view Mira-Bhayandar DP zones on the go",
+        "1 indexed sub-locations inside Mira-Bhayandar"
+      ]
+    },
+    {
+      "slug": "mumbai-eastern-suburbs-dp-plan",
+      "productPurchaseID": "mumbaieastern",
+      "menuKey": "MumbaiEasternSuburbs",
+      "displayName": "Mumbai Eastern Suburbs",
+      "rawDistrictName": "Mumbai Eastern Suburbs",
+      "shortName": "Mumbai Eastern Suburbs",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/mumbaieasternsuburbs_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 19.125517,
+        "lng": 72.921228,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        72.863569,
+        18.992849,
+        72.980714,
+        19.216443
+      ],
+      "villages": [
+        {
+          "name": "Mumbai Eastern Suburbs",
+          "lat": 19.1192,
+          "lng": 72.9262
+        }
+      ],
+      "sourceLink": "https://data.opencity.in/dataset/mumbai-development-plan-2034",
+      "price": "",
+      "focal": {
+        "lat": 19.1192,
+        "lng": 72.9262,
+        "source": "village:Mumbai Eastern Suburbs",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=19.1192&lng=72.9262&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=19.1192&lng=72.9262&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "mumbai-western-suburbs-dp-plan",
+          "displayName": "Mumbai Western Suburbs",
+          "shortName": "Mumbai Western Suburbs",
+          "distanceKm": 9.6
+        },
+        {
+          "slug": "navi-mumbai-municipal-corporation-dp-plan",
+          "displayName": "Navi Mumbai Municipal Corporation",
+          "shortName": "Navi Mumbai Municipal Corporation",
+          "distanceKm": 10.3
+        },
+        {
+          "slug": "thane-dp-plan",
+          "displayName": "Thane/Dombivali",
+          "shortName": "Thane",
+          "distanceKm": 12.2
+        },
+        {
+          "slug": "mira-bhayandar-dp-plan",
+          "displayName": "Mira-Bhayandar",
+          "shortName": "Mira-Bhayandar",
+          "distanceKm": 17.7
+        },
+        {
+          "slug": "mumbai-internal-island-city-dp-plan",
+          "displayName": "Mumbai Internal Island City",
+          "shortName": "Mumbai Internal Island City",
+          "distanceKm": 18.4
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Mumbai Eastern Suburbs Development Plan online?",
+          "a": "You can view the Mumbai Eastern Suburbs DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Mumbai Eastern Suburbs, Maharashtra."
+        },
+        {
+          "q": "Is the Mumbai Eastern Suburbs DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://data.opencity.in/dataset/mumbai-development-plan-2034"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Mumbai Eastern Suburbs?",
+          "a": "Yes — 1 sub-locations are indexed inside Mumbai Eastern Suburbs, including Mumbai Eastern Suburbs and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Mumbai Eastern Suburbs region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Mumbai Eastern Suburbs DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Mumbai Eastern Suburbs Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Mumbai Eastern Suburbs",
+        "Measure distances and areas directly on the Mumbai Eastern Suburbs map",
+        "Mobile-friendly — view Mumbai Eastern Suburbs DP zones on the go",
+        "1 indexed sub-locations inside Mumbai Eastern Suburbs"
+      ]
+    },
+    {
+      "slug": "mumbai-internal-island-city-dp-plan",
+      "productPurchaseID": "mumbai_internal_island",
+      "menuKey": "MumbaiInternalIsland",
+      "displayName": "Mumbai Internal Island City",
+      "rawDistrictName": "Mumbai Internal Island City",
+      "shortName": "Mumbai Internal Island City",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/mumbaiinternalcity_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 18.985388,
+        "lng": 72.828437,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        72.790618,
+        18.893068,
+        72.889581,
+        19.052552
+      ],
+      "villages": [
+        {
+          "name": "Mumbai Internal Island City",
+          "lat": 18.94239,
+          "lng": 72.83024
+        }
+      ],
+      "sourceLink": "https://data.opencity.in/dataset/mumbai-development-plan-2034",
+      "price": "",
+      "focal": {
+        "lat": 18.94239,
+        "lng": 72.83024,
+        "source": "village:Mumbai Internal Island City",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=18.94239&lng=72.83024&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=18.94239&lng=72.83024&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "mumbai-eastern-suburbs-dp-plan",
+          "displayName": "Mumbai Eastern Suburbs",
+          "shortName": "Mumbai Eastern Suburbs",
+          "distanceKm": 18.4
+        },
+        {
+          "slug": "mumbai-western-suburbs-dp-plan",
+          "displayName": "Mumbai Western Suburbs",
+          "shortName": "Mumbai Western Suburbs",
+          "distanceKm": 19.4
+        },
+        {
+          "slug": "navi-mumbai-municipal-corporation-dp-plan",
+          "displayName": "Navi Mumbai Municipal Corporation",
+          "shortName": "Navi Mumbai Municipal Corporation",
+          "distanceKm": 21.7
+        },
+        {
+          "slug": "kharghar-dp-plan",
+          "displayName": "Kharghar / Panvel Municipal Corporation",
+          "shortName": "Kharghar",
+          "distanceKm": 29.7
+        },
+        {
+          "slug": "thane-dp-plan",
+          "displayName": "Thane/Dombivali",
+          "shortName": "Thane",
+          "distanceKm": 30.5
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Mumbai Internal Island City Development Plan online?",
+          "a": "You can view the Mumbai Internal Island City DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Mumbai Internal Island City, Maharashtra."
+        },
+        {
+          "q": "Is the Mumbai Internal Island City DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://data.opencity.in/dataset/mumbai-development-plan-2034"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Mumbai Internal Island City?",
+          "a": "Yes — 1 sub-locations are indexed inside Mumbai Internal Island City, including Mumbai Internal Island City and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Mumbai Internal Island City region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Mumbai Internal Island City DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Mumbai Internal Island City Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Mumbai Internal Island City",
+        "Measure distances and areas directly on the Mumbai Internal Island City map",
+        "Mobile-friendly — view Mumbai Internal Island City DP zones on the go",
+        "1 indexed sub-locations inside Mumbai Internal Island City"
+      ]
+    },
+    {
+      "slug": "mumbai-western-suburbs-dp-plan",
+      "productPurchaseID": "mumbaiwestern",
+      "menuKey": "MumbaiWesternSuburbs",
+      "displayName": "Mumbai Western Suburbs",
+      "rawDistrictName": "Mumbai Western Suburbs",
+      "shortName": "Mumbai Western Suburbs",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/mumbaiwesternsuburbs_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 19.160045,
+        "lng": 72.836966,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        72.775372,
+        19.031725,
+        72.910777,
+        19.269599
+      ],
+      "villages": [
+        {
+          "name": "Mumbai Western Suburbs",
+          "lat": 19.172,
+          "lng": 72.8201
+        }
+      ],
+      "sourceLink": "https://data.opencity.in/dataset/mumbai-development-plan-2034",
+      "price": "",
+      "focal": {
+        "lat": 19.172,
+        "lng": 72.8201,
+        "source": "village:Mumbai Western Suburbs",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=19.172&lng=72.8201&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=19.172&lng=72.8201&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "mumbai-eastern-suburbs-dp-plan",
+          "displayName": "Mumbai Eastern Suburbs",
+          "shortName": "Mumbai Eastern Suburbs",
+          "distanceKm": 9.6
+        },
+        {
+          "slug": "mira-bhayandar-dp-plan",
+          "displayName": "Mira-Bhayandar",
+          "shortName": "Mira-Bhayandar",
+          "distanceKm": 13.2
+        },
+        {
+          "slug": "thane-dp-plan",
+          "displayName": "Thane/Dombivali",
+          "shortName": "Thane",
+          "distanceKm": 17.1
+        },
+        {
+          "slug": "mumbai-internal-island-city-dp-plan",
+          "displayName": "Mumbai Internal Island City",
+          "shortName": "Mumbai Internal Island City",
+          "distanceKm": 19.4
+        },
+        {
+          "slug": "navi-mumbai-municipal-corporation-dp-plan",
+          "displayName": "Navi Mumbai Municipal Corporation",
+          "shortName": "Navi Mumbai Municipal Corporation",
+          "distanceKm": 19.9
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Mumbai Western Suburbs Development Plan online?",
+          "a": "You can view the Mumbai Western Suburbs DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Mumbai Western Suburbs, Maharashtra."
+        },
+        {
+          "q": "Is the Mumbai Western Suburbs DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://data.opencity.in/dataset/mumbai-development-plan-2034"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Mumbai Western Suburbs?",
+          "a": "Yes — 1 sub-locations are indexed inside Mumbai Western Suburbs, including Mumbai Western Suburbs and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Mumbai Western Suburbs region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Mumbai Western Suburbs DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Mumbai Western Suburbs Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Mumbai Western Suburbs",
+        "Measure distances and areas directly on the Mumbai Western Suburbs map",
+        "Mobile-friendly — view Mumbai Western Suburbs DP zones on the go",
+        "1 indexed sub-locations inside Mumbai Western Suburbs"
+      ]
+    },
+    {
+      "slug": "nagpur-metropolitan-region-dp-plan",
+      "productPurchaseID": "nagpurmetropolitan",
+      "menuKey": "NagpurMetropolitan",
+      "displayName": "Nagpur Metropolitan Region",
+      "rawDistrictName": "Nagpur Metropolitan Region",
+      "shortName": "Nagpur Metropolitan Region",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_nagpur.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 21.168894,
+        "lng": 79.14359,
+        "minZoom": 8,
+        "maxZoom": 18
+      },
+      "bbox": [
+        78.680572,
+        20.756235,
+        79.574677,
+        21.649317
+      ],
+      "villages": [
+        {
+          "name": "Nagpur Metropolitan",
+          "lat": 21.199481584848222,
+          "lng": 79.00075219203812
+        }
+      ],
+      "sourceLink": "",
+      "price": "50",
+      "focal": {
+        "lat": 21.199481584848222,
+        "lng": 79.00075219203812,
+        "source": "village:Nagpur Metropolitan",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=21.199481584848222&lng=79.00075219203812&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=21.199481584848222&lng=79.00075219203812&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "bhandara-region-dp-plan",
+          "displayName": "Bhandara Region",
+          "shortName": "Bhandara Region",
+          "distanceKm": 52.7
+        },
+        {
+          "slug": "chandrapur-region-dp-plan",
+          "displayName": "Chandrapur Region",
+          "shortName": "Chandrapur Region",
+          "distanceKm": 135.8
+        },
+        {
+          "slug": "amravati-dp-plan",
+          "displayName": "Amravati",
+          "shortName": "Amravati",
+          "distanceKm": 179.6
+        },
+        {
+          "slug": "akola-dp-plan",
+          "displayName": "Akola",
+          "shortName": "Akola",
+          "distanceKm": 218.7
+        },
+        {
+          "slug": "washim-region-dp-plan",
+          "displayName": "Washim Region",
+          "shortName": "Washim Region",
+          "distanceKm": 240.9
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Nagpur Metropolitan Region Development Plan online?",
+          "a": "You can view the Nagpur Metropolitan Region DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Nagpur Metropolitan Region, Maharashtra."
+        },
+        {
+          "q": "Is the Nagpur Metropolitan Region DP map official?",
+          "a": "The Development Plan referenced here mirrors the latest publication from the local planning authority for Nagpur Metropolitan Region."
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Nagpur Metropolitan Region?",
+          "a": "Yes — 1 sub-locations are indexed inside Nagpur Metropolitan Region, including Nagpur Metropolitan and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Nagpur Metropolitan Region region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Nagpur Metropolitan Region DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Nagpur Metropolitan Region Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Nagpur Metropolitan Region",
+        "Measure distances and areas directly on the Nagpur Metropolitan Region map",
+        "Mobile-friendly — view Nagpur Metropolitan Region DP zones on the go",
+        "1 indexed sub-locations inside Nagpur Metropolitan Region"
+      ]
+    },
+    {
+      "slug": "naina-development-plan",
+      "productPurchaseID": "naina_mumbai",
+      "menuKey": "NainaMumbai",
+      "displayName": "NAINA Region",
+      "rawDistrictName": "NAINA Region (New)",
+      "shortName": "NAINA Region",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/naina_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 18.941291,
+        "lng": 73.142418,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        72.985257,
+        18.68967,
+        73.262701,
+        19.127235
+      ],
+      "villages": [
+        {
+          "name": "Belavali",
+          "lat": 18.9698,
+          "lng": 73.1782
+        },
+        {
+          "name": "Bhilawale",
+          "lat": 18.9099,
+          "lng": 73.275
+        },
+        {
+          "name": "Bhingar",
+          "lat": 18.958,
+          "lng": 73.1825
+        },
+        {
+          "name": "Bhingarwadi",
+          "lat": 18.9487,
+          "lng": 73.1822
+        },
+        {
+          "name": "Borle",
+          "lat": 18.9651,
+          "lng": 73.1634
+        },
+        {
+          "name": "Gaochan",
+          "lat": 18.9602,
+          "lng": 73.1816
+        },
+        {
+          "name": "Kalote Mokashi",
+          "lat": 18.8596,
+          "lng": 73.2813
+        },
+        {
+          "name": "Kalote Rayati",
+          "lat": 18.8496,
+          "lng": 73.2689
+        },
+        {
+          "name": "Kandroli Tarf Wankhal",
+          "lat": 18.8864,
+          "lng": 73.2602
+        },
+        {
+          "name": "Khalapur",
+          "lat": 18.8296,
+          "lng": 73.2839
+        },
+        {
+          "name": "Kon",
+          "lat": 18.9609,
+          "lng": 73.1491
+        },
+        {
+          "name": "Mahad",
+          "lat": 18.8106,
+          "lng": 73.3021
+        },
+        {
+          "name": "Mankival",
+          "lat": 18.8248,
+          "lng": 73.3192
+        },
+        {
+          "name": "Nadode",
+          "lat": 18.8412,
+          "lng": 73.2532
+        },
+        {
+          "name": "Nangurle",
+          "lat": 18.8998,
+          "lng": 73.3054
+        },
+        {
+          "name": "Navandhe",
+          "lat": 18.8433,
+          "lng": 73.3123
+        },
+        {
+          "name": "Nimbode",
+          "lat": 18.8314,
+          "lng": 73.2635
+        },
+        {
+          "name": "Nigdoli",
+          "lat": 18.8515,
+          "lng": 73.2473
+        },
+        {
+          "name": "Pali Budruk",
+          "lat": 18.9052,
+          "lng": 73.2897
+        },
+        {
+          "name": "Palasdari",
+          "lat": 18.8749,
+          "lng": 73.3166
+        },
+        {
+          "name": "Poyange",
+          "lat": 18.9412,
+          "lng": 73.1981
+        },
+        {
+          "name": "Sangade",
+          "lat": 18.9659,
+          "lng": 73.1688
+        },
+        {
+          "name": "Sondewadi",
+          "lat": 18.939,
+          "lng": 73.2776
+        },
+        {
+          "name": "Talawali",
+          "lat": 18.8597,
+          "lng": 73.3263
+        },
+        {
+          "name": "Tighar",
+          "lat": 18.8962,
+          "lng": 73.3019
+        },
+        {
+          "name": "Vanave",
+          "lat": 18.83,
+          "lng": 73.2678
+        },
+        {
+          "name": "Varne",
+          "lat": 18.89,
+          "lng": 73.3073
+        },
+        {
+          "name": "Vinegaon",
+          "lat": 18.8799,
+          "lng": 73.2702
+        },
+        {
+          "name": "Wavarle",
+          "lat": 18.9195,
+          "lng": 73.2876
+        },
+        {
+          "name": "Sondewadi",
+          "lat": 18.939,
+          "lng": 73.2776
+        },
+        {
+          "name": "Pali Budruk",
+          "lat": 18.9373,
+          "lng": 73.2088
+        },
+        {
+          "name": "Poyange",
+          "lat": 18.9412,
+          "lng": 73.1981
+        },
+        {
+          "name": "Bhingarwadi",
+          "lat": 18.9487,
+          "lng": 73.1822
+        },
+        {
+          "name": "Bhingar",
+          "lat": 18.958,
+          "lng": 73.1825
+        },
+        {
+          "name": "Gaochan",
+          "lat": 18.9602,
+          "lng": 73.1816
+        },
+        {
+          "name": "Belavali",
+          "lat": 18.9698,
+          "lng": 73.1782
+        },
+        {
+          "name": "Sangade",
+          "lat": 18.9659,
+          "lng": 73.1688
+        },
+        {
+          "name": "Borle",
+          "lat": 18.9651,
+          "lng": 73.1634
+        },
+        {
+          "name": "Kon",
+          "lat": 18.9609,
+          "lng": 73.1491
+        }
+      ],
+      "sourceLink": "",
+      "price": "50",
+      "focal": {
+        "lat": 18.9698,
+        "lng": 73.1782,
+        "source": "village:Belavali",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=18.9698&lng=73.1782&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=18.9698&lng=73.1782&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "kharghar-dp-plan",
+          "displayName": "Kharghar / Panvel Municipal Corporation",
+          "shortName": "Kharghar",
+          "distanceKm": 12.3
+        },
+        {
+          "slug": "pune-mumbai-msrdc-corridor",
+          "displayName": "Pune–Mumbai – MSRDC Corridor",
+          "shortName": "Pune-Mumbai - MSRDC Corridor",
+          "distanceKm": 13.8
+        },
+        {
+          "slug": "karjat-msrdc-corridor",
+          "displayName": "Karjat – MSRDC Corridor",
+          "shortName": "Karjat - MSRDC Corridor",
+          "distanceKm": 14.6
+        },
+        {
+          "slug": "navi-mumbai-municipal-corporation-dp-plan",
+          "displayName": "Navi Mumbai Municipal Corporation",
+          "shortName": "Navi Mumbai Municipal Corporation",
+          "distanceKm": 21.1
+        },
+        {
+          "slug": "mumbai-eastern-suburbs-dp-plan",
+          "displayName": "Mumbai Eastern Suburbs",
+          "shortName": "Mumbai Eastern Suburbs",
+          "distanceKm": 31
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the NAINA Region Development Plan online?",
+          "a": "You can view the NAINA Region DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in NAINA Region, Maharashtra."
+        },
+        {
+          "q": "Is the NAINA Region DP map official?",
+          "a": "The Development Plan referenced here mirrors the latest publication from the local planning authority for NAINA Region."
+        },
+        {
+          "q": "Can I see specific villages or sectors inside NAINA Region?",
+          "a": "Yes — 39 sub-locations are indexed inside NAINA Region, including Belavali, Bhilawale, Bhingar, Bhingarwadi and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the NAINA Region region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the NAINA Region DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire NAINA Region Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside NAINA Region",
+        "Measure distances and areas directly on the NAINA Region map",
+        "Mobile-friendly — view NAINA Region DP zones on the go",
+        "39 indexed sub-locations inside NAINA Region"
+      ]
+    },
+    {
+      "slug": "nanded-waghala-municipal-corporation-dp-plan",
+      "productPurchaseID": "nandeddistrict",
+      "menuKey": "NandedMaharashtra",
+      "displayName": "Nanded Waghala Municipal Corporation",
+      "rawDistrictName": "Nanded Waghala Municipal Corporation",
+      "shortName": "Nanded Waghala Municipal Corporation",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_nanded.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 19.162138,
+        "lng": 77.319752,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        77.277666,
+        19.088084,
+        77.357202,
+        19.213898
+      ],
+      "villages": [
+        {
+          "name": "Nanded",
+          "lat": 19.12699,
+          "lng": 77.30876
+        }
+      ],
+      "sourceLink": "",
+      "price": "50",
+      "focal": {
+        "lat": 19.12699,
+        "lng": 77.30876,
+        "source": "village:Nanded",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=19.12699&lng=77.30876&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=19.12699&lng=77.30876&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "hingoli-dp-plan",
+          "displayName": "Hingoli",
+          "shortName": "Hingoli",
+          "distanceKm": 64.4
+        },
+        {
+          "slug": "parbhani-region-dp-plan",
+          "displayName": "Parbhani Region",
+          "shortName": "Parbhani Region",
+          "distanceKm": 67.7
+        },
+        {
+          "slug": "latur-region-dp-plan",
+          "displayName": "Latur Region",
+          "shortName": "Latur Region",
+          "distanceKm": 104.3
+        },
+        {
+          "slug": "washim-region-dp-plan",
+          "displayName": "Washim Region",
+          "shortName": "Washim Region",
+          "distanceKm": 106
+        },
+        {
+          "slug": "jalna-region-dp-plan",
+          "displayName": "Jalna Region",
+          "shortName": "Jalna Region",
+          "distanceKm": 161.1
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Nanded Waghala Municipal Corporation Development Plan online?",
+          "a": "You can view the Nanded Waghala Municipal Corporation DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Nanded Waghala Municipal Corporation, Maharashtra."
+        },
+        {
+          "q": "Is the Nanded Waghala Municipal Corporation DP map official?",
+          "a": "The Development Plan referenced here mirrors the latest publication from the local planning authority for Nanded Waghala Municipal Corporation."
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Nanded Waghala Municipal Corporation?",
+          "a": "Yes — 1 sub-locations are indexed inside Nanded Waghala Municipal Corporation, including Nanded and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Nanded Waghala Municipal Corporation region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Nanded Waghala Municipal Corporation DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Nanded Waghala Municipal Corporation Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Nanded Waghala Municipal Corporation",
+        "Measure distances and areas directly on the Nanded Waghala Municipal Corporation map",
+        "Mobile-friendly — view Nanded Waghala Municipal Corporation DP zones on the go",
+        "1 indexed sub-locations inside Nanded Waghala Municipal Corporation"
+      ]
+    },
+    {
+      "slug": "nandurbar-region-dp-plan",
+      "productPurchaseID": "nandurbar",
+      "menuKey": "NandurbarMaharashtra",
+      "displayName": "Nandurbar Region",
+      "rawDistrictName": "Nandurbar Region",
+      "shortName": "Nandurbar Region",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/nandurbar_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 21.36116,
+        "lng": 74.245196,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        74.196351,
+        21.332664,
+        74.283088,
+        21.409379
+      ],
+      "villages": [
+        {
+          "name": "Nandurbar",
+          "lat": 21.370795079627218,
+          "lng": 74.24166494604167
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=nandurbar",
+      "price": "50",
+      "focal": {
+        "lat": 21.370795079627218,
+        "lng": 74.24166494604167,
+        "source": "village:Nandurbar",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=21.370795079627218&lng=74.24166494604167&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=21.370795079627218&lng=74.24166494604167&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "dhule-dp-plan",
+          "displayName": "Dhule",
+          "shortName": "Dhule",
+          "distanceKm": 75.4
+        },
+        {
+          "slug": "jalgaon-region-dp-plan",
+          "displayName": "Jalgaon Region",
+          "shortName": "Jalgaon Region",
+          "distanceKm": 142.8
+        },
+        {
+          "slug": "nashik-dp-plan",
+          "displayName": "Nashik",
+          "shortName": "Nashik",
+          "distanceKm": 161.3
+        },
+        {
+          "slug": "aurangabad-dp-plan",
+          "displayName": "Aurangabad/Chatrapati Sambhaji Nagar",
+          "shortName": "Aurangabad",
+          "distanceKm": 204.8
+        },
+        {
+          "slug": "buldhana-region-dp-plan",
+          "displayName": "Buldhana Region",
+          "shortName": "Buldhana Region",
+          "distanceKm": 221.1
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Nandurbar Region Development Plan online?",
+          "a": "You can view the Nandurbar Region DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Nandurbar Region, Maharashtra."
+        },
+        {
+          "q": "Is the Nandurbar Region DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=nandurbar"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Nandurbar Region?",
+          "a": "Yes — 1 sub-locations are indexed inside Nandurbar Region, including Nandurbar and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Nandurbar Region region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Nandurbar Region DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Nandurbar Region Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Nandurbar Region",
+        "Measure distances and areas directly on the Nandurbar Region map",
+        "Mobile-friendly — view Nandurbar Region DP zones on the go",
+        "1 indexed sub-locations inside Nandurbar Region"
+      ]
+    },
+    {
+      "slug": "nashik-dp-plan",
+      "productPurchaseID": "nashikdistrict",
+      "menuKey": "NashikMaharashtra",
+      "displayName": "Nashik",
+      "rawDistrictName": "Nashik",
+      "shortName": "Nashik",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_kolhapur.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 19.979927,
+        "lng": 73.771546,
+        "minZoom": 11,
+        "maxZoom": 21
+      },
+      "bbox": [
+        73.516454,
+        19.905031,
+        73.902548,
+        20.085605
+      ],
+      "villages": [
+        {
+          "name": "Nashik",
+          "lat": 19.993952,
+          "lng": 73.787102
+        },
+        {
+          "name": "Trimbak",
+          "lat": 19.93732396729223,
+          "lng": 73.53604295218021
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=nashik",
+      "price": "50",
+      "focal": {
+        "lat": 19.993952,
+        "lng": 73.787102,
+        "source": "village:Nashik",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=19.993952&lng=73.787102&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=19.993952&lng=73.787102&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "palghar-dp-plan",
+          "displayName": "Palghar/Vasai-Virar",
+          "shortName": "Palghar",
+          "distanceKm": 110.3
+        },
+        {
+          "slug": "ahmednagar-dp-plan",
+          "displayName": "Ahmednagar / Ahilyanagar",
+          "shortName": "Ahmednagar",
+          "distanceKm": 116.4
+        },
+        {
+          "slug": "thane-dp-plan",
+          "displayName": "Thane/Dombivali",
+          "shortName": "Thane",
+          "distanceKm": 118.2
+        },
+        {
+          "slug": "mira-bhayandar-dp-plan",
+          "displayName": "Mira-Bhayandar",
+          "shortName": "Mira-Bhayandar",
+          "distanceKm": 123.1
+        },
+        {
+          "slug": "kharghar-dp-plan",
+          "displayName": "Kharghar / Panvel Municipal Corporation",
+          "shortName": "Kharghar",
+          "distanceKm": 125.2
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Nashik Development Plan online?",
+          "a": "You can view the Nashik DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Nashik, Maharashtra."
+        },
+        {
+          "q": "Is the Nashik DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=nashik"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Nashik?",
+          "a": "Yes — 2 sub-locations are indexed inside Nashik, including Nashik, Trimbak and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Nashik region is free up to zoom level 14. High-detail (zoom 15–21) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Nashik DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Nashik Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Nashik",
+        "Measure distances and areas directly on the Nashik map",
+        "Mobile-friendly — view Nashik DP zones on the go",
+        "2 indexed sub-locations inside Nashik"
+      ]
+    },
+    {
+      "slug": "navi-mumbai-municipal-corporation-dp-plan",
+      "productPurchaseID": "navimumbaimunicipalcorporation",
+      "menuKey": "MaharashtraNaviMumbai",
+      "displayName": "Navi Mumbai Municipal Corporation",
+      "rawDistrictName": "Navi Mumbai Municipal Corporation",
+      "shortName": "Navi Mumbai Municipal Corporation",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/navimumbai.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 19.082307,
+        "lng": 73.008078,
+        "minZoom": 11,
+        "maxZoom": 19
+      },
+      "bbox": [
+        72.979846,
+        18.992507,
+        73.051697,
+        19.168829
+      ],
+      "villages": [
+        {
+          "name": "Airoli",
+          "lat": 19.15822013515453,
+          "lng": 72.99609733990158
+        },
+        {
+          "name": "Belapur",
+          "lat": 19.018068,
+          "lng": 73.03639
+        },
+        {
+          "name": "Ghansoli",
+          "lat": 19.125236,
+          "lng": 72.997895
+        },
+        {
+          "name": "Koparkhairane",
+          "lat": 19.102405,
+          "lng": 73.005826
+        },
+        {
+          "name": "Nerul",
+          "lat": 19.024859,
+          "lng": 73.013137
+        },
+        {
+          "name": "Sanpada",
+          "lat": 19.055386,
+          "lng": 73.00994
+        },
+        {
+          "name": "Vashi",
+          "lat": 19.076753,
+          "lng": 72.999518
+        }
+      ],
+      "sourceLink": "https://cidco.maharashtra.gov.in/Page?Token=831AAA8551",
+      "price": "50",
+      "focal": {
+        "lat": 19.15822013515453,
+        "lng": 72.99609733990158,
+        "source": "village:Airoli",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=19.15822013515453&lng=72.99609733990158&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=19.15822013515453&lng=72.99609733990158&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "mumbai-eastern-suburbs-dp-plan",
+          "displayName": "Mumbai Eastern Suburbs",
+          "shortName": "Mumbai Eastern Suburbs",
+          "distanceKm": 10.3
+        },
+        {
+          "slug": "kharghar-dp-plan",
+          "displayName": "Kharghar / Panvel Municipal Corporation",
+          "shortName": "Kharghar",
+          "distanceKm": 10.8
+        },
+        {
+          "slug": "thane-dp-plan",
+          "displayName": "Thane/Dombivali",
+          "shortName": "Thane",
+          "distanceKm": 14.8
+        },
+        {
+          "slug": "mumbai-western-suburbs-dp-plan",
+          "displayName": "Mumbai Western Suburbs",
+          "shortName": "Mumbai Western Suburbs",
+          "distanceKm": 19.9
+        },
+        {
+          "slug": "naina-development-plan",
+          "displayName": "NAINA Region",
+          "shortName": "NAINA Region",
+          "distanceKm": 21.1
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Navi Mumbai Municipal Corporation Development Plan online?",
+          "a": "You can view the Navi Mumbai Municipal Corporation DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Navi Mumbai Municipal Corporation, Maharashtra."
+        },
+        {
+          "q": "Is the Navi Mumbai Municipal Corporation DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://cidco.maharashtra.gov.in/Page?Token=831AAA8551"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Navi Mumbai Municipal Corporation?",
+          "a": "Yes — 7 sub-locations are indexed inside Navi Mumbai Municipal Corporation, including Airoli, Belapur, Ghansoli, Koparkhairane and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Navi Mumbai Municipal Corporation region is free up to zoom level 14. High-detail (zoom 15–19) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Navi Mumbai Municipal Corporation DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Navi Mumbai Municipal Corporation Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Navi Mumbai Municipal Corporation",
+        "Measure distances and areas directly on the Navi Mumbai Municipal Corporation map",
+        "Mobile-friendly — view Navi Mumbai Municipal Corporation DP zones on the go",
+        "7 indexed sub-locations inside Navi Mumbai Municipal Corporation"
+      ]
+    },
+    {
+      "slug": "osmanabad-dp-plan",
+      "productPurchaseID": "osmanabaddistrict",
+      "menuKey": "OsmanabadMaharashtra",
+      "displayName": "Osmanabad/Dharashiv Region",
+      "rawDistrictName": "Osmanabad/Dharashiv Region",
+      "shortName": "Osmanabad",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_osmanabad.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 18.079715,
+        "lng": 76.195169,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        75.626568,
+        17.776024,
+        76.65821,
+        18.503127
+      ],
+      "villages": [
+        {
+          "name": "Osmanabad",
+          "lat": 18.186921,
+          "lng": 76.041564
+        },
+        {
+          "name": "Tuljapur",
+          "lat": 18.03524,
+          "lng": 76.08053
+        },
+        {
+          "name": "Umarga",
+          "lat": 17.85231,
+          "lng": 76.62269
+        },
+        {
+          "name": "Murum",
+          "lat": 17.78763193511395,
+          "lng": 76.47143729869809
+        },
+        {
+          "name": "Lohara",
+          "lat": 17.991365989090347,
+          "lng": 76.32513274695233
+        },
+        {
+          "name": "Bhoom",
+          "lat": 18.461861186021014,
+          "lng": 75.65906513517575
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=osmanabad",
+      "price": "50",
+      "focal": {
+        "lat": 18.186921,
+        "lng": 76.041564,
+        "source": "village:Osmanabad",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=18.186921&lng=76.041564&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=18.186921&lng=76.041564&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "solapur-dp-plan",
+          "displayName": "Solapur",
+          "shortName": "Solapur",
+          "distanceKm": 66.5
+        },
+        {
+          "slug": "latur-region-dp-plan",
+          "displayName": "Latur Region",
+          "shortName": "Latur Region",
+          "distanceKm": 68.5
+        },
+        {
+          "slug": "parbhani-region-dp-plan",
+          "displayName": "Parbhani Region",
+          "shortName": "Parbhani Region",
+          "distanceKm": 148.4
+        },
+        {
+          "slug": "nanded-waghala-municipal-corporation-dp-plan",
+          "displayName": "Nanded Waghala Municipal Corporation",
+          "shortName": "Nanded Waghala Municipal Corporation",
+          "distanceKm": 168.9
+        },
+        {
+          "slug": "jalna-region-dp-plan",
+          "displayName": "Jalna Region",
+          "shortName": "Jalna Region",
+          "distanceKm": 197.6
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Osmanabad Development Plan online?",
+          "a": "You can view the Osmanabad/Dharashiv Region DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Osmanabad, Maharashtra."
+        },
+        {
+          "q": "Is the Osmanabad DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=osmanabad"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Osmanabad?",
+          "a": "Yes — 6 sub-locations are indexed inside Osmanabad, including Osmanabad, Tuljapur, Umarga, Murum and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Osmanabad region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Osmanabad DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Osmanabad Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Osmanabad",
+        "Measure distances and areas directly on the Osmanabad map",
+        "Mobile-friendly — view Osmanabad DP zones on the go",
+        "6 indexed sub-locations inside Osmanabad"
+      ]
+    },
+    {
+      "slug": "palghar-dp-plan",
+      "productPurchaseID": "vasaivirar",
+      "menuKey": "VasaiVirar",
+      "displayName": "Palghar/Vasai-Virar",
+      "rawDistrictName": "Palghar/Vasai-Virar",
+      "shortName": "Palghar",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/plaghar_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 19.496121,
+        "lng": 72.851274,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        72.716664,
+        19.286722,
+        72.960607,
+        20.012742
+      ],
+      "villages": [
+        {
+          "name": "Palghar",
+          "lat": 19.69937138099716,
+          "lng": 72.76595262434513
+        },
+        {
+          "name": "Vasai-Virar/ Nala Sopara",
+          "lat": 19.390799317317917,
+          "lng": 72.83658689904209
+        },
+        {
+          "name": "Dahanu",
+          "lat": 19.97839759584557,
+          "lng": 72.75233936090467
+        }
+      ],
+      "sourceLink": "www.google.com/search?client=opera&q=vasai+virar+development+plan+draft&sourceid=opera&ie=UTF-8&oe=UTF-8",
+      "price": "50",
+      "focal": {
+        "lat": 19.69937138099716,
+        "lng": 72.76595262434513,
+        "source": "village:Palghar",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=19.69937138099716&lng=72.76595262434513&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=19.69937138099716&lng=72.76595262434513&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "mira-bhayandar-dp-plan",
+          "displayName": "Mira-Bhayandar",
+          "shortName": "Mira-Bhayandar",
+          "distanceKm": 24.6
+        },
+        {
+          "slug": "thane-dp-plan",
+          "displayName": "Thane/Dombivali",
+          "shortName": "Thane",
+          "distanceKm": 34.6
+        },
+        {
+          "slug": "mumbai-western-suburbs-dp-plan",
+          "displayName": "Mumbai Western Suburbs",
+          "shortName": "Mumbai Western Suburbs",
+          "distanceKm": 37.4
+        },
+        {
+          "slug": "mumbai-eastern-suburbs-dp-plan",
+          "displayName": "Mumbai Eastern Suburbs",
+          "shortName": "Mumbai Eastern Suburbs",
+          "distanceKm": 41.9
+        },
+        {
+          "slug": "navi-mumbai-municipal-corporation-dp-plan",
+          "displayName": "Navi Mumbai Municipal Corporation",
+          "shortName": "Navi Mumbai Municipal Corporation",
+          "distanceKm": 48.9
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Palghar Development Plan online?",
+          "a": "You can view the Palghar/Vasai-Virar DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Palghar, Maharashtra."
+        },
+        {
+          "q": "Is the Palghar DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: www.google.com/search?client=opera&q=vasai+virar+development+plan+draft&sourceid=opera&ie=UTF-8&oe=UTF-8"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Palghar?",
+          "a": "Yes — 3 sub-locations are indexed inside Palghar, including Palghar, Vasai-Virar/ Nala Sopara, Dahanu and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Palghar region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Palghar DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Palghar Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Palghar",
+        "Measure distances and areas directly on the Palghar map",
+        "Mobile-friendly — view Palghar DP zones on the go",
+        "3 indexed sub-locations inside Palghar"
+      ]
+    },
+    {
+      "slug": "parbhani-region-dp-plan",
+      "productPurchaseID": "parbhani",
+      "menuKey": "ParbhaniMaharashtra",
+      "displayName": "Parbhani Region",
+      "rawDistrictName": "Parbhani Region",
+      "shortName": "Parbhani Region",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/parbhani_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 19.325646,
+        "lng": 76.698913,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        76.391028,
+        19.217516,
+        76.821399,
+        19.641335
+      ],
+      "villages": [
+        {
+          "name": "Parbhani",
+          "lat": 19.266976289670673,
+          "lng": 76.77494986384663
+        },
+        {
+          "name": "Jintur",
+          "lat": 19.608743223011494,
+          "lng": 76.68632135772621
+        },
+        {
+          "name": "Pathari",
+          "lat": 19.26130882565358,
+          "lng": 76.4295254740182
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=parbhani",
+      "price": "50",
+      "focal": {
+        "lat": 19.266976289670673,
+        "lng": 76.77494986384663,
+        "source": "village:Parbhani",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=19.266976289670673&lng=76.77494986384663&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=19.266976289670673&lng=76.77494986384663&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "hingoli-dp-plan",
+          "displayName": "Hingoli",
+          "shortName": "Hingoli",
+          "distanceKm": 63.5
+        },
+        {
+          "slug": "nanded-waghala-municipal-corporation-dp-plan",
+          "displayName": "Nanded Waghala Municipal Corporation",
+          "shortName": "Nanded Waghala Municipal Corporation",
+          "distanceKm": 67.7
+        },
+        {
+          "slug": "jalna-region-dp-plan",
+          "displayName": "Jalna Region",
+          "shortName": "Jalna Region",
+          "distanceKm": 96.2
+        },
+        {
+          "slug": "washim-region-dp-plan",
+          "displayName": "Washim Region",
+          "shortName": "Washim Region",
+          "distanceKm": 97.1
+        },
+        {
+          "slug": "latur-region-dp-plan",
+          "displayName": "Latur Region",
+          "shortName": "Latur Region",
+          "distanceKm": 104.1
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Parbhani Region Development Plan online?",
+          "a": "You can view the Parbhani Region DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Parbhani Region, Maharashtra."
+        },
+        {
+          "q": "Is the Parbhani Region DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=parbhani"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Parbhani Region?",
+          "a": "Yes — 3 sub-locations are indexed inside Parbhani Region, including Parbhani, Jintur, Pathari and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Parbhani Region region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Parbhani Region DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Parbhani Region Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Parbhani Region",
+        "Measure distances and areas directly on the Parbhani Region map",
+        "Mobile-friendly — view Parbhani Region DP zones on the go",
+        "3 indexed sub-locations inside Parbhani Region"
+      ]
+    },
+    {
+      "slug": "pmrda-development-plan",
+      "productPurchaseID": "pmrda_plan",
+      "menuKey": "PMRDA",
+      "displayName": "PMRDA",
+      "rawDistrictName": "PMRDA (Draft)",
+      "shortName": "PMRDA",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_pmrda.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 18.592638,
+        "lng": 73.907262,
+        "minZoom": 11,
+        "maxZoom": 20
+      },
+      "bbox": [
+        73.48763,
+        18.118001,
+        74.408035,
+        18.928159
+      ],
+      "villages": [
+        {
+          "name": "Alandi",
+          "lat": 18.675699,
+          "lng": 73.893954
+        },
+        {
+          "name": "Bhor, Tal : Khed",
+          "lat": 18.145344395068797,
+          "lng": 73.844379054403
+        },
+        {
+          "name": "Chakan",
+          "lat": 18.760164,
+          "lng": 73.861893
+        },
+        {
+          "name": "Hinjewadi",
+          "lat": 18.591698226844702,
+          "lng": 73.73910731472326
+        },
+        {
+          "name": "Kedgaon",
+          "lat": 18.456585,
+          "lng": 74.378863
+        },
+        {
+          "name": "LoniKalbhor",
+          "lat": 18.513321,
+          "lng": 74.00367
+        },
+        {
+          "name": "Khadakwasla",
+          "lat": 18.437781,
+          "lng": 73.77914
+        },
+        {
+          "name": "Pirangut",
+          "lat": 18.50933,
+          "lng": 73.70374
+        },
+        {
+          "name": "Ranjangaon",
+          "lat": 18.7808,
+          "lng": 74.311685
+        },
+        {
+          "name": "Saswad",
+          "lat": 18.39498,
+          "lng": 74.0361
+        },
+        {
+          "name": "Rajgurunagar",
+          "lat": 18.852151,
+          "lng": 73.883285
+        },
+        {
+          "name": "Shikrapur",
+          "lat": 18.691028,
+          "lng": 74.12945
+        },
+        {
+          "name": "Shirur Municipal Council",
+          "lat": 18.823478352079782,
+          "lng": 74.3753094270307
+        },
+        {
+          "name": "Shivapur",
+          "lat": 18.35227,
+          "lng": 73.85956
+        },
+        {
+          "name": "Talegaon",
+          "lat": 18.75096,
+          "lng": 73.57538
+        },
+        {
+          "name": "UruliKanchan",
+          "lat": 18.50711,
+          "lng": 74.09055
+        },
+        {
+          "name": "Wagholi",
+          "lat": 18.581348,
+          "lng": 73.978533
+        },
+        {
+          "name": "Yavat",
+          "lat": 18.47803,
+          "lng": 74.26712
+        },
+        {
+          "name": "Kadus",
+          "lat": 18.891329,
+          "lng": 73.816289
+        },
+        {
+          "name": "Kale",
+          "lat": 18.688758,
+          "lng": 73.498121
+        },
+        {
+          "name": "Kikavi",
+          "lat": 18.200796,
+          "lng": 73.944093
+        },
+        {
+          "name": "Nhavara",
+          "lat": 18.662569,
+          "lng": 74.368717
+        },
+        {
+          "name": "Pabal",
+          "lat": 18.831525,
+          "lng": 74.053283
+        },
+        {
+          "name": "Paud",
+          "lat": 18.527244,
+          "lng": 73.620718
+        },
+        {
+          "name": "Rahu",
+          "lat": 18.582627,
+          "lng": 74.260514
+        },
+        {
+          "name": "Jejuri Nagar Parishad",
+          "lat": 18.27711504600255,
+          "lng": 74.16253806335762
+        },
+        {
+          "name": "Sangrun",
+          "lat": 18.409287,
+          "lng": 73.681232
+        },
+        {
+          "name": "Ranjangaon MIDC",
+          "lat": 18.788785,
+          "lng": 74.285592
+        },
+        {
+          "name": "Talegaon MIDC",
+          "lat": 18.780912,
+          "lng": 73.692121
+        }
+      ],
+      "sourceLink": "",
+      "price": "50",
+      "focal": {
+        "lat": 18.675699,
+        "lng": 73.893954,
+        "source": "village:Alandi",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=18.675699&lng=73.893954&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=18.675699&lng=73.893954&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "pune-dp-plan",
+          "displayName": "Pune",
+          "shortName": "Pune",
+          "distanceKm": 11.1
+        },
+        {
+          "slug": "karjat-msrdc-corridor",
+          "displayName": "Karjat – MSRDC Corridor",
+          "shortName": "Karjat - MSRDC Corridor",
+          "distanceKm": 74.9
+        },
+        {
+          "slug": "pune-mumbai-msrdc-corridor",
+          "displayName": "Pune–Mumbai – MSRDC Corridor",
+          "shortName": "Pune-Mumbai - MSRDC Corridor",
+          "distanceKm": 76.4
+        },
+        {
+          "slug": "naina-development-plan",
+          "displayName": "NAINA Region",
+          "shortName": "NAINA Region",
+          "distanceKm": 89.4
+        },
+        {
+          "slug": "kharghar-dp-plan",
+          "displayName": "Kharghar / Panvel Municipal Corporation",
+          "shortName": "Kharghar",
+          "distanceKm": 98.4
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the PMRDA Development Plan online?",
+          "a": "You can view the PMRDA DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in PMRDA, Maharashtra."
+        },
+        {
+          "q": "Is the PMRDA DP map official?",
+          "a": "The Development Plan referenced here mirrors the latest publication from the local planning authority for PMRDA."
+        },
+        {
+          "q": "Can I see specific villages or sectors inside PMRDA?",
+          "a": "Yes — 29 sub-locations are indexed inside PMRDA, including Alandi, Bhor, Tal : Khed, Chakan, Hinjewadi and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the PMRDA region is free up to zoom level 14. High-detail (zoom 15–20) imagery is unlocked with a 7-day access pass. Note: this plan is currently a draft publication."
+        },
+        {
+          "q": "What devices does the PMRDA DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire PMRDA Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside PMRDA",
+        "Measure distances and areas directly on the PMRDA map",
+        "Mobile-friendly — view PMRDA DP zones on the go",
+        "29 indexed sub-locations inside PMRDA"
+      ]
+    },
+    {
+      "slug": "pune-dp-plan",
+      "productPurchaseID": "punedpplan",
+      "menuKey": "MaharashtraPune",
+      "displayName": "Pune",
+      "rawDistrictName": "Pune (Updated 16/10/2025)",
+      "shortName": "Pune",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/pune_black_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 18.639482,
+        "lng": 73.814163,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        73.709621,
+        18.562395,
+        73.933351,
+        18.721064
+      ],
+      "villages": [
+        {
+          "name": "Pune",
+          "lat": 18.509872,
+          "lng": 73.832764
+        },
+        {
+          "name": "Pimpri Chinchwad Municipal Corporation(Draft 2025)",
+          "lat": 18.63503,
+          "lng": 73.79587
+        },
+        {
+          "name": "Baramati",
+          "lat": 18.152659,
+          "lng": 74.57576
+        },
+        {
+          "name": "Lonavala",
+          "lat": 18.757445994569707,
+          "lng": 73.40365454315402
+        },
+        {
+          "name": "Wadgaon Sheri",
+          "lat": 18.5496379987736,
+          "lng": 73.91854758458153
+        },
+        {
+          "name": "Hadapsar",
+          "lat": 18.51124348088315,
+          "lng": 73.92904248677876
+        },
+        {
+          "name": "Lohegaon",
+          "lat": 18.590380596020974,
+          "lng": 73.92881539028333
+        },
+        {
+          "name": "Dhanori",
+          "lat": 18.595336854499863,
+          "lng": 73.8965193355275
+        },
+        {
+          "name": "Pashan",
+          "lat": 18.54186376830427,
+          "lng": 73.7951908780131
+        },
+        {
+          "name": "Kothrud",
+          "lat": 18.50319900459309,
+          "lng": 73.82360111669469
+        },
+        {
+          "name": "Dhankwadi",
+          "lat": 18.465587,
+          "lng": 73.85243
+        },
+        {
+          "name": "Dhayari",
+          "lat": 18.43677,
+          "lng": 73.813309
+        },
+        {
+          "name": "Narhe",
+          "lat": 18.4407,
+          "lng": 73.828067
+        },
+        {
+          "name": "Ambegaon Kh",
+          "lat": 18.436596,
+          "lng": 73.844309
+        },
+        {
+          "name": "Ambegaon Bk",
+          "lat": 18.455108,
+          "lng": 73.839768
+        },
+        {
+          "name": "Kondhave Bk",
+          "lat": 18.451615,
+          "lng": 73.884303
+        },
+        {
+          "name": "Kondhave Kh",
+          "lat": 18.471525,
+          "lng": 73.888058
+        },
+        {
+          "name": "Mahammadwadi",
+          "lat": 18.473796,
+          "lng": 73.916176
+        },
+        {
+          "name": "Fursungi",
+          "lat": 18.473446,
+          "lng": 73.965514
+        },
+        {
+          "name": "Saswad",
+          "lat": 18.345317,
+          "lng": 74.023873
+        },
+        {
+          "name": "Manjari Bk",
+          "lat": 18.513353,
+          "lng": 73.971103
+        },
+        {
+          "name": "Bavdhan",
+          "lat": 18.5028,
+          "lng": 73.77405
+        },
+        {
+          "name": "Baramati (updated)",
+          "lat": 18.16874,
+          "lng": 74.59362
+        },
+        {
+          "name": "Pandhare Industrial Estate",
+          "lat": 18.139534484130238,
+          "lng": 74.4548240771411
+        },
+        {
+          "name": "Pimpri Chinchwad MIDC",
+          "lat": 18.626087991828253,
+          "lng": 73.82994305554142
+        },
+        {
+          "name": "Indapur",
+          "lat": 18.110891689259372,
+          "lng": 75.02643527605976
+        },
+        {
+          "name": "Daund",
+          "lat": 18.46001160643953,
+          "lng": 74.58193434529367
+        }
+      ],
+      "sourceLink": "https://www.pmc.gov.in/b/dp-plan",
+      "price": "50",
+      "focal": {
+        "lat": 18.509872,
+        "lng": 73.832764,
+        "source": "village:Pune",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=18.509872&lng=73.832764&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=18.509872&lng=73.832764&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "pmrda-development-plan",
+          "displayName": "PMRDA",
+          "shortName": "PMRDA",
+          "distanceKm": 11.1
+        },
+        {
+          "slug": "karjat-msrdc-corridor",
+          "displayName": "Karjat – MSRDC Corridor",
+          "shortName": "Karjat - MSRDC Corridor",
+          "distanceKm": 63.8
+        },
+        {
+          "slug": "pune-mumbai-msrdc-corridor",
+          "displayName": "Pune–Mumbai – MSRDC Corridor",
+          "shortName": "Pune-Mumbai - MSRDC Corridor",
+          "distanceKm": 65.3
+        },
+        {
+          "slug": "naina-development-plan",
+          "displayName": "NAINA Region",
+          "shortName": "NAINA Region",
+          "distanceKm": 78.3
+        },
+        {
+          "slug": "kharghar-dp-plan",
+          "displayName": "Kharghar / Panvel Municipal Corporation",
+          "shortName": "Kharghar",
+          "distanceKm": 87.4
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Pune Development Plan online?",
+          "a": "You can view the Pune DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Pune, Maharashtra."
+        },
+        {
+          "q": "Is the Pune DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://www.pmc.gov.in/b/dp-plan"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Pune?",
+          "a": "Yes — 27 sub-locations are indexed inside Pune, including Pune, Pimpri Chinchwad Municipal Corporation(Draft 2025), Baramati, Lonavala and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Pune region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Pune DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Pune Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Pune",
+        "Measure distances and areas directly on the Pune map",
+        "Mobile-friendly — view Pune DP zones on the go",
+        "27 indexed sub-locations inside Pune"
+      ]
+    },
+    {
+      "slug": "pune-mumbai-msrdc-corridor",
+      "productPurchaseID": "msrdc",
+      "menuKey": "MSRDCMumbaiPuneExpressMaharashtra",
+      "displayName": "Pune–Mumbai – MSRDC Corridor",
+      "rawDistrictName": "Pune–Mumbai – MSRDC Corridor (New)",
+      "shortName": "Pune-Mumbai - MSRDC Corridor",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/msrdc_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 18.856415,
+        "lng": 73.237875,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        73.134059,
+        18.701794,
+        73.357647,
+        18.963326
+      ],
+      "villages": [
+        {
+          "name": "Pune–Mumbai – MSRDC Corridor",
+          "lat": 18.90129,
+          "lng": 73.19982
+        }
+      ],
+      "sourceLink": "https://msrdc.in/Site/Upload/Event/Modified%20Draft%20Development%20plan%20of%20MSRDC%20SPA%20U.pdf",
+      "price": "50",
+      "focal": {
+        "lat": 18.90129,
+        "lng": 73.19982,
+        "source": "village:Pune–Mumbai – MSRDC Corridor",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=18.90129&lng=73.19982&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=18.90129&lng=73.19982&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "karjat-msrdc-corridor",
+          "displayName": "Karjat – MSRDC Corridor",
+          "shortName": "Karjat - MSRDC Corridor",
+          "distanceKm": 6.1
+        },
+        {
+          "slug": "naina-development-plan",
+          "displayName": "NAINA Region",
+          "shortName": "NAINA Region",
+          "distanceKm": 13.8
+        },
+        {
+          "slug": "kharghar-dp-plan",
+          "displayName": "Kharghar / Panvel Municipal Corporation",
+          "shortName": "Kharghar",
+          "distanceKm": 25.4
+        },
+        {
+          "slug": "navi-mumbai-municipal-corporation-dp-plan",
+          "displayName": "Navi Mumbai Municipal Corporation",
+          "shortName": "Navi Mumbai Municipal Corporation",
+          "distanceKm": 34.9
+        },
+        {
+          "slug": "mumbai-eastern-suburbs-dp-plan",
+          "displayName": "Mumbai Eastern Suburbs",
+          "shortName": "Mumbai Eastern Suburbs",
+          "distanceKm": 44.8
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Pune-Mumbai - MSRDC Corridor Development Plan online?",
+          "a": "You can view the Pune–Mumbai – MSRDC Corridor DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Pune-Mumbai - MSRDC Corridor, Maharashtra."
+        },
+        {
+          "q": "Is the Pune-Mumbai - MSRDC Corridor DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://msrdc.in/Site/Upload/Event/Modified%20Draft%20Development%20plan%20of%20MSRDC%20SPA%20U.pdf"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Pune-Mumbai - MSRDC Corridor?",
+          "a": "Yes — 1 sub-locations are indexed inside Pune-Mumbai - MSRDC Corridor, including Pune–Mumbai – MSRDC Corridor and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Pune-Mumbai - MSRDC Corridor region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Pune-Mumbai - MSRDC Corridor DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Pune-Mumbai - MSRDC Corridor Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Pune-Mumbai - MSRDC Corridor",
+        "Measure distances and areas directly on the Pune-Mumbai - MSRDC Corridor map",
+        "Mobile-friendly — view Pune-Mumbai - MSRDC Corridor DP zones on the go",
+        "1 indexed sub-locations inside Pune-Mumbai - MSRDC Corridor"
+      ]
+    },
+    {
+      "slug": "sangli-dp-plan",
+      "productPurchaseID": "sangalidistrictweekly",
+      "menuKey": "SangliMirajMaharashtra",
+      "displayName": "Sangli/Miraj Region",
+      "rawDistrictName": "Sangli/Miraj Region",
+      "shortName": "Sangli",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_sangli.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 17.018579,
+        "lng": 74.661954,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        74.24733,
+        16.775172,
+        75.281318,
+        17.298882
+      ],
+      "villages": [
+        {
+          "name": "Sangli",
+          "lat": 16.850336,
+          "lng": 74.572083
+        },
+        {
+          "name": "Miraj",
+          "lat": 16.829471,
+          "lng": 74.646076
+        },
+        {
+          "name": "Kupwad",
+          "lat": 16.861959,
+          "lng": 74.614107
+        },
+        {
+          "name": "Jath",
+          "lat": 17.050520706422876,
+          "lng": 75.21392096301847
+        },
+        {
+          "name": "Ashta",
+          "lat": 16.94891727463458,
+          "lng": 74.40812491872943
+        },
+        {
+          "name": "Islampur",
+          "lat": 17.049909804643583,
+          "lng": 74.26306098636964
+        },
+        {
+          "name": "Tasgaon",
+          "lat": 17.034118071297293,
+          "lng": 74.60195229906746
+        },
+        {
+          "name": "Vita",
+          "lat": 17.269661287677714,
+          "lng": 74.53640814274678
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=sangli",
+      "price": "50",
+      "focal": {
+        "lat": 16.850336,
+        "lng": 74.572083,
+        "source": "village:Sangli",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=16.850336&lng=74.572083&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=16.850336&lng=74.572083&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "kolhapur-dp-plan",
+          "displayName": "Kolhapur",
+          "shortName": "Kolhapur",
+          "distanceKm": 66.1
+        },
+        {
+          "slug": "satara-region-dp-plan",
+          "displayName": "Satara Region",
+          "shortName": "Satara Region",
+          "distanceKm": 100.9
+        },
+        {
+          "slug": "mahabaleshwar-msrdc-corridor",
+          "displayName": "Mahabaleshwar – MSRDC Corridor",
+          "shortName": "Mahabaleshwar - MSRDC Corridor",
+          "distanceKm": 113.7
+        },
+        {
+          "slug": "solapur-dp-plan",
+          "displayName": "Solapur",
+          "shortName": "Solapur",
+          "distanceKm": 134.5
+        },
+        {
+          "slug": "pmrda-development-plan",
+          "displayName": "PMRDA",
+          "shortName": "PMRDA",
+          "distanceKm": 192.4
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Sangli Development Plan online?",
+          "a": "You can view the Sangli/Miraj Region DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Sangli, Maharashtra."
+        },
+        {
+          "q": "Is the Sangli DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=sangli"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Sangli?",
+          "a": "Yes — 8 sub-locations are indexed inside Sangli, including Sangli, Miraj, Kupwad, Jath and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Sangli region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Sangli DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Sangli Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Sangli",
+        "Measure distances and areas directly on the Sangli map",
+        "Mobile-friendly — view Sangli DP zones on the go",
+        "8 indexed sub-locations inside Sangli"
+      ]
+    },
+    {
+      "slug": "satara-region-dp-plan",
+      "productPurchaseID": "sataradistrict",
+      "menuKey": "SataraMaharashtra",
+      "displayName": "Satara Region",
+      "rawDistrictName": "Satara Region",
+      "shortName": "Satara Region",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_satara.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 17.681387,
+        "lng": 74.012596,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        73.956181,
+        17.609518,
+        74.075821,
+        17.758644
+      ],
+      "villages": [
+        {
+          "name": "Satara Municipal Council (Draft)",
+          "lat": 17.69111,
+          "lng": 74.00038
+        },
+        {
+          "name": "Karad",
+          "lat": 17.281237,
+          "lng": 74.197183
+        },
+        {
+          "name": "Malakapur",
+          "lat": 17.25439013776701,
+          "lng": 74.17749161689304
+        },
+        {
+          "name": "Shirwal",
+          "lat": 18.14289271264577,
+          "lng": 73.9769162421015
+        },
+        {
+          "name": "Khandala",
+          "lat": 18.058957164584474,
+          "lng": 74.0186806453188
+        },
+        {
+          "name": "Mhaswad",
+          "lat": 17.635008165750158,
+          "lng": 74.7856436469764
+        },
+        {
+          "name": "Mahabaleshwar",
+          "lat": 17.924399008015044,
+          "lng": 73.65742210304295
+        },
+        {
+          "name": "Phaltan",
+          "lat": 17.989751617224506,
+          "lng": 74.43089217757662
+        },
+        {
+          "name": "Wai",
+          "lat": 17.9515073,
+          "lng": 73.898346
+        },
+        {
+          "name": "Rahimatpur",
+          "lat": 17.59200498124856,
+          "lng": 74.19951642282976
+        },
+        {
+          "name": "Panchgani",
+          "lat": 17.925801397980635,
+          "lng": 73.8025151792269
+        }
+      ],
+      "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=satara",
+      "price": "50",
+      "focal": {
+        "lat": 17.69111,
+        "lng": 74.00038,
+        "source": "village:Satara Municipal Council (Draft)",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=17.69111&lng=74.00038&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=17.69111&lng=74.00038&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "mahabaleshwar-msrdc-corridor",
+          "displayName": "Mahabaleshwar – MSRDC Corridor",
+          "shortName": "Mahabaleshwar - MSRDC Corridor",
+          "distanceKm": 28.3
+        },
+        {
+          "slug": "sangli-dp-plan",
+          "displayName": "Sangli/Miraj Region",
+          "shortName": "Sangli",
+          "distanceKm": 100.9
+        },
+        {
+          "slug": "pmrda-development-plan",
+          "displayName": "PMRDA",
+          "shortName": "PMRDA",
+          "distanceKm": 101.9
+        },
+        {
+          "slug": "pune-dp-plan",
+          "displayName": "Pune",
+          "shortName": "Pune",
+          "distanceKm": 108.6
+        },
+        {
+          "slug": "kolhapur-dp-plan",
+          "displayName": "Kolhapur",
+          "shortName": "Kolhapur",
+          "distanceKm": 135.4
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Satara Region Development Plan online?",
+          "a": "You can view the Satara Region DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Satara Region, Maharashtra."
+        },
+        {
+          "q": "Is the Satara Region DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=satara"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Satara Region?",
+          "a": "Yes — 11 sub-locations are indexed inside Satara Region, including Satara Municipal Council (Draft), Karad, Malakapur, Shirwal and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Satara Region region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Satara Region DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Satara Region Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Satara Region",
+        "Measure distances and areas directly on the Satara Region map",
+        "Mobile-friendly — view Satara Region DP zones on the go",
+        "11 indexed sub-locations inside Satara Region"
+      ]
+    },
+    {
+      "slug": "solapur-dp-plan",
+      "productPurchaseID": "districtsolapur",
+      "menuKey": "MaharashtraSolapur",
+      "displayName": "Solapur",
+      "rawDistrictName": "Solapur (Update 31-01-2026)",
+      "shortName": "Solapur",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_solapur_district.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 17.703764,
+        "lng": 75.706199,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        75.29637,
+        17.505804,
+        75.963693,
+        18.086521
+      ],
+      "villages": [
+        {
+          "name": "Solapur (Draft Rev 2- Dt: 12-12-2025)",
+          "lat": 17.6667,
+          "lng": 75.909175
+        },
+        {
+          "name": "Mohol (Draft 2025)",
+          "lat": 17.808721783830418,
+          "lng": 75.63927574644734
+        },
+        {
+          "name": "Pandharpur (Draft 2025)",
+          "lat": 17.677191,
+          "lng": 75.320363
+        },
+        {
+          "name": "Barshi (Draft 2025)",
+          "lat": 18.236277,
+          "lng": 75.69211
+        },
+        {
+          "name": "Mangalwedha (Draft 2025)",
+          "lat": 17.515152,
+          "lng": 75.448364
+        },
+        {
+          "name": "Angar (Draft 2025)",
+          "lat": 17.902385,
+          "lng": 75.575226
+        },
+        {
+          "name": "Madha (Draft 2025)",
+          "lat": 18.03384590853992,
+          "lng": 75.5164987204569
+        },
+        {
+          "name": "Vairag (Draft 2025)",
+          "lat": 18.060789,
+          "lng": 75.7997172
+        },
+        {
+          "name": "Shripur (Draft 2025)",
+          "lat": 17.85202336409665,
+          "lng": 75.09805432644005
+        },
+        {
+          "name": "Akkalkot",
+          "lat": 17.521859,
+          "lng": 76.200529
+        },
+        {
+          "name": "Sangola",
+          "lat": 17.436332,
+          "lng": 75.191996
+        },
+        {
+          "name": "Tembhurni",
+          "lat": 18.02892,
+          "lng": 75.194467
+        },
+        {
+          "name": "Kurduwadi",
+          "lat": 18.093056,
+          "lng": 75.4184
+        },
+        {
+          "name": "Malshiras",
+          "lat": 17.861849,
+          "lng": 74.903678
+        },
+        {
+          "name": "Velapur",
+          "lat": 17.794608,
+          "lng": 75.055143
+        },
+        {
+          "name": "Akluj",
+          "lat": 17.889067,
+          "lng": 75.014607
+        },
+        {
+          "name": "Modnimb",
+          "lat": 17.914266,
+          "lng": 75.400552
+        },
+        {
+          "name": "Mandrup",
+          "lat": 17.494094,
+          "lng": 75.821328
+        },
+        {
+          "name": "Karmala",
+          "lat": 18.405992,
+          "lng": 75.196266
+        }
+      ],
+      "sourceLink": "https://www.solapurcorporation.gov.in/smc/city_development_plan_english",
+      "price": "50",
+      "focal": {
+        "lat": 17.6667,
+        "lng": 75.909175,
+        "source": "village:Solapur (Draft Rev 2- Dt: 12-12-2025)",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=17.6667&lng=75.909175&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=17.6667&lng=75.909175&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "osmanabad-dp-plan",
+          "displayName": "Osmanabad/Dharashiv Region",
+          "shortName": "Osmanabad",
+          "distanceKm": 66.5
+        },
+        {
+          "slug": "sangli-dp-plan",
+          "displayName": "Sangli/Miraj Region",
+          "shortName": "Sangli",
+          "distanceKm": 134.5
+        },
+        {
+          "slug": "latur-region-dp-plan",
+          "displayName": "Latur Region",
+          "shortName": "Latur Region",
+          "distanceKm": 134.7
+        },
+        {
+          "slug": "satara-region-dp-plan",
+          "displayName": "Satara Region",
+          "shortName": "Satara Region",
+          "distanceKm": 179.4
+        },
+        {
+          "slug": "kolhapur-dp-plan",
+          "displayName": "Kolhapur",
+          "shortName": "Kolhapur",
+          "distanceKm": 196.4
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Solapur Development Plan online?",
+          "a": "You can view the Solapur DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Solapur, Maharashtra."
+        },
+        {
+          "q": "Is the Solapur DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Maharashtra Town Planning. The official PDFs are linked from the source: https://www.solapurcorporation.gov.in/smc/city_development_plan_english"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Solapur?",
+          "a": "Yes — 19 sub-locations are indexed inside Solapur, including Solapur (Draft Rev 2- Dt: 12-12-2025), Mohol (Draft 2025), Pandharpur (Draft 2025), Barshi (Draft 2025) and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Solapur region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Solapur DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Solapur Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Solapur",
+        "Measure distances and areas directly on the Solapur map",
+        "Mobile-friendly — view Solapur DP zones on the go",
+        "19 indexed sub-locations inside Solapur"
+      ]
+    },
+    {
+      "slug": "thane-dp-plan",
+      "productPurchaseID": "thanedistrict",
+      "menuKey": "Thane",
+      "displayName": "Thane/Dombivali",
+      "rawDistrictName": "Thane/Dombivali (Updated)",
+      "shortName": "Thane",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_thane.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 19.213857,
+        "lng": 72.989457,
+        "minZoom": null,
+        "maxZoom": null
+      },
+      "bbox": [
+        72.912928,
+        19.129257,
+        73.076059,
+        19.29649
+      ],
+      "villages": [
+        {
+          "name": "Thane (August 2025 Revision)",
+          "lat": 19.20548,
+          "lng": 72.9783
+        },
+        {
+          "name": "Dombivali (part)",
+          "lat": 19.181525,
+          "lng": 73.092808
+        },
+        {
+          "name": "Kalyan- Atali and Ambivali",
+          "lat": 19.267504,
+          "lng": 73.18441
+        },
+        {
+          "name": "Bhivandi-Nizampur",
+          "lat": 19.285719,
+          "lng": 73.053733
+        },
+        {
+          "name": "Ulhas Nagar",
+          "lat": 19.221416624977447,
+          "lng": 73.16284639261553
+        },
+        {
+          "name": "Asangaon Tal: Shahpur",
+          "lat": 19.4187,
+          "lng": 73.27762
+        }
+      ],
+      "sourceLink": "",
+      "price": "50",
+      "focal": {
+        "lat": 19.20548,
+        "lng": 72.9783,
+        "source": "village:Thane (August 2025 Revision)",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=19.20548&lng=72.9783&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=19.20548&lng=72.9783&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "mumbai-eastern-suburbs-dp-plan",
+          "displayName": "Mumbai Eastern Suburbs",
+          "shortName": "Mumbai Eastern Suburbs",
+          "distanceKm": 12.2
+        },
+        {
+          "slug": "navi-mumbai-municipal-corporation-dp-plan",
+          "displayName": "Navi Mumbai Municipal Corporation",
+          "shortName": "Navi Mumbai Municipal Corporation",
+          "distanceKm": 14.8
+        },
+        {
+          "slug": "mira-bhayandar-dp-plan",
+          "displayName": "Mira-Bhayandar",
+          "shortName": "Mira-Bhayandar",
+          "distanceKm": 14.8
+        },
+        {
+          "slug": "mumbai-western-suburbs-dp-plan",
+          "displayName": "Mumbai Western Suburbs",
+          "shortName": "Mumbai Western Suburbs",
+          "distanceKm": 17.1
+        },
+        {
+          "slug": "kharghar-dp-plan",
+          "displayName": "Kharghar / Panvel Municipal Corporation",
+          "shortName": "Kharghar",
+          "distanceKm": 22.2
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Thane Development Plan online?",
+          "a": "You can view the Thane/Dombivali DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Thane, Maharashtra."
+        },
+        {
+          "q": "Is the Thane DP map official?",
+          "a": "The Development Plan referenced here mirrors the latest publication from the local planning authority for Thane."
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Thane?",
+          "a": "Yes — 6 sub-locations are indexed inside Thane, including Thane (August 2025 Revision), Dombivali (part), Kalyan- Atali and Ambivali, Bhivandi-Nizampur and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Thane region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Thane DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Thane Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Thane",
+        "Measure distances and areas directly on the Thane map",
+        "Mobile-friendly — view Thane DP zones on the go",
+        "6 indexed sub-locations inside Thane"
+      ]
+    },
+    {
+      "slug": "washim-region-dp-plan",
+      "productPurchaseID": "washim",
+      "menuKey": "WashimMaharashtra",
+      "displayName": "Washim Region",
+      "rawDistrictName": "Washim Region",
+      "shortName": "Washim Region",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/washim_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 20.098789,
+        "lng": 77.130976,
+        "minZoom": 11,
+        "maxZoom": 20
+      },
+      "bbox": [
+        77.094652,
+        20.050871,
+        77.171422,
+        20.140136
+      ],
+      "villages": [
+        {
+          "name": "Washim",
+          "lat": 20.111388559245913,
+          "lng": 77.1314261284673
+        }
+      ],
+      "sourceLink": "",
+      "price": "50",
+      "focal": {
+        "lat": 20.111388559245913,
+        "lng": 77.1314261284673,
+        "source": "village:Washim",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=20.111388559245913&lng=77.1314261284673&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=20.111388559245913&lng=77.1314261284673&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "hingoli-dp-plan",
+          "displayName": "Hingoli",
+          "shortName": "Hingoli",
+          "distanceKm": 42.6
+        },
+        {
+          "slug": "parbhani-region-dp-plan",
+          "displayName": "Parbhani Region",
+          "shortName": "Parbhani Region",
+          "distanceKm": 97.1
+        },
+        {
+          "slug": "akola-dp-plan",
+          "displayName": "Akola",
+          "shortName": "Akola",
+          "distanceKm": 99.1
+        },
+        {
+          "slug": "nanded-waghala-municipal-corporation-dp-plan",
+          "displayName": "Nanded Waghala Municipal Corporation",
+          "shortName": "Nanded Waghala Municipal Corporation",
+          "distanceKm": 106
+        },
+        {
+          "slug": "buldhana-region-dp-plan",
+          "displayName": "Buldhana Region",
+          "shortName": "Buldhana Region",
+          "distanceKm": 110.3
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Washim Region Development Plan online?",
+          "a": "You can view the Washim Region DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Washim Region, Maharashtra."
+        },
+        {
+          "q": "Is the Washim Region DP map official?",
+          "a": "The Development Plan referenced here mirrors the latest publication from the local planning authority for Washim Region."
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Washim Region?",
+          "a": "Yes — 1 sub-locations are indexed inside Washim Region, including Washim and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Washim Region region is free up to zoom level 14. High-detail (zoom 15–20) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Washim Region DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Washim Region Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Washim Region",
+        "Measure distances and areas directly on the Washim Region map",
+        "Mobile-friendly — view Washim Region DP zones on the go",
+        "1 indexed sub-locations inside Washim Region"
+      ]
+    }
+  ]
+}

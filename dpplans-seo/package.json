@@ -1,0 +1,24 @@
+{
+  "name": "dpplans-seo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Programmatic SEO landing pages for dpplans.com — static-exported Next.js, one page per Indian DP region.",
+  "scripts": {
+    "build:regions": "node scripts/build-regions.js",
+    "dev": "next dev",
+    "build": "npm run build:regions && next build && node scripts/postbuild-copy.js",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "14.2.15",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.10",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "typescript": "5.5.3"
+  }
+}

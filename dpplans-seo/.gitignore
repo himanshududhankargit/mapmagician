@@ -1,0 +1,10 @@
+node_modules/
+.next/
+# Build artifacts. Cloudflare Pages rebuilds out/ on every push; committing it would
+# cause stale-file confusion. Local previews regenerate it via `npm run build`.
+out/
+*.log
+.env
+.env.local
+.DS_Store
+next-env.d.ts

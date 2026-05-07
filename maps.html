@@ -7546,9 +7546,13 @@
                 map.setMapTypeId(this.value);
             });
 
-            // Home button — back to MapMagician landing page
+            // Home button — back to MapMagician landing page.
+            // mapmagician.in keeps the original marketing-index behavior. Every other
+            // host (dpplans.com in production, localhost during local dpplans-seo testing)
+            // goes to /home/, the regions-browser landing.
             document.getElementById('btn-home').addEventListener('click', () => {
-                window.location.href = 'index.html';
+                var onMapMagician = location.hostname.indexOf('mapmagician.in') !== -1;
+                window.location.href = onMapMagician ? 'index.html' : '/home/';
             });
 
             // ---------------- Go to Coordinates dialog ----------------
