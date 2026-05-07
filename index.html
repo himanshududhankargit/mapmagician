@@ -3,6 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        // dpplans.com landing → maps.html (skip the marketing index for the
+        // dpplans brand). Hostname-gated: mapmagician.in and any other host
+        // are unaffected. Path-gated: explicit /maps.html, /maps1.html, etc.
+        // are not redirected.
+        (function() {
+            var h = location.hostname;
+            var p = location.pathname;
+            if ((h === 'dpplans.com' || h === 'www.dpplans.com') &&
+                (p === '/' || p === '/index.html')) {
+                location.replace('/maps.html' + location.search + location.hash);
+            }
+        })();
+    </script>
     <title>Overlayr - Map Overlay Tool</title>
     
     <!-- Open Graph Meta Tags for Social Media Sharing -->
