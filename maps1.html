@@ -10057,9 +10057,34 @@
                     if (typeof sub.maxZoom === 'number' && zoom > sub.maxZoom) continue;
                     var sb = sub.bbox;
                     if (!sb) continue;
-                    // Bbox overlap test (rectangles intersect)
+                    // Bbox overlap test (rectangles intersect) — fast reject.
                     if (tb.maxLat < sb.minLat || tb.minLat > sb.maxLat ||
                         tb.maxLng < sb.minLng || tb.minLng > sb.maxLng) continue;
+                    // Polygon test — bbox overlap is necessary but not sufficient
+                    // when sub-sheets sit inside one another (e.g. a city-centre
+                    // congested-area polygon nested inside a non-congested
+                    // polygon sharing the same productPurchaseID). Without this
+                    // we fetch tiles for the inner sheet across its bbox
+                    // rectangle and 404 most of them. Cheap two-step test:
+                    // tile centre inside polygon, or any polygon vertex inside
+                    // the tile bbox.
+                    var poly = sub.polygon;
+                    if (poly && poly.length > 0) {
+                        var cLat = (tb.minLat + tb.maxLat) / 2;
+                        var cLng = (tb.minLng + tb.maxLng) / 2;
+                        var covers = pointInPolygon({ lat: cLat, lng: cLng }, poly);
+                        if (!covers) {
+                            for (var pvi = 0; pvi < poly.length; pvi++) {
+                                var pv = poly[pvi];
+                                if (pv.lat >= tb.minLat && pv.lat <= tb.maxLat &&
+                                    pv.lng >= tb.minLng && pv.lng <= tb.maxLng) {
+                                    covers = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!covers) continue;
+                    }
                     matches.push(sub);
                 }
 
