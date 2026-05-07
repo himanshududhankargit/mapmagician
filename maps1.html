@@ -853,11 +853,26 @@
                 <path fill="#000" d="m15,15h2v2h-2zm4,0h2v2h-2zm4,0h2v2h-2zm-8,8h2v2h-2zm4,0h2v2h-2zm4,0h2v2h-2zm-6,18h2v2h-2zm4,0h2v2h-2zm4,0h2v2h-2zm14,-12h2v2h-2zm0,4h2v2h-2zm0,4h2v2h-2zm-16,16h2v2h-2zm4,0h2v2h-2zm4,0h2v2h-2z"/>
             </svg>
         </div>
-        <div style="font-size:22px;font-weight:700;color:#1a1a1a;letter-spacing:-0.5px;font-family:'Segoe UI',Roboto,Arial,sans-serif;">MapMagician</div>
-        <div style="font-size:13px;color:#888;margin-top:4px;font-family:'Segoe UI',Roboto,Arial,sans-serif;">Development Plan GIS</div>
+        <div id="splash-brand-title" style="font-size:22px;font-weight:700;color:#1a1a1a;letter-spacing:-0.5px;font-family:'Segoe UI',Roboto,Arial,sans-serif;">MapMagician</div>
+        <div id="splash-brand-subtitle" style="font-size:13px;color:#888;margin-top:4px;font-family:'Segoe UI',Roboto,Arial,sans-serif;">Development Plan GIS</div>
         <div style="margin-top:28px;width:36px;height:36px;border:3px solid #e0e0e0;border-top-color:#00796B;border-radius:50%;animation:app-spin 0.8s linear infinite;"></div>
         <div id="app-loading-status" style="margin-top:16px;font-size:12px;color:#aaa;font-family:'Segoe UI',Roboto,Arial,sans-serif;">Loading maps...</div>
     </div>
+    <script>
+    (function(){
+        if (location.hostname.endsWith('dpplans.com')) {
+            var t = document.getElementById('splash-brand-title');
+            var s = document.getElementById('splash-brand-subtitle');
+            if (t) t.textContent = 'DpPlan.com';
+            if (s) {
+                s.innerHTML = 'Powered by <span style="color:#00796B;font-weight:600;letter-spacing:0.2px;">MapMagician</span>';
+                s.style.fontSize = '12px';
+                s.style.letterSpacing = '0.3px';
+                s.style.textTransform = 'none';
+            }
+        }
+    })();
+    </script>
     <style>
     @keyframes app-spin { to { transform: rotate(360deg); } }
     @keyframes app-icon-pulse { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.08); opacity:0.85; } }
@@ -1183,8 +1198,10 @@
         </div>
         <div class="layer-section">
             <div class="layer-section-title">About</div>
-            <p style="margin:0;font-size:13px;color:#555;line-height:1.5;">Development Plan GIS<br>Map Magician</p>
-            <p style="margin:6px 0 0;font-size:12px;color:#999;">www.mapmagician.in</p>
+            <p id="about-brand-name" style="margin:0;font-size:15px;font-weight:600;color:#1a1a1a;letter-spacing:-0.2px;line-height:1.3;">MapMagician</p>
+            <p id="about-brand-product" style="margin:2px 0 0;font-size:13px;color:#555;line-height:1.4;">Development Plan GIS</p>
+            <p id="about-brand-tagline" style="display:none;margin:8px 0 0;font-size:12px;color:#888;letter-spacing:0.2px;">Powered by <span style="color:#00796B;font-weight:600;">MapMagician</span></p>
+            <p id="about-brand-url" style="margin:8px 0 0;font-size:12px;color:#999;letter-spacing:0.1px;">www.mapmagician.in</p>
         </div>
         <div class="layer-section" id="settings-account-section">
             <div class="layer-section-title">Account</div>
@@ -1925,6 +1942,19 @@
         const ON_DPPLANS = location.hostname.endsWith('dpplans.com');
         const TILE_HOST = ON_DPPLANS ? 'tiles.dpplans.com' : 'tiles.mapmagician.in';
         const COOKIE_DOMAIN = ON_DPPLANS ? '.dpplans.com' : '.mapmagician.in';
+
+        // DpPlan.com co-branding: rebrand the in-app About section so the
+        // hosted product leads and MapMagician appears as the parent brand.
+        if (ON_DPPLANS) {
+            document.addEventListener('DOMContentLoaded', function() {
+                var n = document.getElementById('about-brand-name');
+                var u = document.getElementById('about-brand-url');
+                var t = document.getElementById('about-brand-tagline');
+                if (n) n.textContent = 'DpPlan.com';
+                if (u) u.textContent = 'www.dpplans.com';
+                if (t) t.style.display = '';
+            });
+        }
 
         // Firebase configuration
         const firebaseConfig = {
@@ -9974,6 +10004,48 @@
             };
         }
 
+        function _lineSegsIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
+            if (Math.max(x1, x2) < Math.min(x3, x4) || Math.max(x3, x4) < Math.min(x1, x2) ||
+                Math.max(y1, y2) < Math.min(y3, y4) || Math.max(y3, y4) < Math.min(y1, y2)) return false;
+            var det = (x2 - x1) * (y4 - y3) - (x4 - x3) * (y2 - y1);
+            if (Math.abs(det) < 1e-10) return false;
+            var t = ((x3 - x1) * (y4 - y3) - (x4 - x3) * (y3 - y1)) / det;
+            var u = -((x2 - x1) * (y3 - y1) - (x2 - x3) * (y2 - y1)) / det;
+            return t >= 0 && t <= 1 && u >= 0 && u <= 1;
+        }
+
+        // True if the polygon covers any part of the tile bbox tb. The third
+        // (edge-vs-edge) check is what the old per-tile code missed: at z>=17
+        // a tile (~150m wide) is often sliced by a polygon edge between two
+        // distant vertices, so center-outside + no-vertex-inside was wrongly
+        // rejecting valid edge tiles, leaving sharp blank rectangles along
+        // district boundaries.
+        function _polygonCoversTile(poly, tb) {
+            if (!poly || poly.length === 0) return false;
+            var cLat = (tb.minLat + tb.maxLat) / 2;
+            var cLng = (tb.minLng + tb.maxLng) / 2;
+            if (pointInPolygon({ lat: cLat, lng: cLng }, poly)) return true;
+            for (var i = 0; i < poly.length; i++) {
+                var pv = poly[i];
+                if (pv.lat >= tb.minLat && pv.lat <= tb.maxLat &&
+                    pv.lng >= tb.minLng && pv.lng <= tb.maxLng) return true;
+            }
+            var edges = [
+                [tb.minLat, tb.minLng, tb.maxLat, tb.minLng],
+                [tb.maxLat, tb.minLng, tb.maxLat, tb.maxLng],
+                [tb.maxLat, tb.maxLng, tb.minLat, tb.maxLng],
+                [tb.minLat, tb.maxLng, tb.minLat, tb.minLng]
+            ];
+            for (var j = 0, k = poly.length - 1; j < poly.length; k = j++) {
+                var s = poly[k], e = poly[j];
+                for (var ei = 0; ei < 4; ei++) {
+                    var b = edges[ei];
+                    if (_lineSegsIntersect(s.lat, s.lng, e.lat, e.lng, b[0], b[1], b[2], b[3])) return true;
+                }
+            }
+            return false;
+        }
+
         function CanvasMapType(layerDef, layerType, opacity) {
             this.tileSize = new google.maps.Size(256, 256);
             this.maxZoom = 22;
@@ -10080,20 +10152,7 @@
                     // the tile bbox.
                     var poly = sub.polygon;
                     if (poly && poly.length > 0) {
-                        var cLat = (tb.minLat + tb.maxLat) / 2;
-                        var cLng = (tb.minLng + tb.maxLng) / 2;
-                        var covers = pointInPolygon({ lat: cLat, lng: cLng }, poly);
-                        if (!covers) {
-                            for (var pvi = 0; pvi < poly.length; pvi++) {
-                                var pv = poly[pvi];
-                                if (pv.lat >= tb.minLat && pv.lat <= tb.maxLat &&
-                                    pv.lng >= tb.minLng && pv.lng <= tb.maxLng) {
-                                    covers = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!covers) continue;
+                        if (!_polygonCoversTile(poly, tb)) continue;
 
                         // Donut semantic: if the tile's centre sits inside any
                         // hole AND no hole vertex lies in the tile bbox, the
@@ -10102,6 +10161,8 @@
                         // straddles the hole boundary so partial data exists.)
                         var holes = sub.holes;
                         if (holes && holes.length > 0) {
+                            var cLat = (tb.minLat + tb.maxLat) / 2;
+                            var cLng = (tb.minLng + tb.maxLng) / 2;
                             var inHole = false;
                             for (var hi = 0; hi < holes.length && !inHole; hi++) {
                                 var hole = holes[hi];
@@ -10197,25 +10258,13 @@
                     tbU.maxLng < sbU.minLng || tbU.minLng > sbU.maxLng)) {
                     return div;
                 }
-                var polyU = _ldef.polygon;
-                var cLatU = (tbU.minLat + tbU.maxLat) / 2;
-                var cLngU = (tbU.minLng + tbU.maxLng) / 2;
-                var coversU = pointInPolygon({ lat: cLatU, lng: cLngU }, polyU);
-                if (!coversU) {
-                    for (var pviU = 0; pviU < polyU.length; pviU++) {
-                        var pvU = polyU[pviU];
-                        if (pvU.lat >= tbU.minLat && pvU.lat <= tbU.maxLat &&
-                            pvU.lng >= tbU.minLng && pvU.lng <= tbU.maxLng) {
-                            coversU = true;
-                            break;
-                        }
-                    }
-                }
-                if (!coversU) return div;
+                if (!_polygonCoversTile(_ldef.polygon, tbU)) return div;
 
                 // Donut semantic — see merged path above.
                 var holesU = _ldef.holes;
                 if (holesU && holesU.length > 0) {
+                    var cLatU = (tbU.minLat + tbU.maxLat) / 2;
+                    var cLngU = (tbU.minLng + tbU.maxLng) / 2;
                     var inHoleU = false;
                     for (var hiU = 0; hiU < holesU.length && !inHoleU; hiU++) {
                         var holeU = holesU[hiU];
