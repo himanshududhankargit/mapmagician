@@ -46,16 +46,6 @@ copyIfExists('AssetsGIS', 'AssetsGIS');
 fs.writeFileSync(path.join(OUT, 'CNAME'), 'dpplans.com\n');
 console.log('postbuild-copy: wrote out/CNAME = dpplans.com');
 
-// Cloudflare Pages _redirects: send root traffic straight to the live map, so direct
-// visitors land on /maps.html. The SEO landing for browsing regions lives at /home/.
-// 302 (temporary) so Google still crawls /home/ as the canonical "regions browser" page.
-const redirects = [
-  '/  /maps.html  302',
-  '',
-].join('\n');
-fs.writeFileSync(path.join(OUT, '_redirects'), redirects);
-console.log('postbuild-copy: wrote out/_redirects (/ -> /maps.html 302)');
-
 // Google Search Console — HTML-file verification token. Single line, exact contents
 // from the file Google generated. Goes at the site root so the property
 // `https://dpplans.com/` can be verified by fetching
@@ -66,3 +56,18 @@ fs.writeFileSync(
   'google-site-verification: ' + GOOGLE_VERIFY_FILE + '\n'
 );
 console.log('postbuild-copy: wrote out/' + GOOGLE_VERIFY_FILE);
+
+// Cloudflare Pages _redirects:
+//   1. Send root traffic straight to the live map (302 keeps /home/ as canonical browser).
+//   2. The first match wins — so the explicit 200-rewrite for the Google verification
+//      file MUST come BEFORE any wildcard or before Cloudflare's automatic .html-stripping
+//      kicks in. Status 200 in _redirects = rewrite (serve the resource without
+//      changing the URL the browser sees), which prevents the default .html→clean-URL
+//      308 that would otherwise break Search Console verification.
+const redirects = [
+  '/' + GOOGLE_VERIFY_FILE + '  /' + GOOGLE_VERIFY_FILE + '  200',
+  '/  /maps.html  302',
+  '',
+].join('\n');
+fs.writeFileSync(path.join(OUT, '_redirects'), redirects);
+console.log('postbuild-copy: wrote out/_redirects (' + GOOGLE_VERIFY_FILE + ' rewrite + / redirect)');
