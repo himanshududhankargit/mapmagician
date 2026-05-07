@@ -26,6 +26,9 @@ export const metadata: Metadata = {
     description: SITE.description,
   },
   twitter: { card: 'summary_large_image', site: SITE.twitter },
+  // Google Search Console site-verification token. Emits
+  // <meta name="google-site-verification" content="..." /> in every page's <head>.
+  verification: { google: 'xFVARIJYEs3hLQyWWu6u3qgdQVJPiMR0QQII8oXZqmI' },
 };
 
 export const viewport: Viewport = {
