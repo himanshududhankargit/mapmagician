@@ -1,11 +1,12 @@
 /**
  * Build dpplans-seo/data/regions.json from:
- *   - data/menuGIS.snapshot.json (committed snapshot of Firebase RTDB `menuGIS`)
+ *   - Firebase RTDB `menuGIS` (fetched live at build time — public read; no auth needed)
  *   - ../data/database/d1.bin (Maharashtra DP tile metadata, JSON — sibling in mapmagician-main)
  *   - ../data/database/d3.bin (legacy DP tile metadata, JSON)
  *
  * Output: data/regions.json — the single source of truth for static-site generation.
- * Run with `npm run build:regions`. Re-run when menuGIS or d1/d3 change.
+ * Run with `npm run build:regions`. Build fails loudly if RTDB is unreachable —
+ * Cloudflare Pages keeps the previous successful deploy live, so dpplans.com stays up.
  */
 
 const fs = require('fs');
@@ -14,7 +15,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 // dpplans-seo lives inside mapmagician-main, so d1/d3 are one level up.
 const MM_ROOT = path.resolve(ROOT, '..');
-const MENU_PATH = path.join(ROOT, 'data', 'menuGIS.snapshot.json');
+const MENU_GIS_URL = 'https://sodium-hour-256110.firebaseio.com/menuGIS.json';
 const D1_PATH = path.join(MM_ROOT, 'data', 'database', 'd1.bin');
 const D3_PATH = path.join(MM_ROOT, 'data', 'database', 'd3.bin');
 const OUT_PATH = path.join(ROOT, 'data', 'regions.json');
@@ -28,6 +29,14 @@ const MAPS_CANONICAL = 'https://dpplans.com/maps.html';
 
 function readJson(p) {
   return JSON.parse(fs.readFileSync(p, 'utf8'));
+}
+
+async function fetchMenuGIS() {
+  const r = await fetch(MENU_GIS_URL);
+  if (!r.ok) throw new Error(`menuGIS fetch failed: ${r.status} ${r.statusText}`);
+  const data = await r.json();
+  if (!data || typeof data !== 'object') throw new Error('menuGIS fetch returned non-object');
+  return data;
 }
 
 function slugify(str) {
@@ -236,8 +245,9 @@ function buildFeatures(region) {
   ];
 }
 
-function main() {
-  const menu = readJson(MENU_PATH);
+async function main() {
+  const menu = await fetchMenuGIS();
+  console.log(`fetched menuGIS from RTDB: ${Object.keys(menu).length} entries`);
   const d1 = readJson(D1_PATH);
   const d3 = readJson(D3_PATH);
   const centroids = { ...aggregateKml(d1), ...aggregateKml(d3) };
@@ -321,4 +331,7 @@ function main() {
   console.log('sample slugs:', regions.slice(0, 8).map(r => r.slug).join(', '));
 }
 
-main();
+main().catch(err => {
+  console.error('build-regions failed:', err);
+  process.exit(1);
+});
