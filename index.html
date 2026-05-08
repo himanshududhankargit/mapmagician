@@ -44,6 +44,64 @@
     <link rel="icon" type="image/png" href="AssetsGIS/mapmagiciansmall.png">
     <link rel="apple-touch-icon" href="AssetsGIS/mapmagiciansmall.png">
 
+    <!-- JSON-LD: FAQ targeting informational queries (what is GIS, how to overlay maps, etc.) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is GIS (Geographic Information System)?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "GIS is a technology that combines maps with data so you can visualize, analyze, and understand geographic information. A GIS overlays datasets — boundaries, zoning, satellite imagery — onto an interactive map so you can see relationships, patterns, and trends that aren't visible in raw data alone."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is a Development Plan (DP) map?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A Development Plan (DP) map is an official zoning and land-use map published by an Indian municipal authority — for example PMRDA (Pune), HMDA (Hyderabad), BBMP (Bengaluru), MCGM (Mumbai), or NMC (Nashik). It shows how land in the region is reserved or zoned for residential, commercial, industrial, public-utility, and other purposes."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I overlay a map or image on Google satellite imagery?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Use Overlayr — a free Android map overlay tool. Open the app, import any image, scanned plan, or PDF, place at least 3 control points to georeference it against Google satellite imagery, and the app will warp the image to fit. You can adjust transparency, measure area and distance, and export the result as KMZ for use in Google Earth or other GIS software."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is the MapMagician map overlay tool free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes — Overlayr (the Android map overlay and georeferencing app) is free to download from Google Play. The Development Plan GIS web viewer at mapmagician.in/maps.html is also free for browsing maps; high-zoom premium tiles for individual districts are unlocked via a 7-day pass."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which Indian regions have Development Plan maps available?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "157+ regions across India are covered, including Pune, PMRDA, Mumbai (Western/Eastern Suburbs and Island City), Navi Mumbai, Thane, Mira-Bhayandar, Palghar, Panvel/Kharghar, Solapur, Nashik, Nagpur Metropolitan Region, Chhatrapati Sambhaji Nagar (Aurangabad), Kolhapur, Satara, Sangli, Ahilyanagar, Hyderabad HMDA Periphery, Bengaluru, plus MSRDC corridors (Mumbai-Pune Expressway, Karjat, Mahabaleshwar). New regions are added regularly."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is mobile georeferencing and who uses it?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Mobile georeferencing is the process of aligning an image or scanned map to real-world coordinates using a phone or tablet. It's used by surveyors performing survey overlays, real-estate professionals marking property boundaries, urban planners visualizing zoning changes on-site, and field researchers mapping environmental features — without needing desktop GIS software."
+          }
+        }
+      ]
+    }
+    </script>
+
     <!-- JSON-LD Structured Data (schema.org) -->
     <script type="application/ld+json">
     {
@@ -1438,7 +1496,7 @@
     <section id="development-plan" class="app-section">
         <div class="container">
             <div class="app-header">
-                <img src="AssetsGIS/image-1.png" alt="Development Plan GIS" class="app-icon">
+                <img src="AssetsGIS/image-1.png" alt="Development Plan GIS Android app icon" class="app-icon" loading="lazy">
                 <div class="app-title">
                     <h2>Development Plan GIS</h2>
                     <p>Comprehensive GIS tools for urban development analysis</p>
@@ -1459,31 +1517,31 @@
                 </button>
                 <div class="screenshots" id="gisScreenshots">
                     <div class="screenshot" onclick="openFullscreen('AssetsGIS/demo-animation.gif', 'App Demo Animation', 'gis', 0)">
-                        <img src="AssetsGIS/demo-animation.gif" alt="App Demo Animation">
+                        <img src="AssetsGIS/demo-animation.gif" alt="Development Plan GIS demo — Maharashtra DP map overlaid on satellite imagery" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetsGIS/image-2.png', 'Georeferenced Plans Over Satellite Imagery', 'gis', 1)">
-                        <img src="AssetsGIS/image-2.png" alt="Georeferenced Plans Over Satellite Imagery">
+                        <img src="AssetsGIS/image-2.png" alt="Georeferenced Plans Over Satellite Imagery — Development Plan GIS" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetsGIS/image-3.png', 'Custom Markers and Area Measurement', 'gis', 2)">
-                        <img src="AssetsGIS/image-3.png" alt="Custom Markers and Area Measurement">
+                        <img src="AssetsGIS/image-3.png" alt="Custom Markers and Area Measurement on Development Plan map" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetsGIS/image-4.png', 'Download Development Plans', 'gis', 3)">
-                        <img src="AssetsGIS/image-4.png" alt="Download Development Plans">
+                        <img src="AssetsGIS/image-4.png" alt="Download Development Plans for offline use" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetsGIS/image-5.png', 'Part Development Plan View', 'gis', 4)">
-                        <img src="AssetsGIS/image-5.png" alt="Part Development Plan View">
+                        <img src="AssetsGIS/image-5.png" alt="Part Development Plan View — zoomed-in DP map detail" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetsGIS/image-6.png', 'Main Menu Interface', 'gis', 5)">
-                        <img src="AssetsGIS/image-6.png" alt="Main Menu Interface">
+                        <img src="AssetsGIS/image-6.png" alt="Main Menu Interface — Development Plan GIS Android app" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetsGIS/image-7.png', 'Maharashtra Districts Selection', 'gis', 6)">
-                        <img src="AssetsGIS/image-7.png" alt="Maharashtra Districts Selection">
+                        <img src="AssetsGIS/image-7.png" alt="Maharashtra Districts Selection — DP map browser" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetsGIS/image-8.png', 'Multiple Village Plans View', 'gis', 7)">
-                        <img src="AssetsGIS/image-8.png" alt="Multiple Village Plans View">
+                        <img src="AssetsGIS/image-8.png" alt="Multiple Village Plans View — gaon nakasha overlays" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetsGIS/image-9.png', 'Village Plan with Survey Numbers', 'gis', 8)">
-                        <img src="AssetsGIS/image-9.png" alt="Village Plan with Survey Numbers">
+                        <img src="AssetsGIS/image-9.png" alt="Village Plan with Survey Numbers — Maharashtra gaon nakasha" loading="lazy">
                     </div>
                 </div>
                 <button class="scroll-button next" onclick="scrollScreenshots('gis', 'right')">
@@ -1597,19 +1655,19 @@
                 </button>
                 <div class="screenshots" id="overlayrScreenshots">
                     <div class="screenshot" onclick="openFullscreen('AssetOverlayr/image-2.png', 'Import and Project Management', 'overlayr', 0)">
-                        <img src="AssetOverlayr/image-2.png" alt="Import and Project Management">
+                        <img src="AssetOverlayr/image-2.png" alt="Import and Project Management — Overlayr map overlay app" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetOverlayr/image-3.png', 'Saved Georeferencing Projects', 'overlayr', 1)">
-                        <img src="AssetOverlayr/image-3.png" alt="Saved Georeferencing Projects">
+                        <img src="AssetOverlayr/image-3.png" alt="Saved Georeferencing Projects — mobile georeferencing app" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetOverlayr/image-4.png', 'Georeferenced Overlay View', 'overlayr', 2)">
-                        <img src="AssetOverlayr/image-4.png" alt="Georeferenced Overlay View">
+                        <img src="AssetOverlayr/image-4.png" alt="Georeferenced Overlay View — map overlay on satellite imagery" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetOverlayr/image-5.png', 'Precision Point Selection', 'overlayr', 3)">
-                        <img src="AssetOverlayr/image-5.png" alt="Precision Point Selection">
+                        <img src="AssetOverlayr/image-5.png" alt="Precision Point Selection — control points for georeferencing" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetOverlayr/image-6.png', 'Map Matching and Alignment', 'overlayr', 4)">
-                        <img src="AssetOverlayr/image-6.png" alt="Map Matching and Alignment">
+                        <img src="AssetOverlayr/image-6.png" alt="Map Matching and Alignment — survey overlay on satellite imagery" loading="lazy">
                     </div>
                 </div>
                 <button class="scroll-button next" onclick="scrollScreenshots('overlayr', 'right')">
@@ -1729,7 +1787,7 @@
     <section id="location-plan-maker" class="app-section">
         <div class="container">
             <div class="app-header">
-                <img src="AssetsLocationPlanMaker/icon.png" alt="Location Plan Maker Pro" class="app-icon">
+                <img src="AssetsLocationPlanMaker/icon.png" alt="Location Plan Maker Pro Android app icon" class="app-icon" loading="lazy">
                 <div class="app-title">
                     <h2>Location Plan Maker Pro</h2>
                     <p>Create professional location plans, site maps & property layouts from your phone</p>
@@ -1763,25 +1821,25 @@
                 </button>
                 <div class="screenshots" id="lpmScreenshots">
                     <div class="screenshot" onclick="openFullscreen('AssetsLocationPlanMaker/screenshot-1.png', 'Professional Location Plan Output', 'lpm', 0)">
-                        <img src="AssetsLocationPlanMaker/screenshot-1.png" alt="Professional Location Plan Output">
+                        <img src="AssetsLocationPlanMaker/screenshot-1.png" alt="Professional Location Plan Output" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetsLocationPlanMaker/screenshot-2.png', 'Marker Placement & Categories', 'lpm', 1)">
-                        <img src="AssetsLocationPlanMaker/screenshot-2.png" alt="Marker Placement & Categories">
+                        <img src="AssetsLocationPlanMaker/screenshot-2.png" alt="Marker Placement & Categories" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetsLocationPlanMaker/screenshot-3.png', 'Road Drawing & Styling', 'lpm', 2)">
-                        <img src="AssetsLocationPlanMaker/screenshot-3.png" alt="Road Drawing & Styling">
+                        <img src="AssetsLocationPlanMaker/screenshot-3.png" alt="Road Drawing & Styling" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetsLocationPlanMaker/screenshot-4.png', 'Area & Distance Measurement', 'lpm', 3)">
-                        <img src="AssetsLocationPlanMaker/screenshot-4.png" alt="Area & Distance Measurement">
+                        <img src="AssetsLocationPlanMaker/screenshot-4.png" alt="Area & Distance Measurement" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetsLocationPlanMaker/screenshot-5.png', 'Region Marking & Polygons', 'lpm', 4)">
-                        <img src="AssetsLocationPlanMaker/screenshot-5.png" alt="Region Marking & Polygons">
+                        <img src="AssetsLocationPlanMaker/screenshot-5.png" alt="Region Marking & Polygons" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetsLocationPlanMaker/screenshot-6.png', 'Export & Share Options', 'lpm', 5)">
-                        <img src="AssetsLocationPlanMaker/screenshot-6.png" alt="Export & Share Options">
+                        <img src="AssetsLocationPlanMaker/screenshot-6.png" alt="Export & Share Options" loading="lazy">
                     </div>
                     <div class="screenshot" onclick="openFullscreen('AssetsLocationPlanMaker/sample-output.png', 'Sample Exported Location Plan', 'lpm', 6)">
-                        <img src="AssetsLocationPlanMaker/sample-output.png" alt="Sample Exported Location Plan">
+                        <img src="AssetsLocationPlanMaker/sample-output.png" alt="Sample Exported Location Plan — branded PDF output" loading="lazy">
                     </div>
                 </div>
                 <button class="scroll-button next" onclick="scrollScreenshots('lpm', 'right')">

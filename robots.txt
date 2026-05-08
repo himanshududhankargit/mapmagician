@@ -1,0 +1,5 @@
+User-Agent: *
+Allow: /
+
+Host: https://www.mapmagician.in
+Sitemap: https://www.mapmagician.in/sitemap.xml
