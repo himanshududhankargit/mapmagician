@@ -9027,7 +9027,7 @@
             if (!map) return;
             const c = map.getCenter();
             const center = { lat: c.lat(), lng: c.lng() };
-            const hasOldDP = oldDPGISPolygons.some(polygon => pointInPolygon(center, polygon));
+            const hasOldDP = oldDPGISPolygons.some(polygon => pointInPolygon(center, polygon.outer));
             btn.style.display = hasOldDP ? '' : 'none';
         }
 
