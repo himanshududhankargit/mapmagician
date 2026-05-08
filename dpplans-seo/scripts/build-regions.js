@@ -326,7 +326,28 @@ async function main() {
     seen.set(r.slug, r.menuKey);
   }
 
-  fs.writeFileSync(OUT_PATH, JSON.stringify({ generatedAt: new Date().toISOString(), count: regions.length, regions }, null, 2));
+  // Compare against the committed regions.json (ignoring generatedAt) so unchanged data
+  // doesn't cause a no-op file rewrite — keeps Cloudflare deploys idempotent and makes
+  // a true content change easy to spot in logs.
+  const newPayload = { count: regions.length, regions };
+  const newCanonical = JSON.stringify(newPayload);
+  let unchanged = false;
+  if (fs.existsSync(OUT_PATH)) {
+    try {
+      const prev = readJson(OUT_PATH);
+      const prevCanonical = JSON.stringify({ count: prev.count, regions: prev.regions });
+      unchanged = prevCanonical === newCanonical;
+    } catch (e) {
+      console.warn('could not read existing regions.json, will rewrite:', e.message);
+    }
+  }
+
+  if (unchanged) {
+    console.log(`regions unchanged (${regions.length} entries) — skipping write to ${path.relative(ROOT, OUT_PATH)}`);
+    return;
+  }
+
+  fs.writeFileSync(OUT_PATH, JSON.stringify({ generatedAt: new Date().toISOString(), ...newPayload }, null, 2));
   console.log(`wrote ${regions.length} regions to ${path.relative(ROOT, OUT_PATH)}`);
   console.log('sample slugs:', regions.slice(0, 8).map(r => r.slug).join(', '));
 }
