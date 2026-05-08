@@ -41,6 +41,11 @@ copyIfExists('manifest.json', 'manifest.json');
 copyIfExists('sw.js', 'sw.js');
 copyIfExists('AssetsGIS', 'AssetsGIS');
 
+// Staging slots: maps1.html, maps2.html, etc. — always test these on dpplans.com before promoting.
+fs.readdirSync(MM_ROOT)
+  .filter(f => /^maps\d+\.html$/.test(f))
+  .forEach(f => copyIfExists(f, f));
+
 // CNAME tells GitHub Pages / Cloudflare Pages which custom domain to bind. Cloudflare
 // Pages also reads this and treats it as authoritative.
 fs.writeFileSync(path.join(OUT, 'CNAME'), 'dpplans.com\n');
