@@ -4733,7 +4733,8 @@
         const DP_URL_DATABASE_NAME = "d1";
         const VILLAGE_URL_DATABASE_NAME = "d2";
         const OLD_DP_URL_DATABASE_NAME = "d3";
-        const LAYER_JSON_BASE = "data/database";
+        // dpplans.com Cloudflare Pages build doesn't ship data/database/ — fetch from mapmagician.in.
+        const LAYER_JSON_BASE = ON_DPPLANS ? "https://www.mapmagician.in/data/database" : "data/database";
 
         // Map settings
         const MAX_ZOOM_FOR_DP = 18;
