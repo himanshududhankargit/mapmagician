@@ -1831,17 +1831,23 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
-    <!-- Microsoft Clarity — heat maps + session replay -->
+    <!-- Microsoft Clarity — heat maps + session replay. Defer to after window.load
+         + 2s idle so the analytics script doesn't compete with map init for the
+         main thread. PageSpeed flagged ~57ms of Clarity work during initial render. -->
     <script type="text/javascript">
-        (function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window, document, "clarity", "script", "w9zgyteauk");
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                (function(c,l,a,r,i,t,y){
+                    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+                })(window, document, "clarity", "script", "w9zgyteauk");
+            }, 2000);
+        });
     </script>
     <!-- Razorpay checkout — loaded on demand from the buy-pass flow (see "if (typeof Razorpay === 'undefined')" below). -->
-    <!-- JSZip for extracting district geojson zips -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- JSZip — only used by the web worker on tile-zip imports, not at startup. defer it. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
     
     <!-- Firebase initialization must come after the Firebase scripts have loaded -->
     <script>
