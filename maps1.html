@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Development Plan Maps Online – Pune, Mumbai, Hyderabad, Bengaluru, Solapur, Nashik DP, Layout & Village Maps | MapMagician</title>
     <meta name="description" content="Free online viewer for Development Plan (DP), Layout Plan, and Village Maps across 40+ regions in India — Pune, Mumbai, Thane, Solapur, Nashik, Nagpur, Hyderabad HMDA, Bengaluru, Chhatrapati Sambhaji Nagar (Aurangabad), Kolhapur, Satara and more. Interactive GIS with survey overlay, distance & area measurement tools. Includes georeferenced maps for Maharashtra. Expanding to new cities and states.">
     <meta name="keywords" content="development plan map, DP map, India DP, Maharashtra DP, Telangana DP, Karnataka DP, Pune DP, Mumbai DP, Hyderabad DP, Bengaluru DP, Solapur DP, Nashik DP, Nagpur DP, layout plan, village map, gaon nakasha, PMRDA, NAINA, HMDA, BBMP, MSRDC corridor, regional plan, land use map, TP scheme, draft development plan, georeferenced map maharashtra, georeferenced map, survey overlay, map overlay, satellite map overlay, development plan gis, solapur town planning map, nashik dp plan map, dpplans, dp plans, dpplans.com, DP plans India, dp plans online">
@@ -721,10 +721,11 @@
         .disclaimer-italic { font-style:italic; color:#555; font-size:13px; }
         .disclaimer-actions { display:flex; gap:12px; padding:14px 24px 20px; justify-content:flex-end; flex-shrink:0; border-top:1px solid #eee; }
         .disclaimer-btn { padding:10px 28px; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
-        .disclaimer-btn-disagree { background:#F44336; color:#fff; }
-        .disclaimer-btn-disagree:hover { background:#D32F2F; }
-        .disclaimer-btn-agree { background:#4CAF50; color:#fff; }
-        .disclaimer-btn-agree:hover { background:#388E3C; }
+        /* Button colors meet WCAG AA contrast (4.5:1) for white text. */
+        .disclaimer-btn-disagree { background:#C62828; color:#fff; }
+        .disclaimer-btn-disagree:hover { background:#B71C1C; }
+        .disclaimer-btn-agree { background:#2E7D32; color:#fff; }
+        .disclaimer-btn-agree:hover { background:#1B5E20; }
         @media (max-width:480px) {
             .disclaimer-title { font-size:16px; padding:16px 18px 12px; }
             .disclaimer-body { padding:14px 18px; font-size:13px; }
@@ -1057,7 +1058,7 @@
     <!-- Top search row -->
     <div class="top-search-row">
         <input id="search-input" type="search" placeholder="Search Place..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-        <select id="map-type">
+        <select id="map-type" aria-label="Map type">
             <option value="hybrid">Hybrid</option>
             <option value="satellite">Satellite</option>
             <option value="roadmap">Roadmap</option>
@@ -1230,6 +1231,7 @@
             <div class="layer-section-title">Opacity</div>
             <div style="display:flex;align-items:center;gap:8px;">
                 <input type="range" id="opacity-slider" min="0" max="100" value="50"
+                       aria-label="Layer opacity"
                        style="flex:1;height:4px;-webkit-appearance:none;appearance:none;background:#ccc;border-radius:2px;outline:none;">
                 <span id="opacity-value" style="font-size:13px;color:#212121;min-width:36px;">50%</span>
             </div>
@@ -1317,7 +1319,7 @@
     <!-- Unified bottom bar -->
     <div class="bottom-bar" id="bottom-bar">
         <div class="bottom-bar-left">
-            <input type="range" class="opacity-strip-slider" id="info-opacity-slider" min="0" max="100" value="50">
+            <input type="range" class="opacity-strip-slider" id="info-opacity-slider" min="0" max="100" value="50" aria-label="Layer opacity">
             <span class="opacity-strip-label" id="opacity-strip-label">50%</span>
         </div>
         <div class="bottom-bar-center">
@@ -1830,10 +1832,17 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs — v10 compat. Namespaced API (firebase.auth(), firebase.database(),
+    <!-- Firebase SDKs — v12 compat. Namespaced API (firebase.auth(), firebase.database(),
          firebase.functions()) is preserved by the -compat builds, so existing call sites
-         work unchanged. v10 also drops the deprecated "unload" event listener that v8.10.1
-         was triggering in PageSpeed's Best Practices audit. -->
+         work unchanged.
+
+         NOTE: PageSpeed's "Unload event listeners are deprecated" warning is emitted by
+         Firebase's own long-poll iframe served from firebaseio.com (/.lp?dframe=t...),
+         not by code we control. Upgrading 8.10.1 → 12.13.0 did NOT remove it; the listener
+         lives in the iframe HTML that the Realtime DB connection bootstraps. We can't fix
+         this until upstream Firebase removes it. Loading the SDKs lazily is not a workaround
+         here — auth + getCloudFrontCookies are in the LCP critical path for tile delivery,
+         so deferring them would worsen LCP. Leave as-is. -->
     <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-auth-compat.js"></script>
