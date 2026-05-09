@@ -20,10 +20,12 @@ const sharp = require('sharp');
 const SRC = path.join(__dirname, 'AssetsGIS', '_source', 'hero-banner-source.jpg');
 const OUT_DIR = path.join(__dirname, 'AssetsGIS');
 
+// Locked to exact 3:1 ratio so the <img> width/height attrs match
+// every variant precisely (no Lighthouse "incorrect aspect ratio" warning).
 const VARIANTS = [
-    { width: 1920, webpQ: 78, jpgQ: 80 },
-    { width: 1280, webpQ: 78, jpgQ: 80 },
-    { width: 768,  webpQ: 75, jpgQ: 78 }
+    { width: 1920, height: 640, webpQ: 78, jpgQ: 80 },
+    { width: 1280, height: 427, webpQ: 78, jpgQ: 80 },
+    { width: 768,  height: 256, webpQ: 75, jpgQ: 78 }
 ];
 
 async function build() {
@@ -37,7 +39,12 @@ async function build() {
     console.log(`Source: ${meta.width}x${meta.height} ${meta.format} (${(fs.statSync(SRC).size / 1024).toFixed(0)} KB)`);
 
     for (const v of VARIANTS) {
-        const base = sharp(SRC).resize({ width: v.width, withoutEnlargement: true });
+        const base = sharp(SRC).resize({
+            width: v.width,
+            height: v.height,
+            fit: 'cover',
+            position: 'centre'
+        });
 
         const webpPath = path.join(OUT_DIR, `hero-banner-${v.width}.webp`);
         await base.clone().webp({ quality: v.webpQ, effort: 6 }).toFile(webpPath);

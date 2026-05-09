@@ -322,7 +322,11 @@
             height: 570px; /* 70px nav + 500px banner */
             background: #111827;
             overflow: hidden;
+            cursor: pointer;
+            transition: filter 0.25s;
         }
+        .map-banner:hover { filter: brightness(1.05); }
+        .map-banner:focus-visible { outline: 3px solid var(--primary-color); outline-offset: -3px; }
         .map-banner-img {
             position: absolute;
             top: 70px;
@@ -1260,8 +1264,10 @@
         </div>
     </nav>
 
-    <!-- Map Banner (static preview — interactive map opens in new tab) -->
-    <section class="map-banner" id="map-showcase" aria-label="Map Magician GIS preview">
+    <!-- Map Banner (static preview — click anywhere to open the interactive map) -->
+    <section class="map-banner" id="map-showcase" aria-label="Open Interactive Map" role="link" tabindex="0"
+             onclick="window.open('../maps.html?lat=19.076&amp;lng=72.877&amp;zoom=13', '_blank', 'noopener')"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.open('../maps.html?lat=19.076&amp;lng=72.877&amp;zoom=13', '_blank', 'noopener');}">
         <picture>
             <source
                 type="image/webp"
@@ -1292,7 +1298,8 @@
                target="_blank"
                rel="noopener"
                class="map-banner-cta"
-               aria-label="Open Interactive Map">
+               aria-label="Open Interactive Map"
+               onclick="event.stopPropagation()">
                 Open Interactive Map
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
