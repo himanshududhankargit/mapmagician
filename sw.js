@@ -1,12 +1,12 @@
 // Service worker — caches app shell so the installed PWA opens offline
 // instead of showing "This site can't be reached".
-const SW_VERSION = 'v9-2026-05-09';
+const SW_VERSION = 'v10-2026-05-09';
 const CACHE_NAME = 'mm-shell-' + SW_VERSION;
 
 // App-shell files to pre-cache on install
 const SHELL_URLS = [
     '/maps.html',
-    '/maps1-app.js',
+    '/maps-app.js',
     '/manifest.json',
     '/AssetsGIS/icons/icon-192x192.png',
     '/AssetsGIS/icons/icon-512x512.png',

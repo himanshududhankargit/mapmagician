@@ -1873,7 +1873,7 @@
         var onIdle = window.requestIdleCallback || function(cb) { return setTimeout(cb, 1); };
 
         // --- Disclaimer (shown on first map interaction, skipped in embed mode) ---
-        // _showDisclaimer is referenced from initMap inside maps1-app.js, which
+        // _showDisclaimer is referenced from initMap inside maps-app.js, which
         // is itself deferred — so wiring up the cancel/agree click handlers in
         // an idle callback can never miss a real user interaction.
         onIdle(function() {
@@ -2251,7 +2251,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js" defer></script>
+    <script src="maps-app.js" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
@@ -2261,7 +2261,7 @@
     </div>
 
     <!-- Load Google Maps API. defer (no async) so the browser preserves document order:
-         maps1-app.js executes first and defines initMap, THEN this script downloads, runs,
+         maps-app.js executes first and defines initMap, THEN this script downloads, runs,
          and invokes initMap via the ?callback= query param. With async + defer, async wins
          and this script could fire before initMap is on window — race condition. -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBBfEcHoR1yHBlnOvWKYLkr3C3ob6nb5hw&libraries=places&callback=initMap&loading=async" defer></script>
