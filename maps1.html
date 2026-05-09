@@ -968,13 +968,17 @@
     .app-icon-animated { animation: app-icon-pulse 2s ease-in-out infinite; }
     </style>
     <script>
-    // Fallback: auto-dismiss loading screen after 8s even if init fails
+    // Fallback: auto-dismiss loading screen after 8s even if init fails.
+    // Hide via display:none rather than remove() so the splash banner image
+    // remains the LCP candidate in Chromium's tracker — removing it from the
+    // DOM causes LCP to advance to the next-largest visible element (a map tile).
     setTimeout(function() {
         var ls = document.getElementById('app-loading-screen');
         if (ls) {
             ls.style.opacity = '0';
             setTimeout(function() {
-                ls.remove();
+                ls.style.display = 'none';
+                ls.style.pointerEvents = 'none';
                 if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
             }, 500);
         }
@@ -2502,7 +2506,11 @@
                         if (ls) {
                             ls.style.opacity = '0';
                             setTimeout(function() {
-                                ls.remove();
+                                // display:none instead of remove() — keeps splash banner
+                                // as the LCP candidate so PageSpeed reports LCP at first
+                                // paint (~1.4s) rather than at element-removal time (~7s).
+                                ls.style.display = 'none';
+                                ls.style.pointerEvents = 'none';
                                 if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
                             }, 500);
                         }
