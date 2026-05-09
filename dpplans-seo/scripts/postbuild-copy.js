@@ -37,13 +37,15 @@ function copyIfExists(srcRel, destRel) {
 }
 
 copyIfExists('maps.html', 'maps.html');
+copyIfExists('maps-app.js', 'maps-app.js');
 copyIfExists('manifest.json', 'manifest.json');
 copyIfExists('sw.js', 'sw.js');
 copyIfExists('AssetsGIS', 'AssetsGIS');
 
 // Staging slots: maps1.html, maps2.html, etc. — always test these on dpplans.com before promoting.
+// Also pick up their *-app.js companions (maps1-app.js, maps2-app.js, ...).
 fs.readdirSync(MM_ROOT)
-  .filter(f => /^maps\d+\.html$/.test(f))
+  .filter(f => /^maps\d+\.html$/.test(f) || /^maps\d+-app\.js$/.test(f))
   .forEach(f => copyIfExists(f, f));
 
 // CNAME tells GitHub Pages / Cloudflare Pages which custom domain to bind. Cloudflare
