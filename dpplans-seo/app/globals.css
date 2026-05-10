@@ -97,7 +97,7 @@ button { font: inherit; cursor: pointer; }
   .logo img { width: 32px; height: 32px; }
 }
 
-/* --- Map showcase (the "hero" of every page — same pattern as index.html .map-showcase) --- */
+/* --- Map showcase (the "hero" of every page — static banner JPG, no iframe) --- */
 .map-showcase {
   position: relative;
   width: 100%;
@@ -105,28 +105,19 @@ button { font: inherit; cursor: pointer; }
   background: var(--dark-bg);
   overflow: hidden;
 }
-.map-showcase .skeleton {
+.map-showcase .banner-link {
   position: absolute; inset: 0;
-  background: var(--dark-bg);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  z-index: 5; color: rgba(255, 255, 255, 0.6);
+  display: block;
+  text-decoration: none;
+  cursor: pointer;
 }
-.map-showcase .skeleton .loader {
-  width: 36px; height: 36px;
-  border: 3px solid rgba(255, 255, 255, 0.15);
-  border-top-color: rgba(255, 255, 255, 0.7);
-  border-radius: 50%;
-  animation: dpspin 1s linear infinite;
-  margin-bottom: 12px;
-}
-@keyframes dpspin { to { transform: rotate(360deg); } }
-.map-showcase iframe {
+.map-showcase .banner-img {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
-  border: 0; display: block;
-  z-index: 2;
+  object-fit: cover; display: block;
+  z-index: 1;
 }
-.map-showcase .overlay {
+.map-showcase .banner-overlay-content {
   position: absolute; inset: 0;
   background: linear-gradient(to bottom,
     rgba(17, 24, 39, 0.0) 0%,
@@ -135,11 +126,10 @@ button { font: inherit; cursor: pointer; }
     rgba(17, 24, 39, 0.92) 100%);
   display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
   padding: 0 24px 32px;
-  cursor: pointer;
   z-index: 10;
   transition: background 0.3s;
 }
-.map-showcase .overlay:hover {
+.map-showcase .banner-link:hover .banner-overlay-content {
   background: linear-gradient(to bottom,
     rgba(17, 24, 39, 0.0) 0%,
     rgba(17, 24, 39, 0.05) 35%,
@@ -333,6 +323,43 @@ button { font: inherit; cursor: pointer; }
 .btn-ghost:hover { border-color: var(--primary-color); color: var(--primary-color); text-decoration: none; }
 .btn-block { width: 100%; justify-content: center; }
 .btn-sm { padding: 7px 14px; font-size: 13px; border-radius: 20px; flex-shrink: 0; }
+.btn-white {
+  background: #fff;
+  color: var(--text-dark);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+.btn-white:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  text-decoration: none;
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* App promo blocks (Android + Microsoft Store) — copied from maps.html .pd-mobile-hint */
+.pd-mobile-hint {
+  display: flex; align-items: center; gap: 12px;
+  background: #FAFAFA; border-radius: 10px; padding: 10px 12px;
+  font-size: 12px; color: #546E7A; line-height: 1.45;
+}
+.pd-mobile-hint + .pd-mobile-hint { margin-top: 10px; }
+.pd-app-icon {
+  width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); background: #fff;
+}
+.pd-mobile-hint-text { flex: 1; min-width: 0; }
+.pd-mobile-hint-text strong { color: #37474F; font-weight: 600; display: block; margin-bottom: 1px; }
+.pd-play-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #fff; color: #1B5E20;
+  font-size: 11px; font-weight: 700; text-decoration: none;
+  padding: 7px 11px; border-radius: 7px;
+  border: 1px solid #C8E6C9; flex-shrink: 0;
+}
+.pd-play-btn:hover { background: #F1F8E9; text-decoration: none; }
+.pd-ms-btn { color: #0078D4; border-color: #B3D7F2; }
+.pd-ms-btn:hover { background: #E8F4FD; }
 
 /* Sub-locations list (main-column card) */
 .sublocations .aux-text { color: var(--text-light); font-size: 14.5px; margin-bottom: 16px; }

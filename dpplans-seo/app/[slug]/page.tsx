@@ -146,7 +146,6 @@ export default function RegionPage({ params }: Props) {
 
       <MapEmbed
         title={region.shortName}
-        embedUrl={region.embedUrl}
         fullMapUrl={region.fullMapUrl}
         caption={showcaseCaption}
       />
@@ -238,9 +237,39 @@ export default function RegionPage({ params }: Props) {
               The full {region.shortName} viewer includes measurement tools, search, and an overlay-toggle panel.
               Disclaimer and sign-in run on the app — first visit only.
             </p>
-            <a className="btn btn-primary btn-block" href={region.fullMapUrl} target="_blank" rel="noopener">
+            <a className="btn btn-white btn-block" href={region.fullMapUrl} target="_blank" rel="noopener">
               Launch interactive map →
             </a>
+          </div>
+
+          <div className="side-card">
+            <h3>Get the apps</h3>
+            <div className="pd-mobile-hint">
+              <picture>
+                <source srcSet="/AssetsGIS/image-1.webp" type="image/webp" />
+                <img className="pd-app-icon" src="/AssetsGIS/image-1.png" alt="MapMagician app icon" width={36} height={36} loading="lazy" decoding="async" />
+              </picture>
+              <div className="pd-mobile-hint-text">
+                <strong>Prefer mobile?</strong>Get the Android app for on-the-go access.
+              </div>
+              <a className="pd-play-btn" href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="#1B5E20" aria-hidden="true"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z" /></svg>
+                Google Play
+              </a>
+            </div>
+            <div className="pd-mobile-hint">
+              <picture>
+                <source srcSet="/AssetsGIS/image-1.webp" type="image/webp" />
+                <img className="pd-app-icon" src="/AssetsGIS/image-1.png" alt="MapMagician app icon" width={36} height={36} loading="lazy" decoding="async" />
+              </picture>
+              <div className="pd-mobile-hint-text">
+                <strong>Want desktop app?</strong>Get MapMagician from the Microsoft Store.
+              </div>
+              <a className="pd-play-btn pd-ms-btn" href="https://apps.microsoft.com/detail/9PNZDK3DQPL0?hl=en-us&gl=IN&ocid=pdpshare" target="_blank" rel="noopener">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="#0078D4" aria-hidden="true"><path d="M1 1h10v10H1zm12 0h10v10H13zM1 13h10v10H1zm12 0h10v10H13z" /></svg>
+                Microsoft Store
+              </a>
+            </div>
           </div>
 
           {region.nearby.length > 0 && (
