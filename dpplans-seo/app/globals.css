@@ -212,7 +212,7 @@ button { font: inherit; cursor: pointer; }
 
 /* --- Region body (two-column grid below the showcase) --- */
 .region-body { display: grid; gap: 32px; padding: 40px 0; }
-@media (min-width: 940px) { .region-body { grid-template-columns: minmax(0, 1fr) 320px; } }
+@media (min-width: 940px) { .region-body { grid-template-columns: minmax(0, 1fr) 360px; } }
 
 .text-block p { margin-bottom: 14px; color: var(--text-dark); font-size: 15.5px; line-height: 1.7; }
 .text-block p:last-child { margin-bottom: 0; }
@@ -360,15 +360,6 @@ button { font: inherit; cursor: pointer; }
 .pd-play-btn:hover { background: #F1F8E9; text-decoration: none; }
 .pd-ms-btn { color: #0078D4; border-color: #B3D7F2; }
 .pd-ms-btn:hover { background: #E8F4FD; }
-
-/* Sidebar (~320px) is too narrow for icon | text | button on one row. Stack
-   text at top, button full-width at bottom. The app icon is dropped in this
-   context — it's already visible at the top of the page and adds visual noise
-   without info at this size. */
-.side-card .pd-mobile-hint { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 14px; }
-.side-card .pd-app-icon { display: none; }
-.side-card .pd-mobile-hint-text { font-size: 12.5px; }
-.side-card .pd-play-btn { width: 100%; justify-content: center; padding: 10px; font-size: 12.5px; }
 
 /* Sub-locations list (main-column card) */
 .sublocations .aux-text { color: var(--text-light); font-size: 14.5px; margin-bottom: 16px; }
