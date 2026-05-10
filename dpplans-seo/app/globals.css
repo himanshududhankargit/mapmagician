@@ -361,13 +361,14 @@ button { font: inherit; cursor: pointer; }
 .pd-ms-btn { color: #0078D4; border-color: #B3D7F2; }
 .pd-ms-btn:hover { background: #E8F4FD; }
 
-/* Sidebar (~320px) is too narrow for icon | text | button on one row. Let the
-   button wrap to a full-width second row so the description text doesn't get
-   crushed into 4-line wrapping. */
-.side-card .pd-mobile-hint { flex-wrap: wrap; row-gap: 10px; }
-.side-card .pd-app-icon { width: 32px; height: 32px; }
+/* Sidebar (~320px) is too narrow for icon | text | button on one row. Stack
+   text at top, button full-width at bottom. The app icon is dropped in this
+   context — it's already visible at the top of the page and adds visual noise
+   without info at this size. */
+.side-card .pd-mobile-hint { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 14px; }
+.side-card .pd-app-icon { display: none; }
 .side-card .pd-mobile-hint-text { font-size: 12.5px; }
-.side-card .pd-play-btn { flex-basis: 100%; justify-content: center; padding: 9px 11px; font-size: 12px; }
+.side-card .pd-play-btn { width: 100%; justify-content: center; padding: 10px; font-size: 12.5px; }
 
 /* Sub-locations list (main-column card) */
 .sublocations .aux-text { color: var(--text-light); font-size: 14.5px; margin-bottom: 16px; }
