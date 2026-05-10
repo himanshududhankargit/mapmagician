@@ -361,6 +361,14 @@ button { font: inherit; cursor: pointer; }
 .pd-ms-btn { color: #0078D4; border-color: #B3D7F2; }
 .pd-ms-btn:hover { background: #E8F4FD; }
 
+/* Sidebar (~320px) is too narrow for icon | text | button on one row. Let the
+   button wrap to a full-width second row so the description text doesn't get
+   crushed into 4-line wrapping. */
+.side-card .pd-mobile-hint { flex-wrap: wrap; row-gap: 10px; }
+.side-card .pd-app-icon { width: 32px; height: 32px; }
+.side-card .pd-mobile-hint-text { font-size: 12.5px; }
+.side-card .pd-play-btn { flex-basis: 100%; justify-content: center; padding: 9px 11px; font-size: 12px; }
+
 /* Sub-locations list (main-column card) */
 .sublocations .aux-text { color: var(--text-light); font-size: 14.5px; margin-bottom: 16px; }
 .sublocation-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
