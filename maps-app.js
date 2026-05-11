@@ -1968,6 +1968,26 @@
             return { inside: bestArea !== Infinity, area: bestArea };
         }
 
+        // Phase 1: returns an array of candidate indices into `layerArray`
+        // for `point`. With a Flatbush index registered via _buildLayerIndex,
+        // this returns only entries whose bbox contains the point — typically
+        // <10 hits out of 100–500 entries. Without the index, returns the
+        // full range so the caller's behavior is unchanged.
+        function _candidateIndicesAtPoint(layerArray, point) {
+            if (!layerArray || layerArray.length === 0) return [];
+            var meta = _layerIndexMeta.get(layerArray);
+            if (meta) {
+                var hits = meta.index.search(point.lng, point.lat, point.lng, point.lat);
+                var map = meta.idxMap;
+                var out = new Array(hits.length);
+                for (var j = 0; j < hits.length; j++) out[j] = map[hits[j]];
+                return out;
+            }
+            var all = new Array(layerArray.length);
+            for (var i = 0; i < layerArray.length; i++) all[i] = i;
+            return all;
+        }
+
         function findDistrictAtCenter() {
             if (!map) return null;
             const c = map.getCenter();
@@ -1990,7 +2010,11 @@
                         bestTile = stickyTile;
                     }
                 }
-                for (const tile of dpLayerData) {
+                // Phase 1: narrow to entries whose bbox covers center via the
+                // Flatbush index. Falls back to a full scan when no index.
+                var dpcCands = _candidateIndicesAtPoint(dpLayerData, center);
+                for (var dpci = 0; dpci < dpcCands.length; dpci++) {
+                    const tile = dpLayerData[dpcCands[dpci]];
                     if (tile === bestTile) continue; // skip sticky tile, already seeded
                     var check = _checkLayerEntryAtPoint(tile, center);
                     if (check.inside) {
@@ -3391,7 +3415,15 @@
         }
 
         // --- Web Worker: all polygon math runs off the main thread ---
+        // Resolve the Flatbush URL relative to the document, then bake it into
+        // the worker source as a JSON-escaped literal so importScripts inside
+        // the blob worker can pull it from the page's origin. If Flatbush
+        // fails to load (CSP, offline, etc.) the worker silently falls back
+        // to a linear scan — same behavior as before Phase 1.
+        const _flatbushUrlForWorker = new URL('AssetsGIS/flatbush.js', location.href).href;
         const workerCode = `
+            try { importScripts(${JSON.stringify(_flatbushUrlForWorker)}); } catch (e) { /* fallback: linear scan */ }
+
             function pointInPolygon(point, polygon) {
                 let inside = false;
                 for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
@@ -3464,12 +3496,23 @@
             // pushes data once via { kind:'loadLayer' } (and again if the backing
             // array reference changes — e.g. a cache-version refetch). Subsequent
             // 'compute' messages carry only viewport + active types.
+            //
+            // Phase 1: loadLayer may also carry a Flatbush index (indexBuffer +
+            // indexIdxMap) — when present we use index.search to narrow the
+            // compute loop from O(N) to O(log N + K). Absent index → linear scan.
             const layerCache = {};
 
             self.onmessage = function(e) {
                 const msg = e.data;
                 if (msg.kind === 'loadLayer') {
-                    layerCache[msg.type] = msg.data;
+                    const cached = { data: msg.data, index: null, idxMap: null };
+                    if (msg.indexBuffer && msg.indexIdxMap && typeof Flatbush !== 'undefined') {
+                        try {
+                            cached.index = Flatbush.from(msg.indexBuffer);
+                            cached.idxMap = new Int32Array(msg.indexIdxMap);
+                        } catch (err) { /* fallback to linear scan */ }
+                    }
+                    layerCache[msg.type] = cached;
                     return;
                 }
                 // kind: 'compute'
@@ -3477,11 +3520,22 @@
                 const results = {};
                 for (let k = 0; k < activeTypes.length; k++) {
                     const at = activeTypes[k];
-                    const data = layerCache[at.type];
-                    if (!data) continue;
+                    const cached = layerCache[at.type];
+                    if (!cached) continue;
+                    const data = cached.data;
                     const decisions = new Array(data.length);
-                    for (let i = 0; i < data.length; i++) {
-                        decisions[i] = shouldLoadTile(data[i], currentZoom, centerPoint, vp, at.zoomLimits);
+                    for (let i = 0; i < data.length; i++) decisions[i] = false;
+                    if (cached.index) {
+                        const hits = cached.index.search(vp.minLng, vp.minLat, vp.maxLng, vp.maxLat);
+                        const map = cached.idxMap;
+                        for (let h = 0; h < hits.length; h++) {
+                            const i = map[hits[h]];
+                            decisions[i] = shouldLoadTile(data[i], currentZoom, centerPoint, vp, at.zoomLimits);
+                        }
+                    } else {
+                        for (let i = 0; i < data.length; i++) {
+                            decisions[i] = shouldLoadTile(data[i], currentZoom, centerPoint, vp, at.zoomLimits);
+                        }
                     }
                     results[at.type] = decisions;
                 }
@@ -3642,6 +3696,9 @@
                 zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
                 fullscreenControl: false,
                 gestureHandling: isEmbedMode ? 'none' : 'greedy',
+                // Suppress Google's POI hit-testing and icon rendering — we don't use
+                // place clicks, and it's a documented pan-jank source on low-end Android.
+                clickableIcons: false,
                 maxZoom: MAX_FREE_ZOOM
             });
 
@@ -6639,7 +6696,14 @@
             // to DP/oldDP layers. Villages have their own productPurchaseIDs
             // but each village entry is independent and the marker/addon code
             // depends on per-entry villageName/latLng fields the merge clears.
-            return shouldMerge ? _mergeByProductPurchaseID(processed) : processed;
+            const result = shouldMerge ? _mergeByProductPurchaseID(processed) : processed;
+            // Phase 1: register a Flatbush spatial index in _layerIndexMeta
+            // so per-pan / per-tile viewport queries skip the linear scan
+            // over all entries. Also registers a sub-sheet index per merged
+            // entry in _subIndexMeta (consumed by CanvasMapType.getTile).
+            // Safe no-op if Flatbush failed to load.
+            _buildLayerIndex(result);
+            return result;
         }
 
         // --- Layer-registry cache with live version-stamp listener ---
@@ -6893,8 +6957,10 @@
             // 4-corner union rectangle. Without this, every village near a
             // merged DP region (e.g. Pune) gets a false-positive "inside DP"
             // and createVillageMarkers skips it — so no marker shows up.
-            for (var i = 0; i < dpLayerData.length; i++) {
-                if (_checkLayerEntryAtPoint(dpLayerData[i], pt).inside) return true;
+            // Phase 1: candidate list is index-narrowed when available.
+            var cands = _candidateIndicesAtPoint(dpLayerData, pt);
+            for (var i = 0; i < cands.length; i++) {
+                if (_checkLayerEntryAtPoint(dpLayerData[cands[i]], pt).inside) return true;
             }
             return false;
         }
@@ -6906,19 +6972,24 @@
             var pt = { lat: center.lat, lng: center.lng };
 
             // Check current DP polygons (merged-entry safe via _checkLayerEntryAtPoint)
+            // Phase 1: candidate list is index-narrowed when available.
             if (dpLayerData && dpLayerData.length > 0) {
-                for (var i = 0; i < dpLayerData.length; i++) {
-                    if (_checkLayerEntryAtPoint(dpLayerData[i], pt).inside) {
-                        return dpLayerData[i].productPurchaseID || null;
+                var dpCands = _candidateIndicesAtPoint(dpLayerData, pt);
+                for (var i = 0; i < dpCands.length; i++) {
+                    var dp = dpLayerData[dpCands[i]];
+                    if (_checkLayerEntryAtPoint(dp, pt).inside) {
+                        return dp.productPurchaseID || null;
                     }
                 }
             }
 
             // Check old DP polygons (like Android's oldDPPolygonArraylist)
             if (typeof oldDPLayerData !== 'undefined' && oldDPLayerData && oldDPLayerData.length > 0) {
-                for (var j = 0; j < oldDPLayerData.length; j++) {
-                    if (_checkLayerEntryAtPoint(oldDPLayerData[j], pt).inside) {
-                        return oldDPLayerData[j].productPurchaseID || null;
+                var oldCands = _candidateIndicesAtPoint(oldDPLayerData, pt);
+                for (var j = 0; j < oldCands.length; j++) {
+                    var od = oldDPLayerData[oldCands[j]];
+                    if (_checkLayerEntryAtPoint(od, pt).inside) {
+                        return od.productPurchaseID || null;
                     }
                 }
             }
@@ -7714,6 +7785,67 @@
             return out;
         }
 
+        // Phase 1 spatial index — Flatbush bbox tree per layer array so that
+        // isInsideDPRegion / getDPProductIdForVillage / findDistrictAtCenter
+        // and the tile-visibility worker can stop linear-scanning 100–500
+        // entries on every pan. Each merged entry also gets a sub-sheet
+        // Flatbush consumed by CanvasMapType.getTile. Coordinates: x = lng,
+        // y = lat.
+        //
+        // Side-channel via WeakMap (NOT expando properties on the arrays /
+        // entries): the layer array is shipped to the tile worker via
+        // postMessage, which structured-clones it. Flatbush instances hold
+        // non-cloneable typed-array constructor refs (Float64Array etc.), so
+        // attaching them as expando properties triggers DataCloneError.
+        // WeakMap keeps them main-thread-only.
+        const _layerIndexMeta = new WeakMap();  // layer array -> { index, indexBuffer, idxMap }
+        const _subIndexMeta = new WeakMap();    // merged entry -> { index, idxMap }
+
+        function _buildLayerIndex(entries) {
+            if (!entries || entries.length === 0) return entries;
+            if (typeof Flatbush === 'undefined') return entries;
+
+            let nIndexable = 0;
+            for (let i = 0; i < entries.length; i++) {
+                if (entries[i] && entries[i].bbox) nIndexable++;
+            }
+            if (nIndexable === 0) return entries;
+
+            const fb = new Flatbush(nIndexable);
+            const idxMap = new Int32Array(nIndexable);
+            let j = 0;
+            for (let i = 0; i < entries.length; i++) {
+                const e = entries[i];
+                const b = e && e.bbox;
+                if (!b) continue;
+                fb.add(b.minLng, b.minLat, b.maxLng, b.maxLat);
+                idxMap[j++] = i;
+
+                // Sub-sheet index for merged entries.
+                if (e.isMerged && Array.isArray(e.subSheets) && e.subSheets.length > 0) {
+                    const subs = e.subSheets;
+                    let nSub = 0;
+                    for (let k = 0; k < subs.length; k++) if (subs[k] && subs[k].bbox) nSub++;
+                    if (nSub > 0) {
+                        const sfb = new Flatbush(nSub);
+                        const subMap = new Int32Array(nSub);
+                        let m = 0;
+                        for (let k = 0; k < subs.length; k++) {
+                            const sb = subs[k] && subs[k].bbox;
+                            if (!sb) continue;
+                            sfb.add(sb.minLng, sb.minLat, sb.maxLng, sb.maxLat);
+                            subMap[m++] = k;
+                        }
+                        sfb.finish();
+                        _subIndexMeta.set(e, { index: sfb, idxMap: subMap });
+                    }
+                }
+            }
+            fb.finish();
+            _layerIndexMeta.set(entries, { index: fb, indexBuffer: fb.data, idxMap: idxMap });
+            return entries;
+        }
+
         function parseKML(kml) {
             if (!kml) return null;
 
@@ -7797,7 +7929,21 @@
                 if (!visible || !dataLoaded || !data || !data.length) return;
                 if (currentZoom < limits[0] || currentZoom > limits[1]) return;
                 if (_workerSentRefs[type] !== data) {
-                    tileWorker.postMessage({ kind: 'loadLayer', type: type, data: data });
+                    const msg = { kind: 'loadLayer', type: type, data: data };
+                    const transfer = [];
+                    // Phase 1: ship the Flatbush index alongside the data. We
+                    // slice the index ArrayBuffer + copy the idxMap so the
+                    // main thread's Flatbush instance keeps working after the
+                    // transfer detaches the worker-side buffers. Sidecar via
+                    // _layerIndexMeta (NOT array expandos) — see comment by
+                    // _buildLayerIndex for why.
+                    const meta = _layerIndexMeta.get(data);
+                    if (meta) {
+                        msg.indexBuffer = meta.indexBuffer.slice(0);
+                        msg.indexIdxMap = new Int32Array(meta.idxMap).buffer;
+                        transfer.push(msg.indexBuffer, msg.indexIdxMap);
+                    }
+                    tileWorker.postMessage(msg, transfer);
                     _workerSentRefs[type] = data;
                 }
                 activeTypes.push({ type: type, zoomLimits: limits });
@@ -7953,6 +8099,15 @@
                         urlPrefix: tileBaseUrl + (lk.endsWith('/') ? lk : lk + '/')
                     };
                 });
+                // Phase 1: carry over the Flatbush sub-sheet index registered
+                // by _buildLayerIndex (sidecar WeakMap keyed by the merged
+                // entry — see _subIndexMeta). getTile uses it to skip the
+                // linear scan when the merged entry has many sub-sheets.
+                // May be undefined if Flatbush didn't load or no sub-sheet
+                // had a bbox — getTile falls back to the linear loop then.
+                var _smeta = _subIndexMeta.get(def);
+                this._subFlatbush = _smeta ? _smeta.index : null;
+                this._subFlatbushIdxMap = _smeta ? _smeta.idxMap : null;
                 this.urlPrefix_ = '';
             } else {
                 this._merged = false;
@@ -7999,7 +8154,22 @@
             if (this._merged) {
                 var tb = _tileCoordToBoundsLatLng(tileCoord.x, tileCoord.y, zoom);
                 var matches = [];
-                for (var si = 0; si < this._subSheets.length; si++) {
+                // Phase 1: narrow the sub-sheet iteration via the Flatbush
+                // index built in _buildLayerIndex. For merged entries with
+                // many sub-sheets, this drops the per-tile cost from O(N) to
+                // O(log N + K) where K = sub-sheets actually overlapping the
+                // tile bbox. Fallback path: index missing → original linear
+                // scan, identical semantics.
+                var _candIdxs = null;
+                if (this._subFlatbush) {
+                    var _hits = this._subFlatbush.search(tb.minLng, tb.minLat, tb.maxLng, tb.maxLat);
+                    var _imap = this._subFlatbushIdxMap;
+                    _candIdxs = new Array(_hits.length);
+                    for (var _ci = 0; _ci < _hits.length; _ci++) _candIdxs[_ci] = _imap[_hits[_ci]];
+                }
+                var _candN = _candIdxs ? _candIdxs.length : this._subSheets.length;
+                for (var _si = 0; _si < _candN; _si++) {
+                    var si = _candIdxs ? _candIdxs[_si] : _si;
                     var sub = this._subSheets[si];
                     if (typeof sub.minZoom === 'number' && zoom < sub.minZoom) continue;
                     if (typeof sub.maxZoom === 'number' && zoom > sub.maxZoom) continue;
