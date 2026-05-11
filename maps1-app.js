@@ -1969,16 +1969,16 @@
         }
 
         // Phase 1: returns an array of candidate indices into `layerArray`
-        // for `point`. With a Flatbush `_index` attached, this returns only
-        // entries whose bbox contains the point — typically <10 hits out of
-        // 100–500 entries. Without the index, returns the full range so the
-        // caller's behavior is unchanged.
+        // for `point`. With a Flatbush index registered via _buildLayerIndex,
+        // this returns only entries whose bbox contains the point — typically
+        // <10 hits out of 100–500 entries. Without the index, returns the
+        // full range so the caller's behavior is unchanged.
         function _candidateIndicesAtPoint(layerArray, point) {
             if (!layerArray || layerArray.length === 0) return [];
-            var idx = layerArray._index;
-            if (idx) {
-                var hits = idx.search(point.lng, point.lat, point.lng, point.lat);
-                var map = layerArray._indexIdxMap;
+            var meta = _layerIndexMeta.get(layerArray);
+            if (meta) {
+                var hits = meta.index.search(point.lng, point.lat, point.lng, point.lat);
+                var map = meta.idxMap;
                 var out = new Array(hits.length);
                 for (var j = 0; j < hits.length; j++) out[j] = map[hits[j]];
                 return out;
@@ -6697,11 +6697,11 @@
             // but each village entry is independent and the marker/addon code
             // depends on per-entry villageName/latLng fields the merge clears.
             const result = shouldMerge ? _mergeByProductPurchaseID(processed) : processed;
-            // Phase 1: attach a Flatbush spatial index so per-pan / per-tile
-            // viewport queries skip the linear scan over all entries. Also
-            // populates entry._subFlatbush on merged entries for the per-tile
-            // sub-sheet pick inside CanvasMapType.getTile. Safe no-op if
-            // Flatbush failed to load.
+            // Phase 1: register a Flatbush spatial index in _layerIndexMeta
+            // so per-pan / per-tile viewport queries skip the linear scan
+            // over all entries. Also registers a sub-sheet index per merged
+            // entry in _subIndexMeta (consumed by CanvasMapType.getTile).
+            // Safe no-op if Flatbush failed to load.
             _buildLayerIndex(result);
             return result;
         }
@@ -7785,16 +7785,22 @@
             return out;
         }
 
-        // Phase 1 spatial index — attaches a Flatbush bbox tree to the entry
-        // array so isInsideDPRegion / getDPProductIdForVillage / the tile
-        // worker can stop linear-scanning 100–500 entries on every pan. Each
-        // merged entry also gets its own `_subFlatbush` over its sub-sheets
-        // (consumed by CanvasMapType.getTile). Coordinates: x = lng, y = lat.
+        // Phase 1 spatial index — Flatbush bbox tree per layer array so that
+        // isInsideDPRegion / getDPProductIdForVillage / findDistrictAtCenter
+        // and the tile-visibility worker can stop linear-scanning 100–500
+        // entries on every pan. Each merged entry also gets a sub-sheet
+        // Flatbush consumed by CanvasMapType.getTile. Coordinates: x = lng,
+        // y = lat.
         //
-        // Mutates `entries` (attaches `_index`, `_indexBuffer`, `_indexIdxMap`
-        // as expando array props; attaches `_subFlatbush` + map to each
-        // merged entry). Returns `entries` unchanged. No-op if Flatbush
-        // hasn't loaded or there are zero indexable bboxes.
+        // Side-channel via WeakMap (NOT expando properties on the arrays /
+        // entries): the layer array is shipped to the tile worker via
+        // postMessage, which structured-clones it. Flatbush instances hold
+        // non-cloneable typed-array constructor refs (Float64Array etc.), so
+        // attaching them as expando properties triggers DataCloneError.
+        // WeakMap keeps them main-thread-only.
+        const _layerIndexMeta = new WeakMap();  // layer array -> { index, indexBuffer, idxMap }
+        const _subIndexMeta = new WeakMap();    // merged entry -> { index, idxMap }
+
         function _buildLayerIndex(entries) {
             if (!entries || entries.length === 0) return entries;
             if (typeof Flatbush === 'undefined') return entries;
@@ -7831,15 +7837,12 @@
                             subMap[m++] = k;
                         }
                         sfb.finish();
-                        e._subFlatbush = sfb;
-                        e._subFlatbushIdxMap = subMap;
+                        _subIndexMeta.set(e, { index: sfb, idxMap: subMap });
                     }
                 }
             }
             fb.finish();
-            entries._index = fb;
-            entries._indexBuffer = fb.data; // ArrayBuffer — transferable to worker
-            entries._indexIdxMap = idxMap;  // flatbush idx -> entries[] idx
+            _layerIndexMeta.set(entries, { index: fb, indexBuffer: fb.data, idxMap: idxMap });
             return entries;
         }
 
@@ -7930,11 +7933,14 @@
                     const transfer = [];
                     // Phase 1: ship the Flatbush index alongside the data. We
                     // slice the index ArrayBuffer + copy the idxMap so the
-                    // main thread's `data._index` keeps working after the
-                    // transfer detaches the worker-side buffers.
-                    if (data._indexBuffer && data._indexIdxMap) {
-                        msg.indexBuffer = data._indexBuffer.slice(0);
-                        msg.indexIdxMap = new Int32Array(data._indexIdxMap).buffer;
+                    // main thread's Flatbush instance keeps working after the
+                    // transfer detaches the worker-side buffers. Sidecar via
+                    // _layerIndexMeta (NOT array expandos) — see comment by
+                    // _buildLayerIndex for why.
+                    const meta = _layerIndexMeta.get(data);
+                    if (meta) {
+                        msg.indexBuffer = meta.indexBuffer.slice(0);
+                        msg.indexIdxMap = new Int32Array(meta.idxMap).buffer;
                         transfer.push(msg.indexBuffer, msg.indexIdxMap);
                     }
                     tileWorker.postMessage(msg, transfer);
@@ -8093,13 +8099,15 @@
                         urlPrefix: tileBaseUrl + (lk.endsWith('/') ? lk : lk + '/')
                     };
                 });
-                // Phase 1: carry over the Flatbush sub-sheet index attached by
-                // _buildLayerIndex. getTile uses it to skip the linear scan
-                // when the merged entry has many sub-sheets. May be undefined
-                // if Flatbush didn't load or no sub-sheet had a bbox — getTile
-                // falls back to the linear loop in that case.
-                this._subFlatbush = def._subFlatbush || null;
-                this._subFlatbushIdxMap = def._subFlatbushIdxMap || null;
+                // Phase 1: carry over the Flatbush sub-sheet index registered
+                // by _buildLayerIndex (sidecar WeakMap keyed by the merged
+                // entry — see _subIndexMeta). getTile uses it to skip the
+                // linear scan when the merged entry has many sub-sheets.
+                // May be undefined if Flatbush didn't load or no sub-sheet
+                // had a bbox — getTile falls back to the linear loop then.
+                var _smeta = _subIndexMeta.get(def);
+                this._subFlatbush = _smeta ? _smeta.index : null;
+                this._subFlatbushIdxMap = _smeta ? _smeta.idxMap : null;
                 this.urlPrefix_ = '';
             } else {
                 this._merged = false;
