@@ -736,6 +736,25 @@
                 return;
             }
 
+            // Silent-unlock if already owned (e.g. pendingPurchase resumed after
+            // login over a region the account already purchased on another device).
+            // fetchPurchaseStatus(true) ran in the auth listener before this
+            // re-trigger, so activePurchases is fresh — no need to call createOrder.
+            if (hasPurchase(productId)) {
+                document.getElementById('zoom-restrict-overlay').classList.remove('open');
+                setMapMaxZoom(21);
+                enableMapInteraction();
+                showUnlockToast(regionName);
+                try { await fetchCloudFrontCookies(); } catch (e) {}
+                clearAllLayersOfType(dpOverlays);
+                dpTileStatus = Array(dpLayerData.length).fill(false);
+                loadTilesBasedOnViewport();
+                lastCheckedRegionId = null;
+                stickyTile = null;
+                stickyDistrict = null;
+                return;
+            }
+
             // Show loading overlay
             const loadingOverlay = document.getElementById('payment-loading-overlay');
             document.getElementById('payment-loading-sub').textContent = '7-Day Pass: ' + regionName;
@@ -853,7 +872,10 @@
             } catch (error) {
                 loadingOverlay.classList.remove('open');
                 console.error('Purchase error:', error);
-                if (error.code === 'already-exists') {
+                // Firebase JS SDK 8.x callable wraps HttpsError codes as
+                // "functions/<code>" on the client — match both forms.
+                var ecode = (error && error.code) || '';
+                if (ecode === 'already-exists' || ecode === 'functions/already-exists') {
                     // Already purchased — unlock the region and close paywall
                     await fetchPurchaseStatus(true);
                     setMapMaxZoom(21);
@@ -881,6 +903,24 @@
                 document.getElementById('auth-dialog-desc').textContent =
                     'Sign in with your Google account to subscribe to ' + regionName + '.';
                 document.getElementById('auth-dialog-overlay').classList.add('open');
+                return;
+            }
+
+            // Silent-unlock if already active (one-time or subscription) — same
+            // post-login resume case as buyRegion. hasPurchase covers both plan
+            // types (see this function's own existing use at line below).
+            if (hasPurchase(productId)) {
+                document.getElementById('zoom-restrict-overlay').classList.remove('open');
+                setMapMaxZoom(21);
+                enableMapInteraction();
+                showUnlockToast(regionName);
+                try { await fetchCloudFrontCookies(); } catch (e) {}
+                clearAllLayersOfType(dpOverlays);
+                dpTileStatus = Array(dpLayerData.length).fill(false);
+                loadTilesBasedOnViewport();
+                lastCheckedRegionId = null;
+                stickyTile = null;
+                stickyDistrict = null;
                 return;
             }
 
@@ -1023,7 +1063,8 @@
             } catch (error) {
                 loadingOverlay.classList.remove('open');
                 console.error('Subscription error:', error);
-                if (error.code === 'already-exists') {
+                var ecode = (error && error.code) || '';
+                if (ecode === 'already-exists' || ecode === 'functions/already-exists') {
                     await fetchPurchaseStatus(true);
                     if (hasPurchase(productId)) {
                         setMapMaxZoom(21);
@@ -7523,6 +7564,16 @@
                 return;
             }
 
+            // Silent-unlock if already active — post-login resume over an
+            // already-purchased village should show the toast, not re-prompt payment.
+            if (hasVillagePurchase(villageName)) {
+                showUnlockToast(villageName);
+                updateVillageMarkerStyles();
+                var vItem = villageDataByName.get(villageName);
+                if (vItem) zoomToVillage(vItem);
+                return;
+            }
+
             var loadingOverlay = document.getElementById('payment-loading-overlay');
             document.getElementById('payment-loading-sub').textContent = 'Village Plan: ' + villageName;
             loadingOverlay.classList.add('open');
@@ -7621,10 +7672,11 @@
                 rzp.open();
             } catch (error) {
                 loadingOverlay.classList.remove('open');
-                if (error.code === 'already-exists') {
+                var ecode = (error && error.code) || '';
+                if (ecode === 'already-exists' || ecode === 'functions/already-exists') {
                     await fetchVillagePurchases();
                     updateVillageMarkerStyles();
-                    updateStatus(villageName + ' is already active!');
+                    showUnlockToast(villageName);
                 } else {
                     alert('Payment error: ' + (error.message || JSON.stringify(error)));
                     updateStatus('Payment failed');
