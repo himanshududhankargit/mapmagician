@@ -2249,6 +2249,11 @@
         });
     </script>
     
+    <!-- Flatbush: static spatial index (UMD, exposes window.Flatbush). Used to skip
+         linear scans of layer entries / sub-sheets during pan & in the tile-visibility
+         worker. defer keeps it ordered before maps1-app.js. -->
+    <script src="AssetsGIS/flatbush.js" defer></script>
+
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
