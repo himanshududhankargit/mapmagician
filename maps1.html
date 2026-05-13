@@ -926,6 +926,10 @@
     </style>
 </head>
 <body>
+    <!-- SEO-only H1: the visual UI is a full-viewport map app with no chrome H1.
+         .sr-only (line 192) keeps this out of the visual layout but in the DOM, so
+         Googlebot can read the page topic. Do not remove without an alternative H1. -->
+    <h1 class="sr-only">Development Plan Maps — Pune, Mumbai, Hyderabad, Bengaluru, Nashik, Nagpur, Thane and 40+ Indian Regions</h1>
     <!-- App loading screen — banner image is the LCP element so first paint is fast.
          Existing IDs preserved so the dpplans rebrand script and fade-out logic still work. -->
     <div id="app-loading-screen" style="position:fixed;inset:0;z-index:99999;background:#111827;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;overflow:hidden;">
