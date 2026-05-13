@@ -451,7 +451,11 @@
 
         // --- Subscription status ---
         async function fetchSubscriptionStatus() {
-            if (!currentUser || currentUser.isAnonymous) return;
+            if (!currentUser || currentUser.isAnonymous) {
+                activeSubscriptions.clear();
+                try { updateGraceRenewBanner(); } catch (e) { /* non-fatal */ }
+                return;
+            }
             try {
                 var getSubscriptionStatus = functions.httpsCallable('getSubscriptionStatus');
                 var result = await getSubscriptionStatus();
@@ -461,6 +465,58 @@
                 });
             } catch (e) {
                 console.error('Failed to fetch subscription status:', e);
+            }
+            try { updateGraceRenewBanner(); } catch (e) { /* non-fatal */ }
+        }
+
+        // Show a persistent banner above #bottom-bar when any subscription is in the
+        // 3-day grace window. Renew button reuses the same flow as the My Purchases
+        // panel's Renew button. Dismiss is session-scoped (returns next page load).
+        function updateGraceRenewBanner() {
+            var banner = document.getElementById('grace-renew-banner');
+            if (!banner) return;
+            if (!currentUser || currentUser.isAnonymous) {
+                banner.style.display = 'none';
+                return;
+            }
+            if (sessionStorage.getItem('graceBannerDismissed') === '1') {
+                banner.style.display = 'none';
+                return;
+            }
+            var graceSub = null, gracePid = null, graceName = null;
+            activeSubscriptions.forEach(function(sub, pid) {
+                if (graceSub) return;
+                if (sub && sub.graceAppliedThisCycle
+                    && Number(sub.graceExpiry || 0) > Date.now()) {
+                    var district = (typeof findDistrictByPurchaseId === 'function')
+                        ? findDistrictByPurchaseId(pid) : null;
+                    graceSub = sub;
+                    gracePid = pid;
+                    graceName = district ? district.districtName : pid;
+                }
+            });
+            if (!graceSub) {
+                banner.style.display = 'none';
+                return;
+            }
+            var regionEl = document.getElementById('grace-renew-banner-region');
+            if (regionEl) regionEl.textContent = graceName;
+            var bb = document.getElementById('bottom-bar');
+            banner.style.bottom = (bb ? bb.offsetHeight : 56) + 'px';
+            banner.style.display = 'flex';
+
+            var renewBtn = document.getElementById('grace-renew-banner-btn');
+            if (renewBtn) {
+                renewBtn.onclick = function() {
+                    renewRegionSubscription(gracePid, graceName);
+                };
+            }
+            var dismissBtn = document.getElementById('grace-renew-banner-dismiss');
+            if (dismissBtn) {
+                dismissBtn.onclick = function() {
+                    sessionStorage.setItem('graceBannerDismissed', '1');
+                    banner.style.display = 'none';
+                };
             }
         }
 
