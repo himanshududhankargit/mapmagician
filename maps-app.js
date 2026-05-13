@@ -451,7 +451,11 @@
 
         // --- Subscription status ---
         async function fetchSubscriptionStatus() {
-            if (!currentUser || currentUser.isAnonymous) return;
+            if (!currentUser || currentUser.isAnonymous) {
+                activeSubscriptions.clear();
+                try { updateGraceRenewBanner(); } catch (e) { /* non-fatal */ }
+                return;
+            }
             try {
                 var getSubscriptionStatus = functions.httpsCallable('getSubscriptionStatus');
                 var result = await getSubscriptionStatus();
@@ -461,6 +465,63 @@
                 });
             } catch (e) {
                 console.error('Failed to fetch subscription status:', e);
+            }
+            try { updateGraceRenewBanner(); } catch (e) { /* non-fatal */ }
+        }
+
+        // Show a banner above #bottom-bar when any subscription is in the 3-day grace
+        // window. Renew button reuses the same flow as the My Purchases panel's Renew
+        // button. Dismiss is in-memory only — reloading the page brings the banner back
+        // so users keep being reminded.
+        var _graceBannerDismissed = false;
+        function updateGraceRenewBanner() {
+            var banner = document.getElementById('grace-renew-banner');
+            if (!banner) return;
+            if (!currentUser || currentUser.isAnonymous) {
+                banner.style.display = 'none';
+                return;
+            }
+            if (_graceBannerDismissed) {
+                banner.style.display = 'none';
+                return;
+            }
+            var graceSub = null, gracePid = null, graceName = null;
+            activeSubscriptions.forEach(function(sub, pid) {
+                if (graceSub) return;
+                if (sub && sub.graceAppliedThisCycle
+                    && Number(sub.graceExpiry || 0) > Date.now()) {
+                    var district = (typeof findDistrictByPurchaseId === 'function')
+                        ? findDistrictByPurchaseId(pid) : null;
+                    graceSub = sub;
+                    gracePid = pid;
+                    // Use full district name so banner + Razorpay Checkout match the
+                    // name shown in the My Purchases row.
+                    graceName = district ? district.districtName : pid;
+                }
+            });
+            if (!graceSub) {
+                banner.style.display = 'none';
+                return;
+            }
+            var regionEl = document.getElementById('grace-renew-banner-region');
+            if (regionEl) regionEl.textContent = graceName;
+            var bb = document.getElementById('bottom-bar');
+            // 8px gap above bottom bar so the pill visually floats rather than touches.
+            banner.style.bottom = ((bb ? bb.offsetHeight : 56) + 8) + 'px';
+            banner.style.display = 'flex';
+
+            var renewBtn = document.getElementById('grace-renew-banner-btn');
+            if (renewBtn) {
+                renewBtn.onclick = function() {
+                    renewRegionSubscription(gracePid, graceName);
+                };
+            }
+            var dismissBtn = document.getElementById('grace-renew-banner-dismiss');
+            if (dismissBtn) {
+                dismissBtn.onclick = function() {
+                    _graceBannerDismissed = true;
+                    banner.style.display = 'none';
+                };
             }
         }
 
@@ -1123,6 +1184,85 @@
             });
 
             overlay.classList.add('open');
+        }
+
+        // Manual retry for a subscription in the 3-day grace window after an
+        // Autopay charge failure. Fetches the open Razorpay invoice via a
+        // server callable, then opens Razorpay Checkout against that invoice.
+        // On success, the subscription.charged webhook clears grace and extends
+        // the period; we just poll fetchSubscriptionStatus a couple of times.
+        async function renewRegionSubscription(productId, regionName) {
+            if (!currentUser || currentUser.isAnonymous) {
+                alert('Please sign in to renew.');
+                return;
+            }
+            var loadingOverlay = document.getElementById('payment-loading-overlay');
+            document.getElementById('payment-loading-text').textContent = 'Preparing renewal...';
+            document.getElementById('payment-loading-sub').textContent = regionName;
+            loadingOverlay.classList.add('open');
+            try {
+                var getInvoice = functions.httpsCallable('getSubscriptionRenewInvoice');
+                var result = await getInvoice({ productId: productId });
+                var inv = result.data;
+                if (!inv || !inv.invoiceId) {
+                    loadingOverlay.classList.remove('open');
+                    alert('Could not find a pending invoice to renew. Please refresh.');
+                    return;
+                }
+
+                if (typeof Razorpay === 'undefined') {
+                    await new Promise(function(resolve, reject) {
+                        var s = document.createElement('script');
+                        s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                        s.onload = resolve;
+                        s.onerror = function() { reject(new Error('Could not load payment gateway.')); };
+                        document.head.appendChild(s);
+                    });
+                }
+
+                var options = {
+                    key: 'rzp_live_SXr1BKnoysSo9r',
+                    invoice_id: inv.invoiceId,
+                    name: 'Development Plans (GIS)',
+                    description: 'Renew subscription: ' + regionName,
+                    prefill: {
+                        email: currentUser.email,
+                        name: currentUser.displayName || ''
+                    },
+                    theme: { color: '#008577' },
+                    handler: async function(response) {
+                        document.getElementById('payment-loading-text').textContent = 'Confirming renewal...';
+                        // Webhook flips status to active and clears grace flags.
+                        setTimeout(function() {
+                            fetchSubscriptionStatus().then(function() {
+                                renderSettingsPurchases();
+                                loadingOverlay.classList.remove('open');
+                            });
+                        }, 3000);
+                        setTimeout(function() {
+                            fetchSubscriptionStatus().then(renderSettingsPurchases);
+                        }, 8000);
+                    },
+                    modal: {
+                        ondismiss: function() {
+                            // User closed the modal — payment may still have gone through.
+                            setTimeout(function() {
+                                fetchSubscriptionStatus().then(function() {
+                                    renderSettingsPurchases();
+                                    loadingOverlay.classList.remove('open');
+                                });
+                            }, 2000);
+                        }
+                    }
+                };
+                loadingOverlay.classList.remove('open');
+                new Razorpay(options).open();
+            } catch (e) {
+                loadingOverlay.classList.remove('open');
+                var msg = (e && (e.message || e.code)) || 'Could not start renewal.';
+                alert('Renew failed: ' + msg);
+                console.error('renewRegionSubscription:', e);
+            }
         }
 
         // Debounce for checkFirebasePurchaseEntry — prevents rapid DB reads on zoom
@@ -5796,11 +5936,21 @@
                         var statusColor = status === 'active' ? '#2E7D32' : status === 'cancelled' ? '#c62828' : '#EF6C00';
                         var statusLabel = status === 'active' ? 'Active' : status === 'cancelled' ? 'Cancelled' : status === 'halted' ? 'Payment Failed' : status.charAt(0).toUpperCase() + status.slice(1);
 
-                        var cancelBtn = '';
-                        if (status === 'active') {
-                            cancelBtn = '<button onclick="cancelRegionSubscription(\'' + pid + '\', \'' + name.replace(/'/g, "\\'") + '\')" ' +
-                                'style="margin-top:4px;padding:3px 10px;font-size:10px;font-weight:600;border:1px solid #c62828;color:#c62828;background:none;border-radius:4px;cursor:pointer;">Cancel</button>';
+                        var inGrace = !!(sub && sub.graceAppliedThisCycle
+                            && Number(sub.graceExpiry || 0) > Date.now());
+
+                        var btns = [];
+                        if (inGrace) {
+                            btns.push('<button onclick="renewRegionSubscription(\'' + pid + '\', \'' + name.replace(/'/g, "\\'") + '\')" ' +
+                                'style="padding:3px 10px;font-size:10px;font-weight:600;border:1px solid #2E7D32;color:#fff;background:#2E7D32;border-radius:4px;cursor:pointer;">Renew</button>');
                         }
+                        if (status === 'active' || inGrace) {
+                            btns.push('<button onclick="cancelRegionSubscription(\'' + pid + '\', \'' + name.replace(/'/g, "\\'") + '\')" ' +
+                                'style="padding:3px 10px;font-size:10px;font-weight:600;border:1px solid #c62828;color:#c62828;background:none;border-radius:4px;cursor:pointer;">Cancel</button>');
+                        }
+                        var cancelBtn = btns.length
+                            ? '<div style="display:flex;gap:6px;margin-top:4px;">' + btns.join('') + '</div>'
+                            : '';
 
                         // Ordering within Subscriptions: healthy first, terminal last
                         var statusOrder = status === 'active' ? 0 :

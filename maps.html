@@ -1316,6 +1316,15 @@
         </div>
     </div>
 
+    <!-- Grace-period renew banner: floats centred above #bottom-bar as a pill, shown
+         only when a subscription is in the 3-day grace window after an Autopay charge
+         failure. Width is capped via max-width:92vw so it stays compact on mobile. -->
+    <div id="grace-renew-banner" style="display:none;position:absolute;left:50%;transform:translateX(-50%);background:#FFF3E0;border:1px solid #FFB74D;border-radius:8px;padding:8px 10px 8px 14px;align-items:center;gap:8px;z-index:999;font-family:'Segoe UI',Roboto,Arial,sans-serif;font-size:13px;color:#5D4037;box-sizing:border-box;max-width:92vw;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+        <span style="line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">&#9888;&#65039; <strong id="grace-renew-banner-region">Subscription</strong> renewal failed</span>
+        <button id="grace-renew-banner-btn" type="button" style="padding:5px 12px;font-size:12px;font-weight:600;border:none;background:#EF6C00;color:#fff;border-radius:4px;cursor:pointer;flex-shrink:0;">Renew</button>
+        <button id="grace-renew-banner-dismiss" type="button" aria-label="Dismiss" style="background:none;border:none;color:#5D4037;font-size:18px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0;">&times;</button>
+    </div>
+
     <!-- Unified bottom bar -->
     <div class="bottom-bar" id="bottom-bar">
         <div class="bottom-bar-left">
@@ -1874,7 +1883,7 @@
         var onIdle = window.requestIdleCallback || function(cb) { return setTimeout(cb, 1); };
 
         // --- Disclaimer (shown on first map interaction, skipped in embed mode) ---
-        // _showDisclaimer is referenced from initMap inside maps-app.js, which
+        // _showDisclaimer is referenced from initMap inside maps1-app.js, which
         // is itself deferred — so wiring up the cancel/agree click handlers in
         // an idle callback can never miss a real user interaction.
         onIdle(function() {
@@ -2257,7 +2266,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps-app.js" defer></script>
+    <script src="maps1-app.js" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
@@ -2267,7 +2276,7 @@
     </div>
 
     <!-- Load Google Maps API. defer (no async) so the browser preserves document order:
-         maps-app.js executes first and defines initMap, THEN this script downloads, runs,
+         maps1-app.js executes first and defines initMap, THEN this script downloads, runs,
          and invokes initMap via the ?callback= query param. With async + defer, async wins
          and this script could fire before initMap is on window — race condition. -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBBfEcHoR1yHBlnOvWKYLkr3C3ob6nb5hw&libraries=places&callback=initMap&loading=async" defer></script>
