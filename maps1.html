@@ -371,6 +371,14 @@
             font-size: 11px; font-weight: 600; color: #757575;
             text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
         }
+        .dp-region-link {
+            display: block; padding: 7px 10px; margin-top: 4px;
+            font-size: 13px; color: #00695C; text-decoration: none;
+            font-family: inherit; border-radius: 6px;
+            transition: background 0.15s;
+        }
+        .dp-region-link:hover { background: #E0F2F1; text-decoration: underline; }
+        .dp-region-link-all { margin-top: 8px; font-weight: 600; color: #008577; }
         .layer-toggle {
             display: flex; align-items: center; gap: 10px;
             padding: 8px 0; cursor: pointer;
@@ -1290,6 +1298,18 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="#0078D4" style="flex-shrink:0;"><path d="M1 1h10v10H1zm12 0h10v10H13zM1 13h10v10H1zm12 0h10v10H13z"/></svg>
                 Windows &mdash; Microsoft Store
             </a>
+        </div>
+        <div class="layer-section" id="settings-dp-regions-section">
+            <div class="layer-section-title">Browse Development Plan regions</div>
+            <p style="margin:0 0 8px;font-size:12px;color:#777;line-height:1.4;">Open a region's dedicated DP map page on DPPlans:</p>
+            <a href="https://dpplans.com/pune-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Pune Development Plan</a>
+            <a href="https://dpplans.com/mumbai-western-suburbs-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Mumbai (Western Suburbs) DP</a>
+            <a href="https://dpplans.com/mumbai-eastern-suburbs-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Mumbai (Eastern Suburbs) DP</a>
+            <a href="https://dpplans.com/mumbai-internal-island-city-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Mumbai (Island City) DP</a>
+            <a href="https://dpplans.com/thane-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Thane Development Plan</a>
+            <a href="https://dpplans.com/nashik-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Nashik Development Plan</a>
+            <a href="https://dpplans.com/nagpur-metropolitan-region-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Nagpur Metropolitan Region DP</a>
+            <a href="https://dpplans.com/home/" target="_blank" rel="noopener" class="dp-region-link dp-region-link-all">See all regions &rarr;</a>
         </div>
         <div class="layer-section">
             <div class="layer-section-title">About</div>
