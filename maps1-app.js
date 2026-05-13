@@ -492,11 +492,11 @@
                     && Number(sub.graceExpiry || 0) > Date.now()) {
                     var district = (typeof findDistrictByPurchaseId === 'function')
                         ? findDistrictByPurchaseId(pid) : null;
-                    var fullName = district ? district.districtName : pid;
-                    // Drop noisy "(Updated 16/10/2025)" suffix so the banner stays compact.
                     graceSub = sub;
                     gracePid = pid;
-                    graceName = fullName.replace(/\s*\(Updated[^)]*\)\s*/i, '').trim();
+                    // Use full district name so banner + Razorpay Checkout match the
+                    // name shown in the My Purchases row.
+                    graceName = district ? district.districtName : pid;
                 }
             });
             if (!graceSub) {
