@@ -469,9 +469,11 @@
             try { updateGraceRenewBanner(); } catch (e) { /* non-fatal */ }
         }
 
-        // Show a persistent banner above #bottom-bar when any subscription is in the
-        // 3-day grace window. Renew button reuses the same flow as the My Purchases
-        // panel's Renew button. Dismiss is session-scoped (returns next page load).
+        // Show a banner above #bottom-bar when any subscription is in the 3-day grace
+        // window. Renew button reuses the same flow as the My Purchases panel's Renew
+        // button. Dismiss is in-memory only — reloading the page brings the banner back
+        // so users keep being reminded.
+        var _graceBannerDismissed = false;
         function updateGraceRenewBanner() {
             var banner = document.getElementById('grace-renew-banner');
             if (!banner) return;
@@ -479,7 +481,7 @@
                 banner.style.display = 'none';
                 return;
             }
-            if (sessionStorage.getItem('graceBannerDismissed') === '1') {
+            if (_graceBannerDismissed) {
                 banner.style.display = 'none';
                 return;
             }
@@ -517,7 +519,7 @@
             var dismissBtn = document.getElementById('grace-renew-banner-dismiss');
             if (dismissBtn) {
                 dismissBtn.onclick = function() {
-                    sessionStorage.setItem('graceBannerDismissed', '1');
+                    _graceBannerDismissed = true;
                     banner.style.display = 'none';
                 };
             }
