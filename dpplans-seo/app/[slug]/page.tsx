@@ -93,15 +93,13 @@ export default function RegionPage({ params }: Props) {
     {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
+      // Visible UI breadcrumb still shows Regions › State › Region, but the structured
+      // data drops the intermediate state crumb — there's no /<state>/ landing page to
+      // point `item` at, and Google flags intermediate ListItems missing `item` as
+      // invalid ("Missing field 'item'").
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Regions', item: SITE.origin + '/home/' },
-        ...(region.state ? [{ '@type': 'ListItem', position: 2, name: region.state }] : []),
-        {
-          '@type': 'ListItem',
-          position: region.state ? 3 : 2,
-          name: region.shortName,
-          item: url,
-        },
+        { '@type': 'ListItem', position: 2, name: region.shortName, item: url },
       ],
     },
     {
