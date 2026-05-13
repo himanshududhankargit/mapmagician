@@ -1,4 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+// 404 page must not be indexed — any broken region link or removed slug should
+// not pollute search results with a thin "Region not found" page.
+export const metadata: Metadata = {
+  title: 'Region not found',
+  robots: { index: false, follow: true },
+};
 
 export default function NotFound() {
   return (

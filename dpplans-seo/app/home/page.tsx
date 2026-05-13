@@ -7,6 +7,11 @@ import { RegionSearch } from '@/components/RegionSearch';
 
 const HOME_URL = `${SITE.origin}/home/`;
 
+// 1200×630 banner image lives in mapmagician-main/AssetsGIS/ and is copied into
+// dpplans-seo/out/AssetsGIS/ by scripts/postbuild-copy.js. Used for social-share
+// previews (LinkedIn / Twitter / WhatsApp / Google Discover).
+const OG_BANNER = `${SITE.origin}/AssetsGIS/mapmagicianlogo-banner.png`;
+
 export const metadata: Metadata = {
   title: 'Development Plan maps online — India DP, Layout & Village maps',
   description: SITE.description,
@@ -17,7 +22,9 @@ export const metadata: Metadata = {
     title: 'Development Plan maps online — India DP, Layout & Village maps',
     description: SITE.description,
     siteName: SITE.name,
+    images: [{ url: OG_BANNER, width: 1200, height: 630, alt: 'DPPlans — Development Plan maps for India' }],
   },
+  twitter: { card: 'summary_large_image', title: 'Development Plan maps online — India DP, Layout & Village maps', description: SITE.description, images: [OG_BANNER] },
 };
 
 export default function HomePage() {
