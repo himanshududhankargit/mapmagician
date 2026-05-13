@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Fragment } from 'react';
 import { notFound } from 'next/navigation';
 import { allRegions, regionBySlug } from '@/lib/regions';
+import { regionContentBySlug } from '@/data/region-content';
 import { SITE } from '@/lib/site';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Faq } from '@/components/Faq';
@@ -51,6 +53,7 @@ export default function RegionPage({ params }: Props) {
   const region = regionBySlug(params.slug);
   if (!region) notFound();
 
+  const regionContent = regionContentBySlug(params.slug);
   const url = `${SITE.origin}/${region.slug}/`;
   const breadcrumbs = [
     { label: 'Regions', href: '/home/' },
@@ -185,6 +188,28 @@ export default function RegionPage({ params }: Props) {
               for the {region.shortName} region, which also enables the same plan inside the Map Magician Android app.
             </p>
           </section>
+
+          {regionContent && (
+            <section className="card region-plan-details">
+              <h2>{region.shortName} Development Plan — key details</h2>
+              {regionContent.paragraphs.map((p, i) => (
+                <p key={i}>{p}</p>
+              ))}
+              {regionContent.quickFacts.length > 0 && (
+                <>
+                  <h3>Plan at a glance</h3>
+                  <dl className="region-quick-facts">
+                    {regionContent.quickFacts.map((f, i) => (
+                      <Fragment key={i}>
+                        <dt>{f.label}</dt>
+                        <dd>{f.value}</dd>
+                      </Fragment>
+                    ))}
+                  </dl>
+                </>
+              )}
+            </section>
+          )}
 
           {region.villages.length > 0 && (
             <section className="card sublocations">

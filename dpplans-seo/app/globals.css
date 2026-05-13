@@ -229,6 +229,42 @@ button { font: inherit; cursor: pointer; }
 }
 .card h2 { font-size: 20px; margin-bottom: 14px; }
 
+/* Plan-details: unique per-region prose + quick-facts table */
+.region-plan-details p {
+  margin-bottom: 14px;
+  color: var(--text-dark);
+  font-size: 15.5px;
+  line-height: 1.7;
+}
+.region-plan-details p:last-of-type { margin-bottom: 0; }
+.region-plan-details h3 {
+  font-size: 17px;
+  margin: 22px 0 12px;
+  color: var(--text-dark);
+}
+.region-quick-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 18px;
+  margin: 0;
+  font-size: 14.5px;
+}
+.region-quick-facts dt {
+  color: #555;
+  font-weight: 600;
+}
+.region-quick-facts dd {
+  margin: 0;
+  color: var(--text-dark);
+}
+@media (max-width: 600px) {
+  .region-quick-facts {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+  }
+  .region-quick-facts dd { margin: 0 0 10px; }
+}
+
 /* Feature list with branded check */
 .features ul { list-style: none; }
 .features li {
