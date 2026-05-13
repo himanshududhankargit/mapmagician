@@ -490,9 +490,11 @@
                     && Number(sub.graceExpiry || 0) > Date.now()) {
                     var district = (typeof findDistrictByPurchaseId === 'function')
                         ? findDistrictByPurchaseId(pid) : null;
+                    var fullName = district ? district.districtName : pid;
+                    // Drop noisy "(Updated 16/10/2025)" suffix so the banner stays compact.
                     graceSub = sub;
                     gracePid = pid;
-                    graceName = district ? district.districtName : pid;
+                    graceName = fullName.replace(/\s*\(Updated[^)]*\)\s*/i, '').trim();
                 }
             });
             if (!graceSub) {
@@ -502,7 +504,8 @@
             var regionEl = document.getElementById('grace-renew-banner-region');
             if (regionEl) regionEl.textContent = graceName;
             var bb = document.getElementById('bottom-bar');
-            banner.style.bottom = (bb ? bb.offsetHeight : 56) + 'px';
+            // 8px gap above bottom bar so the pill visually floats rather than touches.
+            banner.style.bottom = ((bb ? bb.offsetHeight : 56) + 8) + 'px';
             banner.style.display = 'flex';
 
             var renewBtn = document.getElementById('grace-renew-banner-btn');

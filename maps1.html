@@ -1316,12 +1316,13 @@
         </div>
     </div>
 
-    <!-- Grace-period renew banner: sits just above #bottom-bar, shown only when a
-         subscription is in the 3-day grace window after an Autopay charge failure. -->
-    <div id="grace-renew-banner" style="display:none;position:absolute;left:0;right:0;background:#FFF3E0;border-top:1px solid #FFB74D;border-bottom:1px solid #FFB74D;padding:10px 14px;align-items:center;gap:10px;z-index:999;font-family:'Segoe UI',Roboto,Arial,sans-serif;font-size:13px;color:#5D4037;box-sizing:border-box;">
-        <span style="flex:1;line-height:1.3;">&#9888;&#65039; <strong id="grace-renew-banner-region">Subscription</strong> payment failed &mdash; renew before grace ends.</span>
-        <button id="grace-renew-banner-btn" type="button" style="padding:6px 14px;font-size:12px;font-weight:600;border:none;background:#EF6C00;color:#fff;border-radius:4px;cursor:pointer;flex-shrink:0;">Renew</button>
-        <button id="grace-renew-banner-dismiss" type="button" aria-label="Dismiss" style="background:none;border:none;color:#5D4037;font-size:20px;cursor:pointer;padding:0 6px;line-height:1;flex-shrink:0;">&times;</button>
+    <!-- Grace-period renew banner: floats centred above #bottom-bar as a pill, shown
+         only when a subscription is in the 3-day grace window after an Autopay charge
+         failure. Width is capped via max-width:92vw so it stays compact on mobile. -->
+    <div id="grace-renew-banner" style="display:none;position:absolute;left:50%;transform:translateX(-50%);background:#FFF3E0;border:1px solid #FFB74D;border-radius:8px;padding:8px 10px 8px 14px;align-items:center;gap:8px;z-index:999;font-family:'Segoe UI',Roboto,Arial,sans-serif;font-size:13px;color:#5D4037;box-sizing:border-box;max-width:92vw;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+        <span style="line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">&#9888;&#65039; <strong id="grace-renew-banner-region">Subscription</strong> renewal failed</span>
+        <button id="grace-renew-banner-btn" type="button" style="padding:5px 12px;font-size:12px;font-weight:600;border:none;background:#EF6C00;color:#fff;border-radius:4px;cursor:pointer;flex-shrink:0;">Renew</button>
+        <button id="grace-renew-banner-dismiss" type="button" aria-label="Dismiss" style="background:none;border:none;color:#5D4037;font-size:18px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0;">&times;</button>
     </div>
 
     <!-- Unified bottom bar -->
