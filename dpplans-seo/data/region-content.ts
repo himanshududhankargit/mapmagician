@@ -21,8 +21,11 @@ export type RegionContent = {
 };
 
 export const REGION_CONTENT: Record<string, RegionContent> = {
-  // Sources: pmc.gov.in DP-Plan, Notification TPS-1815/209/CR-69/15/D.P.Pune/Sanction/UD-13,
-  // Government Notification No TPS-1818/CR-85/18/UD-13 dated 08.03.2019, MIDC portal.
+  // ===========================================================================
+  // PHASE 1 — Priority cities (sources: pmc.gov.in, mcgm.gov.in, nmc.gov.in,
+  // nmrda.org, MIDC portal, Wikipedia citing primaries).
+  // ===========================================================================
+
   'pune-dp-plan': {
     paragraphs: [
       'The Pune Development Plan is administered by the Pune Municipal Corporation (PMC). The Development Control and Promotion Regulations (DCPR) governing land use and building activities within PMC limits were sanctioned by the Maharashtra State Government on 5 January 2017, and the formal gazette notification for the sanctioned Development Plan of the old PMC limits was issued on 8 March 2019. The plan applies to building activities within the area first notified under Section 23 of the Maharashtra Regional and Town Planning Act, 1966 on 13 December 2007.',
@@ -39,7 +42,6 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
     ],
   },
 
-  // Sources: MCGM DCPR 2034 PDF, Notification dated 8 May 2018, Wikipedia (WEH/EEH).
   'mumbai-western-suburbs-dp-plan': {
     paragraphs: [
       'The Mumbai Western Suburbs Development Plan is part of the Greater Mumbai DP 2034, the master plan for all 24 wards of Mumbai prepared by the Municipal Corporation of Greater Mumbai (MCGM). The State Government accorded sanction to the DP 2034 (with modifications) by notification dated 8 May 2018; the plan remains in force until 2034 and is implemented alongside the Development Control and Promotion Regulations (DCPR) 2034.',
@@ -88,7 +90,6 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
     ],
   },
 
-  // Sources: TMC DCR 1994, MMRDA 27-villages report, Wagle Estate Wikipedia, Thane DP 2026-2046 reporting.
   'thane-dp-plan': {
     paragraphs: [
       'The Thane Development Plan is administered by the Thane Municipal Corporation (TMC). The principal Development Plan was sanctioned by the Maharashtra State Government on 4 October 1999, with the excluded part sanctioned on 3 April 2003; the consolidated plan came into force from 14 May 2003. A revised Thane DP 2026-2046 has been notified in draft and is currently in the public-objections and revision stage at TMC.',
@@ -106,7 +107,6 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
     ],
   },
 
-  // Sources: nmc.gov.in DP page, Section 26 report, DCPR 2015, MIDC portal.
   'nashik-dp-plan': {
     paragraphs: [
       'The Nashik Development Plan is administered by the Nashik Municipal Corporation (NMC), which was constituted on 7 November 1982 under the Maharashtra Regional and Town Planning Act, 1966. The original Development Plan for NMC’s jurisdiction was sanctioned by the Maharashtra State Government in two parts — partly in 1993 and the remainder in 1994. A Revised Sanctioned Development Plan along with the Development Control and Promotion Regulations was sanctioned partly in 2017 and the remaining part in 2018.',
@@ -124,7 +124,6 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
     ],
   },
 
-  // Sources: nmrda.org, NIT Nagpur DCR 2018 PDF, Butibori MIDC profile, Wikipedia NMRDA.
   'nagpur-metropolitan-region-dp-plan': {
     paragraphs: [
       'The Nagpur Metropolitan Region Development Plan covers approximately 3,567 square kilometres encompassing 721 villages across 9 tehsils of Nagpur District. The plan was prepared by the Nagpur Improvement Trust (NIT) acting as the Special Planning Authority under the Maharashtra Regional and Town Planning Act, 1966, and is administered by the Nagpur Metropolitan Region Development Authority (NMRDA). The plan covers the period 2012-2032, and the associated Development Control and Promotion Regulations were notified in 2018.',
@@ -140,6 +139,591 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       { label: 'Key industrial estate', value: 'Butibori MIDC (est. 1994, ~23 sq km)' },
       { label: 'Adjacent integrated project', value: 'MIHAN (cargo hub + SEZ)' },
       { label: 'Asian highways at junction', value: 'AH-43 and AH-46' },
+    ],
+  },
+
+  // ===========================================================================
+  // PHASE 2 — Remaining 32 regions. Strict-verifiable only; where authoritative
+  // facts (sanction year, area, etc.) could not be confirmed from a primary
+  // or near-primary source, content uses verified context (Act framework,
+  // distinguishing geography/industry) without inventing specifics.
+  // ===========================================================================
+
+  // Sources: pmrda.gov.in, Wikipedia PMRDA.
+  'pmrda-development-plan': {
+    paragraphs: [
+      'The Pune Metropolitan Region Development Authority (PMRDA) Development Plan is administered by PMRDA, established by the Government of Maharashtra in 2015 under the Maharashtra Regional and Town Planning Act, 1966. PMRDA has jurisdiction over approximately 7,246 square kilometres, and the Draft Development Plan 2021 covers approximately 6,052 sq km across 814 villages spanning 9 talukas of Pune district.',
+      'PMRDA functions as the Special Planning Authority (SPA) for 697 villages of the Pune Metropolitan Region (excluding their gaothan areas), and additionally for 23 villages newly merged into the Pune Municipal Corporation. The plan defines zoning, road alignments, reservations and Town Planning Schemes for the peripheral metropolitan area outside the core PMC and PCMC limits — including the high-growth fringe along the Hinjewadi IT corridor, the Mumbai-Pune Expressway buffer, the Pune-Nashik Highway corridor, and the Pune-Solapur Highway corridor.',
+      'Under the PMRDA Masterplan, Agricultural Non-Development Zone land cannot be used for private residential construction unless brought under a formal Town Planning Scheme approved by the state government. The DP overlay on this page reflects PMRDA’s published zoning, reservation, road-line and Town Planning Scheme boundaries georeferenced over satellite imagery.',
+    ],
+    quickFacts: [
+      { label: 'Planning authority', value: 'Pune Metropolitan Region Development Authority (PMRDA)' },
+      { label: 'PMRDA established', value: '2015' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Jurisdiction', value: '~7,246 sq km' },
+      { label: 'Draft DP 2021 coverage', value: '~6,052 sq km, 814 villages, 9 talukas' },
+      { label: 'SPA for', value: '697 villages (excl. gaothan) + 23 newly merged PMC villages' },
+      { label: 'Key growth corridors', value: 'Hinjewadi IT, Mumbai-Pune Expressway, Pune-Nashik, Pune-Solapur' },
+      { label: 'Regulatory note', value: 'Agri Non-Development Zone needs TPS for residential use' },
+    ],
+  },
+
+  // Sources: CIDCO NAINA PDF, Wikipedia NAINA, Government Notification TPS-1712/475/CR-98/12/UD-12 dated 10/01/2013.
+  'naina-development-plan': {
+    paragraphs: [
+      'The NAINA (Navi Mumbai Airport Influence Notified Area) Development Plan is administered by the City and Industrial Development Corporation of Maharashtra (CIDCO) as the Special Planning Authority. NAINA was notified by the Government of Maharashtra Urban Development Department vide Notification No. TPS-1712/475/CR-98/12/UD-12 dated 10 January 2013, under section 40(1)(b) of the Maharashtra Regional and Town Planning Act, 1966.',
+      'The NAINA area encompasses approximately 473 square kilometres across 175 villages and 38 khopta areas, primarily in the Panvel, Pen and Uran talukas of Raigad district. The notified area was originally identified as the zone within a 25 km radius of the proposed Navi Mumbai International Airport, which sits at the heart of the SPA. NAINA’s planning vision is structured around airport-influence growth — including airport-supporting logistics, hospitality, residential and commercial development.',
+      'Portions of the original NAINA boundary have since been carved out and re-assigned to other Special Planning Authorities (notably the MSRDC SPA along the Mumbai-Pune Expressway corridor). The DP overlay on this page reflects CIDCO’s notified zoning, reservation and Town Planning Scheme boundaries for the remaining NAINA area georeferenced over satellite imagery.',
+    ],
+    quickFacts: [
+      { label: 'Special Planning Authority', value: 'CIDCO' },
+      { label: 'NAINA notified', value: '10 January 2013' },
+      { label: 'Notification', value: 'TPS-1712/475/CR-98/12/UD-12' },
+      { label: 'Governing Act', value: 'MRTP Act, 1966 — Section 40(1)(b)' },
+      { label: 'Notified area', value: '~473 sq km' },
+      { label: 'Coverage', value: '175 villages + 38 khopta areas' },
+      { label: 'Talukas', value: 'Panvel, Pen, Uran (Raigad district)' },
+      { label: 'Trigger', value: '25 km influence radius of Navi Mumbai International Airport' },
+    ],
+  },
+
+  // Sources: NMMC official, Wikipedia NMMC/Navi Mumbai, CIDCO Maharashtra.
+  'navi-mumbai-municipal-corporation-dp-plan': {
+    paragraphs: [
+      'The Navi Mumbai Municipal Corporation (NMMC) Development Plan is administered by NMMC under the Maharashtra Regional and Town Planning Act, 1966. The corporation came into existence on 1 January 1992, with jurisdiction covering 29 villages from the original Navi Mumbai project area and a further 15 villages from the Kalyan complex area — 44 villages in total.',
+      'The original Development Plan for the wider Navi Mumbai region was sanctioned by the State Government in 1979-80 and came into effect from 1 March 1980 — this plan was structural in nature and was prepared by CIDCO, which was empowered under the MRTP Act to plan and develop Navi Mumbai. Out of the 44 villages within NMMC’s jurisdiction, 29 are part of the CIDCO-sanctioned Development Plan. Planning powers were delegated to NMMC partly in 1994 and again in 2008, although CIDCO continues to hold rights over open plots within the NMMC jurisdiction.',
+      'Navi Mumbai’s CIDCO-planned nodes within NMMC limits include Vashi, Sanpada, Nerul, Belapur, Airoli, Ghansoli, Koparkhairane and Turbhe — anchored by the Thane-Belapur industrial corridor (Trans-Thane Creek industrial belt) and connected by the suburban Harbour and Trans-Harbour railway lines. The DP overlay on this page reflects NMMC’s and CIDCO’s published zoning, reservation and road-line boundaries georeferenced over satellite imagery.',
+    ],
+    quickFacts: [
+      { label: 'Planning authority (civic body)', value: 'Navi Mumbai Municipal Corporation (NMMC)' },
+      { label: 'NMMC established', value: '1 January 1992' },
+      { label: 'Original DP sanctioned', value: '1979-80 (effective 1 March 1980) by CIDCO' },
+      { label: 'NMMC jurisdiction', value: '44 villages (29 from NM project + 15 from Kalyan complex)' },
+      { label: 'Planning powers delegated to NMMC', value: 'Partly 1994 and 2008' },
+      { label: 'CIDCO retains', value: 'Rights over open plots within NMMC' },
+      { label: 'Key industrial corridor', value: 'Thane-Belapur (Trans-Thane Creek)' },
+    ],
+  },
+
+  // Sources: Panvel Municipal Corporation, CIDCO, Wikipedia Panvel/Kharghar.
+  'kharghar-dp-plan': {
+    paragraphs: [
+      'The Kharghar / Panvel Municipal Corporation Development Plan covers Kharghar and the surrounding CIDCO nodes within the larger Panvel Municipal Corporation jurisdiction. Panvel Municipal Corporation (PMC) was upgraded from a Municipal Council in 2016 and covers approximately 110 square kilometres across 29 revenue villages of Panvel taluka — including CIDCO’s planned nodes of Taloja, Kharghar, Kalamboli, Kamothe and New Panvel.',
+      'Although Panvel Municipal Corporation is the principal civic body for the area, the City and Industrial Development Corporation of Maharashtra (CIDCO) continues as the planning and development authority specifically for the Kharghar, Taloje Pachnand, Owe, Navde and Pendhar nodes — pursuant to a Government Resolution issued at the time of PMC’s formation which stipulated that CIDCO will retain its planning role for these nodes until the development of each node is fully completed.',
+      'Kharghar itself was developed by CIDCO as a sector-based residential and institutional new town within Navi Mumbai, anchored by the Central Park, the Tata Memorial Cancer Centre, ITC Maratha, the Pendhar Golf Course and the Kharghar railway station on the Harbour Line. The DP overlay on this page reflects the published CIDCO and PMC zoning, reservation and road-line boundaries georeferenced over satellite imagery.',
+    ],
+    quickFacts: [
+      { label: 'Civic body', value: 'Panvel Municipal Corporation (PMC)' },
+      { label: 'PMC upgraded from council', value: '2016' },
+      { label: 'PMC jurisdiction', value: '~110 sq km, 29 villages' },
+      { label: 'Planning authority for CIDCO nodes', value: 'CIDCO (Kharghar, Taloje, Owe, Navde, Pendhar)' },
+      { label: 'Constituent CIDCO nodes', value: 'Taloja, Kharghar, Kalamboli, Kamothe, New Panvel' },
+      { label: 'Major institutional anchors', value: 'Central Park, Tata Memorial Cancer Centre' },
+    ],
+  },
+
+  // Sources: VVCMC sanctioned DP PDF, MoHUA appraisal, Wikipedia.
+  'palghar-dp-plan': {
+    paragraphs: [
+      'The Palghar / Vasai-Virar Development Plan is administered by the Vasai-Virar City Municipal Corporation (VVCMC), the principal urban local body for the Vasai-Virar sub-region within Palghar district on the north-western edge of the Mumbai Metropolitan Region (MMR). The Government of Maharashtra appointed the City and Industrial Development Corporation (CIDCO) as the Special Planning Authority for the Vasai-Virar sub-region prior to VVCMC’s formation, and the Development Control Regulations for the sub-region took effect from 1 March 2004.',
+      'The plan area covers the dense urban clusters of Vasai, Virar, Nallasopara and Naigaon along the Mumbai Western Railway suburban corridor, plus the surrounding villages of Vasai and Virar tehsils. The area sits between the Vasai Creek (separating it from Mira-Bhayandar) and the Tungareshwar Wildlife Sanctuary, with extensive salt-pan lands, mangrove forests and Coastal Regulation Zone (CRZ) areas along the creek and the western coastline.',
+      'The DP overlay on this page reflects the published VVCMC / CIDCO zoning, reservation, road-line and CRZ boundaries georeferenced over satellite imagery, covering the urban cores, the coastal villages, and the forest-edge precincts. Planning is governed under the Maharashtra Regional and Town Planning Act, 1966.',
+    ],
+    quickFacts: [
+      { label: 'Civic body', value: 'Vasai-Virar City Municipal Corporation (VVCMC)' },
+      { label: 'Special Planning Authority (historically)', value: 'CIDCO' },
+      { label: 'Development Control Regulations effective', value: '1 March 2004' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'District', value: 'Palghar' },
+      { label: 'Region', value: 'Mumbai Metropolitan Region (MMR), north-western edge' },
+      { label: 'Key transit', value: 'Mumbai Western Railway suburban line (Vasai Road, Virar)' },
+      { label: 'Ecological context', value: 'Tungareshwar WLS, Vasai Creek mangroves, CRZ areas' },
+    ],
+  },
+
+  // Sources: MBMC reporting, Wikipedia Mira-Bhayandar.
+  'mira-bhayandar-dp-plan': {
+    paragraphs: [
+      'The Mira-Bhayandar Development Plan is administered by the Mira Bhayandar Municipal Corporation (MBMC). The initial Development Plan for Mira-Bhayandar was sanctioned by the State Government on 14 May 1997 and came into effect on 15 July 1997 (excluding certain notified areas), under the Maharashtra Regional and Town Planning Act, 1966.',
+      'A revised Development Plan for the period 2031-2051 is currently being prepared — the validity of the 1997 DP came to an end in 2017 and a new 20-year vision document has been mandated. The successor plan is being drafted by the town-planning department attached to Thane Municipal Corporation on behalf of MBMC, within the framework of the MRTP Act, 1966.',
+      'Mira-Bhayandar sits along the Vasai Creek on the north-western edge of the Mumbai Metropolitan Region (MMR), connected to Mumbai by the Western Railway suburban line (Mira Road and Bhayandar stations) and by the Western Express Highway / Mira-Bhayandar Road. The DP overlay on this page reflects MBMC’s published zoning, reservation and road-line boundaries georeferenced over satellite imagery, including salt-pan lands, creek-side conservation areas, and the dense residential clusters around Mira Road, Bhayandar and Naya Nagar.',
+    ],
+    quickFacts: [
+      { label: 'Planning authority', value: 'Mira Bhayandar Municipal Corporation (MBMC)' },
+      { label: 'Initial DP sanctioned', value: '14 May 1997' },
+      { label: 'Initial DP effective', value: '15 July 1997' },
+      { label: 'Successor plan', value: 'DP 2031-2051 (under preparation)' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Region', value: 'Mumbai Metropolitan Region (MMR), north-western edge' },
+      { label: 'Key transit', value: 'Western Railway suburban line (Mira Road, Bhayandar)' },
+    ],
+  },
+
+  // Sources: KMC, KUADA notification, MIDC portal.
+  'kolhapur-dp-plan': {
+    paragraphs: [
+      'The Kolhapur Development Plan is administered by the Kolhapur Municipal Corporation (KMC). The Development Plan for the City of Kolhapur was sanctioned by the State Government on 18 December 1999 under the Maharashtra Regional and Town Planning Act, 1966.',
+      'A separate Kolhapur Urban Area Development Authority (KUADA) was constituted in 2017 — vide Government Notification No. TPS-2117/24/C.R.96/17/UD-13 dated 16 August 2017 — under sections 42(A) to 42(G) of the MRTP Act, to act as the Planning Authority for 42 villages surrounding Kolhapur Municipal Corporation. KUADA’s mandate is to secure well-planned peripheral development around the KMC core.',
+      'Kolhapur is a major industrial and trading city in south-western Maharashtra, historically a princely state and home to the Mahalakshmi (Ambabai) temple — one of the principal Shakti Peethas. Industrial activity centres on the Kolhapur, Shiroli, Kagal and Gokul-Shirgaon MIDC industrial estates, with engineering, foundry, textile, dairy and sugar industries as the major sectors. The DP overlay on this page reflects KMC’s published zoning, reservation and road-line boundaries georeferenced over satellite imagery.',
+    ],
+    quickFacts: [
+      { label: 'Planning authority (city)', value: 'Kolhapur Municipal Corporation (KMC)' },
+      { label: 'City DP sanctioned', value: '18 December 1999' },
+      { label: 'Peripheral planning authority', value: 'KUADA (Kolhapur Urban Area Development Authority)' },
+      { label: 'KUADA notified', value: '16 August 2017 (covers 42 surrounding villages)' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Key MIDC estates', value: 'Kolhapur, Shiroli, Kagal, Gokul-Shirgaon' },
+      { label: 'Major industries', value: 'Foundry, engineering, textiles, dairy, sugar' },
+    ],
+  },
+
+  // Sources: SMC town-planning, court records (1977 sanction).
+  'sangli-dp-plan': {
+    paragraphs: [
+      'The Sangli / Sangli-Miraj Development Plan is administered by the Sangli, Miraj and Kupwad City Municipal Corporation (SMKC), which was constituted on 9 February 1998 by merging the erstwhile Sangli, Miraj and Kupwad municipal councils. The Development Plan for the original Sangli town was sanctioned by the State Government on 28 March 1977 and came into force on 1 June 1977 under the Maharashtra Regional and Town Planning Act, 1966.',
+      'Sangli is a major agricultural-trade and educational centre in south-western Maharashtra, historically renowned as the principal turmeric-trading market of India — the Sangli turmeric APMC is one of the largest in the country — and as a centre for sugar processing, jaggery, grape and raisin trading. The Miraj sub-centre is a major rail junction on the Central Railway / South Central Railway interface and an important regional healthcare cluster.',
+      'The DP overlay on this page reflects SMKC’s published zoning, reservation and road-line boundaries georeferenced over satellite imagery, covering the Sangli city core along the Krishna river, the Miraj rail junction precinct, the Kupwad area, and the institutional cluster around Walchand College of Engineering and the Government Medical College, Miraj.',
+    ],
+    quickFacts: [
+      { label: 'Planning authority', value: 'Sangli, Miraj and Kupwad City Municipal Corporation (SMKC)' },
+      { label: 'SMKC constituted', value: '9 February 1998 (merger of Sangli, Miraj, Kupwad councils)' },
+      { label: 'Original Sangli DP sanctioned', value: '28 March 1977' },
+      { label: 'Original Sangli DP effective', value: '1 June 1977' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Distinguishing trade', value: 'Turmeric APMC (one of India’s largest)' },
+      { label: 'Key sub-cluster', value: 'Miraj (rail junction + healthcare)' },
+    ],
+  },
+
+  // Sources: Satara district notices, DTP Maharashtra, MSRDC New Mahabaleshwar.
+  'satara-region-dp-plan': {
+    paragraphs: [
+      'The Satara Regional Plan covers Satara district in south-western Maharashtra, prepared under the Maharashtra Regional and Town Planning Act, 1966 and administered by the District Planning Office at Satara in coordination with the Town Planning and Valuation Department of Maharashtra State. The constituent urban local bodies for Satara, Karad, Mahabaleshwar, Panchgani and Wai act as local planning authorities within their respective jurisdictions.',
+      'A separate Mahabaleshwar-Panchgani Regional Plan was first sanctioned by the Government of Maharashtra in 1985 (with a plan period of 1984-2001), and was subsequently revised (covering 2002-2024). The hill-station precinct is also designated as an Eco-Sensitive Zone under the Environment Protection Act and is now overlaid by the New Mahabaleshwar Special Planning Authority (MSRDC) for the broader hill-area project.',
+      'Satara district sits on the eastern edge of the Western Ghats and hosts industrial nodes at Karad and Satara MIDC, agricultural belts along the Krishna and Koyna rivers, and the Koyna Dam — one of India’s largest hydroelectric installations. The DP overlay on this page reflects the published regional, municipal and Eco-Sensitive Zone boundaries georeferenced over satellite imagery.',
+    ],
+    quickFacts: [
+      { label: 'Plan type', value: 'Regional Plan (district)' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Mahabaleshwar-Panchgani RP sanctioned', value: '1985 (1984-2001 period; revised 2002-2024)' },
+      { label: 'Region', value: 'South-western Maharashtra (Western Ghats)' },
+      { label: 'Key towns', value: 'Satara, Karad, Mahabaleshwar, Panchgani, Wai' },
+      { label: 'Overlay SPA', value: 'New Mahabaleshwar (MSRDC)' },
+      { label: 'Major infrastructure', value: 'Koyna Dam (hydroelectric)' },
+    ],
+  },
+
+  // Sources: SMC town-planning, draft DP 2023-2043 reporting, GI registry.
+  'solapur-dp-plan': {
+    paragraphs: [
+      'The Solapur Development Plan is administered by the Solapur Municipal Corporation (SMC), the principal civic body and planning authority for Solapur city under the Maharashtra Regional and Town Planning Act, 1966. A revised Draft Development Plan for the period 2023-2043 has been prepared by the Town Planning Department of Solapur Municipal Corporation, with public consultations and modifications under way.',
+      'Solapur is a major industrial and commercial city in south-eastern Maharashtra and is historically India’s largest centre for power-loom textiles and Solapuri chaddars (cotton blankets) and terry towels — products that hold Geographical Indication (GI) registration. The city’s textile sector is one of the largest concentrations of decentralised power-loom units in the country. Other industries include sugar processing (with sugar factories ringing the city), bidi rolling, agro-processing and engineering.',
+      'Solapur sits at the junction of the Mumbai-Hyderabad and Pune-Hyderabad corridors, served by national highways linking it to Pune, Hyderabad, Bengaluru and Vijayawada, and by the broad-gauge Mumbai-Hyderabad-Chennai railway corridor. The DP overlay on this page reflects SMC’s published zoning, reservation and road-line boundaries georeferenced over satellite imagery, covering the city core, the textile-cluster wards, and the expanding industrial peripheries along the highway corridors.',
+    ],
+    quickFacts: [
+      { label: 'Planning authority', value: 'Solapur Municipal Corporation (SMC)' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Draft DP under consultation', value: '2023-2043' },
+      { label: 'Distinguishing industry', value: 'Power-loom textiles (largest decentralised cluster in India)' },
+      { label: 'GI-registered products', value: 'Solapuri chaddars, terry towels' },
+      { label: 'Other industries', value: 'Sugar processing, bidi rolling, engineering' },
+      { label: 'Strategic position', value: 'Junction of Mumbai-Hyderabad and Pune-Hyderabad corridors' },
+    ],
+  },
+
+  // Sources: AMC notification 2022, Wikipedia Aurangabad MC, AURIC/DMIC reporting.
+  'aurangabad-dp-plan': {
+    paragraphs: [
+      'The Aurangabad / Chhatrapati Sambhaji Nagar Development Plan is administered by the Chhatrapati Sambhaji Nagar Municipal Corporation (the city was officially renamed from Aurangabad). The original-limits town plan for Aurangabad city was sanctioned by the State Government in 1991 under the Maharashtra Regional and Town Planning Act, 1966.',
+      'For the extended municipal limits, the Planning Authority declared its intention to prepare a draft Development Plan under Section 23(1) of the MRTP Act on 26 May 2010, and re-initiated revision proceedings in 2013. The corporation has subsequently (Resolution No. 232/2022 dated 19 January 2022) again declared its intention to prepare the consolidated Development Plan for the full corporation limit. Chhatrapati Sambhaji Nagar is the headquarters of Maharashtra’s Aurangabad Revenue Division covering the eight districts of Marathwada.',
+      'Industrial development around the city centres on the Waluj, Shendra and Bidkin MIDC industrial estates — large industrial nodes that anchor the Delhi-Mumbai Industrial Corridor (DMIC) Aurangabad Industrial City (AURIC). The DP overlay on this page reflects published zoning and reservation boundaries georeferenced over satellite imagery.',
+    ],
+    quickFacts: [
+      { label: 'Planning authority', value: 'Chhatrapati Sambhaji Nagar Municipal Corporation' },
+      { label: 'Original-limits DP sanctioned', value: '1991' },
+      { label: 'Extended-limits DP', value: 'Under preparation (Resolution 232/2022 dated 19 Jan 2022)' },
+      { label: 'Section 23(1) intention declared', value: '26 May 2010' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Administrative role', value: 'Marathwada divisional headquarters' },
+      { label: 'Key industrial nodes', value: 'Waluj, Shendra, Bidkin MIDC; AURIC (DMIC)' },
+    ],
+  },
+
+  // Sources: Latur District Regional Plan gazette notification 2 Jan 2018 / 17 Feb 2018.
+  'latur-region-dp-plan': {
+    paragraphs: [
+      'The Latur Regional Development Plan covers Latur district in the Marathwada region of Maharashtra. The Government of Maharashtra, vide notification dated 2 January 2018 (published in the Maharashtra Government Gazette dated 17 February 2018), accorded sanction to the Draft Regional Plan of Latur subject to the modifications specified in Schedule-A appended to the notification. The plan is administered under the Maharashtra Regional and Town Planning Act, 1966.',
+      'The principal urban local body within the district is the Latur Municipal Corporation, which serves as the planning authority for Latur city’s jurisdiction within the broader regional plan framework. Surrounding municipal councils for Ahmedpur, Ausa, Nilanga, Udgir and the other tehsil towns administer their respective jurisdictions, with the District Planning Office coordinating the regional plan area.',
+      'Latur is a major agricultural-trade and education centre in central Maharashtra, with a long-standing reputation for academic coaching (the so-called Latur Pattern) and for hosting one of the country’s largest agricultural produce markets for soybean and tur. The DP overlay on this page reflects the published regional and municipal zoning, reservation and land-use boundaries georeferenced over satellite imagery.',
+    ],
+    quickFacts: [
+      { label: 'Plan type', value: 'Regional Plan (district)' },
+      { label: 'Plan sanctioned', value: '2 January 2018' },
+      { label: 'Gazette publication', value: '17 February 2018' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Region', value: 'Marathwada' },
+      { label: 'City civic body', value: 'Latur Municipal Corporation' },
+      { label: 'Tehsil headquarters', value: 'Latur, Ahmedpur, Ausa, Nilanga, Udgir + others' },
+      { label: 'Distinguishing feature', value: '"Latur Pattern" academic coaching; soybean/tur APMC' },
+    ],
+  },
+
+  // Sources: dharashiv.maharashtra.gov.in, osmanabad.gov.in, Wikipedia Osmanabad/Dharashiv.
+  'osmanabad-dp-plan': {
+    paragraphs: [
+      'The Osmanabad / Dharashiv District Regional Plan is administered under the Maharashtra Regional and Town Planning Act, 1966. Osmanabad district was officially renamed to Dharashiv district by the Government of Maharashtra in 2023. The District Planning Office at Dharashiv coordinates the regional plan in conjunction with the constituent municipal councils for Osmanabad town, Tuljapur, Naldurg, Bhum, Kalamb, Omerga, Paranda and Washi — all of which serve as local planning authorities within their jurisdictions.',
+      'Dharashiv lies in the Marathwada region of central Maharashtra on the border with Karnataka and Telangana, and is best known for the Tulja Bhavani temple at Tuljapur — one of the four Maha-Shakti Peethas of India and the kuldevi of the Maratha clan. The district is also home to the Naldurg fort and the ancient Buddhist caves at Dharashiv. Major crops include sugarcane, soybean, jowar and pulses, with sugar factories anchoring much of the rural-industrial activity.',
+      'The plan overlay on this page reflects the published regional and municipal zoning and land-use boundaries georeferenced over satellite imagery, covering Dharashiv town, the tehsil centres, the surrounding agricultural plains, and the historic and pilgrimage sites across the district.',
+    ],
+    quickFacts: [
+      { label: 'Plan type', value: 'Regional Plan (district)' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'District renamed (Osmanabad → Dharashiv)', value: '2023' },
+      { label: 'Region', value: 'Marathwada' },
+      { label: 'Distinguishing pilgrimage', value: 'Tulja Bhavani temple at Tuljapur (one of four Maha-Shakti Peethas)' },
+      { label: 'Notable historical site', value: 'Naldurg Fort; Dharashiv Buddhist caves' },
+      { label: 'Tehsils', value: 'Osmanabad, Tuljapur, Bhum, Kalamb, Omerga, Paranda, Washi, Lohara' },
+    ],
+  },
+
+  // Sources: NWCMC, Wikipedia Nanded-Waghala Municipal Corporation.
+  'nanded-waghala-municipal-corporation-dp-plan': {
+    paragraphs: [
+      'The Nanded-Waghala Development Plan is administered by the Nanded Waghala City Municipal Corporation (NWCMC), which was constituted on 26 March 1997 by merging the erstwhile Nanded Municipal Council and the adjoining Waghala Municipal Council. The corporation operates under the provisions of the Bombay Provincial Municipal Corporations Act, 1949 and the Maharashtra Regional and Town Planning Act, 1966, with Draft Development Control Regulations referenced from 2010.',
+      'Nanded is one of the principal cities of the Marathwada region of central Maharashtra and a major Sikh pilgrimage destination — home to Hazur Sahib (Sachkhand Sri Hazur Abchalnagar Sahib Gurdwara), one of the five Takhts of Sikhism, where Guru Gobind Singh ji is believed to have entered eternal abode. The city is connected by the broad-gauge Manmad-Secunderabad railway corridor and by national highways linking Marathwada with Telangana and Karnataka.',
+      'Industrial activity in and around Nanded centres on cotton ginning, textiles, sugar processing and dal milling, with the Nanded MIDC and adjacent industrial estates as the principal industrial nodes. The DP overlay on this page reflects NWCMC’s published zoning, reservation and road-line boundaries georeferenced over satellite imagery, covering the historic Nanded city, the Waghala extension, the Godavari riverfront precincts, and the institutional cluster around the Swami Ramanand Teerth Marathwada University.',
+    ],
+    quickFacts: [
+      { label: 'Planning authority', value: 'Nanded Waghala City Municipal Corporation (NWCMC)' },
+      { label: 'NWCMC constituted', value: '26 March 1997 (merger of Nanded + Waghala councils)' },
+      { label: 'Governing Acts', value: 'Bombay Provincial Municipal Corporations Act, 1949; MRTP Act, 1966' },
+      { label: 'Draft DCR referenced', value: '2010' },
+      { label: 'Region', value: 'Marathwada' },
+      { label: 'Distinguishing landmark', value: 'Hazur Sahib Gurdwara (one of the five Sikh Takhts)' },
+      { label: 'Key river', value: 'Godavari' },
+    ],
+  },
+
+  // Sources: AMC town-planning, Wikipedia Amravati MC, DMIC.
+  'amravati-dp-plan': {
+    paragraphs: [
+      'The Amravati Development Plan is administered by the Amravati Municipal Corporation. A revised Development Plan for Amravati was sanctioned by the Government of Maharashtra in 1992 under the Maharashtra Regional and Town Planning Act, 1966, focusing on infrastructure upgrades, housing and transportation networks to accommodate urban expansion in the divisional headquarters of the Amravati Revenue Division.',
+      'Amravati is the headquarters of one of Maharashtra’s six revenue divisions, covering Akola, Buldhana, Washim and Yavatmal districts in addition to Amravati district itself. The city is connected by the broad-gauge Mumbai-Howrah trunk railway line and by national highways that link Vidarbha to Marathwada and the rest of the state. Industrial activity in the Amravati MIDC and the adjacent textile park focuses on cotton ginning, textiles and processing.',
+      'The DP overlay on this page reflects the published municipal zoning, reservation and road-line boundaries georeferenced over satellite imagery, including the older city core around the Ambadevi temple, the institutional cluster of Sant Gadge Baba Amravati University, and the expanding industrial and residential peripheries.',
+    ],
+    quickFacts: [
+      { label: 'Planning authority', value: 'Amravati Municipal Corporation' },
+      { label: 'Revised DP sanctioned', value: '1992' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Administrative role', value: 'Headquarters of Amravati Revenue Division' },
+      { label: 'Region', value: 'Vidarbha (western)' },
+      { label: 'Key institutional landmark', value: 'Sant Gadge Baba Amravati University' },
+      { label: 'Major rail corridor', value: 'Mumbai-Howrah (broad gauge)' },
+    ],
+  },
+
+  // Sources: AMC, Wikipedia Akola MC.
+  'akola-dp-plan': {
+    paragraphs: [
+      'The Akola Development Plan is administered by the Akola Municipal Corporation (AMC), the principal civic body for Akola in Maharashtra’s Vidarbha region. The Municipal Corporation governs an area of approximately 124 square kilometres and operates under the Maharashtra Regional and Town Planning Act, 1966.',
+      'Akola sits at the centre of the cotton-growing belt of western Vidarbha, and is historically a major cotton-trading and ginning centre. The city is connected to Mumbai, Nagpur and other Vidarbha cities by the Mumbai-Howrah trunk railway line — one of the busiest broad-gauge corridors in India — and by national highways linking the Vidarbha sub-region with Marathwada and the Konkan. Industrial activity in and around Akola includes cotton ginning and pressing, edible-oil milling, dal milling and a handful of textile units.',
+      'The Development Plan overlay on this page reflects published municipal zoning and reservation boundaries georeferenced over satellite imagery — including the cantonment area, the older walled city, civil and revenue offices, and the expanding industrial and residential peripheries along the highway corridors.',
+    ],
+    quickFacts: [
+      { label: 'Planning authority', value: 'Akola Municipal Corporation (AMC)' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Approximate corporation area', value: '124 sq km' },
+      { label: 'Region', value: 'Vidarbha (western)' },
+      { label: 'Key industries', value: 'Cotton ginning/pressing, edible-oil milling, dal milling' },
+      { label: 'Major rail corridor', value: 'Mumbai-Howrah (broad gauge)' },
+    ],
+  },
+
+  // Sources: CMC Chandrapur, Wikipedia, MPCB CEPI report.
+  'chandrapur-region-dp-plan': {
+    paragraphs: [
+      'The Chandrapur Regional Plan covers Chandrapur district in eastern Maharashtra, prepared under the Maharashtra Regional and Town Planning Act, 1966. The Chandrapur City Municipal Corporation is the principal urban local body within the district and serves as the planning authority for the city’s jurisdiction. Surrounding municipal councils and the District Planning Office administer the rural and other urban portions of the plan area.',
+      'Chandrapur is known as the City of Black Gold owing to its vast coal deposits — the district is one of India’s principal coal-producing regions and hosts the Chandrapur Super Thermal Power Station (one of the country’s largest coal-fired thermal plants), as well as cement factories and large paper-manufacturing units. Major industrial anchors include the Western Coalfields Limited (WCL) mining areas and the Chandrapur MIDC and Tadali industrial estates.',
+      'The plan overlay on this page reflects published regional zoning and land-use boundaries georeferenced over satellite imagery, covering the industrial-heavy urban core, the surrounding coal-mining belt, and the forest and wildlife corridors of the Tadoba-Andhari Tiger Reserve in the northwest of the district.',
+    ],
+    quickFacts: [
+      { label: 'Plan type', value: 'Regional Plan' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Major industries', value: 'Coal mining, thermal power, cement, paper' },
+      { label: 'Notable thermal plant', value: 'Chandrapur Super Thermal Power Station' },
+      { label: 'Key mining operator', value: 'Western Coalfields Limited (WCL)' },
+      { label: 'Wildlife reserve', value: 'Tadoba-Andhari Tiger Reserve' },
+    ],
+  },
+
+  // Sources: bhandara.gov.in, indiandistricts.in Bhandara.
+  'bhandara-region-dp-plan': {
+    paragraphs: [
+      'The Bhandara Regional Plan covers Bhandara district in eastern Maharashtra, governed under the Maharashtra Regional and Town Planning Act, 1966, with regional planning administered by the Town Planning and Valuation Department of Maharashtra State and the local planning authorities for the constituent municipal and tehsil units.',
+      'Bhandara is widely recognised as the rice bowl of Maharashtra, with the Wainganga river — which flows southward through the district after entering from Madhya Pradesh — irrigating the sandy-loam (Sihar) soils that are well-suited to high-quality paddy cultivation. The district’s industrial landscape is dominated by small-scale, agro-processing units, with over 100 operational rice mills, alongside copper and brassware manufacturing in Bhandara town and adjoining tehsils. Indigenous rice varieties cultivated in the district include Chinnor, Dubraj, Kalimooch and Shriram.',
+      'The plan overlay on this page reflects the published regional zoning and land-use boundaries georeferenced over satellite imagery, including paddy belts along the Wainganga floodplain, conservation areas around the Nagzira and Navegaon wildlife reserves in the southern part of the district, and the urban cores of Bhandara, Tumsar and Pauni.',
+    ],
+    quickFacts: [
+      { label: 'Plan type', value: 'Regional Plan (district)' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Key river', value: 'Wainganga (joins Wardha to form Pranhita)' },
+      { label: 'Agricultural identity', value: 'Rice bowl of Maharashtra' },
+      { label: 'Operating rice mills', value: '100+' },
+      { label: 'Local industries', value: 'Rice milling, copper and brassware manufacturing' },
+      { label: 'Wildlife reserves', value: 'Nagzira, Navegaon' },
+    ],
+  },
+
+  // Sources: buldhana.nic.in, UDCPR 2020.
+  'buldhana-region-dp-plan': {
+    paragraphs: [
+      'The Buldhana Regional Plan covers Buldhana district in Maharashtra’s Vidarbha region, prepared under the provisions of the Maharashtra Regional and Town Planning Act, 1966. The plan is administered by the Town Planning and Valuation Department of Maharashtra State and the District Planning Office at Buldhana, with the constituent municipal councils for Buldhana, Khamgaon, Malkapur, Shegaon and other tehsil towns acting as local planning authorities within their jurisdictions.',
+      'Buldhana sits along the watershed dividing the Tapi and Godavari river basins, with the Painganga river (a tributary of the Godavari) and the Purna river (a tributary of the Tapi) crossing the district. The district lies along the historical trade route between Khandesh and the Deccan plateau, and is known for the Lonar Crater Lake — a meteorite-impact saline lake recognised as a Ramsar site since 2020 — and the temple town of Shegaon associated with Sant Gajanan Maharaj.',
+      'The plan overlay on this page reflects the published regional zoning and land-use boundaries georeferenced over satellite imagery, covering the rural plains, the urban centres and the protected ecological zones across the district. The Unified Development Control and Promotion Regulations (UDCPR) 2020 — Chapter 5 — provide additional provisions applicable to this district within the Hingoli-Buldhana-Washim-Yavatmal-Nanded regional plan group.',
+    ],
+    quickFacts: [
+      { label: 'Plan type', value: 'Regional Plan' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Applicable additional regs', value: 'UDCPR 2020 Chapter 5 (Hingoli-Buldhana-Washim-Yavatmal-Nanded group)' },
+      { label: 'Region', value: 'Vidarbha (western)' },
+      { label: 'Key towns', value: 'Buldhana, Khamgaon, Malkapur, Shegaon' },
+      { label: 'Distinguishing geography', value: 'Tapi-Godavari watershed' },
+      { label: 'Notable site', value: 'Lonar Crater Lake (Ramsar site, 2020)' },
+      { label: 'Pilgrimage centre', value: 'Shegaon (Sant Gajanan Maharaj)' },
+    ],
+  },
+
+  // Sources: indiandistricts.in Hingoli, UDCPR 2020.
+  'hingoli-dp-plan': {
+    paragraphs: [
+      'The Hingoli Regional / Development Plan is governed under the Maharashtra Regional and Town Planning Act, 1966 and falls within the group of regional plans administered jointly with Buldhana, Washim, Yavatmal and Nanded under the Additional Regulations of the Unified Development Control and Promotion Regulations (UDCPR) 2020 for these districts. The principal urban local body is the Hingoli Municipal Council, which serves as the planning authority for the town’s jurisdiction.',
+      'Hingoli district lies in the Marathwada region of central Maharashtra and was carved out of Parbhani district in 1999. The district lies in the basin of the Painganga river — a tributary of the Godavari — and is largely agricultural, with cotton, soybean and tur (pigeon pea) as dominant crops. The town of Aundha Nagnath, one of the twelve Jyotirlinga shrines of Lord Shiva, is located within the district and is a major pilgrimage destination.',
+      'The plan overlay on this page reflects published regional and municipal zoning, reservation and land-use boundaries georeferenced over satellite imagery, covering Hingoli town, the tehsil headquarters of Basmath, Kalamnuri, Sengaon and Aundha, and the surrounding agricultural plains.',
+    ],
+    quickFacts: [
+      { label: 'Plan type', value: 'Regional Plan (district)' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Applicable additional regs', value: 'UDCPR 2020 (Hingoli-Buldhana-Washim-Yavatmal-Nanded group)' },
+      { label: 'District carved out of Parbhani', value: '1999' },
+      { label: 'Region', value: 'Marathwada' },
+      { label: 'Key pilgrimage', value: 'Aundha Nagnath (one of the 12 Jyotirlingas)' },
+      { label: 'Major crops', value: 'Cotton, soybean, tur' },
+    ],
+  },
+
+  // Sources: JCMC, Wikipedia Jalgaon.
+  'jalgaon-region-dp-plan': {
+    paragraphs: [
+      'The Jalgaon Development Plan is administered by the Jalgaon City Municipal Corporation (JCMC), which was constituted on 21 March 2003. The municipal corporation governs an area of approximately 68 square kilometres of Jalgaon city in north-western Maharashtra, with the final-form Development Plan having come into force from 11 February 2002 (prior to the corporation’s establishment, under the predecessor council). The plan is governed by the Maharashtra Regional and Town Planning Act, 1966.',
+      'Jalgaon is colloquially known as the Banana City of India — farmers in Jalgaon district grow approximately two-thirds of Maharashtra’s banana crop, making it the country’s single largest banana-producing district. The wider district also hosts the railway-junction town of Bhusaval (a major Central Railway maintenance hub) and important industries including cotton ginning, oil milling, plastic pipe manufacturing and dal milling.',
+      'The DP overlay on this page reflects JCMC’s published zoning, reservation and road-line boundaries georeferenced over satellite imagery, covering the city core around Mehrun Lake, the railway-linked industrial belts, the Kavayitri Bahinabai Chaudhari North Maharashtra University campus, and the expanding residential peripheries.',
+    ],
+    quickFacts: [
+      { label: 'Planning authority', value: 'Jalgaon City Municipal Corporation (JCMC)' },
+      { label: 'JCMC established', value: '21 March 2003' },
+      { label: 'Final DP enforced from', value: '11 February 2002' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Approximate corporation area', value: '~68 sq km' },
+      { label: 'Agricultural identity', value: 'Banana City of India (~2/3 of MH banana production)' },
+      { label: 'Notable subsidiary town', value: 'Bhusaval (Central Railway maintenance hub)' },
+    ],
+  },
+
+  // Sources: Parbhani district, VNMAU.
+  'parbhani-region-dp-plan': {
+    paragraphs: [
+      'The Parbhani Regional Plan covers Parbhani district in the Marathwada region of central Maharashtra, prepared under the Maharashtra Regional and Town Planning Act, 1966. The plan is administered by the District Planning Office at Parbhani in conjunction with the Town Planning and Valuation Department of Maharashtra State, with the Parbhani Municipal Corporation as the principal urban local body and planning authority for the city’s jurisdiction.',
+      'Parbhani is a major agricultural-trade and education centre in central Maharashtra, well known as the home of the Vasantrao Naik Marathwada Agricultural University (VNMAU) — one of Maharashtra’s four state-funded agricultural universities, established in 1972. The district lies in the basin of the Godavari river and its tributary the Purna, with cotton, soybean, sugarcane and turmeric as the principal crops. Industrial activity centres on cotton ginning, sugar processing, oilseed milling and dal milling.',
+      'The plan overlay on this page reflects the published regional and municipal zoning and land-use boundaries georeferenced over satellite imagery, covering Parbhani city, the tehsil headquarters of Gangakhed, Jintur, Manwath, Pathri, Purna, Sailu, Sonpeth and Palam, and the surrounding agricultural plains.',
+    ],
+    quickFacts: [
+      { label: 'Plan type', value: 'Regional Plan (district)' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'City civic body', value: 'Parbhani Municipal Corporation' },
+      { label: 'Region', value: 'Marathwada' },
+      { label: 'Notable institution', value: 'Vasantrao Naik Marathwada Agricultural University (est. 1972)' },
+      { label: 'Tehsils', value: '9 (Parbhani, Gangakhed, Jintur, Manwath, Pathri, Purna, Sailu, Sonpeth, Palam)' },
+      { label: 'Key rivers', value: 'Godavari, Purna' },
+    ],
+  },
+
+  // Sources: Jalna district, Wikipedia Jalna.
+  'jalna-region-dp-plan': {
+    paragraphs: [
+      'The Jalna Regional Plan covers Jalna district in the Marathwada region of Maharashtra, prepared under the Maharashtra Regional and Town Planning Act, 1966. The plan is administered by the Town Planning and Valuation Department of Maharashtra State and the District Planning Office at Jalna, with the Jalna Municipal Council serving as the principal urban local body and planning authority for the city’s jurisdiction.',
+      'Jalna is a major agricultural-marketing centre in central Maharashtra and one of India’s largest hubs for hybrid seed production — the city hosts a large concentration of seed-research and seed-production companies serving the Indian agriculture sector. Jalna also has steel re-rolling units, sugar mills and bidi-rolling industries, with the Jalna Industrial Estate (MIDC) as the principal industrial node within the municipal limits. The town sits along the broad-gauge Manmad-Secunderabad railway corridor.',
+      'The plan overlay on this page reflects the published regional zoning and land-use boundaries georeferenced over satellite imagery, covering Jalna town, the tehsil headquarters of Ambad, Badnapur, Bhokardan, Ghansawangi, Jafrabad, Mantha and Partur, and the surrounding agricultural plains of Marathwada.',
+    ],
+    quickFacts: [
+      { label: 'Plan type', value: 'Regional Plan (district)' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Region', value: 'Marathwada' },
+      { label: 'Notable industry', value: 'Hybrid seed production (one of India’s largest hubs)' },
+      { label: 'Other industries', value: 'Steel re-rolling, sugar mills, bidi rolling' },
+      { label: 'Key industrial node', value: 'Jalna MIDC Industrial Estate' },
+      { label: 'Tehsils', value: '8 (Jalna, Ambad, Badnapur, Bhokardan, Ghansawangi, Jafrabad, Mantha, Partur)' },
+    ],
+  },
+
+  // Sources: washim.gov.in, indiandistricts.in Washim, UDCPR 2020.
+  'washim-region-dp-plan': {
+    paragraphs: [
+      'The Washim Regional Plan covers Washim district in Maharashtra’s Vidarbha region, prepared under the Maharashtra Regional and Town Planning Act, 1966. The plan falls within the Hingoli-Buldhana-Washim-Yavatmal-Nanded group of regional plans for which the Unified Development Control and Promotion Regulations (UDCPR) 2020 provides additional Chapter 5 regulations applicable to plan areas. The District Planning Office at Washim administers the regional plan in conjunction with the constituent municipal councils.',
+      'Washim district was carved out of Akola district on 1 July 1998 and lies in the cotton- and soybean-growing belt of western Vidarbha. The town of Washim is the district headquarters and a regional trade centre, while the historic pilgrimage town of Pohradevi (the home shrine of the Banjara community) and the Balaji Mandir at Karanja-Lad are notable cultural landmarks within the district.',
+      'The plan overlay on this page reflects the published regional and municipal zoning and land-use boundaries georeferenced over satellite imagery, covering Washim town, the tehsil headquarters of Karanja, Malegaon, Mangrulpir, Manora and Risod, and the surrounding agricultural plains.',
+    ],
+    quickFacts: [
+      { label: 'Plan type', value: 'Regional Plan (district)' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Applicable additional regs', value: 'UDCPR 2020 Chapter 5 (Hingoli-Buldhana-Washim-Yavatmal-Nanded group)' },
+      { label: 'District carved out of Akola', value: '1 July 1998' },
+      { label: 'Region', value: 'Vidarbha (western)' },
+      { label: 'Cultural landmarks', value: 'Pohradevi (Banjara community shrine), Karanja-Lad Balaji Mandir' },
+      { label: 'Tehsils', value: 'Washim, Karanja, Malegaon, Mangrulpir, Manora, Risod' },
+    ],
+  },
+
+  // Sources: Dhule district, Wikipedia Dhule, DMIC Nardana.
+  'dhule-dp-plan': {
+    paragraphs: [
+      'The Dhule Development Plan is administered by the Dhule Municipal Corporation, which serves as the principal planning authority for the city under the Maharashtra Regional and Town Planning Act, 1966. The corporation governs the urban core of Dhule city in the Khandesh region of north-western Maharashtra.',
+      'Dhule occupies a strategically significant location at the junction of three National Highways — NH-3 (the Mumbai-Agra Highway), NH-6 (the Surat-Kolkata Highway) and NH-211 — making it one of the few cities in Maharashtra at a confluence of three major National Highways. The city is emerging as a hub for textiles, edible oil, power-loom manufacturing and information technology, and serves as a regional commercial centre for north Maharashtra and Khandesh.',
+      'The Nardana Textile Park, being developed under the proposed Delhi-Mumbai Industrial Corridor (DMIC), is located approximately 30 km from Dhule city; the park covers approximately 648 hectares with 72 industrial plots demarcated. The DP overlay on this page reflects published municipal zoning, reservation and road-line boundaries georeferenced over satellite imagery, covering the city core, the institutional cluster of the Kavayitri Bahinabai Chaudhari North Maharashtra University satellite campus, and the expanding industrial peripheries.',
+    ],
+    quickFacts: [
+      { label: 'Planning authority', value: 'Dhule Municipal Corporation' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'National highways at junction', value: 'NH-3 (Mumbai-Agra), NH-6 (Surat-Kolkata), NH-211' },
+      { label: 'Key industries', value: 'Textiles, edible oil, power-loom, IT' },
+      { label: 'Major industrial node nearby', value: 'Nardana Textile Park (~30 km, DMIC, ~648 ha, 72 plots)' },
+      { label: 'Region', value: 'Khandesh (north-western Maharashtra)' },
+    ],
+  },
+
+  // Sources: Nandurbar district, DTP Maharashtra Nandurbar entry, Wikipedia.
+  'nandurbar-region-dp-plan': {
+    paragraphs: [
+      'The Nandurbar Regional / Development Plan is administered under the Maharashtra Regional and Town Planning Act, 1966, with an approved regional plan in force — referenced on the Directorate of Town Planning & Valuation, Maharashtra State as the Development Plan for Nandurbar (Revised Partly) under Section 31(1) of the MRTP Act. The District Branch Office for Town Planning at Nandurbar (Assistant Director of Town Planning) administers the plan in coordination with the constituent municipal councils.',
+      'Nandurbar district was carved out of Dhule district on 1 July 1998 and lies in the tribal belt of north-western Maharashtra, bordering Gujarat and Madhya Pradesh. The district has the highest proportion of Scheduled Tribe population in Maharashtra and is dominated by hilly terrain, the Satpura range and the Narmada river basin in its northern reaches. The town of Nandurbar itself is a regional trading and administrative centre, with cotton, soybean and forest produce as the principal economic drivers.',
+      'The plan overlay on this page reflects the published regional and municipal zoning and land-use boundaries georeferenced over satellite imagery, covering Nandurbar town, the tehsil headquarters of Shahada, Taloda, Akkalkuwa, Akrani (Dhadgaon) and Navapur, and the protected tribal-area lands and forest reserves of the Satpura highlands.',
+    ],
+    quickFacts: [
+      { label: 'Plan type', value: 'Regional Plan with Development Plan (Revised Partly) for Nandurbar' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966, Section 31(1)' },
+      { label: 'District carved out of Dhule', value: '1 July 1998' },
+      { label: 'Geography', value: 'Satpura range, Narmada basin' },
+      { label: 'Region', value: 'Khandesh (north-west Maharashtra, on Gujarat-MP border)' },
+      { label: 'Demographic note', value: 'Highest ST population proportion in Maharashtra' },
+      { label: 'Tehsils', value: 'Nandurbar, Shahada, Taloda, Akkalkuwa, Akrani (Dhadgaon), Navapur' },
+    ],
+  },
+
+  // Sources: AMC Ahmednagar/Ahilyanagar, Wikipedia Ahmednagar.
+  'ahmednagar-dp-plan': {
+    paragraphs: [
+      'The Ahmednagar (Ahilyanagar) Development Plan is administered by the Ahmednagar Municipal Corporation (now officially the Ahilyanagar Municipal Corporation following the renaming of the district). The Municipal Corporation was formed in 2003 under the Maharashtra Regional and Town Planning Act, 1966, succeeding the earlier Ahmednagar Municipal Council.',
+      'Ahmednagar sits in central Maharashtra at the junction of multiple regional connections — national highways linking Pune, Aurangabad, Manmad and Solapur — and the city is an important regional trading and educational centre. The Bhima river basin lies to the south, and the Pravara river / Bhandardara dam reservoir lies to the west. Industrial activity centres on the MIDC industrial areas at Nagar and Supa, and includes sugar processing, dairy and food-processing units.',
+      'The DP overlay on this page reflects the published municipal zoning, reservation and road-line boundaries georeferenced over satellite imagery, covering the AMC jurisdiction including the historic city core, defence-establishment lands (Ahmednagar is home to the Armoured Corps Centre & School of the Indian Army), and the expanding industrial peripheries along the Pune and Aurangabad highways.',
+    ],
+    quickFacts: [
+      { label: 'Planning authority', value: 'Ahmednagar / Ahilyanagar Municipal Corporation' },
+      { label: 'Corporation formed', value: '2003' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Notable institutional land', value: 'Armoured Corps Centre & School (Indian Army)' },
+      { label: 'Major rivers', value: 'Bhima (south), Pravara / Bhandardara reservoir (west)' },
+      { label: 'Region', value: 'Central Maharashtra (Western Ghats edge)' },
+    ],
+  },
+
+  // Sources: MSRDC SPA, Wikipedia MSRDC, Mumbai-Pune Expressway reporting.
+  'karjat-msrdc-corridor': {
+    paragraphs: [
+      'The Karjat – MSRDC Corridor Development Plan is administered by the Maharashtra State Road Development Corporation (MSRDC) acting as Special Planning Authority under the Maharashtra Regional and Town Planning Act, 1966. The notified Special Planning Authority area comprises 71 villages of the Panvel and Khalapur talukas of Raigad district, covering approximately 186.72 square kilometres along the Mumbai-Pune Expressway corridor. The 2011 Census recorded a population of about 1,01,175 within the SPA boundary.',
+      'The corridor extends linearly along the Mumbai-Pune Expressway from Ariwali, Ajivali and Giravale villages at the northern tip to Chavani village at the southern end, spanning approximately 34 km. The area was previously part of the Navi Mumbai Airport Influence Notified Area (NAINA) under CIDCO before MSRDC was appointed as the SPA for this corridor segment. Four villages within the SPA — Nadhal, Adoshi, Chavani and Talavali — fall within the Western Ghats (Malabar Plains) Eco-Sensitive Area, with planning rules calibrated accordingly.',
+      'The DP overlay on this page reflects MSRDC’s notified zoning, reservation and road-line boundaries georeferenced over satellite imagery, including the expressway alignment, interchange-influence buffers, freight-logistics nodes and the ecologically sensitive village clusters.',
+    ],
+    quickFacts: [
+      { label: 'Special Planning Authority', value: 'Maharashtra State Road Development Corporation (MSRDC)' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Notified area', value: '~186.72 sq km, 71 villages' },
+      { label: 'Talukas covered', value: 'Panvel, Khalapur (Raigad district)' },
+      { label: 'Linear length along expressway', value: '~34 km' },
+      { label: 'Population (2011 census)', value: '~1,01,175' },
+      { label: 'Previous SPA', value: 'NAINA / CIDCO' },
+      { label: 'ESA-affected villages', value: '4 (Nadhal, Adoshi, Chavani, Talavali)' },
+    ],
+  },
+
+  // Sources: MSRDC SPA listings, expressway reporting.
+  'pune-mumbai-msrdc-corridor': {
+    paragraphs: [
+      'The Pune-Mumbai – MSRDC Corridor Development Plan is administered by the Maharashtra State Road Development Corporation (MSRDC) acting as Special Planning Authority along the Mumbai-Pune Expressway under the Maharashtra Regional and Town Planning Act, 1966. The Government of Maharashtra appointed MSRDC as SPA for an approximately 2-km-wide stretch flanking the Mumbai-Pune Expressway corridor, with the notified area covering roughly 186.72 sq km strategically located between two important urban centres — Mumbai (about 45 km from the SPA boundary) and Pune (about 80 km) — with Navi Mumbai approximately 20 km away.',
+      'The corridor is anchored by the Mumbai-Pune Expressway, India’s first six-lane access-controlled tolled expressway, with the recently opened Missing Link bypass at Khopoli (commissioned 1 May 2026) reducing total expressway length by approximately 6 km and shortening travel time. The MSRDC SPA boundary touches second- and third-tier nodes — Panvel (~30 km), Khopoli (~20 km), Lonavala (~12 km), Khandala (~8 km), Thane (~54 km), Kalyan (~52 km) and Karjat (~15 km).',
+      'The DP overlay on this page reflects MSRDC’s notified zoning, reservation and road-line boundaries georeferenced over satellite imagery — including the expressway alignment, the interchange-influence buffers, the freight-logistics nodes and the buffer-zone reservations.',
+    ],
+    quickFacts: [
+      { label: 'Special Planning Authority', value: 'Maharashtra State Road Development Corporation (MSRDC)' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'SPA notified area', value: '~186.72 sq km, ~2 km wide stretch' },
+      { label: 'Anchoring infrastructure', value: 'Mumbai-Pune Expressway' },
+      { label: 'Recent enhancement', value: 'Missing Link bypass commissioned 1 May 2026' },
+      { label: 'Distance to Mumbai (boundary)', value: '~45 km' },
+      { label: 'Distance to Pune (boundary)', value: '~80 km' },
+      { label: 'Distance to Navi Mumbai', value: '~20 km' },
+    ],
+  },
+
+  // Sources: Satara district notices, MSRDC New Mahabaleshwar reporting.
+  'mahabaleshwar-msrdc-corridor': {
+    paragraphs: [
+      'The Mahabaleshwar – MSRDC Corridor Development Plan is administered by the Maharashtra State Road Development Corporation (MSRDC) acting as Special Planning Authority for the New Mahabaleshwar Hill Station project. MSRDC was appointed as SPA by the Government of Maharashtra in 2019 to draft the development plan for the proposed New Mahabaleshwar Hill Station area, under the Maharashtra Regional and Town Planning Act, 1966.',
+      'The initial New Mahabaleshwar Town Area included 235 villages across four talukas of Satara district — Jaoli, Mahabaleshwar, Satara and Patan. The Maharashtra State Government subsequently approved an expansion of the project to incorporate 294 additional villages, bringing the total to 529 villages across the same four hilly tehsils, with a total project area of approximately 2,097 square kilometres.',
+      'The project’s vision is a planned eco-tourism hill station with controlled development around tourism, hospitality and outdoor-adventure facilities. The DP overlay on this page reflects MSRDC’s notified zoning, reservation and land-use boundaries for the SPA area georeferenced over satellite imagery, covering the existing Mahabaleshwar-Panchgani hill station precinct (an Eco-Sensitive Zone) and the surrounding hilly villages.',
+    ],
+    quickFacts: [
+      { label: 'Special Planning Authority', value: 'Maharashtra State Road Development Corporation (MSRDC)' },
+      { label: 'MSRDC appointed', value: '2019' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Initial area', value: '235 villages, 4 talukas of Satara district' },
+      { label: 'Talukas covered', value: 'Jaoli, Mahabaleshwar, Satara, Patan' },
+      { label: 'Expanded area', value: '529 villages, ~2,097 sq km' },
+      { label: 'Ecological context', value: 'Mahabaleshwar-Panchgani Eco-Sensitive Zone' },
+    ],
+  },
+
+  // Sources: BDA RMP 2031 documents, BBMP, Government of Karnataka.
+  'bengaluru-dp-plan': {
+    paragraphs: [
+      'The Bengaluru Development Plan, formally the Revised Master Plan (RMP), is administered by the Bangalore Development Authority (BDA) as the principal planning authority for the Bengaluru Metropolitan Area. The Government of Karnataka sanctioned the RMP 2015 prepared by BDA in 2007, and BDA published a Draft of the RMP 2031 in 2017 covering the next planning cycle.',
+      'Bengaluru’s planning authorities work in coordination with the Bruhat Bengaluru Mahanagara Palike (BBMP), the city’s urban local body. BDA handles master planning and large-scale infrastructure development, while BBMP handles building permits and civic services within its limits. Planning in Karnataka is governed by the Karnataka Town and Country Planning Act, 1961 (a different statutory framework from Maharashtra’s MRTP Act, 1966).',
+      'Major elements covered by the RMP include the Outer Ring Road and the Peripheral Ring Road, IT-corridor zoning around Whitefield, Electronic City and Sarjapur, and the Namma Metro (Bengaluru Metro Rail) alignments. The DP overlay on this page reflects BDA’s published zoning, infrastructure and reservation boundaries georeferenced over satellite imagery.',
+    ],
+    quickFacts: [
+      { label: 'Planning authority', value: 'Bangalore Development Authority (BDA)' },
+      { label: 'Civic body', value: 'Bruhat Bengaluru Mahanagara Palike (BBMP)' },
+      { label: 'RMP 2015 sanctioned', value: '2007' },
+      { label: 'RMP 2031 drafted', value: '2017' },
+      { label: 'Governing Act', value: 'Karnataka Town and Country Planning Act, 1961' },
+      { label: 'Key infrastructure', value: 'Outer Ring Road, Peripheral Ring Road, Namma Metro' },
+      { label: 'IT corridors', value: 'Whitefield, Electronic City, Sarjapur' },
+    ],
+  },
+
+  // Sources: hmda.gov.in Master Planning 2031 page, Wikipedia HMDA.
+  'hyderabad-hmda-periphery-dp-plan': {
+    paragraphs: [
+      'The Hyderabad Metropolitan Region Master Plan 2031 is administered by the Hyderabad Metropolitan Development Authority (HMDA). The Master Plan was notified by the Government in 2013 and covers approximately 5,965 square kilometres of the Hyderabad Metropolitan Region — including the GHMC (Greater Hyderabad Municipal Corporation) area, the Sangareddy and Bhongir municipalities, and 849 surrounding villages.',
+      'The HMDA Master Plan 2031 adopts a radial-concentric structure of development, with new urban nodes and urban centres proposed in all directions from the GHMC core to promote balanced growth across the metropolitan region. A Peri-Urban Zone runs along the urban boundary to control sprawl and preserve resources at the periphery.',
+      'The plan covers zoning for residential, commercial, industrial, IT-corridor and conservation uses, infrastructure alignments for the Outer Ring Road and the Regional Ring Road, transit-oriented development zones along the Hyderabad Metro corridors, and the airport-influence zoning around the Rajiv Gandhi International Airport at Shamshabad. The DP overlay on this page reflects HMDA’s notified zoning and reservation boundaries georeferenced over satellite imagery.',
+    ],
+    quickFacts: [
+      { label: 'Planning authority', value: 'Hyderabad Metropolitan Development Authority (HMDA)' },
+      { label: 'Master Plan notified', value: '2013 (HMDA Master Plan 2031)' },
+      { label: 'Coverage', value: '~5,965 sq km' },
+      { label: 'Constituent areas', value: 'GHMC, Sangareddy, Bhongir municipalities, 849 villages' },
+      { label: 'Planning structure', value: 'Radial-concentric with Peri-Urban Zone' },
+      { label: 'Key infrastructure', value: 'Outer Ring Road, Regional Ring Road, Hyderabad Metro' },
+      { label: 'Major airport node', value: 'Rajiv Gandhi International Airport (Shamshabad)' },
     ],
   },
 };
