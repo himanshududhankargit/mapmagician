@@ -50,7 +50,7 @@ export default function HomePage() {
     '@type': 'Organization',
     name: 'Map Magician',
     url: 'https://www.mapmagician.in',
-    sameAs: [SITE.origin],
+    sameAs: [SITE.origin, 'https://www.linkedin.com/company/mapmagician'],
     logo: 'https://www.mapmagician.in/AssetsGIS/mapmagiciansmall.png',
   };
 
