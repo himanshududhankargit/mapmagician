@@ -1001,6 +1001,15 @@
 
                 loadingOverlay.classList.remove('open');
 
+                // Customer already has a halted/pending subscription for this
+                // region — resume it by paying the outstanding invoice instead
+                // of creating a duplicate. renewRegionSubscription opens the
+                // Razorpay invoice checkout; subscription.charged reactivates
+                // the SAME subscription.
+                if (result.data && result.data.action === 'recover') {
+                    return renewRegionSubscription(productId, regionName);
+                }
+
                 var subscriptionId = result.data.subscriptionId;
 
                 // Poll for webhook confirmation — don't trust Razorpay UI result
