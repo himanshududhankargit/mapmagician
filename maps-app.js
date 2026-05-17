@@ -2378,6 +2378,20 @@
             newSubBtn.style.background = '#4CAF50';
             subActionBtn.parentNode.replaceChild(newSubBtn, subActionBtn);
 
+            // If the user already has a halted/pending/grace subscription for
+            // this region, tapping subscribe RECOVERS (renews) the SAME
+            // subscription rather than creating a new one (createSubscription
+            // returns action:"recover"). Label the button to match the Renew
+            // banner / My Purchases wording so the user knows it's a renewal.
+            var existingSub = activeSubscriptions.get(pid);
+            var subRecoverable = !!(existingSub && (
+                existingSub.status === 'halted'
+                || existingSub.status === 'pending'
+                || (existingSub.graceAppliedThisCycle && Number(existingSub.graceExpiry || 0) > Date.now())));
+            if (subRecoverable) {
+                newSubBtn.textContent = 'Renew Subscription';
+            }
+
             newSubBtn.addEventListener('click', () => {
                 overlay.classList.remove('open');
                 enableMapInteraction();
