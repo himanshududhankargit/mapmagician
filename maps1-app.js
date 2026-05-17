@@ -610,6 +610,8 @@
                 activeEntries.push(entry);
             });
 
+            const supportCenter = map ? map.getCenter() : null;
+
             try {
                 const sendSupportRequest = functions.httpsCallable('sendSupportRequest');
                 await sendSupportRequest({
@@ -618,6 +620,8 @@
                     region: document.getElementById('support-region').value,
                     regionPid: district ? district.productPurchaseID : '',
                     zoom: map ? map.getZoom() : 0,
+                    lat: supportCenter ? supportCenter.lat() : null,
+                    lng: supportCenter ? supportCenter.lng() : null,
                     userAgent: navigator.userAgent,
                     activeSubscriptions: activeEntries
                 });
