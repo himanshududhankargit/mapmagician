@@ -6024,6 +6024,45 @@
                     }
                 });
 
+                // Recoverable subscriptions with NO purchase entry — a halted
+                // sub's mirror gets expiry-revoked then deleted by
+                // cleanupMyExpiredPurchases, so it never appears via
+                // activePurchases above and the Subscriptions group would be
+                // empty. Synthesize a row (status + Renew/Cancel) for any
+                // recoverable sub (halted/pending/grace) that has no purchase
+                // entry, so the customer can still see and renew it.
+                activeSubscriptions.forEach(function(sub, pid) {
+                    if (!sub || activePurchases.has(pid)) return;
+                    var sStatus = sub.status;
+                    var sInGrace = !!(sub.graceAppliedThisCycle
+                        && Number(sub.graceExpiry || 0) > Date.now());
+                    var sNeedsRenew = sInGrace || sStatus === 'halted' || sStatus === 'pending';
+                    if (!sNeedsRenew) return;
+                    var sDistrict = findDistrictByPurchaseId(pid);
+                    var sName = sDistrict ? sDistrict.districtName : pid;
+                    var sPid = pid;
+                    var sNameEsc = sName.replace(/'/g, "\\'");
+                    var sLabel = sStatus === 'halted' ? 'Payment Failed'
+                        : sStatus === 'pending' ? 'Payment Pending'
+                        : sStatus.charAt(0).toUpperCase() + sStatus.slice(1);
+                    var sBtns = '<button onclick="renewRegionSubscription(\'' + sPid + '\', \'' + sNameEsc + '\')" '
+                        + 'style="padding:3px 10px;font-size:10px;font-weight:600;border:1px solid #2E7D32;color:#fff;background:#2E7D32;border-radius:4px;cursor:pointer;">Renew</button>'
+                        + '<button onclick="cancelRegionSubscription(\'' + sPid + '\', \'' + sNameEsc + '\')" '
+                        + 'style="padding:3px 10px;font-size:10px;font-weight:600;border:1px solid #c62828;color:#c62828;background:none;border-radius:4px;cursor:pointer;">Cancel</button>';
+                    subItems.push({
+                        _order: sStatus === 'halted' ? 1 : 3,
+                        html: '<div style="flex:1;min-width:0;">'
+                            + '<div style="font-weight:600;color:#333;">' + sName + '</div>'
+                            + '<div style="display:flex;align-items:center;gap:6px;margin-top:2px;">'
+                            + '<span style="font-size:10px;font-weight:600;color:#fff;background:#EF6C00;padding:1px 6px;border-radius:4px;">' + sLabel + '</span>'
+                            + '<span style="font-size:11px;color:#888;">Weekly</span>'
+                            + '</div>'
+                            + '<div style="display:flex;gap:6px;margin-top:4px;">' + sBtns + '</div>'
+                            + '</div>',
+                        onClick: function() { goToPurchasedRegion(sPid); }
+                    });
+                });
+
                 // Stable sort each group so active entries rise to the top and
                 // terminal states (cancelled, refunded) sink to the bottom.
                 // Items pushed without _order default to 0 (treated as active).
