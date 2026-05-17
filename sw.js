@@ -1,6 +1,6 @@
 // Service worker — caches app shell so the installed PWA opens offline
 // instead of showing "This site can't be reached".
-const SW_VERSION = 'v14-2026-05-17';
+const SW_VERSION = 'v15-2026-05-17';
 const CACHE_NAME = 'mm-shell-' + SW_VERSION;
 
 // App-shell files to pre-cache on install
