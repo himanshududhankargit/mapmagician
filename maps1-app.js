@@ -488,8 +488,16 @@
             var graceSub = null, gracePid = null, graceName = null;
             activeSubscriptions.forEach(function(sub, pid) {
                 if (graceSub) return;
-                if (sub && sub.graceAppliedThisCycle
-                    && Number(sub.graceExpiry || 0) > Date.now()) {
+                // Show the Renew banner for grace, halted OR pending — i.e.
+                // any state the backend treats as recoverable by paying the
+                // outstanding invoice (mirrors `recoverable` in
+                // getSubscriptionRenewInvoice). A halted sub clears the grace
+                // flags, so a grace-only check would never surface it.
+                var needsRenew = sub && (
+                    (sub.graceAppliedThisCycle && Number(sub.graceExpiry || 0) > Date.now())
+                    || sub.status === 'halted'
+                    || sub.status === 'pending');
+                if (needsRenew) {
                     var district = (typeof findDistrictByPurchaseId === 'function')
                         ? findDistrictByPurchaseId(pid) : null;
                     graceSub = sub;
@@ -1000,6 +1008,15 @@
                 var result = await createSubscription({ productId: productId, regionName: regionName });
 
                 loadingOverlay.classList.remove('open');
+
+                // Customer already has a halted/pending subscription for this
+                // region — resume it by paying the outstanding invoice instead
+                // of creating a duplicate. renewRegionSubscription opens the
+                // Razorpay invoice checkout; subscription.charged reactivates
+                // the SAME subscription.
+                if (result.data && result.data.action === 'recover') {
+                    return renewRegionSubscription(productId, regionName);
+                }
 
                 var subscriptionId = result.data.subscriptionId;
 
@@ -5942,13 +5959,16 @@
 
                         var inGrace = !!(sub && sub.graceAppliedThisCycle
                             && Number(sub.graceExpiry || 0) > Date.now());
+                        // Renew is offered for any recoverable state (grace /
+                        // halted / pending), matching the backend gate.
+                        var needsRenew = inGrace || status === 'halted' || status === 'pending';
 
                         var btns = [];
-                        if (inGrace) {
+                        if (needsRenew) {
                             btns.push('<button onclick="renewRegionSubscription(\'' + pid + '\', \'' + name.replace(/'/g, "\\'") + '\')" ' +
                                 'style="padding:3px 10px;font-size:10px;font-weight:600;border:1px solid #2E7D32;color:#fff;background:#2E7D32;border-radius:4px;cursor:pointer;">Renew</button>');
                         }
-                        if (status === 'active' || inGrace) {
+                        if (status === 'active' || needsRenew) {
                             btns.push('<button onclick="cancelRegionSubscription(\'' + pid + '\', \'' + name.replace(/'/g, "\\'") + '\')" ' +
                                 'style="padding:3px 10px;font-size:10px;font-weight:600;border:1px solid #c62828;color:#c62828;background:none;border-radius:4px;cursor:pointer;">Cancel</button>');
                         }
