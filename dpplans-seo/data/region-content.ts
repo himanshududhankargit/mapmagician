@@ -726,6 +726,26 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       { label: 'Major airport node', value: 'Rajiv Gandhi International Airport (Shamshabad)' },
     ],
   },
+
+  // Sources: vijayapura.uda.gov.in master plan page, Karnataka TCP Act 1961,
+  // Government of Karnataka gazette renaming Bijapur → Vijayapura (1 Nov 2014),
+  // ASI Gol Gumbaz monument record, UNESCO tentative list "Monuments and Forts of the Deccan Sultanate".
+  'vijayapura-dp-plan': {
+    paragraphs: [
+      'The Vijayapura Development Plan is administered by the Vijayapura Urban Development Authority (VUDA), the principal planning body for the Vijayapura local planning area in northern Karnataka. VUDA prepares and publishes the master plan under the Karnataka Town and Country Planning Act, 1961 — the same statutory framework that governs Bengaluru, Hubballi-Dharwad and other planning areas across Karnataka.',
+      'Vijayapura was officially renamed from Bijapur to Vijayapura by the Government of Karnataka on 1 November 2014; older planning documents, revenue records and search results often still use the legacy "Bijapur" spelling for the same city, district and planning area. The civic body within the planning area is the Vijayapura City Corporation (Vijayapura Mahanagar Palike), while VUDA handles master planning, layout sanction and large-scale infrastructure development for the urban region.',
+      'Vijayapura sits on the Deccan Plateau in the Krishna river basin, with the city core anchored by the heritage precinct of the former Adil Shahi capital (1490–1686) — Gol Gumbaz, Ibrahim Rauza and Jod Gumbaz form a near-continuous monument zone listed on the UNESCO World Heritage tentative list as "Monuments and Forts of the Deccan Sultanate". The DP overlay on this page reflects VUDA’s published zoning, road-line and reservation boundaries georeferenced over satellite imagery so plot boundaries align with on-ground features.',
+    ],
+    quickFacts: [
+      { label: 'Planning authority', value: 'Vijayapura Urban Development Authority (VUDA)' },
+      { label: 'Civic body', value: 'Vijayapura City Corporation (Vijayapura Mahanagar Palike)' },
+      { label: 'Governing Act', value: 'Karnataka Town and Country Planning Act, 1961' },
+      { label: 'Name change', value: 'Bijapur → Vijayapura (1 November 2014, Govt. of Karnataka)' },
+      { label: 'District', value: 'Vijayapura District, Northern Karnataka' },
+      { label: 'Geographic basin', value: 'Krishna river basin, Deccan Plateau' },
+      { label: 'Heritage precinct', value: 'Gol Gumbaz, Ibrahim Rauza, Jod Gumbaz (Adil Shahi capital, 1490–1686)' },
+    ],
+  },
 };
 
 /** Look up unique content by region slug. Returns null when no curated content exists. */
