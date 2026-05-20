@@ -1166,6 +1166,19 @@
             var overlay = document.getElementById('cancel-sub-overlay');
             document.getElementById('cancel-sub-region').textContent = regionName;
 
+            var accessLine = document.getElementById('cancel-sub-access-line');
+            if (accessLine) {
+                var sub = activeSubscriptions.get(productId);
+                var purchase = activePurchases.get(productId);
+                var accessUntil = (sub && sub.currentPeriodEnd) || (purchase && purchase.expiry) || 0;
+                if (accessUntil) {
+                    var dateStr = new Date(accessUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                    accessLine.textContent = 'Your access will continue till ' + dateStr + ' even if cancelled';
+                } else {
+                    accessLine.textContent = 'Your access continues until the current period ends';
+                }
+            }
+
             // Replace buttons to remove old listeners
             var confirmBtn = document.getElementById('cancel-sub-confirm');
             var newConfirm = confirmBtn.cloneNode(true);
