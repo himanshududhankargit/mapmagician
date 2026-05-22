@@ -5431,6 +5431,8 @@
                 // already covered by menuGIS' villagesJSON. These carry a real
                 // productPurchaseID + polygon bbox, so clicking can fitBounds and
                 // open the purchase context. menuGIS wins on duplicates.
+                // getVillageCenter falls back to polygon centroid when the entry's
+                // pre-computed latLng field is empty — common in d2.bin.
                 if (villageLayerData && villageLayerData.length > 0) {
                     villageLayerData.forEach(entry => {
                         const vName = entry.villageName || '';
@@ -5438,21 +5440,14 @@
                         const vLower = vName.toLowerCase();
                         if (!vLower.includes(query)) return;
                         if (addedVillageNames.has(vLower)) return;
-                        let lat = NaN, lng = NaN;
-                        if (entry.latLng) {
-                            const parts = entry.latLng.split(',');
-                            if (parts.length >= 2) {
-                                lat = parseFloat(parts[0].trim());
-                                lng = parseFloat(parts[1].trim());
-                            }
-                        }
-                        if (isNaN(lat) || isNaN(lng)) return;
+                        const center = getVillageCenter(entry);
+                        if (!center) return;
                         addedVillageNames.add(vLower);
                         results.push({
                             name: vName,
                             path: 'Village Plan',
                             type: 'villagePlan',
-                            lat: lat, lng: lng,
+                            lat: center.lat, lng: center.lng,
                             bbox: entry.bbox || null,
                             productPurchaseID: entry.productPurchaseID || '',
                             item: entry
