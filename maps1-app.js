@@ -4739,6 +4739,12 @@
                 buildAfterMenuData();
             });
 
+            // Background-prefetch village layer (d2.bin) so the top search bar can
+            // surface MahaVillage entries even when the village toggle is off.
+            (window.requestIdleCallback || function(cb) { return setTimeout(cb, 3000); })(function() {
+                if (!villageDataLoaded) fetchVillageLayerData();
+            }, { timeout: 3000 });
+
             // ===== Fullscreen Region Browser =====
             const regionBrowser = document.getElementById('region-browser');
             const regionGrid = document.getElementById('region-grid');
@@ -5355,6 +5361,7 @@
                 const results = [];
                 const addedStates = new Set();
                 const addedDistricts = new Set();
+                const addedVillageNames = new Set(); // dedup gate for MahaVillage pass
 
                 // Auto-detect coordinates in the query and surface a direct "Go to" result at the top
                 const coordHit = detectCoordsInQuery(query);
@@ -5414,14 +5421,48 @@
                                     lat: lat, lng: lng,
                                     item: item
                                 });
+                                addedVillageNames.add(villageName.toLowerCase());
                             }
                         });
                     }
                 });
 
-                // Sort: coord match first, then villages (most useful), then districts, then states
+                // Second pass: surface MahaVillage (d2.bin) entries that aren't
+                // already covered by menuGIS' villagesJSON. These carry a real
+                // productPurchaseID + polygon bbox, so clicking can fitBounds and
+                // open the purchase context. menuGIS wins on duplicates.
+                if (villageLayerData && villageLayerData.length > 0) {
+                    villageLayerData.forEach(entry => {
+                        const vName = entry.villageName || '';
+                        if (!vName) return;
+                        const vLower = vName.toLowerCase();
+                        if (!vLower.includes(query)) return;
+                        if (addedVillageNames.has(vLower)) return;
+                        let lat = NaN, lng = NaN;
+                        if (entry.latLng) {
+                            const parts = entry.latLng.split(',');
+                            if (parts.length >= 2) {
+                                lat = parseFloat(parts[0].trim());
+                                lng = parseFloat(parts[1].trim());
+                            }
+                        }
+                        if (isNaN(lat) || isNaN(lng)) return;
+                        addedVillageNames.add(vLower);
+                        results.push({
+                            name: vName,
+                            path: 'Village Plan',
+                            type: 'villagePlan',
+                            lat: lat, lng: lng,
+                            bbox: entry.bbox || null,
+                            productPurchaseID: entry.productPurchaseID || '',
+                            item: entry
+                        });
+                    });
+                }
+
+                // Sort: coord match first, then villages (most useful), then villagePlans, then districts, then states
                 results.sort((a, b) => {
-                    const order = { coord: -1, village: 0, district: 1, state: 2 };
+                    const order = { coord: -1, village: 0, villagePlan: 1, district: 2, state: 3 };
                     return (order[a.type] || 0) - (order[b.type] || 0);
                 });
 
@@ -5445,7 +5486,7 @@
                             new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'),
                             '<mark>$1</mark>'
                         );
-                        const icon = r.type === 'coord' ? '🎯' : r.type === 'village' ? '📍' : r.type === 'district' ? '🏘' : '🗺';
+                        const icon = r.type === 'coord' ? '🎯' : r.type === 'village' ? '📍' : r.type === 'villagePlan' ? '🏘️' : r.type === 'district' ? '🏘' : '🗺';
                         // Coord result shouldn't get query highlighting (the name is formatted coords, not a text match)
                         const nameHtml = r.type === 'coord' ? r.name : highlighted;
                         btn.innerHTML = `
@@ -5461,6 +5502,18 @@
                             } else if (r.type === 'village' && r.lat && r.lng) {
                                 const pid = r.item ? r.item.productPurchaseID : '';
                                 goToLocation(r.lat, r.lng, r.name, pid);
+                            } else if (r.type === 'villagePlan' && r.lat && r.lng) {
+                                // goToLocation first so it sets zoomBypassActive + purchase
+                                // context + status text, then fitBounds frames the polygon
+                                // footprint as the final framing.
+                                goToLocation(r.lat, r.lng, r.name, r.productPurchaseID || '');
+                                if (r.bbox) {
+                                    const b = new google.maps.LatLngBounds(
+                                        { lat: r.bbox.minLat, lng: r.bbox.minLng },
+                                        { lat: r.bbox.maxLat, lng: r.bbox.maxLng }
+                                    );
+                                    map.fitBounds(b);
+                                }
                             } else if (r.item) {
                                 if (r.type === 'district' && r.item.villagesJSON) {
                                     showVillages(r.item.district || r.item.state, r.item.villagesJSON, null, r.item.productPurchaseID);
