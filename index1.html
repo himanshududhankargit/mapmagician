@@ -813,25 +813,12 @@ html, body {
   }
 
   function onCardClick(item) {
+    // Always navigate to the live map — splash drives engagement to
+    // /maps.html, not the SEO landing pages. Per-region SEO discovery
+    // happens via crawlable links elsewhere, not via this click handler.
     if (item._kind === 'state') { openState(item.name); return; }
-    if (item._kind === 'district') {
-      // Send to the region SEO landing page if one was built for this pid;
-      // otherwise drill into the village list as before.
-      var dpid = item._entry && item._entry.productPurchaseID;
-      var dseo = dpid ? seoByPid[dpid] : null;
-      if (dseo && dseo.slug) { navigateTo('/' + dseo.slug + '/'); return; }
-      openDistrict(item._entry);
-      return;
-    }
-    if (item._kind === 'village') {
-      // If a village-specific SEO page exists, send there; else deep-link to
-      // /maps.html at the village's coordinates.
-      var vseo = item._pid ? seoByPid[item._pid] : null;
-      var vslug = vseo && item.name ? vseo.villages[item.name.toLowerCase()] : null;
-      if (vseo && vslug) { navigateTo('/' + vseo.slug + '/' + vslug + '/'); return; }
-      goToVillage({ lat: item._lat, lng: item._lng, name: item.name }, item._pid);
-      return;
-    }
+    if (item._kind === 'district') { openDistrict(item._entry); return; }
+    if (item._kind === 'village') { goToVillage({ lat: item._lat, lng: item._lng, name: item.name }, item._pid); return; }
   }
 
   function goToVillage(v, productPurchaseID) {
