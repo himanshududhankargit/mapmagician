@@ -42,6 +42,12 @@ copyIfExists('manifest.json', 'manifest.json');
 copyIfExists('sw.js', 'sw.js');
 copyIfExists('AssetsGIS', 'AssetsGIS');
 
+// Splash staging slot: dpplans.com/index1.html serves the new fast-loading splash
+// while the production / -> /maps.html redirect stays untouched. Once approved,
+// rename index1.html -> index.html and add copyIfExists('index.html', 'index.html')
+// so it overwrites the Next.js redirect stub at the root.
+copyIfExists('index1.html', 'index1.html');
+
 // Staging slots: maps1.html, maps2.html, etc. — always test these on dpplans.com before promoting.
 // Also pick up their *-app.js companions (maps1-app.js, maps2-app.js, ...).
 fs.readdirSync(MM_ROOT)

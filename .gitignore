@@ -1,0 +1,10 @@
+# Temporary npm artifacts created by the one-off image compression scripts
+# (compress-hero-banner.js, compress-splash-hero.js). Each script installs
+# sharp on demand; we never want those bytes in the static-site repo.
+node_modules/
+package.json
+package-lock.json
+
+# OS noise
+.DS_Store
+Thumbs.db
