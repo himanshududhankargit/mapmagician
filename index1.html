@@ -399,6 +399,37 @@ html, body {
   width: 100vw;
   transition: width 280ms cubic-bezier(.4,0,.2,1), transform 280ms cubic-bezier(.4,0,.2,1), opacity 220ms ease-out;
 }
+/* When the panel covers the viewport the toggle tab would protrude past the
+   right edge (right:-18px) and be unreachable. Pin it to the viewport edge
+   so users can still collapse back to the narrow rail. */
+.panel.expanded .panel-toggle {
+  position: fixed;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* Close button — only shown when the panel is expanded. Tapping it closes
+   the splash and navigates to /maps.html, the user-requested exit. */
+.panel-close {
+  display: none;
+  width: 36px; height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.panel-close:hover { background: #eef6f4; color: var(--brand-dark); }
+.panel.expanded .panel-close { display: flex; }
 .panel.expanded .grid {
   grid-template-columns: repeat(2, 1fr);
   max-width: 1100px;
@@ -445,6 +476,7 @@ html, body {
       <img src="AssetsGIS/mapmagiciansmall.png" alt="" width="28" height="28">
       <h1 class="panel-title" id="title">Browse Regions</h1>
     </div>
+    <button class="panel-close" id="panel-close" type="button" aria-label="Close menu and open map">&times;</button>
   </div>
   <input class="panel-search" id="search" type="search" placeholder="Search states or districts..." autocomplete="off" enterkeyhint="search">
   <div class="grid" id="grid">
@@ -829,6 +861,11 @@ html, body {
     var isExpanded = panel.classList.toggle('expanded');
     toggleBtn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
     toggleBtn.setAttribute('aria-label', isExpanded ? 'Collapse panel' : 'Expand panel');
+  });
+
+  $('panel-close').addEventListener('click', function (e) {
+    e.stopPropagation();
+    goToMap();
   });
 
   var searchDebounce;
