@@ -146,7 +146,8 @@ html, body {
   border-color: var(--brand);
 }
 .grid {
-  flex: 1;
+  flex: 1 1 0;
+  min-height: 0; /* let the flex item shrink so overflow-y:auto actually scrolls */
   overflow-y: auto;
   overflow-x: hidden;
   padding: 4px 14px 14px;
@@ -269,49 +270,49 @@ html, body {
 }
 .open-map:hover .arrow { transform: translateX(3px); }
 
-/* ============ MOBILE LAYOUT (panel becomes top strip; hero stays full-bleed behind) ============ */
+/* ============ MOBILE LAYOUT (same left-column shape as desktop, just narrower) ============
+   Per design: keep the panel as a left rail even on phones. Width drops to ~38vw
+   (clamped 150-220px) and the grid stays vertical (single column) with shrunk
+   icons. Hero fills the rest of the screen on the right and remains full-bleed
+   behind the panel.                                                              */
 @media (max-width: 767px) {
   .panel {
-    width: 100vw;
-    height: auto;
-    max-height: 60vh;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    box-shadow: 0 2px 18px rgba(0,0,0,.08);
-  }
-  .panel.closing {
-    /* Per design: slide LEFT on mobile too. */
-    transform: translateX(-100%);
+    width: clamp(150px, 38vw, 220px);
+    /* keep top:0 / bottom:0 inset from base rule; same left rail as desktop */
   }
   .grid {
-    /* Single column on mobile so all region names stay scannable. */
-    grid-template-columns: 1fr;
-    padding: 4px 14px 14px;
+    grid-template-columns: 1fr; /* single column inside the narrow rail */
+    padding: 4px 8px 12px;
+    gap: 8px;
   }
-  .card { display: flex; align-items: center; }
-  .card-img, .card-ph {
-    width: 80px;
-    aspect-ratio: 1/1;
-    flex: 0 0 80px;
-    padding: 6px;
-  }
-  .card-body {
-    flex: 1;
-    text-align: left;
-    padding: 10px 12px;
-  }
+  .card { /* keep vertical card shape (image on top, name below) — just smaller */ }
+  .card-img, .card-ph { padding: 6px; }
+  .card-body { padding: 5px 6px 8px; }
+  .card-name { font-size: 12px; }
+  .card-sub { font-size: 10px; }
   .skel {
-    aspect-ratio: auto;
-    height: 80px;
+    /* skeletons fill the same column at the same approx aspect as a real card */
+    aspect-ratio: 4/5;
   }
+  .panel-header { padding: 12px 10px 6px; }
+  .panel-logo img { width: 22px; height: 22px; }
+  .panel-title { font-size: 14px; }
+  .panel-search {
+    margin: 4px 10px 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .panel-footer { padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); font-size: 10px; }
   .open-map {
-    /* Hero spans the full viewport on mobile too, but the panel covers the top
-       portion. Center the button on the full viewport — it sits over the
-       visible hero region (below the panel). */
-    left: 50%;
+    /* Center over the visible hero strip (right of the panel). Panel width is
+       clamped between 150 and 220px; using the same calc form as desktop with
+       a smaller offset keeps the button visually centered on phones. */
+    /* Center over the hero strip to the right of the panel. The clamp tracks
+       the panel width exactly: half of clamp(150, 38vw, 220) -> clamp(75, 19vw, 110). */
+    left: calc(50% + clamp(75px, 19vw, 110px));
     bottom: calc(20px + env(safe-area-inset-bottom));
-    padding: 13px 24px;
-    font-size: 15px;
+    padding: 12px 22px;
+    font-size: 14px;
   }
 }
 </style>
