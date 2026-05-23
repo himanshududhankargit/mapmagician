@@ -63,3 +63,29 @@ console.log('postbuild-copy: wrote out/CNAME = dpplans.com');
 // /home/ as the canonical browser landing page).
 fs.writeFileSync(path.join(OUT, '_redirects'), '/  /maps.html  302\n');
 console.log('postbuild-copy: wrote out/_redirects (/ -> /maps.html)');
+
+// Slim SEO lookup for index1.html — strips bbox/kml/centroid from regions.json
+// (~950 KB) down to a ~10 KB pid/slug/village-slug map. Lets the splash decide
+// at click time whether to navigate to /<slug>/ (SEO page) or /maps.html.
+try {
+  const regionsPath = path.join(ROOT, 'data', 'regions.json');
+  const regions = JSON.parse(fs.readFileSync(regionsPath, 'utf8'));
+  const slim = {
+    generatedAt: regions.generatedAt,
+    regions: (regions.regions || []).map(r => ({
+      slug: r.slug,
+      productPurchaseID: r.productPurchaseID,
+      menuKey: r.menuKey,
+      displayName: r.displayName,
+      villages: (r.villages || [])
+        .filter(v => !v.skipPage && v.slug)
+        .map(v => ({ name: v.name, slug: v.slug }))
+    }))
+  };
+  const dataDir = path.join(OUT, 'data');
+  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+  fs.writeFileSync(path.join(dataDir, 'seo-index.json'), JSON.stringify(slim));
+  console.log('postbuild-copy: wrote out/data/seo-index.json (' + slim.regions.length + ' regions)');
+} catch (err) {
+  console.warn('postbuild-copy: skipping seo-index.json —', err.message);
+}

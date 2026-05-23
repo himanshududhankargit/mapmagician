@@ -1,7 +1,14 @@
 // Service worker — caches app shell so the installed PWA opens offline
 // instead of showing "This site can't be reached".
-const SW_VERSION = 'v16-2026-05-17';
+const SW_VERSION = 'v17-2026-05-23';
 const CACHE_NAME = 'mm-shell-' + SW_VERSION;
+
+// Region-icon cache: cross-origin PNGs from CloudFront used by the splash
+// (index1.html) and maps.html region browser. Versioned independently of
+// the app shell so an SW bump doesn't force users to re-download icons.
+const ICON_CACHE = 'mm-icons-v1';
+const ICON_URL_PREFIX = 'https://tiles.mapmagician.in/dpplans/0imagesGIS/';
+const KEEP_CACHES = [CACHE_NAME, ICON_CACHE];
 
 // App-shell files to pre-cache on install
 const SHELL_URLS = [
@@ -24,10 +31,10 @@ self.addEventListener('install', (e) => {
 });
 
 self.addEventListener('activate', (e) => {
-    // Purge old caches from previous SW versions
+    // Purge old caches from previous SW versions but keep the icon cache.
     e.waitUntil(
         caches.keys().then(keys =>
-            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+            Promise.all(keys.filter(k => !KEEP_CACHES.includes(k)).map(k => caches.delete(k)))
         ).then(() => self.clients.claim())
     );
 });
@@ -38,6 +45,37 @@ self.addEventListener('fetch', (e) => {
     if (e.request.method !== 'GET') return;
 
     const url = new URL(e.request.url);
+
+    // Region icons (cross-origin, CloudFront): cache-first with background
+    // refresh. Opaque responses (no-cors) are cacheable and render fine in
+    // <img> tags. Failing fetch + no cached copy returns a 404 stub so the
+    // <img onerror> placeholder fires in the page.
+    if (e.request.url.indexOf(ICON_URL_PREFIX) === 0) {
+        e.respondWith(
+            caches.open(ICON_CACHE).then(async cache => {
+                const cached = await cache.match(e.request);
+                if (cached) {
+                    // Fire-and-forget refresh so updated icons land on the next view.
+                    fetch(e.request).then(resp => {
+                        if (resp && (resp.ok || resp.type === 'opaque')) {
+                            cache.put(e.request, resp.clone()).catch(() => {});
+                        }
+                    }).catch(() => {});
+                    return cached;
+                }
+                try {
+                    const fresh = await fetch(e.request);
+                    if (fresh && (fresh.ok || fresh.type === 'opaque')) {
+                        cache.put(e.request, fresh.clone()).catch(() => {});
+                    }
+                    return fresh;
+                } catch (err) {
+                    return new Response('', { status: 504, statusText: 'icon offline' });
+                }
+            })
+        );
+        return;
+    }
 
     // Navigation requests (page loads): network-first, fall back to cached maps.html
     if (e.request.mode === 'navigate') {

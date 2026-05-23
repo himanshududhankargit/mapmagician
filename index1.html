@@ -211,7 +211,7 @@ html, body {
   overflow: hidden;
 }
 .card-sub {
-  font-size: 10px; color: #999;
+  font-size: 10px; color: var(--muted);
   margin-top: 2px;
 }
 
@@ -245,7 +245,7 @@ html, body {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .row-sub {
-  font-size: 10px; color: #999;
+  font-size: 10px; color: var(--muted);
   margin-top: 2px;
 }
 
@@ -469,6 +469,7 @@ html, body {
   'use strict';
 
   var MENU_URL = 'https://sodium-hour-256110.firebaseio.com/menuGIS.json';
+  var SEO_INDEX_URL = '/data/seo-index.json';
   var ICON_BASE = 'https://tiles.mapmagician.in/dpplans/0imagesGIS/';
   var MAP_URL = '/maps.html';
 
@@ -481,14 +482,27 @@ html, body {
   // Animate panel off-screen, then navigate. 280ms matches the CSS transition
   // so the slide completes before the new page replaces this one.
   var navigating = false;
-  function goToMap(extraQuery) {
+  function navigateTo(url) {
     if (navigating) return;
     navigating = true;
     panel.classList.add('closing');
     openBtn.style.opacity = '0';
-    var url = MAP_URL + (extraQuery ? '?' + extraQuery : '');
     setTimeout(function () { window.location.href = url; }, 280);
   }
+  function goToMap(extraQuery) {
+    navigateTo(MAP_URL + (extraQuery ? '?' + extraQuery : ''));
+  }
+
+  // Browser back from /maps.html restores this page from the bfcache with the
+  // pre-navigation state intact: panel is still .closing (translateX -100%)
+  // and navigating=true blocks every interaction. Reset on pageshow so the
+  // splash is usable again.
+  window.addEventListener('pageshow', function (e) {
+    if (!e.persisted) return;
+    navigating = false;
+    panel.classList.remove('closing');
+    openBtn.style.opacity = '';
+  });
 
   // Hero interactions: real tap, OR drag past a small threshold.
   // pointerdown alone would fire on scroll-start; we wait for pointerup (tap)
@@ -521,6 +535,12 @@ html, body {
   var stateOrder = null;    // [stateName, ...] in first-seen order (matches maps.html)
   // historyStack lets the Back button rewind state -> district -> village.
   var historyStack = []; // [{ level, title, items, parent? }]
+
+  // SEO routing lookup populated by fetchSEOIndex(). Each entry maps the
+  // menuGIS productPurchaseID for a district to { slug, villages }, where
+  // villages is a lowercase-name -> village slug map. Districts/villages
+  // not present here fall through to /maps.html with deep-link params.
+  var seoByPid = {};
 
   function countVillages(villagesJSON) {
     if (!villagesJSON) return 0;
@@ -564,6 +584,23 @@ html, body {
         renderStates();
       })
       .catch(function () { showEmpty('Could not load regions. Tap Open Map to continue.'); });
+  }
+
+  function fetchSEOIndex() {
+    fetch(SEO_INDEX_URL, { cache: 'force-cache' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (json) {
+        if (!json || !json.regions) return;
+        json.regions.forEach(function (r) {
+          if (!r.productPurchaseID || !r.slug) return;
+          var villages = {};
+          (r.villages || []).forEach(function (v) {
+            if (v && v.name && v.slug) villages[v.name.toLowerCase()] = v.slug;
+          });
+          seoByPid[r.productPurchaseID] = { slug: r.slug, villages: villages };
+        });
+      })
+      .catch(function () { /* SEO unavailable — clicks fall through to /maps.html */ });
   }
 
   function renderStates() {
@@ -745,15 +782,34 @@ html, body {
 
   function onCardClick(item) {
     if (item._kind === 'state') { openState(item.name); return; }
-    if (item._kind === 'district') { openDistrict(item._entry); return; }
-    if (item._kind === 'village') { goToVillage({ lat: item._lat, lng: item._lng, name: item.name }, item._pid); return; }
+    if (item._kind === 'district') {
+      // Send to the region SEO landing page if one was built for this pid;
+      // otherwise drill into the village list as before.
+      var dpid = item._entry && item._entry.productPurchaseID;
+      var dseo = dpid ? seoByPid[dpid] : null;
+      if (dseo && dseo.slug) { navigateTo('/' + dseo.slug + '/'); return; }
+      openDistrict(item._entry);
+      return;
+    }
+    if (item._kind === 'village') {
+      // If a village-specific SEO page exists, send there; else deep-link to
+      // /maps.html at the village's coordinates.
+      var vseo = item._pid ? seoByPid[item._pid] : null;
+      var vslug = vseo && item.name ? vseo.villages[item.name.toLowerCase()] : null;
+      if (vseo && vslug) { navigateTo('/' + vseo.slug + '/' + vslug + '/'); return; }
+      goToVillage({ lat: item._lat, lng: item._lng, name: item.name }, item._pid);
+      return;
+    }
   }
 
   function goToVillage(v, productPurchaseID) {
-    // maps-app.js:3877 honors ?lat&lng&zoom for deep-linking. Land at zoom 14,
-    // the last free zoom — one step below the premium gate (maps-app.js:2904
-    // treats zoom > 14 as premium), so the user can preview before billing.
-    var qs = 'lat=' + v.lat + '&lng=' + v.lng + '&zoom=14';
+    // maps-app.js:3877 honors ?lat&lng&zoom for deep-linking. Land at zoom 13:
+    // the access check at maps-app.js:4214 fires at z >= MAX_FREE_ZOOM (14)
+    // and flashes a "No Map Data" dialog while polygons are still parsing.
+    // Zoom 13 keeps the user safely below both the access check and the
+    // billing gate (z > 14, maps-app.js:2904) — they see city context and
+    // zoom in manually when ready.
+    var qs = 'lat=' + v.lat + '&lng=' + v.lng + '&zoom=13';
     if (productPurchaseID) qs += '&pid=' + encodeURIComponent(productPurchaseID);
     goToMap(qs);
   }
@@ -800,7 +856,19 @@ html, body {
   }
   (window.requestIdleCallback || function (cb) { return setTimeout(cb, 800); })(prefetchMap, { timeout: 1500 });
 
-  requestAnimationFrame(function () { setTimeout(fetchMenu, 0); });
+  // Register the shared service worker — caches region icons cross-origin
+  // (CloudFront tiles.mapmagician.in/dpplans/0imagesGIS/*.png) so the splash
+  // grid re-renders instantly on repeat visits and inside the installed PWA.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').catch(function () { /* file:// or unsupported */ });
+    });
+  }
+
+  requestAnimationFrame(function () {
+    setTimeout(fetchMenu, 0);
+    setTimeout(fetchSEOIndex, 0);
+  });
 })();
 </script>
 </body>
