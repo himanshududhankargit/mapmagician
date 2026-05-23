@@ -176,6 +176,7 @@ html, body {
   position: relative;
   display: flex;
   flex-direction: column;
+  min-height: 170px; /* 110 image + ~60 body — hard floor so grid never squeezes */
   transition: transform 120ms, box-shadow 120ms, border-color 120ms;
 }
 .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
@@ -331,7 +332,7 @@ html, body {
     padding: 4px 8px 12px;
     gap: 8px;
   }
-  .card { /* keep vertical card shape (image on top, name below) — just smaller */ }
+  .card { min-height: 190px; /* 130 image + ~60 body */ }
   .card-img, .card-ph { height: 130px; flex: 0 0 130px; padding: 6px; }
   .card-body { padding: 5px 6px 8px; }
   .card-name { font-size: 12px; }
@@ -361,7 +362,58 @@ html, body {
     padding: 12px 22px;
     font-size: 14px;
   }
+  .panel.expanded { width: 100vw; }
+  .panel.expanded .grid { grid-template-columns: repeat(2, 1fr); }
+  .panel-toggle { right: -16px; width: 20px; height: 48px; }
 }
+
+/* ============ EXPAND-TO-FULL-WIDTH ============
+   Tab on the panel's right edge: tap to widen the panel to the full viewport
+   (mirrors maps.html region-browser layout) and tap again to collapse. */
+.panel-toggle {
+  position: absolute;
+  top: 50%;
+  right: -18px;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 56px;
+  border: 1px solid var(--border);
+  border-left: none;
+  background: #fff;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-dark);
+  font-size: 14px;
+  box-shadow: 2px 0 6px rgba(0,0,0,.08);
+  padding: 0;
+}
+.panel-toggle:hover { background: #eef6f4; }
+.toggle-arrow { transition: transform 200ms; display: inline-block; line-height: 1; }
+.panel.expanded .toggle-arrow { transform: rotate(180deg); }
+
+.panel.expanded {
+  width: 100vw;
+  transition: width 280ms cubic-bezier(.4,0,.2,1), transform 280ms cubic-bezier(.4,0,.2,1), opacity 220ms ease-out;
+}
+.panel.expanded .grid {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+@media (min-width: 600px) {
+  .panel.expanded .grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 900px) {
+  .panel.expanded .grid { grid-template-columns: repeat(4, 1fr); }
+}
+.panel.expanded.grid-village-active .grid { grid-template-columns: 1fr; max-width: 720px; }
+/* hide the floating Open Map button when the panel covers the viewport */
+.panel.expanded ~ .open-map { opacity: 0; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -403,6 +455,9 @@ html, body {
   <footer class="panel-footer">
     Powered by <a href="https://www.mapmagician.in/" rel="noopener">MapMagician</a>
   </footer>
+  <button class="panel-toggle" id="toggle-width" type="button" aria-label="Expand panel" aria-expanded="false">
+    <span class="toggle-arrow" aria-hidden="true">&#x276F;</span>
+  </button>
 </aside>
 
 <button class="open-map" id="open-map" type="button">
@@ -420,7 +475,8 @@ html, body {
   var $ = function (id) { return document.getElementById(id); };
   var panel = $('panel'), grid = $('grid'), title = $('title'),
       back = $('back'), search = $('search'),
-      hero = $('hero'), openBtn = $('open-map');
+      hero = $('hero'), openBtn = $('open-map'),
+      toggleBtn = $('toggle-width');
 
   // Animate panel off-screen, then navigate. 280ms matches the CSS transition
   // so the slide completes before the new page replaces this one.
@@ -608,6 +664,7 @@ html, body {
     // Villages render as a flat single-column list (matches maps-app.js:4815).
     // States and districts render as a 2-col silhouette card grid.
     grid.classList.toggle('grid-list', level === 'village');
+    panel.classList.toggle('grid-village-active', level === 'village');
     if (!items.length) { showEmpty('No matches.'); return; }
     var frag = document.createDocumentFragment();
     items.forEach(function (item) {
@@ -693,8 +750,10 @@ html, body {
   }
 
   function goToVillage(v, productPurchaseID) {
-    // maps-app.js:3877 honors ?lat&lng&zoom for deep-linking.
-    var qs = 'lat=' + v.lat + '&lng=' + v.lng + '&zoom=15';
+    // maps-app.js:3877 honors ?lat&lng&zoom for deep-linking. Land at zoom 14,
+    // the last free zoom — one step below the premium gate (maps-app.js:2904
+    // treats zoom > 14 as premium), so the user can preview before billing.
+    var qs = 'lat=' + v.lat + '&lng=' + v.lng + '&zoom=14';
     if (productPurchaseID) qs += '&pid=' + encodeURIComponent(productPurchaseID);
     goToMap(qs);
   }
@@ -708,6 +767,13 @@ html, body {
   }
 
   back.addEventListener('click', popLevel);
+
+  toggleBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var isExpanded = panel.classList.toggle('expanded');
+    toggleBtn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+    toggleBtn.setAttribute('aria-label', isExpanded ? 'Collapse panel' : 'Expand panel');
+  });
 
   var searchDebounce;
   search.addEventListener('input', function () {
