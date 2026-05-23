@@ -155,11 +155,18 @@ html, body {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   align-content: start;
+  align-items: start; /* prevent cards from stretching to fill auto-row height */
   -webkit-overflow-scrolling: touch;
 }
+.grid.grid-list {
+  /* Village level: one row per village, full-width inside the panel. */
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
 
-/* Card style mirrors maps.html (.region-card / .region-card-img):
-   4:3 contained silhouette on white, centered name beneath. */
+/* State / district cards: silhouette on white + centered name (mirrors maps.html
+   .region-card). Explicit pixel heights on the image area guarantee the card
+   never compresses, regardless of grid stretching or aspect-ratio support. */
 .card {
   background: #fff;
   border: 2px solid #e0e0e0;
@@ -167,22 +174,25 @@ html, body {
   overflow: hidden;
   cursor: pointer;
   position: relative;
-  display: block;
+  display: flex;
+  flex-direction: column;
   transition: transform 120ms, box-shadow 120ms, border-color 120ms;
 }
 .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
 .card:active { transform: scale(.97); }
 .card-img {
   width: 100%;
-  aspect-ratio: 4/3;
+  height: 110px;            /* explicit px height — works without aspect-ratio support */
   object-fit: contain;
   display: block;
   background: #fff;
   padding: 8px;
+  flex: 0 0 110px;
 }
 .card-ph {
   width: 100%;
-  aspect-ratio: 4/3;
+  height: 110px;
+  flex: 0 0 110px;
   display: flex; align-items: center; justify-content: center;
   background: #f5f5f5;
   font-size: 36px; font-weight: 800; color: #B0BEC5;
@@ -190,6 +200,7 @@ html, body {
 .card-body {
   padding: 6px 8px 10px;
   text-align: center;
+  flex: 1 1 auto;
 }
 .card-name {
   font-size: 13px; font-weight: 600;
@@ -202,10 +213,45 @@ html, body {
   font-size: 10px; color: #999;
   margin-top: 2px;
 }
+
+/* Village rows: flat list, no silhouette — mirrors maps.html village rendering
+   (line 4820-4828): letter chip on the left, name + coords on the right. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 120ms, background 120ms;
+}
+.row:hover { border-color: #d1d5db; background: #fafafa; }
+.row:active { background: #f3f4f6; }
+.row-letter {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: #e8f5e9;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: #2E7D32;
+  flex-shrink: 0;
+}
+.row-text { flex: 1; min-width: 0; }
+.row-name {
+  font-size: 13px; font-weight: 600;
+  color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.row-sub {
+  font-size: 10px; color: #999;
+  margin-top: 2px;
+}
+
 .skel {
   background: #eef0f1;
   border-radius: 10px;
-  aspect-ratio: 3/4; /* matches card height roughly: 4/3 image + body */
+  height: 150px; /* matches a real card's height */
   position: relative;
   overflow: hidden;
 }
@@ -286,14 +332,15 @@ html, body {
     gap: 8px;
   }
   .card { /* keep vertical card shape (image on top, name below) — just smaller */ }
-  .card-img, .card-ph { padding: 6px; }
+  .card-img, .card-ph { height: 130px; flex: 0 0 130px; padding: 6px; }
   .card-body { padding: 5px 6px 8px; }
   .card-name { font-size: 12px; }
   .card-sub { font-size: 10px; }
-  .skel {
-    /* skeletons fill the same column at the same approx aspect as a real card */
-    aspect-ratio: 4/5;
-  }
+  .row { padding: 9px 10px; gap: 10px; }
+  .row-letter { width: 32px; height: 32px; font-size: 13px; }
+  .row-name { font-size: 12px; }
+  .row-sub { font-size: 9px; }
+  .skel { height: 170px; }
   .panel-header { padding: 12px 10px 6px; }
   .panel-logo img { width: 22px; height: 22px; }
   .panel-title { font-size: 14px; }
@@ -541,7 +588,7 @@ html, body {
     title.textContent = level.title;
     back.classList.toggle('visible', historyStack.length > 1);
     search.value = '';
-    paint(level.items);
+    paint(level.items, level.level);
     grid.scrollTop = 0;
   }
 
@@ -552,55 +599,91 @@ html, body {
     title.textContent = prev.title;
     back.classList.toggle('visible', historyStack.length > 1);
     search.value = '';
-    paint(prev.items);
+    paint(prev.items, prev.level);
     grid.scrollTop = 0;
   }
 
-  function paint(items) {
+  function paint(items, level) {
     grid.innerHTML = '';
+    // Villages render as a flat single-column list (matches maps-app.js:4815).
+    // States and districts render as a 2-col silhouette card grid.
+    grid.classList.toggle('grid-list', level === 'village');
     if (!items.length) { showEmpty('No matches.'); return; }
     var frag = document.createDocumentFragment();
     items.forEach(function (item) {
-      var c = document.createElement('div');
-      c.className = 'card';
-      var firstChar = (item.name.charAt(0) || '?');
-      if (item.icon) {
-        var img = document.createElement('img');
-        img.className = 'card-img';
-        img.loading = 'lazy';
-        img.decoding = 'async';
-        img.alt = '';
-        img.src = ICON_BASE + item.icon + '.png';
-        img.onerror = function () {
-          var ph = document.createElement('div');
-          ph.className = 'card-ph';
-          ph.textContent = firstChar;
-          this.parentNode.replaceChild(ph, this);
-        };
-        c.appendChild(img);
+      var c;
+      if (level === 'village') {
+        c = renderRow(item);
       } else {
-        var ph = document.createElement('div');
-        ph.className = 'card-ph';
-        ph.textContent = firstChar;
-        c.appendChild(ph);
+        c = renderCard(item);
       }
-      var body = document.createElement('div');
-      body.className = 'card-body';
-      var nameEl = document.createElement('div');
-      nameEl.className = 'card-name';
-      nameEl.textContent = item.name;
-      body.appendChild(nameEl);
-      if (item.sub) {
-        var subEl = document.createElement('div');
-        subEl.className = 'card-sub';
-        subEl.textContent = item.sub;
-        body.appendChild(subEl);
-      }
-      c.appendChild(body);
       c.addEventListener('click', function () { onCardClick(item); });
       frag.appendChild(c);
     });
     grid.appendChild(frag);
+  }
+
+  function renderCard(item) {
+    var c = document.createElement('div');
+    c.className = 'card';
+    var firstChar = (item.name.charAt(0) || '?');
+    if (item.icon) {
+      var img = document.createElement('img');
+      img.className = 'card-img';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.alt = '';
+      img.src = ICON_BASE + item.icon + '.png';
+      img.onerror = function () {
+        var ph = document.createElement('div');
+        ph.className = 'card-ph';
+        ph.textContent = firstChar;
+        this.parentNode.replaceChild(ph, this);
+      };
+      c.appendChild(img);
+    } else {
+      var ph = document.createElement('div');
+      ph.className = 'card-ph';
+      ph.textContent = firstChar;
+      c.appendChild(ph);
+    }
+    var body = document.createElement('div');
+    body.className = 'card-body';
+    var nameEl = document.createElement('div');
+    nameEl.className = 'card-name';
+    nameEl.textContent = item.name;
+    body.appendChild(nameEl);
+    if (item.sub) {
+      var subEl = document.createElement('div');
+      subEl.className = 'card-sub';
+      subEl.textContent = item.sub;
+      body.appendChild(subEl);
+    }
+    c.appendChild(body);
+    return c;
+  }
+
+  function renderRow(item) {
+    var r = document.createElement('div');
+    r.className = 'row';
+    var letter = document.createElement('div');
+    letter.className = 'row-letter';
+    letter.textContent = (item.name.charAt(0) || '?');
+    var txt = document.createElement('div');
+    txt.className = 'row-text';
+    var nameEl = document.createElement('div');
+    nameEl.className = 'row-name';
+    nameEl.textContent = item.name;
+    txt.appendChild(nameEl);
+    if (item.sub) {
+      var subEl = document.createElement('div');
+      subEl.className = 'row-sub';
+      subEl.textContent = item.sub;
+      txt.appendChild(subEl);
+    }
+    r.appendChild(letter);
+    r.appendChild(txt);
+    return r;
   }
 
   function onCardClick(item) {
@@ -633,8 +716,8 @@ html, body {
       var q = search.value.trim().toLowerCase();
       var current = historyStack[historyStack.length - 1];
       if (!current) return;
-      if (!q) { paint(current.items); return; }
-      paint(current.items.filter(function (it) { return it.name.toLowerCase().indexOf(q) > -1; }));
+      if (!q) { paint(current.items, current.level); return; }
+      paint(current.items.filter(function (it) { return it.name.toLowerCase().indexOf(q) > -1; }), current.level);
     }, 80);
   });
 
