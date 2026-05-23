@@ -11,17 +11,17 @@
 <link rel="apple-touch-icon" href="AssetsGIS/mapmagiciansmall.png">
 
 <!-- Preload the hero variant the browser will most likely use, so it races the
-     initial HTML parse instead of waiting for layout. media= keeps mobile from
-     wasting bytes on the desktop variant and vice versa. -->
+     initial HTML parse instead of waiting for layout. The hero now sits as a
+     full-viewport background, so on desktop we want the wide variant. -->
 <link rel="preload" as="image" type="image/webp"
       href="AssetsGIS/splash-hero-desktop-1280.webp"
       imagesrcset="AssetsGIS/splash-hero-desktop-768.webp 768w, AssetsGIS/splash-hero-desktop-1280.webp 1280w, AssetsGIS/splash-hero-desktop-1920.webp 1920w"
-      imagesizes="(min-width: 768px) calc(100vw - 360px), 0px"
+      imagesizes="100vw"
       media="(min-width: 768px)">
 <link rel="preload" as="image" type="image/webp"
       href="AssetsGIS/splash-hero-mobile-750.webp"
       imagesrcset="AssetsGIS/splash-hero-mobile-390.webp 390w, AssetsGIS/splash-hero-mobile-750.webp 750w, AssetsGIS/splash-hero-mobile-1080.webp 1080w"
-      imagesizes="(max-width: 767px) 100vw, 0px"
+      imagesizes="100vw"
       media="(max-width: 767px)">
 
 <!-- Warm the connection to the icon CDN; region cards each request one PNG from here. -->
@@ -45,25 +45,58 @@ html, body {
   overflow: hidden;
   font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color: var(--text);
-  background: var(--bg);
+  background: #c5d5d2;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
-.app {
-  display: flex;
-  height: 100%;
+
+/* ============ HERO: full-viewport fixed background ============
+   Sits behind everything so the menu floats on top and the image
+   covers 100vw x 100vh at any aspect ratio. Pointer events stay
+   enabled so a tap/drag anywhere outside the menu opens the map. */
+.hero {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: #c5d5d2;
+  cursor: pointer;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+.hero picture, .hero img {
+  position: absolute;
+  inset: 0;
   width: 100%;
+  height: 100%;
+  display: block;
+}
+.hero img {
+  object-fit: cover;
+  object-position: center;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none; /* clicks bubble to .hero */
+}
+.hero-gradient {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 160px;
+  background: linear-gradient(to top, rgba(0,0,0,.35), transparent);
+  pointer-events: none;
 }
 
-/* ============ PANEL (left on desktop, top on mobile) ============ */
+/* ============ PANEL: floats on top of hero (left col on desktop, top strip on mobile) ============ */
 .panel {
-  flex: 0 0 360px;
+  position: fixed;
+  top: 0; left: 0;
+  width: 360px;
+  height: 100vh;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   background: var(--card);
   border-right: 1px solid var(--border);
-  position: relative;
-  z-index: 2;
+  box-shadow: 2px 0 18px rgba(0,0,0,.08);
   transition: transform 280ms cubic-bezier(.4,0,.2,1), opacity 220ms ease-out;
   will-change: transform;
 }
@@ -116,58 +149,62 @@ html, body {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 4px 14px 20px;
+  padding: 4px 14px 14px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 12px;
   align-content: start;
   -webkit-overflow-scrolling: touch;
 }
+
+/* Card style mirrors maps.html (.region-card / .region-card-img):
+   4:3 contained silhouette on white, centered name beneath. */
 .card {
   background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
-  display: flex; flex-direction: column;
-  min-height: 130px;
-  transition: transform 140ms ease-out, box-shadow 140ms ease-out, border-color 140ms;
-  box-shadow: var(--shadow);
+  position: relative;
+  display: block;
+  transition: transform 120ms, box-shadow 120ms, border-color 120ms;
 }
-.card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.08); border-color: #d1d5db; }
-.card:active { transform: translateY(0); }
+.card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+.card:active { transform: scale(.97); }
 .card-img {
   width: 100%;
-  aspect-ratio: 16/10;
-  object-fit: cover;
-  background: #e8f5f3;
+  aspect-ratio: 4/3;
+  object-fit: contain;
   display: block;
+  background: #fff;
+  padding: 8px;
 }
 .card-ph {
   width: 100%;
-  aspect-ratio: 16/10;
-  background: linear-gradient(135deg, #e8f5f3, #c9e7e2);
+  aspect-ratio: 4/3;
   display: flex; align-items: center; justify-content: center;
-  font-size: 24px; font-weight: 700; color: var(--brand-dark);
+  background: #f5f5f5;
+  font-size: 36px; font-weight: 800; color: #B0BEC5;
 }
 .card-body {
-  padding: 8px 10px 10px;
+  padding: 6px 8px 10px;
+  text-align: center;
 }
 .card-name {
   font-size: 13px; font-weight: 600;
   color: var(--text);
-  line-height: 1.25;
+  line-height: 1.3;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   overflow: hidden;
 }
 .card-sub {
-  font-size: 11px; color: var(--muted);
+  font-size: 10px; color: #999;
   margin-top: 2px;
 }
 .skel {
   background: #eef0f1;
-  border-radius: 12px;
-  min-height: 130px;
+  border-radius: 10px;
+  aspect-ratio: 3/4; /* matches card height roughly: 4/3 image + body */
   position: relative;
   overflow: hidden;
 }
@@ -186,39 +223,31 @@ html, body {
   font-size: 13px;
 }
 
-/* ============ HERO (right on desktop, bottom on mobile) ============ */
-.hero {
-  flex: 1;
-  position: relative;
-  background: #c5d5d2;
-  overflow: hidden;
-  cursor: pointer;
-  display: flex; flex-direction: column;
-  touch-action: manipulation;
+.panel-footer {
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  background: #fff;
+  flex-shrink: 0;
 }
-.hero-img {
-  flex: 1;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  display: block;
-  user-select: none;
-  -webkit-user-drag: none;
-  pointer-events: none;
+.panel-footer a {
+  color: var(--brand-dark);
+  text-decoration: none;
+  font-weight: 600;
 }
-.hero-gradient {
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  height: 140px;
-  background: linear-gradient(to top, rgba(0,0,0,.45), transparent);
-  pointer-events: none;
-}
+.panel-footer a:hover { text-decoration: underline; }
+
+/* ============ OPEN MAP button: fixed, centered over the visible hero region ============ */
 .open-map {
-  position: absolute;
-  left: 50%;
-  bottom: 28px;
+  position: fixed;
+  bottom: calc(28px + env(safe-area-inset-bottom));
+  /* Desktop default: center over the right portion of the viewport (hero area
+     visible past the 360px panel). Recalculated for mobile below. */
+  left: calc(50% + 180px);
   transform: translateX(-50%);
+  z-index: 3;
   display: inline-flex; align-items: center; gap: 10px;
   padding: 14px 28px;
   border: none;
@@ -228,8 +257,8 @@ html, body {
   font: 600 16px/1 inherit;
   letter-spacing: .01em;
   cursor: pointer;
-  box-shadow: 0 6px 22px rgba(0,133,119,.45), 0 2px 4px rgba(0,0,0,.15);
-  transition: transform 120ms, background 120ms, box-shadow 120ms, opacity 200ms;
+  box-shadow: 0 6px 22px rgba(0,133,119,.45), 0 2px 4px rgba(0,0,0,.18);
+  transition: transform 120ms, background 120ms, opacity 200ms;
   white-space: nowrap;
 }
 .open-map:hover { background: var(--brand-dark); transform: translateX(-50%) translateY(-1px); }
@@ -240,42 +269,47 @@ html, body {
 }
 .open-map:hover .arrow { transform: translateX(3px); }
 
-/* ============ MOBILE LAYOUT (stacked, panel on top) ============ */
+/* ============ MOBILE LAYOUT (panel becomes top strip; hero stays full-bleed behind) ============ */
 @media (max-width: 767px) {
-  .app { flex-direction: column; }
   .panel {
-    flex: 0 0 35vh;
+    width: 100vw;
+    height: auto;
+    max-height: 60vh;
     border-right: none;
     border-bottom: 1px solid var(--border);
-    width: 100%;
+    box-shadow: 0 2px 18px rgba(0,0,0,.08);
   }
   .panel.closing {
-    /* Slide LEFT on mobile too — keeps the gesture consistent across breakpoints. */
+    /* Per design: slide LEFT on mobile too. */
     transform: translateX(-100%);
   }
   .grid {
     /* Single column on mobile so all region names stay scannable. */
     grid-template-columns: 1fr;
-    padding: 4px 14px 16px;
+    padding: 4px 14px 14px;
   }
-  .card {
-    flex-direction: row;
-    align-items: center;
-    min-height: 0;
-  }
+  .card { display: flex; align-items: center; }
   .card-img, .card-ph {
-    width: 64px;
+    width: 80px;
     aspect-ratio: 1/1;
-    flex: 0 0 64px;
+    flex: 0 0 80px;
+    padding: 6px;
   }
   .card-body {
     flex: 1;
+    text-align: left;
     padding: 10px 12px;
   }
-  .skel { min-height: 64px; }
-  .hero { flex: 1; min-height: 0; }
+  .skel {
+    aspect-ratio: auto;
+    height: 80px;
+  }
   .open-map {
-    bottom: 20px;
+    /* Hero spans the full viewport on mobile too, but the panel covers the top
+       portion. Center the button on the full viewport — it sits over the
+       visible hero region (below the panel). */
+    left: 50%;
+    bottom: calc(20px + env(safe-area-inset-bottom));
     padding: 13px 24px;
     font-size: 15px;
   }
@@ -284,49 +318,48 @@ html, body {
 </head>
 <body>
 
-<div class="app" id="app">
-
-  <aside class="panel" id="panel">
-    <div class="panel-header">
-      <button class="panel-back" id="back" aria-label="Back" type="button">&larr;</button>
-      <div class="panel-logo">
-        <img src="AssetsGIS/mapmagiciansmall.png" alt="" width="28" height="28">
-        <h1 class="panel-title" id="title">Browse Regions</h1>
-      </div>
-    </div>
-    <input class="panel-search" id="search" type="search" placeholder="Search states or districts..." autocomplete="off" enterkeyhint="search">
-    <div class="grid" id="grid">
-      <!-- Skeleton cards: visible until menuGIS arrives. -->
-      <div class="skel"></div><div class="skel"></div>
-      <div class="skel"></div><div class="skel"></div>
-      <div class="skel"></div><div class="skel"></div>
-      <div class="skel"></div><div class="skel"></div>
-    </div>
-  </aside>
-
-  <main class="hero" id="hero" role="button" aria-label="Open the interactive map">
-    <picture>
-      <source media="(max-width: 767px)" type="image/webp"
-              srcset="AssetsGIS/splash-hero-mobile-390.webp 390w, AssetsGIS/splash-hero-mobile-750.webp 750w, AssetsGIS/splash-hero-mobile-1080.webp 1080w"
-              sizes="100vw">
-      <source media="(max-width: 767px)" type="image/jpeg"
-              srcset="AssetsGIS/splash-hero-mobile-390.jpg 390w, AssetsGIS/splash-hero-mobile-750.jpg 750w, AssetsGIS/splash-hero-mobile-1080.jpg 1080w"
-              sizes="100vw">
-      <source media="(min-width: 768px)" type="image/webp"
-              srcset="AssetsGIS/splash-hero-desktop-768.webp 768w, AssetsGIS/splash-hero-desktop-1280.webp 1280w, AssetsGIS/splash-hero-desktop-1920.webp 1920w"
-              sizes="calc(100vw - 360px)">
-      <source media="(min-width: 768px)" type="image/jpeg"
-              srcset="AssetsGIS/splash-hero-desktop-768.jpg 768w, AssetsGIS/splash-hero-desktop-1280.jpg 1280w, AssetsGIS/splash-hero-desktop-1920.jpg 1920w"
-              sizes="calc(100vw - 360px)">
-      <img class="hero-img" src="AssetsGIS/splash-hero-desktop-1280.jpg" alt="Live Development Plan map preview" width="1280" height="676" decoding="async" fetchpriority="high">
-    </picture>
-    <div class="hero-gradient"></div>
-    <button class="open-map" id="open-map" type="button">
-      Open Map <span class="arrow" aria-hidden="true">&rarr;</span>
-    </button>
-  </main>
-
+<!-- Hero is BEHIND everything; clicks anywhere outside the panel/button open the map. -->
+<div class="hero" id="hero" role="button" aria-label="Open the interactive map">
+  <picture>
+    <source media="(max-width: 767px)" type="image/webp"
+            srcset="AssetsGIS/splash-hero-mobile-390.webp 390w, AssetsGIS/splash-hero-mobile-750.webp 750w, AssetsGIS/splash-hero-mobile-1080.webp 1080w"
+            sizes="100vw">
+    <source media="(max-width: 767px)" type="image/jpeg"
+            srcset="AssetsGIS/splash-hero-mobile-390.jpg 390w, AssetsGIS/splash-hero-mobile-750.jpg 750w, AssetsGIS/splash-hero-mobile-1080.jpg 1080w"
+            sizes="100vw">
+    <source media="(min-width: 768px)" type="image/webp"
+            srcset="AssetsGIS/splash-hero-desktop-768.webp 768w, AssetsGIS/splash-hero-desktop-1280.webp 1280w, AssetsGIS/splash-hero-desktop-1920.webp 1920w"
+            sizes="100vw">
+    <source media="(min-width: 768px)" type="image/jpeg"
+            srcset="AssetsGIS/splash-hero-desktop-768.jpg 768w, AssetsGIS/splash-hero-desktop-1280.jpg 1280w, AssetsGIS/splash-hero-desktop-1920.jpg 1920w"
+            sizes="100vw">
+    <img src="AssetsGIS/splash-hero-desktop-1280.jpg" alt="Live Development Plan map preview" decoding="async" fetchpriority="high">
+  </picture>
+  <div class="hero-gradient"></div>
 </div>
+
+<aside class="panel" id="panel">
+  <div class="panel-header">
+    <button class="panel-back" id="back" aria-label="Back" type="button">&larr;</button>
+    <div class="panel-logo">
+      <img src="AssetsGIS/mapmagiciansmall.png" alt="" width="28" height="28">
+      <h1 class="panel-title" id="title">Browse Regions</h1>
+    </div>
+  </div>
+  <input class="panel-search" id="search" type="search" placeholder="Search states or districts..." autocomplete="off" enterkeyhint="search">
+  <div class="grid" id="grid">
+    <div class="skel"></div><div class="skel"></div>
+    <div class="skel"></div><div class="skel"></div>
+    <div class="skel"></div><div class="skel"></div>
+  </div>
+  <footer class="panel-footer">
+    Powered by <a href="https://www.mapmagician.in/" rel="noopener">MapMagician</a>
+  </footer>
+</aside>
+
+<button class="open-map" id="open-map" type="button">
+  Open Map <span class="arrow" aria-hidden="true">&rarr;</span>
+</button>
 
 <script>
 (function () {
@@ -341,23 +374,21 @@ html, body {
       back = $('back'), search = $('search'),
       hero = $('hero'), openBtn = $('open-map');
 
-  // Animate panel off-screen, then navigate. Same handler for hero tap, drag,
-  // and Open Map button. 280ms matches the CSS transition so the slide
-  // completes before the new page replaces this one.
+  // Animate panel off-screen, then navigate. 280ms matches the CSS transition
+  // so the slide completes before the new page replaces this one.
   var navigating = false;
   function goToMap(extraQuery) {
     if (navigating) return;
     navigating = true;
     panel.classList.add('closing');
     openBtn.style.opacity = '0';
-    openBtn.style.transform = 'translateX(-50%) translateY(8px)';
     var url = MAP_URL + (extraQuery ? '?' + extraQuery : '');
     setTimeout(function () { window.location.href = url; }, 280);
   }
 
   // Hero interactions: real tap, OR drag past a small threshold.
   // pointerdown alone would fire on scroll-start; we wait for pointerup (tap)
-  // or genuine pointermove. pointercancel clears intent (browser took over).
+  // or genuine pointermove. pointercancel clears intent.
   var pdown = null;
   hero.addEventListener('pointerdown', function (e) {
     pdown = { x: e.clientX, y: e.clientY, fired: false };
@@ -377,14 +408,39 @@ html, body {
   hero.addEventListener('pointercancel', function () { pdown = null; });
 
   openBtn.addEventListener('click', function (e) { e.stopPropagation(); goToMap(); });
-  openBtn.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
-  openBtn.addEventListener('pointerup', function (e) { e.stopPropagation(); });
 
-  // Region browser: state -> district. Villages are deliberately left to
-  // maps.html, where the user already has the full map UX.
+  // Region browser: full 3-level drill — state -> district -> village. Mirrors
+  // maps.html's openRegionsBrowser/openStateInBrowser/openDistrictVillages so
+  // every entry visible there is also visible here.
   var data = null;
-  var byState = null;
-  var view = { level: 'state', state: null, items: [] };
+  var byState = null;       // { stateName: [entry, ...] }, insertion-ordered
+  var stateOrder = null;    // [stateName, ...] in first-seen order (matches maps.html)
+  // historyStack lets the Back button rewind state -> district -> village.
+  var historyStack = []; // [{ level, title, items, parent? }]
+
+  function countVillages(villagesJSON) {
+    if (!villagesJSON) return 0;
+    var c = 0;
+    var lines = villagesJSON.split('\n');
+    for (var i = 0; i < lines.length; i++) if (lines[i].indexOf('=') > -1) c++;
+    return c;
+  }
+
+  function parseVillagesJSON(villagesJSON) {
+    if (!villagesJSON) return [];
+    var out = [];
+    villagesJSON.split('\n').forEach(function (line) {
+      var eq = line.indexOf('=');
+      if (eq <= 0) return;
+      var name = line.substring(0, eq).trim();
+      var coords = line.substring(eq + 1).trim().split(',');
+      var lat = parseFloat(coords[0]);
+      var lng = parseFloat(coords[1]);
+      if (!name || isNaN(lat) || isNaN(lng)) return;
+      out.push({ name: name, lat: lat, lng: lng });
+    });
+    return out;
+  }
 
   function fetchMenu() {
     fetch(MENU_URL, { cache: 'force-cache' })
@@ -393,11 +449,13 @@ html, body {
         if (!json) return showEmpty('Could not load regions. Tap Open Map to continue.');
         data = json;
         byState = {};
+        stateOrder = [];
         for (var k in json) {
           var e = json[k]; if (!e || !e.state) continue;
           var copy = { _key: k };
           for (var f in e) copy[f] = e[f];
-          (byState[e.state] = byState[e.state] || []).push(copy);
+          if (!byState[e.state]) { byState[e.state] = []; stateOrder.push(e.state); }
+          byState[e.state].push(copy);
         }
         renderStates();
       })
@@ -405,9 +463,8 @@ html, body {
   }
 
   function renderStates() {
-    view.level = 'state'; view.state = null;
-    var states = Object.keys(byState).sort();
-    view.items = states.map(function (name) {
+    historyStack = [];
+    var items = stateOrder.map(function (name) {
       var entries = byState[name];
       var districts = entries.filter(function (e) { return e.district; });
       var icon = (entries[0] && entries[0].iconState) || '';
@@ -416,37 +473,85 @@ html, body {
         sub = districts.length + ' district' + (districts.length === 1 ? '' : 's');
       } else {
         var v = 0;
-        entries.forEach(function (e) {
-          if (e.villagesJSON) v += e.villagesJSON.split('\n').filter(function (l) { return l.indexOf('=') > -1; }).length;
-        });
+        entries.forEach(function (e) { v += countVillages(e.villagesJSON); });
         sub = v ? v + ' location' + (v === 1 ? '' : 's') : '';
       }
-      return { name: name, sub: sub, icon: icon, _hasDistricts: districts.length > 0, _entry: entries[0] };
+      return { name: name, sub: sub, icon: icon, _kind: 'state' };
     });
-    title.textContent = 'Browse Regions';
-    back.classList.remove('visible');
-    search.value = '';
-    paint(view.items);
+    pushLevel({ level: 'state', title: 'Browse Regions', items: items });
   }
 
-  function renderDistricts(stateName) {
-    view.level = 'district'; view.state = stateName;
-    var districts = (byState[stateName] || []).filter(function (e) { return e.district; });
-    districts.sort(function (a, b) { return a.district.localeCompare(b.district); });
-    view.items = districts.map(function (d) {
-      var locCount = 0;
-      if (d.villagesJSON) locCount = d.villagesJSON.split('\n').filter(function (l) { return l.indexOf('=') > -1; }).length;
+  function openState(stateName) {
+    // Match maps.html openStateInBrowser logic exactly. If a state has districts,
+    // show district list. If it's a single state-level entry with villages, jump
+    // straight to its villages.
+    var entries = byState[stateName] || [];
+    var districts = entries.filter(function (e) { return e.district; })
+      .sort(function (a, b) { return a.district.localeCompare(b.district); });
+    var stateItem = entries.find(function (e) { return !e.district; });
+
+    if (districts.length === 1) {
+      // Single district — skip a step and jump to its villages.
+      openDistrict(districts[0]);
+      return;
+    }
+    if (districts.length > 1) {
+      var items = districts.map(function (d) {
+        var locCount = countVillages(d.villagesJSON);
+        return {
+          name: d.district,
+          sub: locCount ? locCount + ' location' + (locCount === 1 ? '' : 's') : '',
+          icon: d.iconVillage || d.iconState || '',
+          _kind: 'district',
+          _entry: d
+        };
+      });
+      pushLevel({ level: 'district', title: stateName, items: items });
+      return;
+    }
+    if (stateItem && stateItem.villagesJSON) {
+      openDistrict(stateItem, stateName);
+    }
+  }
+
+  function openDistrict(entry, overrideTitle) {
+    var villages = parseVillagesJSON(entry.villagesJSON);
+    if (villages.length === 1) {
+      // Single village — go straight to map at that lat/lng.
+      goToVillage(villages[0], entry.productPurchaseID);
+      return;
+    }
+    var items = villages.map(function (v) {
       return {
-        name: d.district,
-        sub: locCount ? locCount + ' location' + (locCount === 1 ? '' : 's') : '',
-        icon: d.iconVillage || d.iconState || '',
-        _entry: d
+        name: v.name,
+        sub: v.lat.toFixed(4) + ', ' + v.lng.toFixed(4),
+        icon: '', // villages have no icons; placeholder renders the first letter
+        _kind: 'village',
+        _lat: v.lat,
+        _lng: v.lng,
+        _pid: entry.productPurchaseID
       };
     });
-    title.textContent = stateName;
-    back.classList.add('visible');
+    pushLevel({ level: 'village', title: overrideTitle || entry.district || entry.state, items: items });
+  }
+
+  function pushLevel(level) {
+    historyStack.push(level);
+    title.textContent = level.title;
+    back.classList.toggle('visible', historyStack.length > 1);
     search.value = '';
-    paint(view.items);
+    paint(level.items);
+    grid.scrollTop = 0;
+  }
+
+  function popLevel() {
+    if (historyStack.length <= 1) return;
+    historyStack.pop();
+    var prev = historyStack[historyStack.length - 1];
+    title.textContent = prev.title;
+    back.classList.toggle('visible', historyStack.length > 1);
+    search.value = '';
+    paint(prev.items);
     grid.scrollTop = 0;
   }
 
@@ -498,18 +603,16 @@ html, body {
   }
 
   function onCardClick(item) {
-    if (view.level === 'state' && item._hasDistricts) {
-      renderDistricts(item.name);
-      return;
-    }
-    // Leaf click: navigate to maps.html with hints. maps.html can wire these
-    // params later to focus the right district; today they're harmless.
-    var pid = item._entry && item._entry.productPurchaseID;
-    var name = item._entry && (item._entry.district || item._entry.state);
-    var qs = [];
-    if (pid) qs.push('pid=' + encodeURIComponent(pid));
-    if (name) qs.push('region=' + encodeURIComponent(name));
-    goToMap(qs.join('&'));
+    if (item._kind === 'state') { openState(item.name); return; }
+    if (item._kind === 'district') { openDistrict(item._entry); return; }
+    if (item._kind === 'village') { goToVillage({ lat: item._lat, lng: item._lng, name: item.name }, item._pid); return; }
+  }
+
+  function goToVillage(v, productPurchaseID) {
+    // maps-app.js:3877 honors ?lat&lng&zoom for deep-linking.
+    var qs = 'lat=' + v.lat + '&lng=' + v.lng + '&zoom=15';
+    if (productPurchaseID) qs += '&pid=' + encodeURIComponent(productPurchaseID);
+    goToMap(qs);
   }
 
   function showEmpty(msg) {
@@ -520,16 +623,17 @@ html, body {
     grid.appendChild(d);
   }
 
-  back.addEventListener('click', renderStates);
+  back.addEventListener('click', popLevel);
 
-  // Search filters the current level. Substring match, case-insensitive.
   var searchDebounce;
   search.addEventListener('input', function () {
     clearTimeout(searchDebounce);
     searchDebounce = setTimeout(function () {
       var q = search.value.trim().toLowerCase();
-      if (!q) { paint(view.items); return; }
-      paint(view.items.filter(function (it) { return it.name.toLowerCase().indexOf(q) > -1; }));
+      var current = historyStack[historyStack.length - 1];
+      if (!current) return;
+      if (!q) { paint(current.items); return; }
+      paint(current.items.filter(function (it) { return it.name.toLowerCase().indexOf(q) > -1; }));
     }, 80);
   });
 
@@ -546,8 +650,6 @@ html, body {
   }
   (window.requestIdleCallback || function (cb) { return setTimeout(cb, 800); })(prefetchMap, { timeout: 1500 });
 
-  // Kick off menu fetch right after first paint so the skeleton is visible
-  // for a single frame before data lands.
   requestAnimationFrame(function () { setTimeout(fetchMenu, 0); });
 })();
 </script>
