@@ -103,6 +103,53 @@ function parseVillages(blob) {
   return out;
 }
 
+// Source village names have noisy suffixes — drafts dates, ward classifiers, tehsil
+// pointers, composite "A/B" forms. Strip them for the user-facing title/H1; the slug
+// still keeps the longer form so disambiguation survives.
+//   "Pandharpur (Draft 2025)"                              -> "Pandharpur"
+//   "Akkalkot (Rural), Tal: Akkalkot"                      -> "Akkalkot"
+//   "Chandrapur (MCI)/Deoli Gowindpur tukum (Chandrapur)"  -> "Chandrapur"
+function cleanLocationDisplayName(raw) {
+  let s = String(raw || '');
+  s = s.split('/')[0];
+  s = s.split(/,\s*Tal[:.]/i)[0];
+  s = s.replace(/\([^)]*\)/g, '');
+  s = s.replace(/\s+/g, ' ').trim();
+  return s || String(raw || '').trim();
+}
+
+// Sub-location slug: strip parens, slugify, dedupe within the region with -2/-3 suffix.
+// Skip villages whose slug would equal the region's shortName slug — those would just
+// duplicate the parent district page (e.g. Bengaluru region has only 1 village "Bengaluru").
+function attachVillageSlugs(region) {
+  const regionShortSlug = slugify(region.shortName);
+  const seen = new Map(); // baseSlug -> count
+  for (const v of region.villages) {
+    v.displayName = cleanLocationDisplayName(v.name);
+    const cleaned = String(v.name).replace(/\([^)]*\)/g, '').trim() || v.name;
+    const base = slugify(cleaned);
+    if (!base) { v.slug = ''; v.skipPage = true; continue; }
+    if (base === regionShortSlug) { v.slug = base; v.skipPage = true; continue; }
+    const count = (seen.get(base) || 0) + 1;
+    seen.set(base, count);
+    v.slug = count === 1 ? base : `${base}-${count}`;
+    v.skipPage = false;
+  }
+}
+
+// Compass bearing helper for templated sub-location prose ("about 38 km north-east of …").
+function bearingLabel(from, to) {
+  const toRad = x => x * Math.PI / 180;
+  const toDeg = x => x * 180 / Math.PI;
+  const dLng = toRad(to.lng - from.lng);
+  const y = Math.sin(dLng) * Math.cos(toRad(to.lat));
+  const x = Math.cos(toRad(from.lat)) * Math.sin(toRad(to.lat)) -
+            Math.sin(toRad(from.lat)) * Math.cos(toRad(to.lat)) * Math.cos(dLng);
+  const brng = (toDeg(Math.atan2(y, x)) + 360) % 360;
+  const dirs = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'];
+  return dirs[Math.round(brng / 45) % 8];
+}
+
 // KML in d1/d3 entries is a single string of "lng,lat,alt lng,lat,alt ..." pairs.
 // Compute centroid (mean lat/lng) and bbox from all polygons sharing a productPurchaseID.
 function aggregateKml(rawTiles) {
@@ -308,6 +355,18 @@ async function main() {
     r.embedUrl = buildEmbedUrl(r.focal);
   }
 
+  // Sub-location slugs + distance/bearing from the region's district HQ.
+  // Used by the nested /<region>/<loc>/ static pages.
+  for (const r of regions) {
+    attachVillageSlugs(r);
+    if (r.centroid) {
+      for (const v of r.villages) {
+        v.distanceFromHqKm = +haversineKm({ lat: v.lat, lng: v.lng }, r.centroid).toFixed(1);
+        v.bearingFromHq = bearingLabel(r.centroid, v);
+      }
+    }
+  }
+
   // Attach prebuilt content blocks last, so they can reference final fields.
   for (const r of regions) {
     r.faqs = buildFaqs(r);
@@ -317,7 +376,7 @@ async function main() {
   // Stable sort: state, then displayName.
   regions.sort((a, b) => (a.state || '').localeCompare(b.state || '') || a.displayName.localeCompare(b.displayName));
 
-  // Detect duplicate slugs, fail loudly so we never ship two pages on the same URL.
+  // Detect duplicate region slugs, fail loudly so we never ship two pages on the same URL.
   const seen = new Map();
   for (const r of regions) {
     if (seen.has(r.slug)) {
@@ -325,6 +384,22 @@ async function main() {
     }
     seen.set(r.slug, r.menuKey);
   }
+
+  // Same guard for (region, loc) sub-location pairs — also fail loudly.
+  const seenPair = new Map();
+  let subLocationCount = 0;
+  for (const r of regions) {
+    for (const v of r.villages) {
+      if (!v.slug || v.skipPage) continue;
+      const key = `${r.slug}/${v.slug}`;
+      if (seenPair.has(key)) {
+        throw new Error(`Duplicate sub-location slug "${key}": ${seenPair.get(key)} vs ${v.name}`);
+      }
+      seenPair.set(key, v.name);
+      subLocationCount++;
+    }
+  }
+  console.log(`indexed ${subLocationCount} sub-location pages across ${regions.length} regions`);
 
   // Compare against the committed regions.json (ignoring generatedAt) so unchanged data
   // doesn't cause a no-op file rewrite — keeps Cloudflare deploys idempotent and makes

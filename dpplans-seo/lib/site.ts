@@ -19,7 +19,20 @@ export type RegionCentroid = { lat: number; lng: number; minZoom: number | null;
 
 export type RegionFocal = { lat: number; lng: number; source: string; zoom: number };
 
-export type RegionVillage = { name: string; lat: number; lng: number };
+export type RegionVillage = {
+  name: string;
+  lat: number;
+  lng: number;
+  // Added by build-regions.js for the nested /<region>/<loc>/ pages.
+  // `skipPage=true` means we do NOT generate a sub-location page (e.g. when
+  // village name matches the parent district's shortName — would just duplicate it).
+  // `displayName` is the user-facing form (parens / tehsil / "/A" suffixes stripped).
+  slug?: string;
+  skipPage?: boolean;
+  displayName?: string;
+  distanceFromHqKm?: number;
+  bearingFromHq?: string;
+};
 
 export type NearbyRegion = { slug: string; displayName: string; shortName: string; distanceKm: number };
 

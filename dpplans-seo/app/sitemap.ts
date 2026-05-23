@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { allRegions, generatedAt } from '@/lib/regions';
+import { allRegions, allSubLocationPaths, generatedAt } from '@/lib/regions';
 import { SITE } from '@/lib/site';
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -12,11 +12,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: 'weekly' as const,
     priority: 1.0,
   };
-  const pages = allRegions().map(r => ({
+  const regionPages = allRegions().map(r => ({
     url: `${SITE.origin}/${r.slug}/`,
     lastModified,
     changeFrequency: 'weekly' as const,
     priority: 0.8,
   }));
-  return [home, ...pages];
+  const subLocationPages = allSubLocationPaths().map(({ region, village }) => ({
+    url: `${SITE.origin}/${region.slug}/${village.slug}/`,
+    lastModified,
+    changeFrequency: 'monthly' as const,
+    priority: 0.6,
+  }));
+  return [home, ...regionPages, ...subLocationPages];
 }

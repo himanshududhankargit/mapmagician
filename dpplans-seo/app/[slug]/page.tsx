@@ -220,7 +220,11 @@ export default function RegionPage({ params }: Props) {
               <ul className="sublocation-list">
                 {region.villages.map((v, i) => (
                   <li key={i}>
-                    <span className="name">{v.name}</span>
+                    {v.slug && !v.skipPage ? (
+                      <Link className="name" href={`/${region.slug}/${v.slug}/`}>{v.displayName || v.name}</Link>
+                    ) : (
+                      <span className="name">{v.displayName || v.name}</span>
+                    )}
                     <a
                       className="btn btn-primary btn-sm"
                       href={`${SITE.fullMap}?lat=${v.lat}&lng=${v.lng}&zoom=13`}
