@@ -6,7 +6,12 @@
 <meta name="theme-color" content="#008577">
 <title>Map Magician — Development Plan Maps for India</title>
 <meta name="description" content="Browse Development Plan, Town Planning Scheme and Village maps across India. 7-day passes for high-zoom premium tiles per district.">
-<link rel="canonical" href="https://dpplans.com/">
+<!-- index1.html is the staging slot for what will become the dpplans.com homepage.
+     Until it's promoted to /, canonical points at the actual URL so Lighthouse
+     and crawlers don't see a canonical-to-non-equivalent-page warning. After
+     promotion (index1.html -> index.html and overwrites the / redirect),
+     change this back to https://dpplans.com/. -->
+<link rel="canonical" href="https://dpplans.com/index1.html">
 <link rel="icon" href="AssetsGIS/mapmagiciansmall.png">
 <link rel="apple-touch-icon" href="AssetsGIS/mapmagiciansmall.png">
 
@@ -26,9 +31,18 @@
 
 <!-- Warm the connection to the icon CDN; region cards each request one PNG from here. -->
 <link rel="preconnect" href="https://tiles.mapmagician.in" crossorigin>
-<!-- Warm the connection to Firebase RTDB so the menuGIS fetch skips DNS+TLS later. -->
+<!-- Warm the connection to Firebase RTDB so the on-demand menuGIS fetch (triggered
+     when the user opens a state) skips DNS+TLS. -->
 <link rel="preconnect" href="https://sodium-hour-256110.firebaseio.com" crossorigin>
 <link rel="dns-prefetch" href="https://sodium-hour-256110.firebaseio.com">
+
+<!-- LCP preload: Maharashtra is the first state card painted, so its icon is
+     the Largest Contentful Paint candidate. Without this preload, Lighthouse
+     flagged the image as undiscoverable in initial HTML (it only enters the
+     DOM after the menu-states.json fetch + JS render). -->
+<link rel="preload" as="image" fetchpriority="high"
+      href="https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png"
+      crossorigin>
 
 <style>
 :root {
@@ -349,16 +363,17 @@ html, body {
   /* Bottom-sheet close animation slides DOWN, overriding the desktop left-slide. */
   .panel.closing   { transform: translateY(100%); opacity: 0; pointer-events: none; }
 
-  /* Drag handle: a small pill at the top of the sheet. role="separator"
-     announces it as a divider/resize affordance to AT. touch-action:none
-     so the browser doesn't steal the gesture for scrolling. */
+  /* Top pill: a visual affordance only. Tapping it (or anywhere on the sheet
+     handle area) snaps the sheet to full. Closing is exclusively via the X
+     button — drag-to-close was removed because accidental brushes against
+     the handle while scrolling kept dismissing users out of the menu. */
   .panel-drag-handle {
     display: flex;
     align-items: center;
     justify-content: center;
     height: 22px;
     padding-top: 4px;
-    cursor: grab;
+    cursor: pointer;
     touch-action: none;
     flex-shrink: 0;
   }
@@ -367,10 +382,9 @@ html, body {
     width: 44px; height: 5px;
     border-radius: 3px;
     background: #cbd5d5;
-    transition: background 120ms, width 120ms;
+    transition: background 120ms;
   }
-  .panel-drag-handle:active { cursor: grabbing; }
-  .panel-drag-handle:active::before { background: var(--brand); width: 56px; }
+  .panel-drag-handle:active::before { background: var(--brand); }
 
   /* Grid keeps 2 columns even on phones now that the sheet uses full width. */
   .grid {
@@ -401,6 +415,11 @@ html, body {
   .panel.snap-peek .panel-footer { display: none; }
   /* Tighten footer at half so 2 full card rows are visible before scroll. */
   .panel.snap-half .panel-footer { display: none; }
+
+  /* Close X visible whenever the sheet is at snap-full. Since the user pulled
+     drag-to-close (only the X dismisses), this button is the only escape from
+     the menu back to the live map. */
+  .panel.snap-full .panel-close { display: flex; }
 
   /* Open Map centers on the hero above the sheet's peek strip. */
   .open-map {
@@ -554,6 +573,7 @@ html, body {
   'use strict';
 
   var MENU_URL = 'https://sodium-hour-256110.firebaseio.com/menuGIS.json';
+  var STATES_URL = '/data/menu-states.json';
   var SEO_INDEX_URL = '/data/seo-index.json';
   var ICON_BASE = 'https://tiles.mapmagician.in/dpplans/0imagesGIS/';
   var MAP_URL = '/maps.html';
@@ -561,9 +581,11 @@ html, body {
   // localStorage cache keys + TTLs. Cache-first / revalidate-in-background
   // pattern shaves the JSON.parse blocking time off TBT on repeat visits.
   var MENU_CACHE_KEY = 'mm_menuGIS_v1';
+  var STATES_CACHE_KEY = 'mm_menuStates_v1';
   var SEO_CACHE_KEY = 'mm_seoIndex_v1';
   var MENU_TTL_MS = 24 * 60 * 60 * 1000;    // 24h — menuGIS changes daily-ish
-  var SEO_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7d — SEO slugs change rarely
+  var STATES_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7d — state list barely changes
+  var SEO_TTL_MS = 7 * 24 * 60 * 60 * 1000;   // 7d — SEO slugs change rarely
 
   var $ = function (id) { return document.getElementById(id); };
   var panel = $('panel'), grid = $('grid'), title = $('title'),
@@ -673,6 +695,8 @@ html, body {
     catch (e) { /* quota exceeded or storage unavailable */ }
   }
 
+  // Build byState / stateOrder from the FULL menuGIS payload. Used once the
+  // user actually drills into a state and we need the district + village data.
   function processMenu(json) {
     data = json;
     byState = {};
@@ -684,7 +708,6 @@ html, body {
       if (!byState[e.state]) { byState[e.state] = []; stateOrder.push(e.state); }
       byState[e.state].push(copy);
     }
-    renderStates();
   }
 
   function fetchMenuFresh(onDone) {
@@ -698,18 +721,22 @@ html, body {
       .catch(function () { if (onDone) onDone(false); });
   }
 
-  var menuLoaded = false;
-  function ensureMenuLoaded() {
-    if (menuLoaded) return;
-    menuLoaded = true;
+  // Pending-callbacks queue: openState() may be called BEFORE the full menu
+  // arrives. We register the callback and drain the queue on load.
+  var menuLoaded = false, menuLoading = false, menuPending = [];
+  function ensureMenuLoaded(cb) {
+    if (menuLoaded) { if (cb) cb(true); return; }
+    if (cb) menuPending.push(cb);
+    if (menuLoading) return;
+    menuLoading = true;
     var cached = readCache(MENU_CACHE_KEY, MENU_TTL_MS);
     if (cached) {
-      // Warm cache — render instantly, then revalidate in background.
       processMenu(cached);
-      (window.requestIdleCallback || function (cb) { return setTimeout(cb, 3000); })(function () {
+      menuLoaded = true;
+      drainMenuPending(true);
+      // Idle revalidate so a stale-but-readable cache doesn't block UX.
+      (window.requestIdleCallback || function (cb2) { return setTimeout(cb2, 3000); })(function () {
         fetchMenuFresh(function (ok, json) {
-          // Re-render only if state list actually changed length — avoid a
-          // wasteful repaint when the payload differs only in icon URLs.
           if (ok && json && Object.keys(json).length !== Object.keys(data || {}).length) {
             processMenu(json);
           }
@@ -717,11 +744,80 @@ html, body {
       }, { timeout: 6000 });
       return;
     }
-    // Cold cache — fetch immediately, render when it arrives.
     fetchMenuFresh(function (ok, json) {
-      if (ok && json) processMenu(json);
-      else showEmpty('Could not load regions. Tap Open Map to continue.');
+      if (ok && json) {
+        processMenu(json);
+        menuLoaded = true;
+        drainMenuPending(true);
+      } else {
+        drainMenuPending(false);
+      }
     });
+  }
+  function drainMenuPending(ok) {
+    var q = menuPending; menuPending = [];
+    q.forEach(function (cb) { try { cb(ok); } catch (e) {} });
+  }
+
+  // Render the state cards from the slim menu-states.json payload alone —
+  // no full menuGIS required. This is what makes first paint fast: ~1 KB
+  // states file vs the ~167 KB full menu.
+  function renderStatesFromSlim(states) {
+    historyStack = [];
+    // Seed stateOrder so search across the (yet-unloaded) full menu still
+    // works on the state-list level. byState stays empty until needed.
+    stateOrder = states.map(function (s) { return s.name; });
+    var items = states.map(function (s) {
+      var sub = '';
+      if (s.districtCount) sub = s.districtCount + ' district' + (s.districtCount === 1 ? '' : 's');
+      else if (s.locationCount) sub = s.locationCount + ' location' + (s.locationCount === 1 ? '' : 's');
+      return { name: s.name, sub: sub, icon: s.icon || '', _kind: 'state' };
+    });
+    pushLevel({ level: 'state', title: 'Browse Regions', items: items });
+  }
+
+  var statesLoaded = false;
+  function ensureStatesLoaded() {
+    if (statesLoaded) return;
+    statesLoaded = true;
+    var cached = readCache(STATES_CACHE_KEY, STATES_TTL_MS);
+    if (cached && cached.states) {
+      renderStatesFromSlim(cached.states);
+      // Revalidate in background; states list barely changes so this is rare work.
+      (window.requestIdleCallback || function (cb) { return setTimeout(cb, 3000); })(function () {
+        fetch(STATES_URL, { cache: 'force-cache' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (json) {
+            if (json && json.states && json.states.length !== cached.states.length) {
+              writeCache(STATES_CACHE_KEY, json);
+              renderStatesFromSlim(json.states);
+            }
+          })
+          .catch(function () {});
+      }, { timeout: 6000 });
+      return;
+    }
+    fetch(STATES_URL, { cache: 'force-cache' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (json) {
+        if (json && json.states) {
+          writeCache(STATES_CACHE_KEY, json);
+          renderStatesFromSlim(json.states);
+          return;
+        }
+        // Slim file missing (e.g. local file:// or first deploy before postbuild).
+        // Fall back to the full menu fetch — the splash still works, just slower.
+        ensureMenuLoaded(function (ok) {
+          if (ok) renderStates();
+          else showEmpty('Could not load regions. Tap Open Map to continue.');
+        });
+      })
+      .catch(function () {
+        ensureMenuLoaded(function (ok) {
+          if (ok) renderStates();
+          else showEmpty('Could not load regions. Tap Open Map to continue.');
+        });
+      });
   }
 
   function processSEO(json) {
@@ -771,6 +867,18 @@ html, body {
   }
 
   function openState(stateName) {
+    // Drill-down requires the full menuGIS. On first-state-click after a fresh
+    // load, kick off the fetch and replace the grid with skeletons so the user
+    // sees something is happening. On warm cache this resolves synchronously
+    // inside ensureMenuLoaded and we drop straight through.
+    if (!byState || !byState[stateName]) {
+      showSkeletons();
+      ensureMenuLoaded(function (ok) {
+        if (!ok) { showEmpty('Could not load regions. Tap Open Map to continue.'); return; }
+        openState(stateName);
+      });
+      return;
+    }
     // Match maps.html openStateInBrowser logic exactly. If a state has districts,
     // show district list. If it's a single state-level entry with villages, jump
     // straight to its villages.
@@ -852,12 +960,15 @@ html, body {
     panel.classList.toggle('grid-village-active', level === 'village');
     if (!items.length) { showEmpty('No matches.'); return; }
     var frag = document.createDocumentFragment();
-    items.forEach(function (item) {
+    items.forEach(function (item, i) {
       var c;
       if (level === 'village') {
         c = renderRow(item);
       } else {
-        c = renderCard(item);
+        // First card in the state grid is the LCP candidate (matches the
+        // preload in <head>). Mark it priority so the browser keeps the
+        // hint after the JS-rendered img enters the DOM.
+        c = renderCard(item, level === 'state' && i === 0);
       }
       c.addEventListener('click', function () { onCardClick(item); });
       frag.appendChild(c);
@@ -865,14 +976,21 @@ html, body {
     grid.appendChild(frag);
   }
 
-  function renderCard(item) {
+  function renderCard(item, isPriority) {
     var c = document.createElement('div');
     c.className = 'card';
     var firstChar = (item.name.charAt(0) || '?');
     if (item.icon) {
       var img = document.createElement('img');
       img.className = 'card-img';
-      img.loading = 'lazy';
+      // LCP card skips loading=lazy and gets fetchpriority=high so the preload
+      // hint actually wins. All other cards stay lazy so the grid doesn't
+      // request 40+ icons on render.
+      if (isPriority) {
+        img.setAttribute('fetchpriority', 'high');
+      } else {
+        img.loading = 'lazy';
+      }
       img.decoding = 'async';
       img.alt = '';
       img.src = ICON_BASE + item.icon + '.png';
@@ -929,6 +1047,12 @@ html, body {
   }
 
   function onCardClick(item) {
+    // Mobile: any card interaction expands the sheet to full so the drill-down
+    // is visible above the fold (otherwise the lower half of the new list is
+    // hidden behind the hero). Skip for village taps — they navigate away.
+    if (mq.matches && currentSnap !== 'full' && item._kind !== 'village') {
+      setSnap('full');
+    }
     // Always navigate to the live map — splash drives engagement to
     // /maps.html, not the SEO landing pages. Per-region SEO discovery
     // happens via crawlable links elsewhere, not via this click handler.
@@ -957,6 +1081,19 @@ html, body {
     grid.appendChild(d);
   }
 
+  // Skeleton placeholders shown while the full menu loads after a state click
+  // on cold cache. Matches the initial HTML skeletons so the layout doesn't jump.
+  function showSkeletons() {
+    grid.innerHTML = '';
+    grid.classList.remove('grid-list');
+    panel.classList.remove('grid-village-active');
+    for (var i = 0; i < 6; i++) {
+      var s = document.createElement('div');
+      s.className = 'skel';
+      grid.appendChild(s);
+    }
+  }
+
   back.addEventListener('click', popLevel);
 
   toggleBtn.addEventListener('click', function (e) {
@@ -971,20 +1108,17 @@ html, body {
     goToMap();
   });
 
-  // ============ Bottom-sheet drag (mobile only) ============
-  // Injects a drag handle as the first child of the panel and wires pointer
-  // events to drag the panel and snap to one of three positions (peek/half/
-  // full) on release. Velocity > 0.6 px/ms biases the snap in the flick
-  // direction. The handle is the ONLY drag origin — taps on the grid still
-  // scroll its content normally because handle and grid are siblings.
+  // ============ Bottom-sheet snap (mobile only) ============
+  // Simplified from the earlier drag-to-snap-anywhere implementation:
+  //   - Sheet starts at snap-half (the user's preferred resting view).
+  //   - ANY interaction with the top handle — tap or drag — snaps to full.
+  //   - Closing is X-only. Drag-down-to-close was removed because accidental
+  //     brushes against the handle while scrolling kept dismissing users.
+  // This trades expressiveness for predictability and zero misfires.
   var mq = window.matchMedia('(max-width: 767px)');
   var dragHandle = null;
   var currentSnap = 'half';
   var snapClasses = ['snap-peek', 'snap-half', 'snap-full'];
-  // Raised from 4px — small finger jitter during a tap was being misread
-  // as the start of a drag, so taps were getting eaten and never reached
-  // the tap branch in release().
-  var DRAG_THRESHOLD_PX = 10;
 
   function setSnap(name) {
     snapClasses.forEach(function (c) { panel.classList.remove(c); });
@@ -992,80 +1126,15 @@ html, body {
     currentSnap = name;
   }
 
-  function getPanelTranslateY() {
-    var t = getComputedStyle(panel).transform;
-    if (!t || t === 'none') return 0;
-    var m = t.match(/matrix.*\((.+)\)/);
-    if (!m) return 0;
-    var parts = m[1].split(',').map(function (s) { return parseFloat(s.trim()); });
-    return parts[5] || 0; // ty in matrix(a,b,c,d,tx,ty)
-  }
-
   function wireDragHandle(handle) {
-    var startY = 0, startTranslate = 0, lastY = 0, lastT = 0,
-        velocity = 0, pointerId = null, moved = false;
-
     handle.addEventListener('pointerdown', function (e) {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-      // First touch primes the menu load — by the time the user releases the
-      // tap and the sheet snaps open, the network round-trip is already in
-      // flight (or already returned, if the localStorage cache is warm).
+      // Prime the menu load — by the time the snap animation finishes, the
+      // network round-trip is already in flight (or done if cache is warm).
       ensureMenuLoaded();
-      pointerId = e.pointerId;
-      startY = lastY = e.clientY;
-      lastT = performance.now();
-      velocity = 0;
-      moved = false;
-      startTranslate = getPanelTranslateY();
-      panel.classList.add('dragging');
-      try { handle.setPointerCapture(pointerId); } catch (err) {}
+      setSnap('full');
       e.preventDefault();
     }, { passive: false });
-
-    handle.addEventListener('pointermove', function (e) {
-      if (e.pointerId !== pointerId) return;
-      var dy = e.clientY - startY;
-      if (!moved && Math.abs(dy) > DRAG_THRESHOLD_PX) moved = true;
-      if (!moved) return;
-      var newY = startTranslate + dy;
-      var maxY = panel.offsetHeight;            // can't drag below screen
-      var minY = panel.offsetHeight * 0.02;     // can't push above snap-full
-      newY = Math.max(minY, Math.min(maxY, newY));
-      panel.style.transform = 'translateY(' + newY + 'px)';
-      var now = performance.now();
-      velocity = (e.clientY - lastY) / Math.max(1, now - lastT);
-      lastY = e.clientY;
-      lastT = now;
-    });
-
-    function release() {
-      if (pointerId === null) return;
-      panel.style.transform = '';  // hand control back to the .snap-* class
-      panel.classList.remove('dragging');
-
-      if (moved) {
-        var currentY = getPanelTranslateY();
-        var ratio = currentY / panel.offsetHeight;
-        var snap;
-        if (velocity > 0.6)      snap = ratio > 0.4 ? 'peek' : 'half';
-        else if (velocity < -0.6) snap = ratio < 0.35 ? 'full' : 'half';
-        else if (ratio < 0.25)    snap = 'full';
-        else if (ratio < 0.65)    snap = 'half';
-        else                      snap = 'peek';
-        setSnap(snap);
-      } else {
-        // Tap on handle: expand to full, or collapse back to half if already
-        // full. Half is the user's preferred resting state so tapping always
-        // pivots between "show me everything" and "back to the comfy view".
-        setSnap(currentSnap === 'full' ? 'half' : 'full');
-      }
-
-      try { handle.releasePointerCapture(pointerId); } catch (err) {}
-      pointerId = null;
-      moved = false;
-    }
-    handle.addEventListener('pointerup', release);
-    handle.addEventListener('pointercancel', release);
   }
 
   function initBottomSheet() {
@@ -1090,6 +1159,13 @@ html, body {
   initBottomSheet();
   if (mq.addEventListener) mq.addEventListener('change', initBottomSheet);
   else if (mq.addListener) mq.addListener(initBottomSheet); // older Safari
+
+  // Tapping into the search bar on mobile expands the sheet to full so the
+  // virtual keyboard doesn't push the search input behind the hero crop.
+  search.addEventListener('focus', function () {
+    if (mq.matches && currentSnap !== 'full') setSnap('full');
+    ensureMenuLoaded(); // searching needs the full menu (matches across districts/villages)
+  });
 
   var searchDebounce;
   search.addEventListener('input', function () {
@@ -1127,13 +1203,14 @@ html, body {
     }, { timeout: 4000 });
   }
 
-  // Defer menu + SEO fetches to idle so neither competes with first paint
-  // or LCP. If localStorage has a warm cache, the render still happens
-  // immediately inside ensureMenuLoaded — only the network revalidate waits.
-  // First interaction (drag handle, expand toggle, anything that needs the
-  // grid) calls ensureMenuLoaded() directly so users never see skeletons
-  // after they start interacting.
-  (window.requestIdleCallback || function (cb) { return setTimeout(cb, 200); })(ensureMenuLoaded, { timeout: 1500 });
+  // FIRST PAINT: fetch only the slim states list (~1 KB). This replaces the
+  // earlier full-menu fetch on initial load and removes ~167 KB / ~1.2 s from
+  // the critical path. The full menuGIS is fetched lazily — either when the
+  // user opens a state (openState calls ensureMenuLoaded) or when they focus
+  // the search input (which needs the full payload to search districts /
+  // villages). On a warm localStorage cache, ensureStatesLoaded renders
+  // synchronously and the only network work is a background revalidate.
+  ensureStatesLoaded();
   (window.requestIdleCallback || function (cb) { return setTimeout(cb, 1500); })(ensureSEOLoaded, { timeout: 4000 });
 })();
 </script>

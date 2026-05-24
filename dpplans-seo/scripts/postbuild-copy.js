@@ -89,3 +89,55 @@ try {
 } catch (err) {
   console.warn('postbuild-copy: skipping seo-index.json —', err.message);
 }
+
+// Slim states-only lookup for index1.html FIRST PAINT. Without this the splash
+// pulls the full ~167 KB menuGIS.json (~1.2 s on slow links) just to render
+// the three state cards above the fold. menu-states.json is ~1 KB and lets
+// the panel render the entire first layer instantly; the full menu is only
+// fetched when the user actually drills into a state.
+//
+// We fetch menuGIS once at build time (Cloudflare Pages build env has network)
+// and write the slim file. If the fetch fails (offline / RTDB down), the build
+// continues without the slim file — index1.html falls back to its original
+// full-menu fetch path so the splash still works.
+const MENU_URL = 'https://sodium-hour-256110.firebaseio.com/menuGIS.json';
+function countVillagesIn(json) {
+  if (!json) return 0;
+  let c = 0;
+  json.split('\n').forEach(l => { if (l.indexOf('=') > -1) c++; });
+  return c;
+}
+fetch(MENU_URL)
+  .then(r => r.ok ? r.json() : null)
+  .then(menu => {
+    if (!menu) throw new Error('menuGIS fetch returned non-OK');
+    const byState = {};
+    const order = [];
+    for (const k in menu) {
+      const e = menu[k];
+      if (!e || !e.state) continue;
+      if (!byState[e.state]) { byState[e.state] = []; order.push(e.state); }
+      byState[e.state].push(e);
+    }
+    const states = order.map(name => {
+      const entries = byState[name];
+      const districts = entries.filter(e => e.district);
+      const out = {
+        name,
+        icon: (entries[0] && entries[0].iconState) || ''
+      };
+      if (districts.length > 0) {
+        out.districtCount = districts.length;
+      } else {
+        const v = entries.reduce((c, e) => c + countVillagesIn(e.villagesJSON), 0);
+        if (v) out.locationCount = v;
+      }
+      return out;
+    });
+    const slim = { generatedAt: new Date().toISOString(), states };
+    const dataDir = path.join(OUT, 'data');
+    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+    fs.writeFileSync(path.join(dataDir, 'menu-states.json'), JSON.stringify(slim));
+    console.log('postbuild-copy: wrote out/data/menu-states.json (' + states.length + ' states)');
+  })
+  .catch(err => console.warn('postbuild-copy: skipping menu-states.json —', err.message));
