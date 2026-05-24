@@ -4,8 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#008577">
-<title>Map Magician — Development Plan Maps for India</title>
-<meta name="description" content="Browse Development Plan, Town Planning Scheme and Village maps across India. 7-day passes for high-zoom premium tiles per district.">
+<title>DP Plans — Development Plan Maps for Pune, Mumbai, Hyderabad, Bengaluru, Nashik & 40+ Indian Regions | MapMagician</title>
+<meta name="description" content="Free online viewer for Development Plan (DP), Layout Plan, and Village Maps across 40+ regions in India — Pune, Mumbai, Thane, Solapur, Nashik, Nagpur, Hyderabad HMDA, Bengaluru, Chhatrapati Sambhaji Nagar (Aurangabad), Kolhapur, Satara, PMRDA, NAINA, MSRDC corridors and more. Interactive GIS with survey overlay, distance & area measurement.">
+<meta name="keywords" content="development plan map, DP map, India DP, Maharashtra DP, Telangana DP, Karnataka DP, Pune DP, Mumbai DP, Hyderabad DP, Bengaluru DP, Solapur DP, Nashik DP, Nagpur DP, layout plan, village map, gaon nakasha, PMRDA, NAINA, HMDA, BBMP, MSRDC corridor, regional plan, land use map, TP scheme, draft development plan, georeferenced map maharashtra, survey overlay, dpplans, dp plans, dpplans.com, DP plans India, dp plans online">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="author" content="MapMagician">
+<!-- Search Console verification for the dpplans.com property — same token /maps.html uses. -->
+<meta name="google-site-verification" content="xFVARIJYEs3hLQyWWu6u3qgdQVJPiMR0QQII8oXZqmI">
 <!-- The same source file is published at both / and /index1.html by
      postbuild-copy.js. Canonical points at / (the homepage) so search engines
      consolidate on a single URL. -->
@@ -16,10 +21,11 @@
 <!-- Social sharing previews. Without these, dpplans.com links render as
      plain text on WhatsApp/Twitter/LinkedIn/Slack. og:image MUST be an
      absolute https:// URL — crawlers don't resolve relative paths. The
-     splash hero is the natural choice; it's already a landscape image
-     suited to summary_large_image cards. -->
-<meta property="og:title" content="DP Plans — Development Plan, TP Scheme & Village Maps for India">
-<meta property="og:description" content="Browse Development Plan, Town Planning Scheme and Village maps across 150+ Indian districts. 7-day passes for high-zoom premium tiles.">
+     splash hero (1280x676, ~1.89:1) is the natural choice; it's much richer
+     than the tiny logo /maps.html uses, while keeping the same titles/desc
+     for cross-page consistency. -->
+<meta property="og:title" content="DP Plans — DP, Layout & Village Maps for 40+ Indian Regions">
+<meta property="og:description" content="Free online GIS viewer for Development Plan, Layout, and Village maps across Indian cities — Pune, Mumbai Metropolitan, Hyderabad HMDA, Bengaluru, Thane, PMRDA, NAINA, MSRDC corridors, and more.">
 <meta property="og:image" content="https://dpplans.com/AssetsGIS/splash-hero-desktop-1280.jpg">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="676">
@@ -28,10 +34,88 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DP Plans by MapMagician">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="DP Plans — Development Plan & Village Maps for India">
-<meta name="twitter:description" content="Browse DP, TP Scheme and Village maps across 150+ Indian districts.">
+<meta name="twitter:title" content="DP Plans — DP, Layout & Village Maps for 40+ Indian Regions">
+<meta name="twitter:description" content="Free online GIS viewer for Development Plan, Layout, and Village maps across Indian cities and districts.">
 <meta name="twitter:image" content="https://dpplans.com/AssetsGIS/splash-hero-desktop-1280.jpg">
 <meta name="twitter:image:alt" content="Live Development Plan map preview with GIS overlays on satellite imagery">
+
+<!-- JSON-LD: FAQPage mirrors /maps.html so the homepage qualifies for the same
+     FAQ rich results in SERPs. Content is domain-level (DP plans in general),
+     so duplication across / and /maps.html is appropriate. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How can I view Development Plan (DP) maps online for free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Open dpplans.com in any browser. The interactive viewer overlays official Development Plan, Layout, and Village maps for 40+ Indian regions on Google satellite imagery. Browsing is free; high-zoom premium tiles for individual districts are unlocked via a 7-day pass."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between a Development Plan, Layout Plan, and Village Map?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A Development Plan (DP) is a long-term land-use plan for a city or planning region — it shows zoning (residential, commercial, industrial, etc.) and reservations. A Layout Plan is a smaller-scale plan for a specific layout or sub-area. A Village Map (gaon nakasha) shows survey-number boundaries within a revenue village. DP Plans serves all three layer types where available."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which cities in India have Development Plan maps available?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Pune, PMRDA, Mumbai (Western/Eastern Suburbs, Island City), Navi Mumbai, Thane, Mira-Bhayandar, Palghar, Panvel-Kharghar, Solapur, Nashik, Nagpur Metropolitan Region, Chhatrapati Sambhaji Nagar (Aurangabad), Kolhapur, Satara, Sangli, Ahilyanagar (Ahmednagar), Hyderabad HMDA Periphery, Bengaluru, plus NAINA, MSRDC corridors and Maharashtra-wide regional/draft DPs."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are these Development Plan maps official?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes — DP, Layout, and Village maps are sourced from the publishing authorities (PMRDA, NAINA, HMDA, BBMP, MCGM, MSRDC, individual municipal corporations, and state town planning departments). MapMagician georeferences these documents and serves them as map tiles for online viewing."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I measure distance and area on the maps?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The viewer includes built-in distance and area measurement tools. You can also use the survey overlay feature to verify boundaries against satellite imagery."
+      }
+    }
+  ]
+}
+</script>
+
+<!-- JSON-LD: WebApplication describes the GIS viewer this splash launches. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "DP Plans — Development Plan GIS Viewer",
+  "url": "https://dpplans.com/",
+  "description": "Interactive Development Plan, Layout, and Village map viewer for 40+ regions across India — Maharashtra, Telangana, Karnataka and expanding.",
+  "applicationCategory": "GISApplication",
+  "operatingSystem": "Any",
+  "browserRequirements": "Requires HTML5 + JavaScript",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+  "publisher": {
+    "@type": "Organization",
+    "name": "MapMagician",
+    "url": "https://www.mapmagician.in",
+    "sameAs": [
+      "https://www.mapmagician.in",
+      "https://dpplans.com",
+      "https://www.dpplans.com",
+      "https://www.linkedin.com/company/mapmagician"
+    ]
+  }
+}
+</script>
 
 <!-- Preload the hero variant the browser will most likely use, so it races the
      initial HTML parse instead of waiting for layout. The hero now sits as a
