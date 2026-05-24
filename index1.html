@@ -15,7 +15,7 @@
      full-viewport background, so on desktop we want the wide variant. -->
 <link rel="preload" as="image" type="image/webp"
       href="AssetsGIS/splash-hero-desktop-1280.webp"
-      imagesrcset="AssetsGIS/splash-hero-desktop-768.webp 768w, AssetsGIS/splash-hero-desktop-1280.webp 1280w, AssetsGIS/splash-hero-desktop-1920.webp 1920w"
+      imagesrcset="AssetsGIS/splash-hero-desktop-768.webp 768w, AssetsGIS/splash-hero-desktop-1280.webp 1280w"
       imagesizes="100vw"
       media="(min-width: 768px)">
 <link rel="preload" as="image" type="image/webp"
@@ -317,23 +317,65 @@ html, body {
 }
 .open-map:hover .arrow { transform: translateX(3px); }
 
-/* ============ MOBILE LAYOUT (same left-column shape as desktop, just narrower) ============
-   Per design: keep the panel as a left rail even on phones. Width drops to ~38vw
-   (clamped 150-220px) and the grid stays vertical (single column) with shrunk
-   icons. Hero fills the rest of the screen on the right and remains full-bleed
-   behind the panel.                                                              */
+/* ============ MOBILE LAYOUT — bottom-sheet (app drawer) ============
+   Replaces the narrow left rail with a draggable bottom sheet that snaps to
+   peek / half / full. The hero map stays fully visible above the sheet so
+   users always have spatial context while browsing regions. Drag handle at
+   the top, tap-to-cycle or drag-to-snap. JS wires pointer events to compute
+   velocity + nearest snap on release. */
 @media (max-width: 767px) {
   .panel {
-    width: clamp(150px, 38vw, 220px);
-    /* keep top:0 / bottom:0 inset from base rule; same left rail as desktop */
+    top: auto;
+    left: 0; right: 0;
+    width: 100vw;
+    height: 92vh;
+    border-right: none;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -2px 24px rgba(0,0,0,.18);
+    /* Default = peeked (only handle + header tip visible). JS-added
+       .snap-* classes override translate. */
+    transform: translateY(calc(100% - 96px));
+    transition: transform 320ms cubic-bezier(.4,0,.2,1);
+    touch-action: pan-y;
   }
+  .panel.snap-peek { transform: translateY(calc(100% - 96px)); }
+  .panel.snap-half { transform: translateY(45vh); }
+  .panel.snap-full { transform: translateY(2vh); }
+  .panel.dragging  { transition: none; }
+  /* Bottom-sheet close animation slides DOWN, overriding the desktop left-slide. */
+  .panel.closing   { transform: translateY(100%); opacity: 0; pointer-events: none; }
+
+  /* Drag handle: a small pill at the top of the sheet. role="separator"
+     announces it as a divider/resize affordance to AT. touch-action:none
+     so the browser doesn't steal the gesture for scrolling. */
+  .panel-drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 22px;
+    padding-top: 4px;
+    cursor: grab;
+    touch-action: none;
+    flex-shrink: 0;
+  }
+  .panel-drag-handle::before {
+    content: '';
+    width: 44px; height: 5px;
+    border-radius: 3px;
+    background: #cbd5d5;
+    transition: background 120ms, width 120ms;
+  }
+  .panel-drag-handle:active { cursor: grabbing; }
+  .panel-drag-handle:active::before { background: var(--brand); width: 56px; }
+
+  /* Grid keeps 2 columns even on phones now that the sheet uses full width. */
   .grid {
-    grid-template-columns: 1fr; /* single column inside the narrow rail */
-    padding: 4px 8px 12px;
-    gap: 8px;
+    grid-template-columns: 1fr 1fr;
+    padding: 6px 12px 16px;
+    gap: 10px;
   }
-  .card { min-height: 190px; /* 130 image + ~60 body */ }
-  .card-img, .card-ph { height: 130px; flex: 0 0 130px; padding: 6px; }
+  .card { min-height: 160px; }
+  .card-img, .card-ph { height: 100px; flex: 0 0 100px; padding: 6px; }
   .card-body { padding: 5px 6px 8px; }
   .card-name { font-size: 12px; }
   .card-sub { font-size: 10px; }
@@ -341,30 +383,35 @@ html, body {
   .row-letter { width: 32px; height: 32px; font-size: 13px; }
   .row-name { font-size: 12px; }
   .row-sub { font-size: 9px; }
-  .skel { height: 170px; }
-  .panel-header { padding: 12px 10px 6px; }
-  .panel-logo img { width: 22px; height: 22px; }
-  .panel-title { font-size: 14px; }
+  .skel { height: 140px; }
+  .panel-header { padding: 6px 14px 4px; }
+  .panel-logo img { width: 24px; height: 24px; }
+  .panel-title { font-size: 15px; }
   .panel-search {
-    margin: 4px 10px 8px;
-    padding: 8px 12px;
+    margin: 4px 14px 8px;
+    padding: 9px 12px;
     font-size: 13px;
   }
-  .panel-footer { padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); font-size: 10px; }
+  .panel-footer { padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); font-size: 10px; }
+  /* Footer takes precious vertical space when peeked; hide it until at least half-open. */
+  .panel.snap-peek .panel-footer { display: none; }
+
+  /* Open Map centers on the hero above the sheet's peek strip. */
   .open-map {
-    /* Center over the visible hero strip (right of the panel). Panel width is
-       clamped between 150 and 220px; using the same calc form as desktop with
-       a smaller offset keeps the button visually centered on phones. */
-    /* Center over the hero strip to the right of the panel. The clamp tracks
-       the panel width exactly: half of clamp(150, 38vw, 220) -> clamp(75, 19vw, 110). */
-    left: calc(50% + clamp(75px, 19vw, 110px));
-    bottom: calc(20px + env(safe-area-inset-bottom));
+    left: 50%;
+    bottom: calc(118px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
     padding: 12px 22px;
     font-size: 14px;
   }
+  .open-map:hover { transform: translateX(-50%) translateY(-1px); }
+  .open-map:active { transform: translateX(-50%); }
+
+  /* Expand-to-full-width toggle isn't meaningful for a bottom sheet — the
+     sheet already has full-width snap via snap-full. Hide the desktop tab. */
+  .panel-toggle { display: none; }
   .panel.expanded { width: 100vw; }
-  .panel.expanded .grid { grid-template-columns: repeat(2, 1fr); }
-  .panel-toggle { right: -16px; width: 20px; height: 48px; }
+  /* Mobile-expanded reuses snap-full's effective layout; close-X still works. */
 }
 
 /* ============ EXPAND-TO-FULL-WIDTH ============
@@ -459,10 +506,10 @@ html, body {
             srcset="AssetsGIS/splash-hero-mobile-390.jpg 390w, AssetsGIS/splash-hero-mobile-750.jpg 750w, AssetsGIS/splash-hero-mobile-1080.jpg 1080w"
             sizes="100vw">
     <source media="(min-width: 768px)" type="image/webp"
-            srcset="AssetsGIS/splash-hero-desktop-768.webp 768w, AssetsGIS/splash-hero-desktop-1280.webp 1280w, AssetsGIS/splash-hero-desktop-1920.webp 1920w"
+            srcset="AssetsGIS/splash-hero-desktop-768.webp 768w, AssetsGIS/splash-hero-desktop-1280.webp 1280w"
             sizes="100vw">
     <source media="(min-width: 768px)" type="image/jpeg"
-            srcset="AssetsGIS/splash-hero-desktop-768.jpg 768w, AssetsGIS/splash-hero-desktop-1280.jpg 1280w, AssetsGIS/splash-hero-desktop-1920.jpg 1920w"
+            srcset="AssetsGIS/splash-hero-desktop-768.jpg 768w, AssetsGIS/splash-hero-desktop-1280.jpg 1280w"
             sizes="100vw">
     <img src="AssetsGIS/splash-hero-desktop-1280.jpg" alt="Live Development Plan map preview" decoding="async" fetchpriority="high">
   </picture>
@@ -473,7 +520,7 @@ html, body {
   <div class="panel-header">
     <button class="panel-back" id="back" aria-label="Back" type="button">&larr;</button>
     <div class="panel-logo">
-      <img src="AssetsGIS/mapmagiciansmall.png" alt="" width="28" height="28">
+      <img src="AssetsGIS/mapmagiciansmall.webp" alt="" width="28" height="28" decoding="async">
       <h1 class="panel-title" id="title">Browse Regions</h1>
     </div>
     <button class="panel-close" id="panel-close" type="button" aria-label="Close menu and open map">&times;</button>
@@ -854,6 +901,118 @@ html, body {
     e.stopPropagation();
     goToMap();
   });
+
+  // ============ Bottom-sheet drag (mobile only) ============
+  // Injects a drag handle as the first child of the panel and wires pointer
+  // events to drag the panel and snap to one of three positions (peek/half/
+  // full) on release. Velocity > 0.6 px/ms biases the snap in the flick
+  // direction. The handle is the ONLY drag origin — taps on the grid still
+  // scroll its content normally because handle and grid are siblings.
+  var mq = window.matchMedia('(max-width: 767px)');
+  var dragHandle = null;
+  var currentSnap = 'peek';
+  var snapClasses = ['snap-peek', 'snap-half', 'snap-full'];
+
+  function setSnap(name) {
+    snapClasses.forEach(function (c) { panel.classList.remove(c); });
+    panel.classList.add('snap-' + name);
+    currentSnap = name;
+  }
+
+  function getPanelTranslateY() {
+    var t = getComputedStyle(panel).transform;
+    if (!t || t === 'none') return 0;
+    var m = t.match(/matrix.*\((.+)\)/);
+    if (!m) return 0;
+    var parts = m[1].split(',').map(function (s) { return parseFloat(s.trim()); });
+    return parts[5] || 0; // ty in matrix(a,b,c,d,tx,ty)
+  }
+
+  function wireDragHandle(handle) {
+    var startY = 0, startTranslate = 0, lastY = 0, lastT = 0,
+        velocity = 0, pointerId = null, moved = false;
+
+    handle.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      pointerId = e.pointerId;
+      startY = lastY = e.clientY;
+      lastT = performance.now();
+      velocity = 0;
+      moved = false;
+      startTranslate = getPanelTranslateY();
+      panel.classList.add('dragging');
+      try { handle.setPointerCapture(pointerId); } catch (err) {}
+      e.preventDefault();
+    }, { passive: false });
+
+    handle.addEventListener('pointermove', function (e) {
+      if (e.pointerId !== pointerId) return;
+      var dy = e.clientY - startY;
+      if (!moved && Math.abs(dy) > 4) moved = true;
+      if (!moved) return;
+      var newY = startTranslate + dy;
+      var maxY = panel.offsetHeight;            // can't drag below screen
+      var minY = panel.offsetHeight * 0.02;     // can't push above snap-full
+      newY = Math.max(minY, Math.min(maxY, newY));
+      panel.style.transform = 'translateY(' + newY + 'px)';
+      var now = performance.now();
+      velocity = (e.clientY - lastY) / Math.max(1, now - lastT);
+      lastY = e.clientY;
+      lastT = now;
+    });
+
+    function release() {
+      if (pointerId === null) return;
+      panel.style.transform = '';  // hand control back to the .snap-* class
+      panel.classList.remove('dragging');
+
+      if (moved) {
+        var currentY = getPanelTranslateY();
+        var ratio = currentY / panel.offsetHeight;
+        var snap;
+        if (velocity > 0.6)      snap = ratio > 0.4 ? 'peek' : 'half';
+        else if (velocity < -0.6) snap = ratio < 0.35 ? 'full' : 'half';
+        else if (ratio < 0.25)    snap = 'full';
+        else if (ratio < 0.65)    snap = 'half';
+        else                      snap = 'peek';
+        setSnap(snap);
+      } else {
+        // tap on handle cycles peek -> half -> full -> peek
+        var next = currentSnap === 'peek' ? 'half' :
+                   currentSnap === 'half' ? 'full' : 'peek';
+        setSnap(next);
+      }
+
+      try { handle.releasePointerCapture(pointerId); } catch (err) {}
+      pointerId = null;
+      moved = false;
+    }
+    handle.addEventListener('pointerup', release);
+    handle.addEventListener('pointercancel', release);
+  }
+
+  function initBottomSheet() {
+    if (!mq.matches) {
+      // Crossed back to desktop — drop snap classes so the desktop rules win.
+      snapClasses.forEach(function (c) { panel.classList.remove(c); });
+      return;
+    }
+    if (!dragHandle) {
+      dragHandle = document.createElement('div');
+      dragHandle.className = 'panel-drag-handle';
+      dragHandle.id = 'panel-drag-handle';
+      dragHandle.setAttribute('role', 'separator');
+      dragHandle.setAttribute('aria-label', 'Drag to resize panel');
+      panel.insertBefore(dragHandle, panel.firstChild);
+      wireDragHandle(dragHandle);
+    }
+    if (!snapClasses.some(function (c) { return panel.classList.contains(c); })) {
+      setSnap('peek');
+    }
+  }
+  initBottomSheet();
+  if (mq.addEventListener) mq.addEventListener('change', initBottomSheet);
+  else if (mq.addListener) mq.addListener(initBottomSheet); // older Safari
 
   var searchDebounce;
   search.addEventListener('input', function () {
