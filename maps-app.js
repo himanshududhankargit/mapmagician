@@ -5303,13 +5303,24 @@
                 });
             }
 
+            // Native X (clear) button on <input type="search"> fires 'input', not
+            // 'keyup'. Catch that path so clearing reopens the recents view
+            // instead of leaving the previous results onscreen.
+            searchInput.addEventListener('input', function() {
+                if (this.value.trim() === '') {
+                    clearTimeout(searchDebounce);
+                    renderSearchChipsView();
+                }
+            });
+
             // Use keyup (not input) -- Google Places SearchBox can suppress input events
             searchInput.addEventListener('keyup', function(e) {
                 if (e && (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === 'Escape')) return;
                 clearTimeout(searchDebounce);
                 const q = this.value.trim().toLowerCase();
                 if (q.length < 2) {
-                    searchResultsEl.classList.remove('open');
+                    // Empty/short input → show recent-pick chips (or close panel if no history)
+                    renderSearchChipsView();
                     return;
                 }
                 // Run search if we have data OR if this looks like coordinates
@@ -5347,6 +5358,10 @@
                 const q = this.value.trim().toLowerCase();
                 if (q.length >= 2 && menuData.length > 0) {
                     searchMenuData(q);
+                } else {
+                    // Open chip view on focus when the input is empty so the user
+                    // can re-open a recent pick with one tap.
+                    renderSearchChipsView();
                 }
             });
 
@@ -5356,6 +5371,130 @@
                     searchResultsEl.classList.remove('open');
                 }
             });
+
+            // === Search picks: localStorage-backed click history + counts ===
+            // Shape: { recent: [{name, lat, lng, type, productPurchaseID, bbox, addedAt} x8 MRU],
+            //          counts: { "<name>": clickCount } }
+            // Recent chips show when the search input is empty/focused.
+            // Counts boost matching results in the ranked list.
+            const SEARCH_PICKS_KEY = 'gis_search_picks';
+            const SEARCH_PICKS_MAX_RECENT = 8;
+            const SEARCH_PICKS_MAX_COUNTS = 200;
+            let _searchPicks = null;
+
+            function loadSearchPicks() {
+                if (_searchPicks) return _searchPicks;
+                try {
+                    const raw = localStorage.getItem(SEARCH_PICKS_KEY);
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (parsed && Array.isArray(parsed.recent) && parsed.counts && typeof parsed.counts === 'object') {
+                            _searchPicks = parsed;
+                            return _searchPicks;
+                        }
+                    }
+                } catch (e) { /* corrupt → reset */ }
+                _searchPicks = { recent: [], counts: {} };
+                return _searchPicks;
+            }
+
+            function saveSearchPicks() {
+                try { localStorage.setItem(SEARCH_PICKS_KEY, JSON.stringify(_searchPicks)); }
+                catch (e) { /* quota — drop silently */ }
+            }
+
+            function recordSearchPick(r) {
+                // Only track navigable picks (have lat/lng). District/state picks open
+                // sidebars, not navigations, and chips can't easily replay that flow.
+                if (!r || !r.name) return;
+                if (r.type !== 'coord' && r.type !== 'village' && r.type !== 'villagePlan') return;
+                if (r.lat == null || r.lng == null) return;
+                const picks = loadSearchPicks();
+                picks.counts[r.name] = (picks.counts[r.name] || 0) + 1;
+                // Cap counts dict: keep top-N by count, drop the rest
+                const keys = Object.keys(picks.counts);
+                if (keys.length > SEARCH_PICKS_MAX_COUNTS) {
+                    const sorted = keys.sort((a, b) => picks.counts[b] - picks.counts[a]);
+                    const trimmed = {};
+                    sorted.slice(0, Math.floor(SEARCH_PICKS_MAX_COUNTS / 2)).forEach(k => {
+                        trimmed[k] = picks.counts[k];
+                    });
+                    picks.counts = trimmed;
+                }
+                const slim = {
+                    name: r.name,
+                    type: r.type,
+                    lat: r.lat, lng: r.lng,
+                    productPurchaseID: r.productPurchaseID || (r.item && r.item.productPurchaseID) || '',
+                    bbox: r.bbox || null,
+                    addedAt: Date.now()
+                };
+                picks.recent = [slim, ...picks.recent.filter(x => x.name !== r.name)].slice(0, SEARCH_PICKS_MAX_RECENT);
+                saveSearchPicks();
+            }
+
+            function invokeSearchPick(r) {
+                if (r.type === 'coord') {
+                    goToCoordinate(r.lat, r.lng, r.name);
+                } else if (r.type === 'village' || r.type === 'villagePlan') {
+                    goToLocation(r.lat, r.lng, r.name, r.productPurchaseID || '');
+                    if (r.bbox && r.type === 'villagePlan') {
+                        const b = new google.maps.LatLngBounds(
+                            { lat: r.bbox.minLat, lng: r.bbox.minLng },
+                            { lat: r.bbox.maxLat, lng: r.bbox.maxLng }
+                        );
+                        map.fitBounds(b);
+                    }
+                }
+            }
+
+            function renderSearchChipsView() {
+                const picks = loadSearchPicks();
+                if (!picks.recent.length) {
+                    searchResultsEl.classList.remove('open');
+                    return;
+                }
+                searchResultsEl.innerHTML = '';
+                searchActiveIndex = -1;
+
+                const header = document.createElement('div');
+                header.className = 'search-result-header';
+                header.style.display = 'flex';
+                header.style.alignItems = 'center';
+                const title = document.createElement('span');
+                title.textContent = 'Recent';
+                title.style.flex = '1';
+                header.appendChild(title);
+                const clearBtn = document.createElement('button');
+                clearBtn.className = 'search-chip-clear';
+                clearBtn.textContent = 'Clear';
+                clearBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    _searchPicks = { recent: [], counts: {} };
+                    saveSearchPicks();
+                    searchResultsEl.classList.remove('open');
+                });
+                header.appendChild(clearBtn);
+                searchResultsEl.appendChild(header);
+
+                const row = document.createElement('div');
+                row.className = 'search-chip-row';
+                picks.recent.forEach(r => {
+                    const chip = document.createElement('button');
+                    chip.className = 'search-chip';
+                    chip.title = r.name;
+                    chip.textContent = r.name;
+                    chip.addEventListener('click', () => {
+                        recordSearchPick(r);
+                        invokeSearchPick(r);
+                        searchResultsEl.classList.remove('open');
+                        searchInput.value = r.name;
+                    });
+                    row.appendChild(chip);
+                });
+                searchResultsEl.appendChild(row);
+                searchResultsEl.classList.add('open');
+            }
 
             function searchMenuData(query) {
                 const results = [];
@@ -5414,11 +5553,16 @@
                                 if (isNaN(lat) || isNaN(lng)) return;
                                 const pathParts = [state];
                                 if (district) pathParts.push(district);
+                                // Headlines: curated top-of-district entries lack the
+                                // ", Tal: <district>" suffix that real village lines have.
+                                // They rank above villages within the same district hit.
+                                const isHeadline = !villageName.includes(', Tal: ');
                                 results.push({
                                     name: villageName,
                                     path: pathParts.join(' > ') + '  •  Found inside',
                                     type: 'village',
                                     lat: lat, lng: lng,
+                                    isHeadline: isHeadline,
                                     item: item
                                 });
                                 addedVillageNames.add(villageName.toLowerCase());
@@ -5455,10 +5599,23 @@
                     });
                 }
 
-                // Sort: coord match first, then villages (most useful), then villagePlans, then districts, then states
+                // Sort priority:
+                //   1. type bucket (coord → village → villagePlan → district → state)
+                //   2. within bucket: curated headline rows first (only applies to 'village')
+                //   3. within tier: user's personal pick count, most-clicked first
+                //   4. stable insertion order (Array.sort is stable on V8/SpiderMonkey)
+                const pickCounts = loadSearchPicks().counts;
                 results.sort((a, b) => {
                     const order = { coord: -1, village: 0, villagePlan: 1, district: 2, state: 3 };
-                    return (order[a.type] || 0) - (order[b.type] || 0);
+                    const typeOrder = (order[a.type] || 0) - (order[b.type] || 0);
+                    if (typeOrder !== 0) return typeOrder;
+                    const aHead = a.isHeadline ? 1 : 0;
+                    const bHead = b.isHeadline ? 1 : 0;
+                    if (aHead !== bHead) return bHead - aHead;
+                    const aCount = pickCounts[a.name] || 0;
+                    const bCount = pickCounts[b.name] || 0;
+                    if (aCount !== bCount) return bCount - aCount;
+                    return 0;
                 });
 
                 renderSearchResults(results.slice(0, 20), query);
@@ -5492,6 +5649,7 @@
                             </div>
                         `;
                         btn.addEventListener('click', () => {
+                            recordSearchPick(r);
                             if (r.type === 'coord') {
                                 goToCoordinate(r.lat, r.lng, r.name);
                             } else if (r.type === 'village' && r.lat && r.lng) {

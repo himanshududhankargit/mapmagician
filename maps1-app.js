@@ -5303,6 +5303,16 @@
                 });
             }
 
+            // Native X (clear) button on <input type="search"> fires 'input', not
+            // 'keyup'. Catch that path so clearing reopens the recents view
+            // instead of leaving the previous results onscreen.
+            searchInput.addEventListener('input', function() {
+                if (this.value.trim() === '') {
+                    clearTimeout(searchDebounce);
+                    renderSearchChipsView();
+                }
+            });
+
             // Use keyup (not input) -- Google Places SearchBox can suppress input events
             searchInput.addEventListener('keyup', function(e) {
                 if (e && (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === 'Escape')) return;

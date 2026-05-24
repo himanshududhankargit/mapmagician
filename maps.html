@@ -578,6 +578,27 @@
             color: #008577; text-transform: uppercase; letter-spacing: 0.5px;
             background: #f9f9f9; border-bottom: 1px solid #eee;
         }
+        /* Recent-pick chips shown when search input is empty */
+        .search-chip-row {
+            display: flex; flex-wrap: wrap; gap: 6px;
+            padding: 10px 12px; background: #fafafa;
+            border-bottom: 1px solid #eee;
+        }
+        .search-chip {
+            display: inline-flex; align-items: center;
+            max-width: 180px; height: 26px; padding: 0 10px;
+            border-radius: 13px; border: none;
+            background: #e8f5e9; color: #2E7D32;
+            font-size: 11px; font-weight: 500; cursor: pointer;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .search-chip:hover { background: #c8e6c9; }
+        .search-chip-clear {
+            background: transparent; border: none; cursor: pointer;
+            color: #999; font-size: 10px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px; padding: 0 6px;
+        }
+        .search-chip-clear:hover { color: #d32f2f; }
 
         /* Expanded sidebar panel */
         .sidebar-panel {

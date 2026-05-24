@@ -1,6 +1,6 @@
 // Service worker — caches app shell so the installed PWA opens offline
 // instead of showing "This site can't be reached".
-const SW_VERSION = 'v21-2026-05-24-gz';
+const SW_VERSION = 'v22-2026-05-24-search';
 const CACHE_NAME = 'mm-shell-' + SW_VERSION;
 
 // Region-icon cache: cross-origin PNGs from CloudFront used by the splash
