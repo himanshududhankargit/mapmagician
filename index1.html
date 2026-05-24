@@ -525,12 +525,13 @@ html, body {
      the menu back to the live map. */
   .panel.snap-full .panel-close { display: flex; }
 
-  /* Right-bottom FAB above the sheet's peek strip. Stays clear of the snap-half
-     edge (sheet starts at 45vh from top, so it covers the lower 55vh — anchor
-     the FAB above that band). */
+  /* Right-bottom FAB at standard Material inset. Earlier 118px offset dated
+     back to a snap-peek strip we no longer have; with the sheet starting at
+     snap-half, that offset put the FAB awkwardly high inside the sheet
+     content. 24px keeps it at the corner where users expect a FAB. */
   .open-map {
     right: 16px;
-    bottom: calc(118px + env(safe-area-inset-bottom));
+    bottom: calc(24px + env(safe-area-inset-bottom));
     padding: 12px 22px;
     font-size: 14px;
   }
