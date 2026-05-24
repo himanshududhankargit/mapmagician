@@ -1,6 +1,6 @@
 // Service worker — caches app shell so the installed PWA opens offline
 // instead of showing "This site can't be reached".
-const SW_VERSION = 'v19-2026-05-24';
+const SW_VERSION = 'v20-2026-05-24';
 const CACHE_NAME = 'mm-shell-' + SW_VERSION;
 
 // Region-icon cache: cross-origin PNGs from CloudFront used by the splash
@@ -14,9 +14,10 @@ const KEEP_CACHES = [CACHE_NAME, ICON_CACHE];
 // first visit warms them for subsequent visits — keep this list lean, every
 // entry is downloaded on each SW version bump.
 const SHELL_URLS = [
+    '/',                // splash is the homepage; pre-cache the canonical URL
     '/maps.html',
     '/maps-app.js',
-    '/index1.html',
+    '/index1.html',     // alias kept for backward compat with old bookmarks
     '/data/menu-states.json',
     '/data/seo-index.json',
     '/AssetsGIS/flatbush.js',

@@ -42,10 +42,11 @@ copyIfExists('manifest.json', 'manifest.json');
 copyIfExists('sw.js', 'sw.js');
 copyIfExists('AssetsGIS', 'AssetsGIS');
 
-// Splash staging slot: dpplans.com/index1.html serves the new fast-loading splash
-// while the production / -> /maps.html redirect stays untouched. Once approved,
-// rename index1.html -> index.html and add copyIfExists('index.html', 'index.html')
-// so it overwrites the Next.js redirect stub at the root.
+// Splash IS the homepage. The same source file is published at both / (the
+// canonical homepage post-promotion) and /index1.html (kept as an alias so
+// old links / cache entries / Lighthouse history keep resolving). Canonical
+// in the HTML points to / so search engines only index one URL.
+copyIfExists('index1.html', 'index.html');
 copyIfExists('index1.html', 'index1.html');
 
 // Staging slots: maps1.html, maps2.html, etc. — always test these on dpplans.com before promoting.
@@ -59,10 +60,12 @@ fs.readdirSync(MM_ROOT)
 fs.writeFileSync(path.join(OUT, 'CNAME'), 'dpplans.com\n');
 console.log('postbuild-copy: wrote out/CNAME = dpplans.com');
 
-// Cloudflare Pages _redirects: send root traffic straight to the live map (302 keeps
-// /home/ as the canonical browser landing page).
-fs.writeFileSync(path.join(OUT, '_redirects'), '/  /maps.html  302\n');
-console.log('postbuild-copy: wrote out/_redirects (/ -> /maps.html)');
+// Splash promotion: out/index.html IS the homepage now. The previous redirect
+// (`/  /maps.html  302`) must not exist or Cloudflare honours it ahead of
+// index.html and the splash never renders. Writing an empty _redirects so
+// this deploy explicitly overwrites any stale rule from prior builds.
+fs.writeFileSync(path.join(OUT, '_redirects'), '# Splash is the homepage; / serves index.html directly\n');
+console.log('postbuild-copy: wrote out/_redirects (empty — / serves index.html)');
 
 // Slim SEO lookup for index1.html — strips bbox/kml/centroid from regions.json
 // (~950 KB) down to a ~10 KB pid/slug/village-slug map. Lets the splash decide

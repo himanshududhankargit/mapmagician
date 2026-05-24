@@ -6,12 +6,10 @@
 <meta name="theme-color" content="#008577">
 <title>Map Magician — Development Plan Maps for India</title>
 <meta name="description" content="Browse Development Plan, Town Planning Scheme and Village maps across India. 7-day passes for high-zoom premium tiles per district.">
-<!-- index1.html is the staging slot for what will become the dpplans.com homepage.
-     Until it's promoted to /, canonical points at the actual URL so Lighthouse
-     and crawlers don't see a canonical-to-non-equivalent-page warning. After
-     promotion (index1.html -> index.html and overwrites the / redirect),
-     change this back to https://dpplans.com/. -->
-<link rel="canonical" href="https://dpplans.com/index1.html">
+<!-- The same source file is published at both / and /index1.html by
+     postbuild-copy.js. Canonical points at / (the homepage) so search engines
+     consolidate on a single URL. -->
+<link rel="canonical" href="https://dpplans.com/">
 <link rel="icon" href="AssetsGIS/mapmagiciansmall.png">
 <link rel="apple-touch-icon" href="AssetsGIS/mapmagiciansmall.png">
 
