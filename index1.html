@@ -540,7 +540,11 @@ html, body {
   /* Expand-to-full-width toggle isn't meaningful for a bottom sheet — the
      sheet already has full-width snap via snap-full. Hide the desktop tab. */
   .panel-toggle { display: none; }
-  .panel.expanded { width: 100vw; }
+  /* Mobile-expanded sits at snap-full (translateY 2vh), so cap max-height at
+     96vh to leave the 2vh top breathing room without spilling past the
+     viewport bottom. The desktop rule applies height:auto already; this just
+     tightens the ceiling for phones. */
+  .panel.expanded { width: 100vw; max-height: 96vh; }
   /* Mobile-expanded reuses snap-full's effective layout; close-X still works. */
 }
 
@@ -574,7 +578,18 @@ html, body {
 
 .panel.expanded {
   width: 100vw;
+  /* Size to content + max-height instead of locking to viewport height.
+     When only 3 region cards exist, the prior flex:1 grid stretched to fill
+     ~70% of the viewport and pushed the footer to the bottom — leaving a
+     huge white gap between the last card and the footer. With height:auto
+     the panel ends right under the cards, the footer follows naturally,
+     and long lists still scroll within max-height. */
+  height: auto;
+  max-height: 100vh;
   transition: width 280ms cubic-bezier(.4,0,.2,1), transform 280ms cubic-bezier(.4,0,.2,1), opacity 220ms ease-out;
+}
+.panel.expanded .grid {
+  flex: 0 1 auto;  /* size to content; shrink+scroll only if it overflows max-height */
 }
 /* When the panel covers the viewport the toggle tab would protrude past the
    right edge (right:-18px) and be unreachable. Pin it to the viewport edge
@@ -1289,14 +1304,22 @@ html, body {
   // Also opens connections to the third-party origins maps.html needs at
   // boot (Firebase SDK on gstatic, Google Maps JS API), so its DNS+TLS is
   // already done by the time the parser sees the <script> tags.
+  //
+  // menuGIS.json (~167 KB) is the largest single request maps.html makes at
+  // boot (maps-app.js:4734) AND what the splash itself fetches on first state
+  // click. Prefetching it cross-origin requires as=fetch + crossorigin so
+  // the cached entry matches the eventual fetch()'s CORS mode and the bytes
+  // are reused instead of refetched.
   function prefetchMap() {
     [
       { href: MAP_URL, as: 'document' },
       { href: '/maps-app.js', as: 'script' },
-      { href: '/AssetsGIS/flatbush.js', as: 'script' }
+      { href: '/AssetsGIS/flatbush.js', as: 'script' },
+      { href: MENU_URL, as: 'fetch', crossorigin: 'anonymous' }
     ].forEach(function (e) {
       var l = document.createElement('link');
       l.rel = 'prefetch'; l.href = e.href; l.as = e.as;
+      if (e.crossorigin) l.crossOrigin = e.crossorigin;
       document.head.appendChild(l);
     });
     ['https://www.gstatic.com', 'https://maps.googleapis.com', 'https://maps.gstatic.com'].forEach(function (origin) {
