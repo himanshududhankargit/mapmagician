@@ -7111,12 +7111,33 @@
             const p = loadDataVersions().then(versions => {
                 const liveVersion = versions[versionKey];
                 const vParam = encodeURIComponent(liveVersion == null ? '0' : String(liveVersion));
-                const url = LAYER_JSON_BASE + '/' + dbPath + '.bin?v=' + vParam;
-                return fetch(url, { cache: 'no-store' })
+                const baseUrl = LAYER_JSON_BASE + '/' + dbPath + '.bin';
+                const gzUrl = baseUrl + '.gz?v=' + vParam;
+                const plainUrl = baseUrl + '?v=' + vParam;
+                // Prefer the gzipped twin (~2.6x smaller cold payload — JSON
+                // with polygon coords gzips to ~38%) and gunzip via
+                // DecompressionStream. On any failure (no support, 404 on the
+                // .gz twin, decode error) fall back to the canonical .bin —
+                // keeps old browsers and partial-publish states working.
+                const fetchPlain = () => fetch(plainUrl, { cache: 'no-store' })
                     .then(r => {
                         if (!r.ok) throw new Error('layer fetch ' + dbPath + ' -> ' + r.status);
                         return r.json();
-                    })
+                    });
+                const canGunzip = typeof DecompressionStream !== 'undefined';
+                const fetchData = canGunzip
+                    ? fetch(gzUrl, { cache: 'no-store' })
+                        .then(r => {
+                            if (!r.ok) throw new Error('gz ' + r.status);
+                            if (!r.body) throw new Error('gz no-body');
+                            return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).json();
+                        })
+                        .catch(err => {
+                            console.warn('[layer] gz fallback for', dbPath, err && err.message);
+                            return fetchPlain();
+                        })
+                    : fetchPlain();
+                return fetchData
                     .then(data => {
                         if (data) {
                             try {
