@@ -26,6 +26,9 @@
 
 <!-- Warm the connection to the icon CDN; region cards each request one PNG from here. -->
 <link rel="preconnect" href="https://tiles.mapmagician.in" crossorigin>
+<!-- Warm the connection to Firebase RTDB so the menuGIS fetch skips DNS+TLS later. -->
+<link rel="preconnect" href="https://sodium-hour-256110.firebaseio.com" crossorigin>
+<link rel="dns-prefetch" href="https://sodium-hour-256110.firebaseio.com">
 
 <style>
 :root {
@@ -332,9 +335,10 @@ html, body {
     border-right: none;
     border-radius: 18px 18px 0 0;
     box-shadow: 0 -2px 24px rgba(0,0,0,.18);
-    /* Default = peeked (only handle + header tip visible). JS-added
-       .snap-* classes override translate. */
-    transform: translateY(calc(100% - 96px));
+    /* Default snap = half. User explicitly wants the sheet to land here on
+       open (matches the position in their screenshot) — not the older peek
+       default. JS-added .snap-* classes override transform. */
+    transform: translateY(45vh);
     transition: transform 320ms cubic-bezier(.4,0,.2,1);
     touch-action: pan-y;
   }
@@ -395,6 +399,8 @@ html, body {
   .panel-footer { padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); font-size: 10px; }
   /* Footer takes precious vertical space when peeked; hide it until at least half-open. */
   .panel.snap-peek .panel-footer { display: none; }
+  /* Tighten footer at half so 2 full card rows are visible before scroll. */
+  .panel.snap-half .panel-footer { display: none; }
 
   /* Open Map centers on the hero above the sheet's peek strip. */
   .open-map {
@@ -552,6 +558,13 @@ html, body {
   var ICON_BASE = 'https://tiles.mapmagician.in/dpplans/0imagesGIS/';
   var MAP_URL = '/maps.html';
 
+  // localStorage cache keys + TTLs. Cache-first / revalidate-in-background
+  // pattern shaves the JSON.parse blocking time off TBT on repeat visits.
+  var MENU_CACHE_KEY = 'mm_menuGIS_v1';
+  var SEO_CACHE_KEY = 'mm_seoIndex_v1';
+  var MENU_TTL_MS = 24 * 60 * 60 * 1000;    // 24h — menuGIS changes daily-ish
+  var SEO_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7d — SEO slugs change rarely
+
   var $ = function (id) { return document.getElementById(id); };
   var panel = $('panel'), grid = $('grid'), title = $('title'),
       back = $('back'), search = $('search'),
@@ -645,41 +658,97 @@ html, body {
     return out;
   }
 
-  function fetchMenu() {
+  function readCache(key, ttl) {
+    try {
+      var raw = localStorage.getItem(key);
+      if (!raw) return null;
+      var obj = JSON.parse(raw);
+      if (!obj || typeof obj.ts !== 'number' || !obj.data) return null;
+      if (Date.now() - obj.ts > ttl) return null;
+      return obj.data;
+    } catch (e) { return null; }
+  }
+  function writeCache(key, data) {
+    try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: data })); }
+    catch (e) { /* quota exceeded or storage unavailable */ }
+  }
+
+  function processMenu(json) {
+    data = json;
+    byState = {};
+    stateOrder = [];
+    for (var k in json) {
+      var e = json[k]; if (!e || !e.state) continue;
+      var copy = { _key: k };
+      for (var f in e) copy[f] = e[f];
+      if (!byState[e.state]) { byState[e.state] = []; stateOrder.push(e.state); }
+      byState[e.state].push(copy);
+    }
+    renderStates();
+  }
+
+  function fetchMenuFresh(onDone) {
     fetch(MENU_URL, { cache: 'force-cache' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (json) {
-        if (!json) return showEmpty('Could not load regions. Tap Open Map to continue.');
-        data = json;
-        byState = {};
-        stateOrder = [];
-        for (var k in json) {
-          var e = json[k]; if (!e || !e.state) continue;
-          var copy = { _key: k };
-          for (var f in e) copy[f] = e[f];
-          if (!byState[e.state]) { byState[e.state] = []; stateOrder.push(e.state); }
-          byState[e.state].push(copy);
-        }
-        renderStates();
+        if (!json) { if (onDone) onDone(false); return; }
+        writeCache(MENU_CACHE_KEY, json);
+        if (onDone) onDone(true, json);
       })
-      .catch(function () { showEmpty('Could not load regions. Tap Open Map to continue.'); });
+      .catch(function () { if (onDone) onDone(false); });
   }
 
-  function fetchSEOIndex() {
+  var menuLoaded = false;
+  function ensureMenuLoaded() {
+    if (menuLoaded) return;
+    menuLoaded = true;
+    var cached = readCache(MENU_CACHE_KEY, MENU_TTL_MS);
+    if (cached) {
+      // Warm cache — render instantly, then revalidate in background.
+      processMenu(cached);
+      (window.requestIdleCallback || function (cb) { return setTimeout(cb, 3000); })(function () {
+        fetchMenuFresh(function (ok, json) {
+          // Re-render only if state list actually changed length — avoid a
+          // wasteful repaint when the payload differs only in icon URLs.
+          if (ok && json && Object.keys(json).length !== Object.keys(data || {}).length) {
+            processMenu(json);
+          }
+        });
+      }, { timeout: 6000 });
+      return;
+    }
+    // Cold cache — fetch immediately, render when it arrives.
+    fetchMenuFresh(function (ok, json) {
+      if (ok && json) processMenu(json);
+      else showEmpty('Could not load regions. Tap Open Map to continue.');
+    });
+  }
+
+  function processSEO(json) {
+    if (!json || !json.regions) return;
+    json.regions.forEach(function (r) {
+      if (!r.productPurchaseID || !r.slug) return;
+      var villages = {};
+      (r.villages || []).forEach(function (v) {
+        if (v && v.name && v.slug) villages[v.name.toLowerCase()] = v.slug;
+      });
+      seoByPid[r.productPurchaseID] = { slug: r.slug, villages: villages };
+    });
+  }
+  function ensureSEOLoaded() {
+    var cached = readCache(SEO_CACHE_KEY, SEO_TTL_MS);
+    if (cached) {
+      processSEO(cached);
+      return; // skip revalidate — SEO slugs barely change, fresh on next 7d-expiry
+    }
     fetch(SEO_INDEX_URL, { cache: 'force-cache' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (json) {
-        if (!json || !json.regions) return;
-        json.regions.forEach(function (r) {
-          if (!r.productPurchaseID || !r.slug) return;
-          var villages = {};
-          (r.villages || []).forEach(function (v) {
-            if (v && v.name && v.slug) villages[v.name.toLowerCase()] = v.slug;
-          });
-          seoByPid[r.productPurchaseID] = { slug: r.slug, villages: villages };
-        });
+        if (!json) return;
+        writeCache(SEO_CACHE_KEY, json);
+        processSEO(json);
       })
-      .catch(function () { /* SEO unavailable — clicks fall through to /maps.html */ });
+      .catch(function () { /* SEO unavailable — clicks fall through */ });
   }
 
   function renderStates() {
@@ -910,8 +979,12 @@ html, body {
   // scroll its content normally because handle and grid are siblings.
   var mq = window.matchMedia('(max-width: 767px)');
   var dragHandle = null;
-  var currentSnap = 'peek';
+  var currentSnap = 'half';
   var snapClasses = ['snap-peek', 'snap-half', 'snap-full'];
+  // Raised from 4px — small finger jitter during a tap was being misread
+  // as the start of a drag, so taps were getting eaten and never reached
+  // the tap branch in release().
+  var DRAG_THRESHOLD_PX = 10;
 
   function setSnap(name) {
     snapClasses.forEach(function (c) { panel.classList.remove(c); });
@@ -934,6 +1007,10 @@ html, body {
 
     handle.addEventListener('pointerdown', function (e) {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
+      // First touch primes the menu load — by the time the user releases the
+      // tap and the sheet snaps open, the network round-trip is already in
+      // flight (or already returned, if the localStorage cache is warm).
+      ensureMenuLoaded();
       pointerId = e.pointerId;
       startY = lastY = e.clientY;
       lastT = performance.now();
@@ -948,7 +1025,7 @@ html, body {
     handle.addEventListener('pointermove', function (e) {
       if (e.pointerId !== pointerId) return;
       var dy = e.clientY - startY;
-      if (!moved && Math.abs(dy) > 4) moved = true;
+      if (!moved && Math.abs(dy) > DRAG_THRESHOLD_PX) moved = true;
       if (!moved) return;
       var newY = startTranslate + dy;
       var maxY = panel.offsetHeight;            // can't drag below screen
@@ -977,10 +1054,10 @@ html, body {
         else                      snap = 'peek';
         setSnap(snap);
       } else {
-        // tap on handle cycles peek -> half -> full -> peek
-        var next = currentSnap === 'peek' ? 'half' :
-                   currentSnap === 'half' ? 'full' : 'peek';
-        setSnap(next);
+        // Tap on handle: expand to full, or collapse back to half if already
+        // full. Half is the user's preferred resting state so tapping always
+        // pivots between "show me everything" and "back to the comfy view".
+        setSnap(currentSnap === 'full' ? 'half' : 'full');
       }
 
       try { handle.releasePointerCapture(pointerId); } catch (err) {}
@@ -1007,7 +1084,7 @@ html, body {
       wireDragHandle(dragHandle);
     }
     if (!snapClasses.some(function (c) { return panel.classList.contains(c); })) {
-      setSnap('peek');
+      setSnap('half');
     }
   }
   initBottomSheet();
@@ -1042,16 +1119,22 @@ html, body {
   // Register the shared service worker — caches region icons cross-origin
   // (CloudFront tiles.mapmagician.in/dpplans/0imagesGIS/*.png) so the splash
   // grid re-renders instantly on repeat visits and inside the installed PWA.
+  // Deferred to idle so the registration (which downloads sw.js and pre-caches
+  // SHELL_URLS) never competes with first paint / LCP.
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function () {
+    (window.requestIdleCallback || function (cb) { return setTimeout(cb, 2000); })(function () {
       navigator.serviceWorker.register('/sw.js').catch(function () { /* file:// or unsupported */ });
-    });
+    }, { timeout: 4000 });
   }
 
-  requestAnimationFrame(function () {
-    setTimeout(fetchMenu, 0);
-    setTimeout(fetchSEOIndex, 0);
-  });
+  // Defer menu + SEO fetches to idle so neither competes with first paint
+  // or LCP. If localStorage has a warm cache, the render still happens
+  // immediately inside ensureMenuLoaded — only the network revalidate waits.
+  // First interaction (drag handle, expand toggle, anything that needs the
+  // grid) calls ensureMenuLoaded() directly so users never see skeletons
+  // after they start interacting.
+  (window.requestIdleCallback || function (cb) { return setTimeout(cb, 200); })(ensureMenuLoaded, { timeout: 1500 });
+  (window.requestIdleCallback || function (cb) { return setTimeout(cb, 1500); })(ensureSEOLoaded, { timeout: 4000 });
 })();
 </script>
 </body>

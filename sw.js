@@ -1,6 +1,6 @@
 // Service worker — caches app shell so the installed PWA opens offline
 // instead of showing "This site can't be reached".
-const SW_VERSION = 'v17-2026-05-23';
+const SW_VERSION = 'v18-2026-05-24';
 const CACHE_NAME = 'mm-shell-' + SW_VERSION;
 
 // Region-icon cache: cross-origin PNGs from CloudFront used by the splash
@@ -10,12 +10,19 @@ const ICON_CACHE = 'mm-icons-v1';
 const ICON_URL_PREFIX = 'https://tiles.mapmagician.in/dpplans/0imagesGIS/';
 const KEEP_CACHES = [CACHE_NAME, ICON_CACHE];
 
-// App-shell files to pre-cache on install
+// App-shell files to pre-cache on install. Splash assets are listed so the
+// first visit warms them for subsequent visits — keep this list lean, every
+// entry is downloaded on each SW version bump.
 const SHELL_URLS = [
     '/maps.html',
     '/maps-app.js',
+    '/index1.html',
+    '/data/seo-index.json',
     '/AssetsGIS/flatbush.js',
     '/manifest.json',
+    '/AssetsGIS/mapmagiciansmall.webp',
+    '/AssetsGIS/splash-hero-desktop-1280.webp',
+    '/AssetsGIS/splash-hero-mobile-750.webp',
     '/AssetsGIS/icons/icon-192x192.png',
     '/AssetsGIS/icons/icon-512x512.png',
     '/AssetsGIS/image-1.png',
@@ -23,9 +30,12 @@ const SHELL_URLS = [
 ];
 
 self.addEventListener('install', (e) => {
+    // allSettled (not addAll) so a single missing/404 URL — e.g. /data/seo-index.json
+    // on a fresh local checkout before the dpplans-seo postbuild has run —
+    // doesn't abort the whole install and leave us without an active SW.
     e.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(SHELL_URLS))
+            .then(cache => Promise.allSettled(SHELL_URLS.map(url => cache.add(url))))
             .then(() => self.skipWaiting())
     );
 });
