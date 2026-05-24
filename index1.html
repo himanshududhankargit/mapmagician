@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#008577">
-<title>DP Plans — Development Plan Maps for Pune, Mumbai, Hyderabad, Bengaluru, Nashik & 40+ Indian Regions | MapMagician</title>
-<meta name="description" content="Free online viewer for Development Plan (DP), Layout Plan, and Village Maps across 40+ regions in India — Pune, Mumbai, Thane, Solapur, Nashik, Nagpur, Hyderabad HMDA, Bengaluru, Chhatrapati Sambhaji Nagar (Aurangabad), Kolhapur, Satara, PMRDA, NAINA, MSRDC corridors and more. Interactive GIS with survey overlay, distance & area measurement.">
+<title>Development Plan &amp; Master Plan Maps – Pune, Mumbai, Hyderabad, Bengaluru, Nashik & 40+ Indian Regions | MapMagician</title>
+<meta name="description" content="Online viewer for Development Plan (DP) and Master Plan maps across 40+ regions in India — Pune, Mumbai, Thane, Solapur, Nashik, Nagpur, Hyderabad HMDA, Bengaluru, Chhatrapati Sambhaji Nagar (Aurangabad), Kolhapur, Satara, PMRDA, NAINA, MSRDC corridors and more. Includes supporting layout and village maps where available. Interactive GIS with survey overlay, distance & area measurement.">
 <meta name="keywords" content="development plan map, DP map, India DP, Maharashtra DP, Telangana DP, Karnataka DP, Pune DP, Mumbai DP, Hyderabad DP, Bengaluru DP, Solapur DP, Nashik DP, Nagpur DP, layout plan, village map, gaon nakasha, PMRDA, NAINA, HMDA, BBMP, MSRDC corridor, regional plan, land use map, TP scheme, draft development plan, georeferenced map maharashtra, survey overlay, dpplans, dp plans, dpplans.com, DP plans India, dp plans online">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="author" content="MapMagician">
@@ -24,20 +24,20 @@
      splash hero (1280x676, ~1.89:1) is the natural choice; it's much richer
      than the tiny logo /maps.html uses, while keeping the same titles/desc
      for cross-page consistency. -->
-<meta property="og:title" content="DP Plans — DP, Layout & Village Maps for 40+ Indian Regions">
-<meta property="og:description" content="Free online GIS viewer for Development Plan, Layout, and Village maps across Indian cities — Pune, Mumbai Metropolitan, Hyderabad HMDA, Bengaluru, Thane, PMRDA, NAINA, MSRDC corridors, and more.">
+<meta property="og:title" content="Development Plan &amp; Master Plan Maps – 40+ Indian Regions">
+<meta property="og:description" content="Interactive GIS viewer for Development Plan and Master Plan maps across Indian cities — Pune, Mumbai Metropolitan, Hyderabad HMDA, Bengaluru, Thane, PMRDA, NAINA, MSRDC corridors, and more. Supporting layout and village layers included.">
 <meta property="og:image" content="https://dpplans.com/AssetsGIS/splash-hero-desktop-1280.jpg">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="676">
-<meta property="og:image:alt" content="Live Development Plan map preview with GIS overlays on satellite imagery">
+<meta property="og:image:alt" content="Development Plan map overlay on satellite imagery">
 <meta property="og:url" content="https://dpplans.com/">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="DP Plans by MapMagician">
+<meta property="og:site_name" content="Development Plan Maps by MapMagician">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="DP Plans — DP, Layout & Village Maps for 40+ Indian Regions">
-<meta name="twitter:description" content="Free online GIS viewer for Development Plan, Layout, and Village maps across Indian cities and districts.">
+<meta name="twitter:title" content="Development Plan &amp; Master Plan Maps – 40+ Indian Regions">
+<meta name="twitter:description" content="Interactive GIS viewer for Development Plan and Master Plan maps across Indian cities and districts.">
 <meta name="twitter:image" content="https://dpplans.com/AssetsGIS/splash-hero-desktop-1280.jpg">
-<meta name="twitter:image:alt" content="Live Development Plan map preview with GIS overlays on satellite imagery">
+<meta name="twitter:image:alt" content="Development Plan map overlay on satellite imagery">
 
 <!-- JSON-LD: FAQPage mirrors /maps.html so the homepage qualifies for the same
      FAQ rich results in SERPs. Content is domain-level (DP plans in general),
@@ -49,10 +49,10 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "How can I view Development Plan (DP) maps online for free?",
+      "name": "How can I view Development Plan (DP) and Master Plan maps online?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Open dpplans.com in any browser. The interactive viewer overlays official Development Plan, Layout, and Village maps for 40+ Indian regions on Google satellite imagery. Browsing is free; high-zoom premium tiles for individual districts are unlocked via a 7-day pass."
+        "text": "Open dpplans.com in any browser. The interactive viewer overlays official Development Plan, Master Plan, Layout, and Village maps for 40+ Indian regions on Google satellite imagery. The base viewer is open to all users; high-zoom premium tiles for individual districts are unlocked via a 7-day pass."
       }
     },
     {
@@ -96,9 +96,9 @@
 {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "DP Plans — Development Plan GIS Viewer",
+  "name": "Development Plan & Master Plan GIS Viewer",
   "url": "https://dpplans.com/",
-  "description": "Interactive Development Plan, Layout, and Village map viewer for 40+ regions across India — Maharashtra, Telangana, Karnataka and expanding.",
+  "description": "Interactive Development Plan and Master Plan map viewer for 40+ regions across India — Maharashtra, Telangana, Karnataka and expanding. Includes supporting layout and village layers.",
   "applicationCategory": "GISApplication",
   "operatingSystem": "Any",
   "browserRequirements": "Requires HTML5 + JavaScript",
@@ -406,14 +406,14 @@ html, body {
 }
 .panel-footer a:hover { text-decoration: underline; }
 
-/* ============ OPEN MAP button: fixed, centered over the visible hero region ============ */
+/* ============ OPEN MAP button: right-bottom FAB ============
+   Anchored to the right edge so it sits like a Material FAB above the hero,
+   never overlapping the panel column on desktop or the bottom-sheet handle
+   area on mobile. */
 .open-map {
   position: fixed;
   bottom: calc(28px + env(safe-area-inset-bottom));
-  /* Desktop default: center over the right portion of the viewport (hero area
-     visible past the 360px panel). Recalculated for mobile below. */
-  left: calc(50% + 180px);
-  transform: translateX(-50%);
+  right: 28px;
   z-index: 3;
   display: inline-flex; align-items: center; gap: 10px;
   padding: 14px 28px;
@@ -428,8 +428,8 @@ html, body {
   transition: transform 120ms, background 120ms, opacity 200ms;
   white-space: nowrap;
 }
-.open-map:hover { background: var(--brand-dark); transform: translateX(-50%) translateY(-1px); }
-.open-map:active { transform: translateX(-50%) translateY(0); }
+.open-map:hover { background: var(--brand-dark); transform: translateY(-1px); }
+.open-map:active { transform: translateY(0); }
 .open-map .arrow {
   display: inline-block;
   transition: transform 160ms;
@@ -465,28 +465,30 @@ html, body {
   /* Bottom-sheet close animation slides DOWN, overriding the desktop left-slide. */
   .panel.closing   { transform: translateY(100%); opacity: 0; pointer-events: none; }
 
-  /* Top pill: a visual affordance only. Tapping it (or anywhere on the sheet
-     handle area) snaps the sheet to full. Closing is exclusively via the X
-     button — drag-to-close was removed because accidental brushes against
+  /* Top affordance: an upward chevron (matches the desktop right-edge chevron
+     that expands the panel). Tapping it snaps the sheet to full. Closing is
+     X-only — drag-to-close was removed because accidental brushes against
      the handle while scrolling kept dismissing users out of the menu. */
   .panel-drag-handle {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    height: 22px;
-    padding-top: 4px;
+    height: 26px;
+    padding-top: 8px;
     cursor: pointer;
     touch-action: none;
     flex-shrink: 0;
   }
   .panel-drag-handle::before {
     content: '';
-    width: 44px; height: 5px;
-    border-radius: 3px;
-    background: #cbd5d5;
-    transition: background 120ms;
+    width: 14px; height: 14px;
+    border-top: 3px solid var(--brand);
+    border-left: 3px solid var(--brand);
+    border-top-left-radius: 2px;
+    transform: rotate(45deg);
+    transition: border-color 120ms;
   }
-  .panel-drag-handle:active::before { background: var(--brand); }
+  .panel-drag-handle:active::before { border-top-color: var(--brand-dark); border-left-color: var(--brand-dark); }
 
   /* Grid keeps 2 columns even on phones now that the sheet uses full width. */
   .grid {
@@ -523,16 +525,17 @@ html, body {
      the menu back to the live map. */
   .panel.snap-full .panel-close { display: flex; }
 
-  /* Open Map centers on the hero above the sheet's peek strip. */
+  /* Right-bottom FAB above the sheet's peek strip. Stays clear of the snap-half
+     edge (sheet starts at 45vh from top, so it covers the lower 55vh — anchor
+     the FAB above that band). */
   .open-map {
-    left: 50%;
+    right: 16px;
     bottom: calc(118px + env(safe-area-inset-bottom));
-    transform: translateX(-50%);
     padding: 12px 22px;
     font-size: 14px;
   }
-  .open-map:hover { transform: translateX(-50%) translateY(-1px); }
-  .open-map:active { transform: translateX(-50%); }
+  .open-map:hover { transform: translateY(-1px); }
+  .open-map:active { transform: translateY(0); }
 
   /* Expand-to-full-width toggle isn't meaningful for a bottom sheet — the
      sheet already has full-width snap via snap-full. Hide the desktop tab. */
@@ -1283,13 +1286,23 @@ html, body {
 
   // Warm the browser cache for /maps.html so the eventual navigation is
   // near-instant. Idle-scheduled so it never competes with splash paint.
+  // Also opens connections to the third-party origins maps.html needs at
+  // boot (Firebase SDK on gstatic, Google Maps JS API), so its DNS+TLS is
+  // already done by the time the parser sees the <script> tags.
   function prefetchMap() {
-    [MAP_URL, '/maps-app.js'].forEach(function (href) {
+    [
+      { href: MAP_URL, as: 'document' },
+      { href: '/maps-app.js', as: 'script' },
+      { href: '/AssetsGIS/flatbush.js', as: 'script' }
+    ].forEach(function (e) {
       var l = document.createElement('link');
-      l.rel = 'prefetch';
-      l.href = href;
-      l.as = href.endsWith('.js') ? 'script' : 'document';
+      l.rel = 'prefetch'; l.href = e.href; l.as = e.as;
       document.head.appendChild(l);
+    });
+    ['https://www.gstatic.com', 'https://maps.googleapis.com', 'https://maps.gstatic.com'].forEach(function (origin) {
+      var pc = document.createElement('link');
+      pc.rel = 'preconnect'; pc.href = origin; pc.crossOrigin = '';
+      document.head.appendChild(pc);
     });
   }
   (window.requestIdleCallback || function (cb) { return setTimeout(cb, 800); })(prefetchMap, { timeout: 1500 });
