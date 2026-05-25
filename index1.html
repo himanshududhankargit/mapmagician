@@ -465,10 +465,10 @@ html, body {
   /* Bottom-sheet close animation slides DOWN, overriding the desktop left-slide. */
   .panel.closing   { transform: translateY(100%); opacity: 0; pointer-events: none; }
 
-  /* Top affordance: an upward chevron (matches the desktop right-edge chevron
-     that expands the panel). Tapping it snaps the sheet to full. Closing is
-     X-only — drag-to-close was removed because accidental brushes against
-     the handle while scrolling kept dismissing users out of the menu. */
+  /* Top affordance: a chevron that toggles the sheet between half and full.
+     Points up when at half (tap will expand), down when at full (tap will
+     collapse). Closing is X-only — drag-to-close was removed because accidental
+     brushes against the handle while scrolling kept dismissing users. */
   .panel-drag-handle {
     display: flex;
     align-items: flex-start;
@@ -486,8 +486,9 @@ html, body {
     border-left: 3px solid var(--brand);
     border-top-left-radius: 2px;
     transform: rotate(45deg);
-    transition: border-color 120ms;
+    transition: transform 200ms, border-color 120ms;
   }
+  .panel-drag-handle.handle-down::before { transform: rotate(225deg); }
   .panel-drag-handle:active::before { border-top-color: var(--brand-dark); border-left-color: var(--brand-dark); }
 
   /* Grid keeps 2 columns even on phones now that the sheet uses full width. */
@@ -671,7 +672,7 @@ html, body {
     </div>
     <button class="panel-close" id="panel-close" type="button" aria-label="Close menu and open map">&times;</button>
   </div>
-  <input class="panel-search" id="search" type="search" placeholder="Search states or districts..." autocomplete="off" enterkeyhint="search">
+  <input class="panel-search" id="search" type="search" placeholder="Search states, districts, villages…" autocomplete="off" enterkeyhint="search">
   <div class="grid" id="grid">
     <div class="skel"></div><div class="skel"></div>
     <div class="skel"></div><div class="skel"></div>
@@ -1075,15 +1076,17 @@ html, body {
 
   function paint(items, level) {
     grid.innerHTML = '';
-    // Villages render as a flat single-column list (matches maps-app.js:4815).
-    // States and districts render as a 2-col silhouette card grid.
-    grid.classList.toggle('grid-list', level === 'village');
-    panel.classList.toggle('grid-village-active', level === 'village');
+    // Villages and cross-level search results render as a flat single-column
+    // list (matches maps-app.js:4815). States and districts render as a 2-col
+    // silhouette card grid.
+    var rowMode = (level === 'village' || level === 'search');
+    grid.classList.toggle('grid-list', rowMode);
+    panel.classList.toggle('grid-village-active', rowMode);
     if (!items.length) { showEmpty('No matches.'); return; }
     var frag = document.createDocumentFragment();
     items.forEach(function (item, i) {
       var c;
-      if (level === 'village') {
+      if (rowMode) {
         c = renderRow(item);
       } else {
         // First card in the state grid is the LCP candidate (matches the
@@ -1230,12 +1233,11 @@ html, body {
   });
 
   // ============ Bottom-sheet snap (mobile only) ============
-  // Simplified from the earlier drag-to-snap-anywhere implementation:
   //   - Sheet starts at snap-half (the user's preferred resting view).
-  //   - ANY interaction with the top handle — tap or drag — snaps to full.
+  //   - Tapping the top handle toggles between half and full; the chevron
+  //     flips so its direction always reflects the next action.
   //   - Closing is X-only. Drag-down-to-close was removed because accidental
   //     brushes against the handle while scrolling kept dismissing users.
-  // This trades expressiveness for predictability and zero misfires.
   var mq = window.matchMedia('(max-width: 767px)');
   var dragHandle = null;
   var currentSnap = 'half';
@@ -1245,6 +1247,10 @@ html, body {
     snapClasses.forEach(function (c) { panel.classList.remove(c); });
     panel.classList.add('snap-' + name);
     currentSnap = name;
+    if (dragHandle) {
+      dragHandle.classList.toggle('handle-down', name === 'full');
+      dragHandle.setAttribute('aria-label', name === 'full' ? 'Collapse panel' : 'Expand panel');
+    }
   }
 
   function wireDragHandle(handle) {
@@ -1253,7 +1259,7 @@ html, body {
       // Prime the menu load — by the time the snap animation finishes, the
       // network round-trip is already in flight (or done if cache is warm).
       ensureMenuLoaded();
-      setSnap('full');
+      setSnap(currentSnap === 'full' ? 'half' : 'full');
       e.preventDefault();
     }, { passive: false });
   }
@@ -1288,7 +1294,14 @@ html, body {
     ensureMenuLoaded(); // searching needs the full menu (matches across districts/villages)
   });
 
-  var searchDebounce;
+  // Cross-level search: mirrors maps-app.js searchMenuData(). Once menuGIS is
+  // loaded, iterates every state → district → village and returns a ranked flat
+  // list (villages first, then districts, then states) so typing "Majarewadi"
+  // finds it without having to drill into Maharashtra → Solapur first. menuGIS
+  // is the only bulk fetch — already lazy-loaded on search focus and first
+  // state click — so this adds no payload.
+  var SEARCH_CAP = 50;
+  var searchDebounce, searchToken = 0;
   search.addEventListener('input', function () {
     clearTimeout(searchDebounce);
     searchDebounce = setTimeout(function () {
@@ -1296,9 +1309,68 @@ html, body {
       var current = historyStack[historyStack.length - 1];
       if (!current) return;
       if (!q) { paint(current.items, current.level); return; }
-      paint(current.items.filter(function (it) { return it.name.toLowerCase().indexOf(q) > -1; }), current.level);
+      runSearch(q, ++searchToken);
     }, 80);
   });
+
+  function runSearch(q, token) {
+    if (token !== searchToken) return; // newer keystroke superseded us
+    if (!menuLoaded) {
+      showEmpty('Searching…');
+      ensureMenuLoaded(function () { runSearch(q, token); });
+      return;
+    }
+    var results = collectSearchResults(q, SEARCH_CAP);
+    if (!results.length) { showEmpty('No results.'); return; }
+    paint(results, 'search');
+  }
+
+  function collectSearchResults(q, cap) {
+    var villages = [], districts = [], states = [];
+    var sOrder = stateOrder || [];
+    for (var s = 0; s < sOrder.length; s++) {
+      var stateName = sOrder[s];
+      if (stateName.toLowerCase().indexOf(q) > -1) {
+        states.push({ name: stateName, sub: 'State', icon: '', _kind: 'state' });
+      }
+      var entries = byState && byState[stateName];
+      if (!entries) continue;
+      for (var i = 0; i < entries.length; i++) {
+        var entry = entries[i];
+        if (entry.district && entry.district.toLowerCase().indexOf(q) > -1) {
+          districts.push({
+            name: entry.district,
+            sub: stateName,
+            icon: entry.iconVillage || entry.iconState || '',
+            _kind: 'district',
+            _entry: entry
+          });
+        }
+        if (entry.villagesJSON) {
+          var vs = parseVillagesJSON(entry.villagesJSON);
+          for (var j = 0; j < vs.length; j++) {
+            var v = vs[j];
+            if (v.name.toLowerCase().indexOf(q) > -1) {
+              var crumb = entry.district ? (entry.district + ' · ' + stateName) : stateName;
+              villages.push({
+                name: v.name,
+                sub: crumb,
+                icon: '',
+                _kind: 'village',
+                _lat: v.lat,
+                _lng: v.lng,
+                _pid: entry.productPurchaseID
+              });
+              if (villages.length + districts.length + states.length >= cap) {
+                return villages.concat(districts).concat(states).slice(0, cap);
+              }
+            }
+          }
+        }
+      }
+    }
+    return villages.concat(districts).concat(states).slice(0, cap);
+  }
 
   // Warm the browser cache for /maps.html so the eventual navigation is
   // near-instant. Idle-scheduled so it never competes with splash paint.
