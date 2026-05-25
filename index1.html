@@ -274,7 +274,7 @@ html, body {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   align-content: start;
-  align-items: start; /* prevent cards from stretching to fill auto-row height */
+  align-items: stretch; /* equal-height cards within a row — card-body flex:1 absorbs the extra */
   -webkit-overflow-scrolling: touch;
 }
 .grid.grid-list {
@@ -343,6 +343,13 @@ html, body {
 .card-sub {
   font-size: 10px; color: var(--muted);
   margin-top: 2px;
+  /* Cap at 3 lines so a long "Contains X, Y, Z" search annotation can't
+     push a single card disproportionately tall (and drag the whole row with
+     it, now that grid items stretch). */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Village rows: flat list, no silhouette — mirrors maps.html village rendering
