@@ -300,6 +300,17 @@ html, body {
 }
 .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
 .card:active { transform: scale(.97); }
+/* Search-hit pulse: applied to the card scrolled into view after a click on
+   a search result, so the user sees which card to tap next. */
+.card.search-hit, .row.search-hit {
+  border-color: var(--brand);
+  animation: searchHit 1.6s ease-out;
+}
+@keyframes searchHit {
+  0%   { box-shadow: 0 0 0 0 rgba(0, 133, 119, 0.55); }
+  20%  { box-shadow: 0 0 0 8px rgba(0, 133, 119, 0.20); }
+  100% { box-shadow: 0 0 0 14px rgba(0, 133, 119, 0); }
+}
 .card-img {
   width: 100%;
   height: 110px;            /* explicit px height — works without aspect-ratio support */
@@ -1076,10 +1087,11 @@ html, body {
 
   function paint(items, level) {
     grid.innerHTML = '';
-    // Villages and cross-level search results render as a flat single-column
-    // list (matches maps-app.js:4815). States and districts render as a 2-col
-    // silhouette card grid.
-    var rowMode = (level === 'village' || level === 'search');
+    // Villages render as a flat single-column list (matches maps-app.js:4815).
+    // States, districts, and search results render as a 2-col silhouette card
+    // grid — search hits use the same card view as the regions browser so the
+    // visual transition between search and browse is continuous.
+    var rowMode = (level === 'village');
     grid.classList.toggle('grid-list', rowMode);
     panel.classList.toggle('grid-village-active', rowMode);
     if (!items.length) { showEmpty('No matches.'); return; }
@@ -1093,6 +1105,11 @@ html, body {
         // preload in <head>). Mark it priority so the browser keeps the
         // hint after the JS-rendered img enters the DOM.
         c = renderCard(item, level === 'state' && i === 0);
+      }
+      // data-key lets scrollToCard() find this card later when the user lands
+      // here from a search result. Only districts carry _entry._key today.
+      if (item._entry && item._entry._key) {
+        c.setAttribute('data-key', item._entry._key);
       }
       c.addEventListener('click', function () { onCardClick(item); });
       frag.appendChild(c);
@@ -1183,6 +1200,34 @@ html, body {
     if (item._kind === 'state') { openState(item.name); return; }
     if (item._kind === 'district') { openDistrict(item._entry); return; }
     if (item._kind === 'village') { goToVillage({ lat: item._lat, lng: item._lng, name: item.name }, item._pid); return; }
+    if (item._kind === 'district-search') {
+      // Land the user in the state's districts grid (the regions list), then
+      // pulse the matched district so they know which card to tap next.
+      openState(item._stateName);
+      scrollToCard(item._entry && item._entry._key);
+      return;
+    }
+  }
+
+  // Scroll a card into view and pulse it. Called after openState() pushes the
+  // districts grid in response to a search-result click. Two rAFs because
+  // paint() runs synchronously inside pushLevel but the browser still needs a
+  // frame to lay out the new DOM before scrollIntoView has meaningful targets.
+  function scrollToCard(key) {
+    if (!key) return;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        var card = null;
+        var all = grid.querySelectorAll('[data-key]');
+        for (var i = 0; i < all.length; i++) {
+          if (all[i].getAttribute('data-key') === key) { card = all[i]; break; }
+        }
+        if (!card) return;
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.classList.add('search-hit');
+        setTimeout(function () { card.classList.remove('search-hit'); }, 1700);
+      });
+    });
   }
 
   function goToVillage(v, productPurchaseID) {
@@ -1294,13 +1339,14 @@ html, body {
     ensureMenuLoaded(); // searching needs the full menu (matches across districts/villages)
   });
 
-  // Cross-level search: mirrors maps-app.js searchMenuData(). Once menuGIS is
-  // loaded, iterates every state → district → village and returns a ranked flat
-  // list (villages first, then districts, then states) so typing "Majarewadi"
-  // finds it without having to drill into Maharashtra → Solapur first. menuGIS
-  // is the only bulk fetch — already lazy-loaded on search focus and first
-  // state click — so this adds no payload.
-  var SEARCH_CAP = 50;
+  // Cross-level search: aggregates village matches into the district that
+  // contains them, so typing "Majarewadi" returns one "Solapur · Contains
+  // Majarewadi" card instead of a flat village row. Clicking the result drops
+  // the user into Maharashtra's districts grid with Solapur scrolled into view
+  // and pulsed — they then tap the card to open its villages, matching the
+  // "browse regions" mental model of this splash. menuGIS is the only bulk
+  // fetch, already lazy-loaded on search focus and first state click.
+  var SEARCH_CAP = 40;
   var searchDebounce, searchToken = 0;
   search.addEventListener('input', function () {
     clearTimeout(searchDebounce);
@@ -1326,8 +1372,28 @@ html, body {
   }
 
   function collectSearchResults(q, cap) {
-    var villages = [], districts = [], states = [];
+    var districts = [];           // ordered list of district-search results
+    var districtByKey = {};       // _key -> existing entry in `districts`
+    var states = [];
     var sOrder = stateOrder || [];
+
+    function getOrCreateDistrict(entry, stateName) {
+      var key = entry._key;
+      if (districtByKey[key]) return districtByKey[key];
+      var r = {
+        name: entry.district || stateName,
+        icon: entry.iconVillage || entry.iconState || '',
+        _kind: 'district-search',
+        _entry: entry,
+        _stateName: stateName,
+        _matchedVillages: [],
+        _directMatch: false
+      };
+      districtByKey[key] = r;
+      districts.push(r);
+      return r;
+    }
+
     for (var s = 0; s < sOrder.length; s++) {
       var stateName = sOrder[s];
       if (stateName.toLowerCase().indexOf(q) > -1) {
@@ -1338,38 +1404,38 @@ html, body {
       for (var i = 0; i < entries.length; i++) {
         var entry = entries[i];
         if (entry.district && entry.district.toLowerCase().indexOf(q) > -1) {
-          districts.push({
-            name: entry.district,
-            sub: stateName,
-            icon: entry.iconVillage || entry.iconState || '',
-            _kind: 'district',
-            _entry: entry
-          });
+          getOrCreateDistrict(entry, stateName)._directMatch = true;
         }
-        if (entry.villagesJSON) {
+        // Fast reject: substring not anywhere in the villages blob -> skip the
+        // (relatively expensive) split + per-line parse.
+        if (entry.villagesJSON && entry.villagesJSON.toLowerCase().indexOf(q) > -1) {
           var vs = parseVillagesJSON(entry.villagesJSON);
           for (var j = 0; j < vs.length; j++) {
             var v = vs[j];
             if (v.name.toLowerCase().indexOf(q) > -1) {
-              var crumb = entry.district ? (entry.district + ' · ' + stateName) : stateName;
-              villages.push({
-                name: v.name,
-                sub: crumb,
-                icon: '',
-                _kind: 'village',
-                _lat: v.lat,
-                _lng: v.lng,
-                _pid: entry.productPurchaseID
-              });
-              if (villages.length + districts.length + states.length >= cap) {
-                return villages.concat(districts).concat(states).slice(0, cap);
-              }
+              var r = getOrCreateDistrict(entry, stateName);
+              if (r._matchedVillages.length < 3) r._matchedVillages.push(v.name);
             }
           }
         }
       }
+      if (districts.length + states.length >= cap) break;
     }
-    return villages.concat(districts).concat(states).slice(0, cap);
+
+    // Build the sub line + sort direct district matches above village-only matches.
+    districts.forEach(function (d) {
+      if (d._matchedVillages.length && !d._directMatch) {
+        var more = d._matchedVillages.length >= 3 ? '…' : '';
+        d.sub = 'Contains ' + d._matchedVillages.join(', ') + more + ' · ' + d._stateName;
+      } else {
+        d.sub = d._stateName;
+      }
+    });
+    districts.sort(function (a, b) {
+      if (a._directMatch !== b._directMatch) return a._directMatch ? -1 : 1;
+      return 0;
+    });
+    return districts.concat(states).slice(0, cap);
   }
 
   // Warm the browser cache for /maps.html so the eventual navigation is
