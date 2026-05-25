@@ -32,6 +32,8 @@ function copyIfExists(srcRel, destRel) {
     console.warn(`postbuild-copy: skipping ${srcRel} (not found at ${src})`);
     return;
   }
+  const parent = path.dirname(dest);
+  if (!fs.existsSync(parent)) fs.mkdirSync(parent, { recursive: true });
   fs.cpSync(src, dest, { recursive: true, force: true });
   console.log(`postbuild-copy: ${srcRel} -> out/${destRel}`);
 }
@@ -41,6 +43,11 @@ copyIfExists('maps-app.js', 'maps-app.js');
 copyIfExists('manifest.json', 'manifest.json');
 copyIfExists('sw.js', 'sw.js');
 copyIfExists('AssetsGIS', 'AssetsGIS');
+// Solapur TP-scheme polylines + village/TP labels for the map canvas. maps-app.js:3469
+// fetches this with a same-origin relative URL ('data/solapur_overlay.json'); without
+// the file on dpplans.com the request 404s silently and the TP-I/II/III/IV polylines
+// and ~22 village name labels never appear (works on mapmagician.in only).
+copyIfExists('data/solapur_overlay.json', 'data/solapur_overlay.json');
 
 // Splash IS the homepage. The same source file is published at both / (the
 // canonical homepage post-promotion) and /index1.html (kept as an alias so
