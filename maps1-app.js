@@ -8255,7 +8255,8 @@
                         holes: sub.holes || [],
                         bbox: sub.bbox,
                         minZoom: sub.minZoom,
-                        maxZoom: sub.maxZoom
+                        maxZoom: sub.maxZoom,
+                        zIndex: sub.zIndex
                     });
                 }
                 const mergedBbox = { minLat: s, maxLat: n, minLng: w, maxLng: e };
@@ -8615,6 +8616,7 @@
                         holes: sub.holes || [],
                         minZoom: sub.minZoom,
                         maxZoom: sub.maxZoom,
+                        zIndex: (typeof sub.zIndex === 'number') ? sub.zIndex : 0,
                         urlPrefix: tileBaseUrl + (lk.endsWith('/') ? lk : lk + '/')
                     };
                 });
@@ -8745,14 +8747,37 @@
                 }
 
                 var imgs = new Array(matches.length);
+                var loadState = new Array(matches.length);
                 var firedAnalytics = false;
+                // Composite sub-sheets in zIndex order, NOT network load order, so
+                // a higher-zIndex sheet that overlaps a lower one it sits inside
+                // (e.g. KhargharRaigad z=50000 nested in PanvelDevelopmentPlan z=0)
+                // stays painted on top instead of being overwritten by whichever
+                // tile happens to finish loading last. Clear + redraw all loaded
+                // sub-sheets on each onload — cheap at 256x256 with ~1-3 sheets.
+                function repaintMerged() {
+                    if (!div.parentNode) return;
+                    var order = [];
+                    for (var k = 0; k < matches.length; k++) {
+                        var im = imgs[k];
+                        if (loadState[k] && im && im.complete && im.naturalWidth > 0) order.push(k);
+                    }
+                    order.sort(function(a, b) {
+                        var za = (typeof matches[a].zIndex === 'number') ? matches[a].zIndex : 0;
+                        var zb = (typeof matches[b].zIndex === 'number') ? matches[b].zIndex : 0;
+                        return za !== zb ? za - zb : a - b;
+                    });
+                    ctx.clearRect(0, 0, 256, 256);
+                    for (var oi = 0; oi < order.length; oi++) {
+                        try { ctx.drawImage(imgs[order[oi]], 0, 0, 256, 256); } catch (e) {}
+                    }
+                }
                 for (var mi = 0; mi < matches.length; mi++) {
                     (function(sub, idx) {
                         var img = new Image();
                         img.onload = function() {
-                            if (div.parentNode) {
-                                ctx.drawImage(img, 0, 0, 256, 256);
-                            }
+                            loadState[idx] = true;
+                            repaintMerged();
                             if (!firedAnalytics && Math.random() < 0.05) {
                                 firedAnalytics = true;
                                 try {
