@@ -272,7 +272,7 @@ function buildFaqs(region) {
     },
     {
       q: `What devices does the ${city} DP viewer work on?`,
-      a: `The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access.`,
+      a: `The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app.`,
     },
   ];
   return items;

@@ -86,7 +86,7 @@ export default function SubLocationPage({ params }: Props) {
     },
     {
       q: `Is access to ${vname} on the map free?`,
-      a: `Browsing the ${vname} area is free up to zoom level 14. High-detail tile layers (zoom 15 and beyond) unlock with a 7-day access pass for the ${region.shortName} region, which also enables the same plan inside the Map Magician Android app.`,
+      a: `Browsing the ${vname} area is free up to zoom level 14. High-detail tile layers (zoom 15 and beyond) unlock with a 7-day access pass for the ${region.shortName} region.`,
     },
   ];
 
@@ -202,8 +202,7 @@ export default function SubLocationPage({ params }: Props) {
             </p>
             <p>
               Browsing {vname} is free up to zoom level 14. The higher-detail DP tile layers
-              (zoom 15 and beyond) unlock with a 7-day access pass for the {region.shortName} region. The same
-              pass works inside the Map Magician Android app for offline reference on site visits.
+              (zoom 15 and beyond) unlock with a 7-day access pass for the {region.shortName} region.
             </p>
           </section>
 

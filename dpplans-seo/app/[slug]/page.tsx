@@ -185,7 +185,7 @@ export default function RegionPage({ params }: Props) {
             )}
             <p>
               Free up to zoom level 14. High-detail tile layers (zoom 15 and beyond) unlock with a 7-day access pass
-              for the {region.shortName} region, which also enables the same plan inside the Map Magician Android app.
+              for the {region.shortName} region.
             </p>
           </section>
 
