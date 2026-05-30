@@ -550,6 +550,125 @@
         let supportReturnToPaywall = false;
         let supportPaywallDistrict = null;
 
+        // Guided support flow state
+        let supportFlowMode = 'other';            // 'billing' | 'other'
+        let supportBillingSelection = null;       // { pid, name } region the user claims to have paid for
+        let supportBillingNoRecord = false;       // true when no purchase record matched the selected region
+        let supportBillingRecordNote = '';        // human-readable record-check summary for the email
+        let supportConfusionOwnedName = '';       // confused-partner region the user actually owns
+        let supportConfusionOwnedPid = '';
+
+        // Regions that users routinely confuse with each other: distinct regions within the
+        // same area where a pass for one does NOT unlock the other. Extend as more surface.
+        const REGION_CONFUSION_GROUPS = [
+            { area: 'Pune District', members: ['punedpplan', 'pmrda_plan'] },
+        ];
+
+        function supportEsc(s) {
+            const d = document.createElement('div');
+            d.textContent = (s == null) ? '' : String(s);
+            return d.innerHTML;
+        }
+
+        function normPid(pid) {
+            return String(pid || '').toLowerCase().replace(/gst$/, '');
+        }
+
+        // Given a productPurchaseID, return { partners, area } from any confusion group it belongs to.
+        function confusionPartners(pid) {
+            const n = normPid(pid);
+            const out = [];
+            let area = '';
+            REGION_CONFUSION_GROUPS.forEach(function (group) {
+                const norm = group.members.map(normPid);
+                if (norm.indexOf(n) !== -1) {
+                    area = group.area || '';
+                    group.members.forEach(function (g, i) { if (norm[i] !== n) out.push(g); });
+                }
+            });
+            return { partners: out, area: area };
+        }
+
+        // Show exactly one step of the support dialog; hide the rest.
+        function supportShowSection(id) {
+            ['support-choice-section', 'support-billing-section', 'support-confusion-section',
+                'support-form-section', 'support-success-section'].forEach(function (s) {
+                const el = document.getElementById(s);
+                if (el) el.style.display = (s === id) ? '' : 'none';
+            });
+        }
+
+        // Deduped, name-sorted list of purchasable regions derived from menuData.
+        function getSupportRegionOptions() {
+            const seen = {};
+            const out = [];
+            (menuData || []).forEach(function (item) {
+                const pid = item.productPurchaseID;
+                if (!pid) return;
+                const key = pid.toLowerCase();
+                if (seen[key]) return;
+                seen[key] = true;
+                out.push({ pid: pid, name: item.district || item.state || pid });
+            });
+            out.sort(function (a, b) { return a.name.localeCompare(b.name); });
+            return out;
+        }
+
+        function renderSupportRegionList(filter) {
+            const listEl = document.getElementById('support-region-list');
+            if (!listEl) return;
+            let opts = getSupportRegionOptions();
+            const f = (filter || '').trim().toLowerCase();
+            if (f) opts = opts.filter(function (o) { return o.name.toLowerCase().indexOf(f) !== -1; });
+            listEl.innerHTML = '';
+            if (opts.length === 0) {
+                listEl.innerHTML = '<div style="padding:12px;font-size:13px;color:#888;text-align:center;">No matching region</div>';
+                return;
+            }
+            opts.forEach(function (o) {
+                const row = document.createElement('div');
+                row.textContent = o.name;
+                row.style.cssText = 'padding:9px 12px;font-size:13px;color:#333;cursor:pointer;border-bottom:1px solid #f2f2f2;';
+                if (supportBillingSelection && supportBillingSelection.pid === o.pid) {
+                    row.style.background = '#e8f0fe';
+                    row.style.fontWeight = '600';
+                }
+                row.addEventListener('click', function () {
+                    supportBillingSelection = { pid: o.pid, name: o.name };
+                    document.getElementById('support-billing-next').disabled = false;
+                    renderSupportRegionList(document.getElementById('support-region-search').value);
+                });
+                listEl.appendChild(row);
+            });
+        }
+
+        function resetSupportFlow() {
+            supportFlowMode = 'other';
+            supportBillingSelection = null;
+            supportBillingNoRecord = false;
+            supportBillingRecordNote = '';
+            supportConfusionOwnedName = '';
+            supportConfusionOwnedPid = '';
+            const search = document.getElementById('support-region-search');
+            if (search) search.value = '';
+            const nextBtn = document.getElementById('support-billing-next');
+            if (nextBtn) nextBtn.disabled = true;
+        }
+
+        // Enter the final free-text form step with region + an optional pre-filled message.
+        function showSupportFormStep(regionName, prefillMessage) {
+            document.getElementById('support-region').value = regionName || (findDistrictAtCenter()?.districtName || 'General');
+            document.getElementById('support-message').value = prefillMessage || '';
+            document.getElementById('support-send-btn').disabled = false;
+            document.getElementById('support-send-btn').textContent = 'Send Message';
+            supportShowSection('support-form-section');
+        }
+
+        function proceedBillingToForm(selName) {
+            const template = 'I purchased access to ' + selName + ' but the premium map is not unlocking when I zoom in. Please help.';
+            showSupportFormStep(selName, template);
+        }
+
         function openSupportForm(district, returnToPaywall) {
             if (!currentUser || currentUser.isAnonymous) {
                 pendingSupportOpen = { district: district, returnToPaywall: !!returnToPaywall };
@@ -560,12 +679,8 @@
             supportReturnToPaywall = !!returnToPaywall;
             supportPaywallDistrict = district;
             document.getElementById('support-email').value = currentUser ? currentUser.email : '';
-            document.getElementById('support-region').value = district ? district.districtName : (findDistrictAtCenter()?.districtName || 'General');
-            document.getElementById('support-message').value = '';
-            document.getElementById('support-send-btn').disabled = false;
-            document.getElementById('support-send-btn').textContent = 'Send Message';
-            document.getElementById('support-form-section').style.display = '';
-            document.getElementById('support-success-section').style.display = 'none';
+            resetSupportFlow();
+            supportShowSection('support-choice-section');
             document.getElementById('support-dialog-overlay').classList.add('open');
         }
 
@@ -578,6 +693,7 @@
             }
             supportReturnToPaywall = false;
             supportPaywallDistrict = null;
+            resetSupportFlow();
         }
 
         document.getElementById('support-send-btn').addEventListener('click', async () => {
@@ -620,13 +736,26 @@
 
             const supportCenter = map ? map.getCenter() : null;
 
+            // For the Billing flow, attach the record-check context to the message and
+            // report the *selected* region (what the user is trying to access).
+            let fullMsg = msg;
+            let regionPidVal = district ? district.productPurchaseID : '';
+            if (supportFlowMode === 'billing' && supportBillingSelection) {
+                regionPidVal = supportBillingSelection.pid;
+                fullMsg += '\n\n----- Billing context (auto-attached) -----\n'
+                    + 'Problem type: Billing — paid but not working\n'
+                    + 'Selected region (trying to access): ' + supportBillingSelection.name + ' (' + supportBillingSelection.pid + ')\n'
+                    + (supportBillingRecordNote ? supportBillingRecordNote + '\n' : '')
+                    + (supportBillingNoRecord ? 'Flag: NO_RECORD_FOR_SELECTED_REGION\n' : '');
+            }
+
             try {
                 const sendSupportRequest = functions.httpsCallable('sendSupportRequest');
                 await sendSupportRequest({
-                    message: msg,
+                    message: fullMsg,
                     senderName: (currentUser && currentUser.displayName) ? currentUser.displayName : '',
                     region: document.getElementById('support-region').value,
-                    regionPid: district ? district.productPurchaseID : '',
+                    regionPid: regionPidVal,
                     zoom: map ? map.getZoom() : 0,
                     lat: supportCenter ? supportCenter.lat() : null,
                     lng: supportCenter ? supportCenter.lng() : null,
@@ -658,6 +787,95 @@
             // prior history treats back-from-dialog as "close the tab".
             try { history.pushState({ mmDialog: 'support-close-shim' }, ''); } catch (_) {}
             closeSupportForm();
+        });
+
+        // --- Guided support flow: choice / billing / confusion steps ---
+        document.getElementById('support-choice-cancel').addEventListener('click', () => {
+            closeSupportForm();
+        });
+
+        document.getElementById('support-choice-other').addEventListener('click', () => {
+            supportFlowMode = 'other';
+            supportBillingSelection = null;
+            supportBillingNoRecord = false;
+            supportBillingRecordNote = '';
+            const d = supportPaywallDistrict || findDistrictAtCenter();
+            showSupportFormStep(d ? (d.districtName || d.district) : null, '');
+        });
+
+        document.getElementById('support-choice-billing').addEventListener('click', () => {
+            supportFlowMode = 'billing';
+            supportBillingSelection = null;
+            document.getElementById('support-billing-next').disabled = true;
+            document.getElementById('support-region-search').value = '';
+            renderSupportRegionList('');
+            supportShowSection('support-billing-section');
+        });
+
+        document.getElementById('support-region-search').addEventListener('input', function () {
+            renderSupportRegionList(this.value);
+        });
+
+        document.getElementById('support-billing-back').addEventListener('click', () => {
+            supportShowSection('support-choice-section');
+        });
+
+        document.getElementById('support-billing-next').addEventListener('click', () => {
+            if (!supportBillingSelection) return;
+            const sel = supportBillingSelection;
+
+            // Case 1: user genuinely owns the selected region → real technical issue.
+            if (hasPurchase(sel.pid)) {
+                supportBillingNoRecord = false;
+                supportBillingRecordNote = 'Record check: user HAS an active pass/subscription for the selected region ('
+                    + sel.name + ' / ' + sel.pid + '). Genuine access issue.';
+                proceedBillingToForm(sel.name);
+                return;
+            }
+
+            // Case 2: user owns a commonly-confused partner region instead → warn before emailing.
+            const confusion = confusionPartners(sel.pid);
+            let ownedPartnerPid = null;
+            for (let i = 0; i < confusion.partners.length; i++) {
+                if (hasPurchase(confusion.partners[i])) { ownedPartnerPid = confusion.partners[i]; break; }
+            }
+            if (ownedPartnerPid) {
+                const pm = findDistrictByPurchaseId(ownedPartnerPid);
+                const ownedName = pm ? pm.districtName : ownedPartnerPid;
+                const area = confusion.area || 'area';
+                supportConfusionOwnedName = ownedName;
+                supportConfusionOwnedPid = ownedPartnerPid;
+                document.getElementById('support-confusion-text').innerHTML =
+                    '<strong>' + supportEsc(sel.name) + '</strong> and <strong>' + supportEsc(ownedName)
+                    + '</strong> are separate map regions within the same ' + supportEsc(area)
+                    + '. Access to one region does not automatically include access to the other.<br><br>'
+                    + 'Our records show that your active pass is for <strong>' + supportEsc(ownedName)
+                    + '</strong>, while the region currently selected in the app is <strong>' + supportEsc(sel.name) + '</strong>.<br><br>'
+                    + 'Please verify whether you intended to open the <strong>' + supportEsc(sel.name)
+                    + '</strong> region. If so, a separate pass or subscription is required for that region.<br><br>'
+                    + 'Are you sure you would still like to contact support?';
+                supportShowSection('support-confusion-section');
+                return;
+            }
+
+            // Case 3: no record at all → let them email, but flag it for support.
+            supportBillingNoRecord = true;
+            supportBillingRecordNote = 'Record check: NO active purchase found for the selected region ('
+                + sel.name + ' / ' + sel.pid + ').';
+            proceedBillingToForm(sel.name);
+        });
+
+        document.getElementById('support-confusion-back').addEventListener('click', () => {
+            supportShowSection('support-billing-section');
+        });
+
+        document.getElementById('support-confusion-confirm').addEventListener('click', () => {
+            const sel = supportBillingSelection;
+            supportBillingNoRecord = false;
+            supportBillingRecordNote = 'Record check: user does NOT own selected region (' + sel.name + ' / ' + sel.pid
+                + '); user OWNS confused partner ' + supportConfusionOwnedName + ' (' + supportConfusionOwnedPid + '). '
+                + 'User confirmed they still want to email.';
+            proceedBillingToForm(sel.name);
         });
 
         // Placeholder -- set by initSidebar once sidebar is ready
@@ -6187,6 +6405,7 @@
                         // Subscription — show status + cancel button
                         var sub = activeSubscriptions.get(pid);
                         var status = sub ? sub.status : 'active';
+                        if (status === 'paused') status = 'cancelled'; // paused subs are treated as ended (backend collapses them too)
                         var statusColor = status === 'active' ? '#2E7D32' : status === 'cancelled' ? '#c62828' : '#EF6C00';
                         var statusLabel = status === 'active' ? 'Active' : status === 'cancelled' ? 'Cancelled' : status === 'halted' ? 'Payment Failed' : status.charAt(0).toUpperCase() + status.slice(1);
 

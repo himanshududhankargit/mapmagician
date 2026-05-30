@@ -1518,6 +1518,42 @@
     <!-- Support form dialog -->
     <div class="auth-dialog-overlay" id="support-dialog-overlay" data-dismiss="support-cancel-btn" style="z-index:4000;">
         <div class="auth-dialog" style="max-width:400px;text-align:left;">
+            <!-- Step 1: choose problem type -->
+            <div id="support-choice-section" style="display:none;">
+                <h3 style="text-align:center;margin-bottom:8px;">How can we help?</h3>
+                <p style="font-size:13px;color:#5f6368;text-align:center;margin:0 0 20px 0;">Pick the type of problem so we can route it correctly.</p>
+                <button class="auth-dialog-btn" id="support-choice-billing" style="width:100%;justify-content:flex-start;text-align:left;margin-bottom:12px;">
+                    <span style="display:block;">
+                        <span style="display:block;font-weight:600;color:#202124;">Billing Problem</span>
+                        <span style="display:block;font-size:12px;color:#5f6368;">I paid for a region but it's not working</span>
+                    </span>
+                </button>
+                <button class="auth-dialog-btn" id="support-choice-other" style="width:100%;justify-content:flex-start;text-align:left;margin-bottom:0;">
+                    <span style="display:block;">
+                        <span style="display:block;font-weight:600;color:#202124;">Other Problem</span>
+                        <span style="display:block;font-size:12px;color:#5f6368;">Something else — bug, feedback, general help</span>
+                    </span>
+                </button>
+                <button class="auth-dialog-cancel" id="support-choice-cancel">Cancel</button>
+            </div>
+            <!-- Step 2 (Billing): pick the region you paid for -->
+            <div id="support-billing-section" style="display:none;">
+                <h3 style="text-align:center;margin-bottom:8px;">Which region did you pay for?</h3>
+                <p style="font-size:13px;color:#5f6368;text-align:center;margin:0 0 14px 0;">Search and select the region your pass should unlock.</p>
+                <input type="text" id="support-region-search" placeholder="Search region…" autocomplete="off" style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#333;margin-bottom:10px;box-sizing:border-box;">
+                <div id="support-region-list" style="max-height:230px;overflow-y:auto;border:1px solid #eee;border-radius:8px;margin-bottom:14px;"></div>
+                <button class="auth-dialog-btn" id="support-billing-next" style="width:100%;justify-content:center;margin-bottom:0;" disabled>Next</button>
+                <button class="auth-dialog-cancel" id="support-billing-back">Back</button>
+            </div>
+            <!-- Step 3 (Billing): confused-region guard -->
+            <div id="support-confusion-section" style="display:none;">
+                <h3 style="text-align:center;margin-bottom:12px;color:#e65100;">Are these the same region?</h3>
+                <div style="background:#fff8e1;padding:12px;border-radius:8px;border-left:3px solid #f9a825;margin:0 0 16px 0;font-size:13px;line-height:1.5;color:#5d4037;">
+                    <span id="support-confusion-text">&nbsp;</span>
+                </div>
+                <button class="auth-dialog-btn" id="support-confusion-confirm" style="width:100%;justify-content:center;margin-bottom:0;">Yes, contact support</button>
+                <button class="auth-dialog-cancel" id="support-confusion-back">No, take me back</button>
+            </div>
             <div id="support-form-section">
                 <h3 style="text-align:center;margin-bottom:16px;">Contact Support</h3>
                 <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">To</label>
