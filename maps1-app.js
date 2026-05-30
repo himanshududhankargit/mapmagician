@@ -558,10 +558,10 @@
         let supportConfusionOwnedName = '';       // confused-partner region the user actually owns
         let supportConfusionOwnedPid = '';
 
-        // productPurchaseIDs that users routinely confuse with each other (distinct regions,
-        // a pass for one does NOT unlock the other). Extend this list as more pairs surface.
+        // Regions that users routinely confuse with each other: distinct regions within the
+        // same area where a pass for one does NOT unlock the other. Extend as more surface.
         const REGION_CONFUSION_GROUPS = [
-            ['punedpplan', 'pmrda_plan'],
+            { area: 'Pune District', members: ['punedpplan', 'pmrda_plan'] },
         ];
 
         function supportEsc(s) {
@@ -574,17 +574,19 @@
             return String(pid || '').toLowerCase().replace(/gst$/, '');
         }
 
-        // Return the other productPurchaseIDs grouped with `pid` in REGION_CONFUSION_GROUPS.
+        // Given a productPurchaseID, return { partners, area } from any confusion group it belongs to.
         function confusionPartners(pid) {
             const n = normPid(pid);
             const out = [];
+            let area = '';
             REGION_CONFUSION_GROUPS.forEach(function (group) {
-                const norm = group.map(normPid);
+                const norm = group.members.map(normPid);
                 if (norm.indexOf(n) !== -1) {
-                    group.forEach(function (g, i) { if (norm[i] !== n) out.push(g); });
+                    area = group.area || '';
+                    group.members.forEach(function (g, i) { if (norm[i] !== n) out.push(g); });
                 }
             });
-            return out;
+            return { partners: out, area: area };
         }
 
         // Show exactly one step of the support dialog; hide the rest.
@@ -832,22 +834,26 @@
             }
 
             // Case 2: user owns a commonly-confused partner region instead → warn before emailing.
-            const partners = confusionPartners(sel.pid);
+            const confusion = confusionPartners(sel.pid);
             let ownedPartnerPid = null;
-            for (let i = 0; i < partners.length; i++) {
-                if (hasPurchase(partners[i])) { ownedPartnerPid = partners[i]; break; }
+            for (let i = 0; i < confusion.partners.length; i++) {
+                if (hasPurchase(confusion.partners[i])) { ownedPartnerPid = confusion.partners[i]; break; }
             }
             if (ownedPartnerPid) {
                 const pm = findDistrictByPurchaseId(ownedPartnerPid);
                 const ownedName = pm ? pm.districtName : ownedPartnerPid;
+                const area = confusion.area || 'area';
                 supportConfusionOwnedName = ownedName;
                 supportConfusionOwnedPid = ownedPartnerPid;
                 document.getElementById('support-confusion-text').innerHTML =
                     '<strong>' + supportEsc(sel.name) + '</strong> and <strong>' + supportEsc(ownedName)
-                    + '</strong> are two distinct regions within the same area, and a pass for one does <strong>not</strong> unlock the other. '
-                    + 'Our records show your active pass is for <strong>' + supportEsc(ownedName)
-                    + '</strong>, but you selected <strong>' + supportEsc(sel.name) + '</strong>. '
-                    + 'Are you sure you still want to email support?';
+                    + '</strong> are separate map regions within the same ' + supportEsc(area)
+                    + '. Access to one region does not automatically include access to the other.<br><br>'
+                    + 'Our records show that your active pass is for <strong>' + supportEsc(ownedName)
+                    + '</strong>, while the region currently selected in the app is <strong>' + supportEsc(sel.name) + '</strong>.<br><br>'
+                    + 'Please verify whether you intended to open the <strong>' + supportEsc(sel.name)
+                    + '</strong> region. If so, a separate pass or subscription is required for that region.<br><br>'
+                    + 'Are you sure you would still like to contact support?';
                 supportShowSection('support-confusion-section');
                 return;
             }
@@ -6399,6 +6405,7 @@
                         // Subscription — show status + cancel button
                         var sub = activeSubscriptions.get(pid);
                         var status = sub ? sub.status : 'active';
+                        if (status === 'paused') status = 'cancelled'; // paused subs are treated as ended (backend collapses them too)
                         var statusColor = status === 'active' ? '#2E7D32' : status === 'cancelled' ? '#c62828' : '#EF6C00';
                         var statusLabel = status === 'active' ? 'Active' : status === 'cancelled' ? 'Cancelled' : status === 'halted' ? 'Payment Failed' : status.charAt(0).toUpperCase() + status.slice(1);
 
