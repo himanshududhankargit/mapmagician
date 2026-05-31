@@ -736,6 +736,32 @@
 
             const supportCenter = map ? map.getCenter() : null;
 
+            // Region the user is actually viewing right now (viewport center). Independent of
+            // regionPid, which the Billing flow overrides to the user's *claimed* region — so
+            // support can see "claims Pune, but actually on PMRDA".
+            const accessedRegionPid  = district ? (district.productPurchaseID || '') : '';
+            const accessedRegionName = district ? (district.districtName || district.district || '') : '';
+
+            // Classic "viewing a region you don't own while holding a pass for its confused
+            // partner" case (on PMRDA but owning a Pune pass). Reuse existing helpers.
+            let accessConfusion = null;
+            if (accessedRegionPid && !hasPurchase(accessedRegionPid)) {
+                const conf = confusionPartners(accessedRegionPid);
+                for (let i = 0; i < conf.partners.length; i++) {
+                    if (hasPurchase(conf.partners[i])) {
+                        const pm = findDistrictByPurchaseId(conf.partners[i]);
+                        accessConfusion = {
+                            accessedName: accessedRegionName || accessedRegionPid,
+                            accessedPid:  accessedRegionPid,
+                            ownedName:    pm ? pm.districtName : conf.partners[i],
+                            ownedPid:     conf.partners[i],
+                            area:         conf.area || 'area'
+                        };
+                        break;
+                    }
+                }
+            }
+
             // For the Billing flow, attach the record-check context to the message and
             // report the *selected* region (what the user is trying to access).
             let fullMsg = msg;
@@ -760,7 +786,10 @@
                     lat: supportCenter ? supportCenter.lat() : null,
                     lng: supportCenter ? supportCenter.lng() : null,
                     userAgent: navigator.userAgent,
-                    activeSubscriptions: activeEntries
+                    activeSubscriptions: activeEntries,
+                    accessedRegionName: accessedRegionName,
+                    accessedRegionPid:  accessedRegionPid,
+                    accessConfusion:    accessConfusion
                 });
                 document.getElementById('support-success-email').textContent = (currentUser && currentUser.email) ? currentUser.email : '';
                 document.getElementById('support-form-section').style.display = 'none';
@@ -824,6 +853,35 @@
             if (!supportBillingSelection) return;
             const sel = supportBillingSelection;
 
+            // Confusion check (selection ↔ viewport): the region the user says they paid for
+            // differs from the region currently centered on the map, and the two are known
+            // confusables (selected Pune but viewing PMRDA, or vice versa). Catch this even
+            // when they own the selection — it's the exact mix-up behind the puzzling emails.
+            const vp = findDistrictAtCenter();
+            const vpPid = vp ? (vp.productPurchaseID || '') : '';
+            const vpName = vp ? (vp.districtName || '') : '';
+            const selPartners = confusionPartners(sel.pid);
+            if (vpPid && normPid(vpPid) !== normPid(sel.pid)
+                && selPartners.partners.map(normPid).indexOf(normPid(vpPid)) !== -1) {
+                const vArea = selPartners.area || 'area';
+                supportConfusionOwnedName = '';   // not an ownership-based confusion
+                supportConfusionOwnedPid  = '';
+                supportBillingNoRecord = false;
+                supportBillingRecordNote =
+                    'Record check: selected region ' + sel.name + ' (' + sel.pid + ') differs from the '
+                    + 'region the user is viewing on the map ' + vpName + ' (' + vpPid + '); these are '
+                    + 'confusables in the same ' + vArea + '. User confirmed they still want to email.';
+                document.getElementById('support-confusion-text').innerHTML =
+                    'You selected <strong>' + supportEsc(sel.name) + '</strong>, but the map is currently '
+                    + 'centered on <strong>' + supportEsc(vpName) + '</strong>. These are separate map '
+                    + 'regions within the same ' + supportEsc(vArea) + ', and a pass for one does not '
+                    + 'unlock the other.<br><br>Please verify which region you actually need — if you meant '
+                    + '<strong>' + supportEsc(vpName) + '</strong>, a separate pass or subscription is '
+                    + 'required for it.<br><br>Are you sure you would still like to contact support?';
+                supportShowSection('support-confusion-section');
+                return;
+            }
+
             // Case 1: user genuinely owns the selected region → real technical issue.
             if (hasPurchase(sel.pid)) {
                 supportBillingNoRecord = false;
@@ -872,9 +930,13 @@
         document.getElementById('support-confusion-confirm').addEventListener('click', () => {
             const sel = supportBillingSelection;
             supportBillingNoRecord = false;
-            supportBillingRecordNote = 'Record check: user does NOT own selected region (' + sel.name + ' / ' + sel.pid
-                + '); user OWNS confused partner ' + supportConfusionOwnedName + ' (' + supportConfusionOwnedPid + '). '
-                + 'User confirmed they still want to email.';
+            if (supportConfusionOwnedPid) {
+                // ownership-based confusion (Case 2): user owns a confused partner, not the selection.
+                supportBillingRecordNote = 'Record check: user does NOT own selected region (' + sel.name + ' / ' + sel.pid
+                    + '); user OWNS confused partner ' + supportConfusionOwnedName + ' (' + supportConfusionOwnedPid + '). '
+                    + 'User confirmed they still want to email.';
+            }
+            // else: viewport-mismatch confusion — supportBillingRecordNote already set at show time.
             proceedBillingToForm(sel.name);
         });
 
