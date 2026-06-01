@@ -2802,13 +2802,11 @@
             const overlay = document.getElementById('region-mismatch-overlay');
             const titleEl = document.getElementById('region-mismatch-title');
             const ownedEl = document.getElementById('region-mismatch-owned');
-            const accessedEl = document.getElementById('region-mismatch-accessed');
             const unlockBtn = document.getElementById('region-mismatch-unlock');
 
             const accessedName = (district && district.districtName) ? district.districtName : 'this region';
             titleEl.textContent = accessedName + ' is a separate region';
             ownedEl.textContent = owned.ownedName;
-            accessedEl.textContent = accessedName;
             unlockBtn.textContent = 'Unlock ' + accessedName;
 
             disableMapInteraction();
