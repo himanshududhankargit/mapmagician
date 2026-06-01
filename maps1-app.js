@@ -2816,8 +2816,15 @@
             unlockBtn.parentNode.replaceChild(newUnlock, unlockBtn);
             newUnlock.addEventListener('click', () => {
                 overlay.classList.remove('open');
-                // Keep interaction disabled — hand straight off to the paywall.
-                showZoomRestrictionDialog(district);
+                // Defer opening the paywall to a later task so the back-button-dismiss
+                // observer fully settles THIS dialog's close (its history.back() lands
+                // back on maps.html) BEFORE the paywall pushes its own history entry.
+                // Without the gap, the close+open interleave in one observer batch and
+                // the paywall ends up WITHOUT a live history entry — so its "Not now"
+                // and other buttons run history.back() with nothing to pop and the tab
+                // navigates away / closes. Interaction stays disabled across the gap
+                // (showZoomRestrictionDialog re-disables it).
+                setTimeout(function () { showZoomRestrictionDialog(district); }, 300);
             });
 
             document.getElementById('region-mismatch-cancel').onclick = () => {
