@@ -2815,16 +2815,32 @@
             const newUnlock = unlockBtn.cloneNode(true);
             unlockBtn.parentNode.replaceChild(newUnlock, unlockBtn);
             newUnlock.addEventListener('click', () => {
-                overlay.classList.remove('open');
-                // Defer opening the paywall to a later task so the back-button-dismiss
-                // observer fully settles THIS dialog's close (its history.back() lands
-                // back on maps.html) BEFORE the paywall pushes its own history entry.
-                // Without the gap, the close+open interleave in one observer batch and
-                // the paywall ends up WITHOUT a live history entry — so its "Not now"
-                // and other buttons run history.back() with nothing to pop and the tab
-                // navigates away / closes. Interaction stays disabled across the gap
-                // (showZoomRestrictionDialog re-disables it).
-                setTimeout(function () { showZoomRestrictionDialog(district); }, 300);
+                // Hand off to the paywall WITHOUT corrupting the back-button history
+                // stack. The dismiss observer (maps.html) pushes one history entry per
+                // open dialog and calls history.back() when a dialog closes. If we close
+                // THIS dialog and open the paywall in the same tick, the close's async
+                // history.back() races the open's synchronous pushState, so the paywall
+                // is left without a clean live history entry. Its buttons — Not now AND
+                // 7-day / Subscribe (which also hand off to Razorpay's own history push)
+                // — then run history.back() against a stale stack and the tab navigates
+                // away / closes. It's intermittent because it depends on popstate timing,
+                // so a fixed setTimeout only narrows the race instead of closing it.
+                //
+                // Deterministic fix: close THIS dialog, wait for its history.back() to
+                // actually LAND (the popstate it fires), and only THEN open the paywall
+                // so it pushes its own clean entry from maps.html.
+                var handedOff = false;
+                function openPaywall() {
+                    if (handedOff) return;
+                    handedOff = true;
+                    window.removeEventListener('popstate', onPop);
+                    showZoomRestrictionDialog(district);
+                }
+                function onPop() { setTimeout(openPaywall, 0); }
+                window.addEventListener('popstate', onPop);
+                overlay.classList.remove('open');   // observer fires history.back() → popstate
+                // Fallback: if no popstate arrives (e.g. dialog wasn't history-tracked), still open.
+                setTimeout(openPaywall, 500);
             });
 
             document.getElementById('region-mismatch-cancel').onclick = () => {
