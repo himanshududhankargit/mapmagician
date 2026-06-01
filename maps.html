@@ -2044,6 +2044,7 @@
             var suppressNextPopstate = false;
 
             var observer = new MutationObserver(function(mutations) {
+                var opened = 0, closed = 0;
                 for (var i = 0; i < mutations.length; i++) {
                     var m = mutations[i];
                     if (m.attributeName !== 'class') continue;
@@ -2052,20 +2053,32 @@
                     var inStack = stack.indexOf(el) >= 0;
                     if (isOpen && !inStack) {
                         stack.push(el);
-                        history.pushState({ mmDialog: el.id || 'anon' }, '');
+                        opened++;
                     } else if (!isOpen && inStack) {
                         stack.splice(stack.indexOf(el), 1);
-                        if (!closingFromPopstate) {
-                            // User-driven close (tap cancel/X or programmatic). Pop the
-                            // history entry we pushed on open so the browser history stack
-                            // stays clean — otherwise every dialog open+close leaves a
-                            // phantom entry and users need multiple back presses to exit.
-                            // suppressNextPopstate tells the popstate handler below to
-                            // ignore the event this history.back() will trigger.
-                            suppressNextPopstate = true;
-                            history.back();
-                        }
+                        closed++;
                     }
+                }
+                // Reconcile the browser history with the *net* change for this batch,
+                // never both push and pop in one tick. A dialog swap — one closing while
+                // another opens in the same tick, e.g. the paywall handing off to the
+                // support dialog (and back again on Cancel) — nets to zero, so we leave
+                // history untouched and keep one backing entry for whatever dialog is now
+                // on top. Previously the close fired an async history.back() that raced the
+                // open's synchronous pushState(), corrupting the stack so a later Cancel/X
+                // behaved like a browser Back press.
+                var net = opened - closed;
+                if (net > 0) {
+                    // New dialog(s) on top with nothing closing — push a backing entry each.
+                    for (var k = 0; k < net; k++) history.pushState({ mmDialog: 'mm' }, '');
+                } else if (net < 0 && !closingFromPopstate) {
+                    // Net close (tap cancel/X or programmatic). Pop the entries we pushed on
+                    // open so the history stack stays clean — otherwise every dialog leaves a
+                    // phantom entry and users need multiple back presses to exit.
+                    // suppressNextPopstate tells the popstate handler below to ignore the
+                    // event this traversal will trigger.
+                    suppressNextPopstate = true;
+                    history.go(net);
                 }
                 closingFromPopstate = false;
             });
