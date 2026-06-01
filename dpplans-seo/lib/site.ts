@@ -8,11 +8,14 @@ export const SITE = {
   origin: 'https://dpplans.com',
   tagline: 'Development Plan maps for India — online viewer',
   description:
-    'View Development Plan, Layout, and Village maps online for 39+ Indian regions including Pune, Mumbai, Hyderabad, Bengaluru, Solapur, Nashik, Nagpur and more. Interactive GIS over satellite imagery, free to browse.',
+    'View Development Plan and Master Plan maps online for 40+ Indian regions including Pune, Mumbai, Hyderabad (HMDA), Bengaluru, Solapur, Nashik, Nagpur and more. Interactive GIS over satellite imagery, free to browse.',
   twitter: '@mapmagicianin',
   // The interactive map app file. Explicit `.html` so local static servers resolve it;
   // Cloudflare Pages serves /maps.html identically with or without the extension.
   fullMap: 'https://dpplans.com/maps.html',
+  // 1200×630 social-share banner (mapmagician-main/AssetsGIS/, copied to out/ by
+  // postbuild-copy.js). Site-wide OpenGraph/Twitter fallback for pages without their own.
+  ogImage: 'https://dpplans.com/AssetsGIS/mapmagicianlogo-banner.png',
 };
 
 export type RegionCentroid = { lat: number; lng: number; minZoom: number | null; maxZoom: number | null };

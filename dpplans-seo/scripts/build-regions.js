@@ -27,6 +27,19 @@ const ICON_BASE = 'https://tiles.mapmagician.in/dpplans/0imagesGIS/';
 // extension, so production behavior is unchanged.
 const MAPS_CANONICAL = 'https://dpplans.com/maps.html';
 
+// menuGIS `state` is occasionally a label rather than a real state (e.g. Hyderabad's
+// row carries "Hyderabad HMDA Periphery (Draft)"). That string surfaces as a state
+// heading on /home/ and in breadcrumbs, which reads as junk and weakens the page.
+// Normalize known offenders to the actual state so grouping + crumbs are clean.
+const STATE_ALIASES = {
+  'hyderabad hmda periphery (draft)': 'Telangana',
+  'hyderabad hmda periphery': 'Telangana',
+};
+function normalizeState(raw) {
+  const s = String(raw || '').trim();
+  return STATE_ALIASES[s.toLowerCase()] || s;
+}
+
 function readJson(p) {
   return JSON.parse(fs.readFileSync(p, 'utf8'));
 }
@@ -320,7 +333,7 @@ async function main() {
       displayName: cleaned,
       rawDistrictName: row.district || '',
       shortName,
-      state: row.state || '',
+      state: normalizeState(row.state),
       iconUrl: row.iconVillage ? `${ICON_BASE}${row.iconVillage}.png` : (row.iconState ? `${ICON_BASE}${row.iconState}.png` : null),
       stateIconUrl: row.iconState ? `${ICON_BASE}${row.iconState}.png` : null,
       centroid: centroid ? { lat: centroid.lat, lng: centroid.lng, minZoom: centroid.minZoom, maxZoom: centroid.maxZoom } : null,

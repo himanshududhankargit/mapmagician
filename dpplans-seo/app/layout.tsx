@@ -24,8 +24,9 @@ export const metadata: Metadata = {
     url: SITE.origin,
     title: `${SITE.name} — Development Plan maps for India`,
     description: SITE.description,
+    images: [{ url: SITE.ogImage, width: 1200, height: 630, alt: `${SITE.name} — Development Plan maps for India` }],
   },
-  twitter: { card: 'summary_large_image', site: SITE.twitter },
+  twitter: { card: 'summary_large_image', site: SITE.twitter, images: [SITE.ogImage] },
   // Google Search Console site-verification token. Emits
   // <meta name="google-site-verification" content="..." /> in every page's <head>.
   verification: { google: 'xFVARIJYEs3hLQyWWu6u3qgdQVJPiMR0QQII8oXZqmI' },
