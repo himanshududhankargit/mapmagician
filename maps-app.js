@@ -2807,6 +2807,10 @@
             const accessedName = (district && district.districtName) ? district.districtName : 'this region';
             titleEl.textContent = accessedName + ' is a separate region';
             ownedEl.textContent = owned.ownedName;
+            // Fill every accessed-region placeholder (green transition note + amber row).
+            overlay.querySelectorAll('.region-mismatch-accessed').forEach(function (el) {
+                el.textContent = accessedName;
+            });
             unlockBtn.textContent = 'Unlock ' + accessedName;
 
             disableMapInteraction();
