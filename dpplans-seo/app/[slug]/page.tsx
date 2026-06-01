@@ -19,8 +19,9 @@ export function generateStaticParams() {
 export function generateMetadata({ params }: Props): Metadata {
   const region = regionBySlug(params.slug);
   if (!region) return {};
-  const title = `${region.shortName} Development Plan — view DP map online`;
-  const description = `View the ${region.displayName} Development Plan online. Interactive DP overlay over satellite imagery, ${region.villages.length || 'all'} sub-locations indexed${region.state ? `, covering ${region.state}` : ''}.`;
+  const content = regionContentBySlug(params.slug);
+  const title = content?.pageTitle ?? `${region.shortName} Development Plan — view DP map online`;
+  const description = content?.description ?? `View the ${region.displayName} Development Plan online. Interactive DP overlay over satellite imagery, ${region.villages.length || 'all'} sub-locations indexed${region.state ? `, covering ${region.state}` : ''}.`;
   const url = `${SITE.origin}/${region.slug}/`;
   const og = region.iconUrl
     ? [{ url: region.iconUrl, width: 1200, height: 630, alt: `${region.shortName} DP Plan` }]
@@ -38,7 +39,7 @@ export function generateMetadata({ params }: Props): Metadata {
       images: og,
     },
     twitter: { card: 'summary_large_image', title, description, images: og?.map(i => i.url) },
-    keywords: [
+    keywords: content?.keywords ?? [
       `${region.shortName} DP plan`,
       `${region.shortName} Development Plan`,
       `${region.shortName} DP map online`,
@@ -134,7 +135,7 @@ export default function RegionPage({ params }: Props) {
               )}
             </div>
             <div>
-              <h1>{region.shortName} Development Plan — view DP map online</h1>
+              <h1>{regionContent?.pageTitle ?? `${region.shortName} Development Plan — view DP map online`}</h1>
               <p className="summary">
                 Interactive Development Plan viewer for <strong>{region.displayName}</strong>
                 {region.state ? `, ${region.state}` : ''}. The DP overlay aligns with satellite imagery so you

@@ -18,6 +18,16 @@ export type RegionContent = {
   paragraphs: string[];
   // Structured "key facts" displayed alongside the prose.
   quickFacts: RegionQuickFact[];
+  // --- Optional SEO overrides ---
+  // Use when the generic "<shortName> Development Plan — view DP map online" title
+  // doesn't match how the region is actually searched (e.g. Telangana/Karnataka use
+  // "Master Plan", not "Development Plan"; HMDA's high-value query is "hmda master
+  // plan 2031"). When set, `pageTitle` replaces both the <title> and the on-page <h1>.
+  pageTitle?: string;
+  // Overrides the <meta description> + OpenGraph/Twitter description.
+  description?: string;
+  // Replaces the generated keywords array with exact search phrases.
+  keywords?: string[];
 };
 
 export const REGION_CONTENT: Record<string, RegionContent> = {
@@ -95,6 +105,7 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'The Thane Development Plan is administered by the Thane Municipal Corporation (TMC). The principal Development Plan was sanctioned by the Maharashtra State Government on 4 October 1999, with the excluded part sanctioned on 3 April 2003; the consolidated plan came into force from 14 May 2003. A revised Thane DP 2026-2046 has been notified in draft and is currently in the public-objections and revision stage at TMC.',
       "Thane's industrial backbone is centred on the Wagle Industrial Estate — established by the Maharashtra Industrial Development Corporation in 1962, this was MIDC’s first industrial estate in the state. It hosts a mix of engineering, electronics, pharma, IT and BPO operations and is anchored by the Eastern Express Highway, directly accessible from Mumbai via Mulund and Bhandup.",
       "The major arterial network in the TMC plan includes the Eastern Express Highway, the Thane-Belapur Road (linking Navi Mumbai and Airoli), and Ghodbunder Road which carries the city's western growth corridor towards Borivali, Mira-Bhayandar and the Mumbai-Nashik Highway. Mumbai Metro Line 4 (Wadala-Kasarvadavli) runs along the Eastern Express Highway with stations serving Thane; Line 5 (Thane-Bhiwandi-Kalyan) extends the metro network east into the KDMC area.",
+      'Thane district is the home district of Maharashtra Deputy Chief Minister Eknath Shinde, who represents the Kopri-Pachpakhadi assembly constituency in Thane city. Development planning for the district remains a statutory function of the Thane Municipal Corporation within the city limits — and of the respective municipal corporations, councils and the MMRDA across the wider Thane district — under the Maharashtra Regional and Town Planning Act, 1966. The revised Thane DP 2026-2046 is currently in the draft and public-objection stage and is finalised through that statutory process rather than by any individual office-holder.',
     ],
     quickFacts: [
       { label: 'Planning authority', value: 'Thane Municipal Corporation (TMC)' },
@@ -333,6 +344,20 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
 
   // Sources: AMC notification 2022, Wikipedia Aurangabad MC, AURIC/DMIC reporting.
   'aurangabad-dp-plan': {
+    // Renamed Aurangabad -> Chhatrapati Sambhaji Nagar (2023). Both names are searched
+    // heavily; lead with the legacy name (still higher volume) and carry the new one.
+    pageTitle: 'Aurangabad (Chhatrapati Sambhaji Nagar) Development Plan — DP map online',
+    description:
+      'View the Aurangabad / Chhatrapati Sambhaji Nagar Development Plan online. Interactive DP overlay over satellite imagery: zoning, reservations and road lines across the corporation limits, the Waluj-Shendra-Bidkin MIDC belt and AURIC (DMIC).',
+    keywords: [
+      'aurangabad development plan',
+      'chhatrapati sambhaji nagar development plan',
+      'sambhajinagar development plan',
+      'aurangabad dp map',
+      'chhatrapati sambhajinagar dp plan',
+      'aurangabad municipal corporation development plan',
+      'auric dmic map',
+    ],
     paragraphs: [
       'The Aurangabad / Chhatrapati Sambhaji Nagar Development Plan is administered by the Chhatrapati Sambhaji Nagar Municipal Corporation (the city was officially renamed from Aurangabad). The original-limits town plan for Aurangabad city was sanctioned by the State Government in 1991 under the Maharashtra Regional and Town Planning Act, 1966.',
       'For the extended municipal limits, the Planning Authority declared its intention to prepare a draft Development Plan under Section 23(1) of the MRTP Act on 26 May 2010, and re-initiated revision proceedings in 2013. The corporation has subsequently (Resolution No. 232/2022 dated 19 January 2022) again declared its intention to prepare the consolidated Development Plan for the full corporation limit. Chhatrapati Sambhaji Nagar is the headquarters of Maharashtra’s Aurangabad Revenue Division covering the eight districts of Marathwada.',
@@ -370,6 +395,19 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
 
   // Sources: dharashiv.maharashtra.gov.in, osmanabad.gov.in, Wikipedia Osmanabad/Dharashiv.
   'osmanabad-dp-plan': {
+    // Renamed Osmanabad -> Dharashiv district (2023). Dual-name capture.
+    pageTitle: 'Osmanabad (Dharashiv) Development Plan — regional DP map online',
+    description:
+      'View the Osmanabad / Dharashiv District Regional Plan online. Interactive overlay over satellite imagery: zoning and land-use across Dharashiv town, Tuljapur, Naldurg and the Marathwada district tehsils.',
+    keywords: [
+      'osmanabad development plan',
+      'dharashiv development plan',
+      'dharashiv regional plan',
+      'osmanabad dp map',
+      'dharashiv district plan',
+      'tuljapur development plan',
+      'osmanabad zoning map',
+    ],
     paragraphs: [
       'The Osmanabad / Dharashiv District Regional Plan is administered under the Maharashtra Regional and Town Planning Act, 1966. Osmanabad district was officially renamed to Dharashiv district by the Government of Maharashtra in 2023. The District Planning Office at Dharashiv coordinates the regional plan in conjunction with the constituent municipal councils for Osmanabad town, Tuljapur, Naldurg, Bhum, Kalamb, Omerga, Paranda and Washi — all of which serve as local planning authorities within their jurisdictions.',
       'Dharashiv lies in the Marathwada region of central Maharashtra on the border with Karnataka and Telangana, and is best known for the Tulja Bhavani temple at Tuljapur — one of the four Maha-Shakti Peethas of India and the kuldevi of the Maratha clan. The district is also home to the Naldurg fort and the ancient Buddhist caves at Dharashiv. Major crops include sugarcane, soybean, jowar and pulses, with sugar factories anchoring much of the rural-industrial activity.',
@@ -693,6 +731,21 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
 
   // Sources: BDA RMP 2031 documents, BBMP, Government of Karnataka.
   'bengaluru-dp-plan': {
+    // Karnataka uses "Revised Master Plan (RMP) 2031" via BDA, not "Development Plan".
+    // Cover both "Bengaluru" and the still-heavily-searched "Bangalore" spelling.
+    pageTitle: 'Bengaluru Master Plan 2031 (RMP) — Bangalore BDA map online',
+    description:
+      'View the Bengaluru Master Plan online — the BDA Revised Master Plan (RMP 2031) for the Bengaluru Metropolitan Area. Interactive master-plan overlay over satellite imagery: zoning, Outer Ring Road and Peripheral Ring Road alignments, and Namma Metro corridors across Whitefield, Electronic City and Sarjapur.',
+    keywords: [
+      'bengaluru master plan',
+      'bangalore master plan',
+      'bengaluru master plan 2031',
+      'rmp 2031',
+      'bda revised master plan 2031',
+      'bda master plan',
+      'bangalore rmp 2031 map',
+      'bengaluru zoning map',
+    ],
     paragraphs: [
       'The Bengaluru Development Plan, formally the Revised Master Plan (RMP), is administered by the Bangalore Development Authority (BDA) as the principal planning authority for the Bengaluru Metropolitan Area. The Government of Karnataka sanctioned the RMP 2015 prepared by BDA in 2007, and BDA published a Draft of the RMP 2031 in 2017 covering the next planning cycle.',
       'Bengaluru’s planning authorities work in coordination with the Bruhat Bengaluru Mahanagara Palike (BBMP), the city’s urban local body. BDA handles master planning and large-scale infrastructure development, while BBMP handles building permits and civic services within its limits. Planning in Karnataka is governed by the Karnataka Town and Country Planning Act, 1961 (a different statutory framework from Maharashtra’s MRTP Act, 1966).',
@@ -711,6 +764,20 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
 
   // Sources: hmda.gov.in Master Planning 2031 page, Wikipedia HMDA.
   'hyderabad-hmda-periphery-dp-plan': {
+    // Telangana uses "Master Plan", not "Development Plan". Target the high-volume
+    // queries "hmda master plan" and "hmda master plan 2031" (the official plan name).
+    pageTitle: 'HMDA Master Plan 2031 — Hyderabad metropolitan region map online',
+    description:
+      'View the HMDA Master Plan 2031 for the Hyderabad Metropolitan Region online. Interactive master-plan overlay over satellite imagery — read the proposed zoning, Outer Ring Road and Regional Ring Road alignments and peri-urban zones across the GHMC area and 849 surrounding villages.',
+    keywords: [
+      'hmda master plan',
+      'hmda master plan 2031',
+      'hmda master plan 2031 map',
+      'hyderabad master plan 2031',
+      'hyderabad metropolitan region master plan',
+      'hmda zoning map',
+      'hmda master plan villages',
+    ],
     paragraphs: [
       'The Hyderabad Metropolitan Region Master Plan 2031 is administered by the Hyderabad Metropolitan Development Authority (HMDA). The Master Plan was notified by the Government in 2013 and covers approximately 5,965 square kilometres of the Hyderabad Metropolitan Region — including the GHMC (Greater Hyderabad Municipal Corporation) area, the Sangareddy and Bhongir municipalities, and 849 surrounding villages.',
       'The HMDA Master Plan 2031 adopts a radial-concentric structure of development, with new urban nodes and urban centres proposed in all directions from the GHMC core to promote balanced growth across the metropolitan region. A Peri-Urban Zone runs along the urban boundary to control sprawl and preserve resources at the periphery.',
@@ -731,6 +798,20 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   // Government of Karnataka gazette renaming Bijapur → Vijayapura (1 Nov 2014),
   // ASI Gol Gumbaz monument record, UNESCO tentative list "Monuments and Forts of the Deccan Sultanate".
   'vijayapura-dp-plan': {
+    // Karnataka uses "Master Plan" (VUDA). Capture the legacy "Bijapur" spelling
+    // (renamed 2014) — still the dominant query for the same city/planning area.
+    pageTitle: 'Vijayapura (Bijapur) Master Plan — VUDA map online',
+    description:
+      'View the Vijayapura Master Plan online — the VUDA master plan for Vijayapura (formerly Bijapur), northern Karnataka. Interactive overlay over satellite imagery: zoning, road lines and reservations across the Vijayapura local planning area, including the Gol Gumbaz heritage precinct.',
+    keywords: [
+      'vijayapura master plan',
+      'bijapur master plan',
+      'vijayapura development plan',
+      'vuda master plan',
+      'vijayapura master plan map',
+      'bijapur city development plan',
+      'vijayapura zoning map',
+    ],
     paragraphs: [
       'The Vijayapura Development Plan is administered by the Vijayapura Urban Development Authority (VUDA), the principal planning body for the Vijayapura local planning area in northern Karnataka. VUDA prepares and publishes the master plan under the Karnataka Town and Country Planning Act, 1961 — the same statutory framework that governs Bengaluru, Hubballi-Dharwad and other planning areas across Karnataka.',
       'Vijayapura was officially renamed from Bijapur to Vijayapura by the Government of Karnataka on 1 November 2014; older planning documents, revenue records and search results often still use the legacy "Bijapur" spelling for the same city, district and planning area. The civic body within the planning area is the Vijayapura City Corporation (Vijayapura Mahanagar Palike), while VUDA handles master planning, layout sanction and large-scale infrastructure development for the urban region.',

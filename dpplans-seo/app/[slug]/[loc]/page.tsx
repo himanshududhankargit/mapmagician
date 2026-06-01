@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { allSubLocationPaths, subLocationByPath, nearestSisters } from '@/lib/regions';
+import { subLocationContent } from '@/data/sublocation-content';
 import { SITE } from '@/lib/site';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Faq } from '@/components/Faq';
@@ -19,9 +20,12 @@ export function generateMetadata({ params }: Props): Metadata {
   if (!hit) return {};
   const { region, village } = hit;
   const vname = village.displayName || village.name;
-  const title = `${vname} Development Plan map — ${region.shortName} district${region.state ? ', ' + region.state : ''}`;
-  const description =
-    `View the ${vname} section of the ${region.displayName} Development Plan online. Interactive DP overlay over satellite imagery, centred at ${village.lat.toFixed(4)}°N, ${village.lng.toFixed(4)}°E.`;
+  // Optional hand-curated SEO override for high-value sub-locations (e.g. PCMC).
+  const seo = subLocationContent(region.slug, village.slug!);
+  const title = seo?.pageTitle
+    ?? `${vname} Development Plan map — ${region.shortName} district${region.state ? ', ' + region.state : ''}`;
+  const description = seo?.description
+    ?? `View the ${vname} section of the ${region.displayName} Development Plan online. Interactive DP overlay over satellite imagery, centred at ${village.lat.toFixed(4)}°N, ${village.lng.toFixed(4)}°E.`;
   const url = `${SITE.origin}/${region.slug}/${village.slug}/`;
   return {
     title,
@@ -38,7 +42,7 @@ export function generateMetadata({ params }: Props): Metadata {
         : undefined,
     },
     twitter: { card: 'summary_large_image', title, description },
-    keywords: [
+    keywords: seo?.keywords ?? [
       `${vname} DP plan`,
       `${vname} development plan`,
       `${vname} ${region.shortName}`,
@@ -54,6 +58,8 @@ export default function SubLocationPage({ params }: Props) {
   if (!hit) notFound();
   const { region, village } = hit;
   const vname = village.displayName || village.name;
+  const seo = subLocationContent(region.slug, village.slug!);
+  const heading = seo?.pageTitle ?? `${vname} Development Plan map — ${region.shortName} district`;
   const url = `${SITE.origin}/${region.slug}/${village.slug}/`;
   const mapUrl = `${SITE.fullMap}?lat=${village.lat}&lng=${village.lng}&zoom=13`;
   const sisters = nearestSisters(region, village);
@@ -157,7 +163,7 @@ export default function SubLocationPage({ params }: Props) {
               )}
             </div>
             <div>
-              <h1>{vname} Development Plan map — {region.shortName} district</h1>
+              <h1>{heading}</h1>
               <p className="summary">
                 {vname} is mapped under the <strong>{region.displayName} Development Plan</strong>
                 {region.state ? `, ${region.state}` : ''}
@@ -187,6 +193,10 @@ export default function SubLocationPage({ params }: Props) {
         <div>
           <section className="card text-block">
             <h2>About {vname} on the {region.shortName} DP map</h2>
+            {seo?.intro && <p>{seo.intro}</p>}
+            {seo?.paragraphs?.map((p, i) => (
+              <p key={`seo-${i}`}>{p}</p>
+            ))}
             <p>
               {vname} sits at coordinates <strong>{village.lat.toFixed(4)}°N, {village.lng.toFixed(4)}°E</strong>
               {distancePhrase ? `, ${distancePhrase}` : ''}. It is indexed inside the {region.displayName}{' '}
