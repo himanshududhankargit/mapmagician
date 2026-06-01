@@ -589,6 +589,26 @@
             return { partners: out, area: area };
         }
 
+        // User is viewing `accessedPid` (a region they do NOT own). If they own a
+        // confused-partner region (e.g. own Pune while zooming into PMRDA), return
+        // that owned partner's display info so we can surface the clearance dialog.
+        // Returns null when no owned partner applies.
+        function ownedConfusionPartner(accessedPid) {
+            if (!accessedPid || hasPurchase(accessedPid)) return null;
+            const conf = confusionPartners(accessedPid);
+            for (let i = 0; i < conf.partners.length; i++) {
+                if (hasPurchase(conf.partners[i])) {
+                    const pm = findDistrictByPurchaseId(conf.partners[i]);
+                    return {
+                        ownedPid:  conf.partners[i],
+                        ownedName: pm ? pm.districtName : conf.partners[i],
+                        area:      conf.area || ''
+                    };
+                }
+            }
+            return null;
+        }
+
         // Show exactly one step of the support dialog; hide the rest.
         function supportShowSection(id) {
             ['support-choice-section', 'support-billing-section', 'support-confusion-section',
@@ -2774,6 +2794,43 @@
             }
         }
 
+        // Friendly "you own a different region of this pair" clearance dialog.
+        // Shown before the paywall when the user owns a confused-partner region
+        // (e.g. owns Pune, zooming into PMRDA). Primary CTA hands off to the
+        // normal purchase paywall for the accessed region.
+        function showRegionMismatchDialog(district, owned) {
+            const overlay = document.getElementById('region-mismatch-overlay');
+            const titleEl = document.getElementById('region-mismatch-title');
+            const ownedEl = document.getElementById('region-mismatch-owned');
+            const unlockBtn = document.getElementById('region-mismatch-unlock');
+
+            const accessedName = (district && district.districtName) ? district.districtName : 'this region';
+            titleEl.textContent = accessedName + ' is a separate region';
+            ownedEl.textContent = owned.ownedName;
+            unlockBtn.textContent = 'Unlock ' + accessedName;
+
+            disableMapInteraction();
+
+            // Replace the unlock button to drop any stale listeners from a prior open.
+            const newUnlock = unlockBtn.cloneNode(true);
+            unlockBtn.parentNode.replaceChild(newUnlock, unlockBtn);
+            newUnlock.addEventListener('click', () => {
+                overlay.classList.remove('open');
+                // Keep interaction disabled — hand straight off to the paywall.
+                showZoomRestrictionDialog(district);
+            });
+
+            document.getElementById('region-mismatch-cancel').onclick = () => {
+                overlay.classList.remove('open');
+                enableMapInteraction();
+                zoomBypassActive = true;
+                smoothZoomTo(MAX_FREE_ZOOM - 1);
+                google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
+            };
+
+            overlay.classList.add('open');
+        }
+
         function showNoDataDialog() {
             const overlay = document.getElementById('zoom-restrict-overlay');
             const title = document.getElementById('zoom-restrict-title');
@@ -4549,13 +4606,28 @@
                             var stillLocked = findDistrictAtCenterCached();
                             if (!stillLocked) return;
                             if (hasPurchase(stillLocked.productPurchaseID)) return;
-                            showZoomRestrictionDialog(stillLocked);
+                            // If the user owns a confused-partner region (e.g. owns Pune,
+                            // zooming into PMRDA), clear up the confusion first, then the
+                            // paywall. Shown on every confused zoom-in (no suppression).
+                            var owned = ownedConfusionPartner(stillLocked.productPurchaseID);
+                            if (owned) {
+                                showRegionMismatchDialog(stillLocked, owned);
+                            } else {
+                                showZoomRestrictionDialog(stillLocked);
+                            }
                         });
                     }
                 } else if (z < MAX_FREE_ZOOM && overlay.classList.contains('open')) {
                     // Zoomed out — auto-dismiss dialog
                     overlay.classList.remove('open');
                     enableMapInteraction();
+                } else if (z < MAX_FREE_ZOOM) {
+                    // Zoomed out — also dismiss the region-mismatch clearance dialog if open
+                    var mmOverlay = document.getElementById('region-mismatch-overlay');
+                    if (mmOverlay && mmOverlay.classList.contains('open')) {
+                        mmOverlay.classList.remove('open');
+                        enableMapInteraction();
+                    }
                 }
             });
 
