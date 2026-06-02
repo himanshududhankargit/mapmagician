@@ -1146,7 +1146,7 @@
                     amount: data.amount,
                     currency: data.currency || 'INR',
                     name: 'Development Plans (GIS)',
-                    description: '7-Day Pass: ' + regionName,
+                    description: 'Web only (not Android) — 7-Day Pass: ' + regionName,
                     prefill: {
                         email: currentUser.email,
                         name: currentUser.displayName || ''
@@ -1368,7 +1368,7 @@
                     key: 'rzp_live_SXr1BKnoysSo9r',
                     subscription_id: subscriptionId,
                     name: 'Development Plans (GIS)',
-                    description: subUnitLabel + ' Subscription: ' + regionName,
+                    description: 'Web only (not Android) — ' + subUnitLabel + ' Subscription: ' + regionName,
                     prefill: {
                         email: currentUser.email,
                         name: currentUser.displayName || ''
@@ -1558,7 +1558,7 @@
                     key: 'rzp_live_SXr1BKnoysSo9r',
                     invoice_id: inv.invoiceId,
                     name: 'Development Plans (GIS)',
-                    description: 'Renew subscription: ' + regionName,
+                    description: 'Web only (not Android) — Renew subscription: ' + regionName,
                     prefill: {
                         email: currentUser.email,
                         name: currentUser.displayName || ''
@@ -8443,7 +8443,7 @@
                     amount: data.amount,
                     currency: data.currency || 'INR',
                     name: 'Village Plan (GIS)',
-                    description: '7-Day Pass: ' + villageName,
+                    description: 'Web only (not Android) — 7-Day Pass: ' + villageName,
                     prefill: { email: currentUser.email, name: currentUser.displayName || '' },
                     theme: { color: '#1565C0' },
                     handler: async function(response) {
