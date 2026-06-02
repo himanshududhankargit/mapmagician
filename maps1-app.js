@@ -2625,7 +2625,7 @@
             document.getElementById('zoom-restrict-support').style.display = '';
             document.getElementById('pd-plan-tabs').style.display = '';
             // Restore the web-only notice + amber styling (showNoDataDialog strips them)
-            document.getElementById('zoom-restrict-weblabel').style.display = '';
+            document.getElementById('zoom-restrict-weblabel').style.display = 'block';
             var infoBox = document.getElementById('zoom-restrict-info');
             infoBox.style.background = '#fff8e1';
             infoBox.style.borderLeft = '3px solid #f9a825';
