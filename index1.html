@@ -560,10 +560,10 @@ html, body {
   /* Expand-to-full-width toggle isn't meaningful for a bottom sheet — the
      sheet already has full-width snap via snap-full. Hide the desktop tab. */
   .panel-toggle { display: none; }
-  /* Mobile-expanded sits at snap-full (translateY 2vh), so cap max-height at
-     96vh to leave the 2vh top breathing room without spilling past the
-     viewport bottom. The desktop rule applies height:auto already; this just
-     tightens the ceiling for phones. */
+  /* The expand toggle is hidden on phones (.panel-toggle display:none), so the
+     bottom sheet never actually gets .expanded — this is a defensive cap only.
+     If it ever did, snap-full sits at translateY 2vh, so 96vh keeps it from
+     spilling past the viewport bottom (overrides the desktop height:100vh). */
   .panel.expanded { width: 100vw; max-height: 96vh; }
   /* Mobile-expanded reuses snap-full's effective layout; close-X still works. */
 }
@@ -598,18 +598,12 @@ html, body {
 
 .panel.expanded {
   width: 100vw;
-  /* Size to content + max-height instead of locking to viewport height.
-     When only 3 region cards exist, the prior flex:1 grid stretched to fill
-     ~70% of the viewport and pushed the footer to the bottom — leaving a
-     huge white gap between the last card and the footer. With height:auto
-     the panel ends right under the cards, the footer follows naturally,
-     and long lists still scroll within max-height. */
-  height: auto;
-  max-height: 100vh;
+  /* Cover the full viewport when expanded (inherits height:100vh from .panel).
+     The grid keeps flex:1 + align-content:start, so cards sit at the top and
+     the footer pins to the bottom; with few cards the empty middle is just the
+     white panel filling the page — the intended full-page cover. */
+  height: 100vh;
   transition: width 280ms cubic-bezier(.4,0,.2,1), transform 280ms cubic-bezier(.4,0,.2,1), opacity 220ms ease-out;
-}
-.panel.expanded .grid {
-  flex: 0 1 auto;  /* size to content; shrink+scroll only if it overflows max-height */
 }
 /* When the panel covers the viewport the toggle tab would protrude past the
    right edge (right:-18px) and be unreachable. Pin it to the viewport edge
