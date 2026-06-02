@@ -314,7 +314,7 @@
             } else {
                 document.getElementById('auth-dialog-desc').textContent =
                     'Sign in with your Google account to access premium maps, save purchases, and sync across devices.';
-                document.getElementById('auth-dialog-weblabel').style.display = 'none';
+                document.getElementById('auth-dialog-weblabel').style.display = 'block';
                 document.getElementById('auth-dialog-overlay').classList.add('open');
             }
         });
