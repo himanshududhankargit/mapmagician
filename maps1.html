@@ -339,18 +339,6 @@
             transform: translate(-50%, -50%);
         }
 
-        /* Repeating "dpplans.com" screenshot-deterrence watermark (always-on, non-interactive) */
-        .dp-watermark {
-            position: fixed;
-            inset: 0;
-            z-index: 600;            /* above map tiles (0), below all UI which starts at 999 */
-            pointer-events: none;    /* never blocks pan/zoom/clicks */
-            user-select: none;
-            background-repeat: repeat;
-            background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='190'><text x='10' y='110' transform='rotate(-30 150 95)' font-family='Arial, sans-serif' font-size='22' font-weight='700' fill='%23000000' fill-opacity='0.11' stroke='%23ffffff' stroke-opacity='0.18' stroke-width='0.6'>dpplans.com</text></svg>");
-        }
-        @media print { .dp-watermark { display: block !important; } }
-
         /* Right-side floating buttons */
         .fab-stack {
             position: absolute; right: 8px; z-index: 1000;
@@ -1077,7 +1065,6 @@
         <p>Overlay official draft and final Development Plans on satellite imagery, measure distance and area, search by place or coordinates, view village-boundary outlines, and export map views. All regions are updated with the latest draft and notification maps released by state and city planning authorities including Town Planning departments, PMRDA, NAINA, MSRDC, HMDA, BBMP and more. Coverage expanding across Indian states.</p>
     </section>
     <div id="map" data-clarity-mask="true"></div>
-    <div class="dp-watermark" aria-hidden="true"></div>
 
     <!-- Expanded sidebar panel -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
