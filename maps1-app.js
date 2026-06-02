@@ -2624,6 +2624,13 @@
             // Restore cards + support (may have been changed by showNoDataDialog)
             document.getElementById('zoom-restrict-support').style.display = '';
             document.getElementById('pd-plan-tabs').style.display = '';
+            // Restore the web-only notice + amber styling (showNoDataDialog strips them)
+            document.getElementById('zoom-restrict-weblabel').style.display = '';
+            var infoBox = document.getElementById('zoom-restrict-info');
+            infoBox.style.background = '#fff8e1';
+            infoBox.style.borderLeft = '3px solid #f9a825';
+            infoBox.style.padding = '12px 14px';
+            desc.style.color = '';
 
             if (district) {
                 title.textContent = 'Web Unlock ' + district.districtName;
@@ -2867,6 +2874,13 @@
 
             title.textContent = 'No Map Data Available';
             desc.textContent = 'There are no development plan maps available for this area. Browse available regions to explore maps.';
+            // Hide the web-only purchase notice + amber styling — irrelevant on the no-data dialog
+            document.getElementById('zoom-restrict-weblabel').style.display = 'none';
+            var infoBox = document.getElementById('zoom-restrict-info');
+            infoBox.style.background = 'none';
+            infoBox.style.borderLeft = 'none';
+            infoBox.style.padding = '0';
+            desc.style.color = '#666';
             regionInfo.style.display = 'none';
             supportBtn.style.display = 'none';
             document.getElementById('zoom-restrict-price').style.display = 'none';
@@ -8324,7 +8338,7 @@
             var actionBtn = document.getElementById('village-purchase-action');
 
             title.textContent = villageItem.villageName;
-            desc.textContent = 'Unlock the village plan map for ' + villageItem.villageName + '. Full access for 7 days — unlocks on the web.';
+            desc.textContent = 'Unlock the village plan map for ' + villageItem.villageName + '. Full access for 7 days.';
 
             // Get village plan price from pre-fetched pricing cache
             var price = cachedPricing.get('villagePlanDefault') || cachedPricing.get('default') || null;
