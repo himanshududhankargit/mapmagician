@@ -31,6 +31,12 @@ export function generateMetadata({ params }: Props): Metadata {
     title,
     description,
     alternates: { canonical: url },
+    // Only curated sub-locations carry genuinely unique content, so only they are
+    // index-worthy. The thin, near-duplicate long-tail is noindex,follow — still
+    // crawlable through to the map, just kept out of the index so it can't drag the
+    // domain's quality signal. A town flips to indexable the moment it gets a
+    // SUBLOCATION_CONTENT entry. Sitemap inclusion is gated on the same signal.
+    robots: seo ? { index: true, follow: true } : { index: false, follow: true },
     openGraph: {
       type: 'article',
       url,

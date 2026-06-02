@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { allRegions, allSubLocationPaths, generatedAt } from '@/lib/regions';
+import { isCuratedSubLocation } from '@/data/sublocation-content';
 import { SITE } from '@/lib/site';
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -26,11 +27,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: 'weekly' as const,
     priority: 0.8,
   }));
-  const subLocationPages = allSubLocationPaths().map(({ region, village }) => ({
-    url: `${SITE.origin}/${region.slug}/${village.slug}/`,
-    lastModified,
-    changeFrequency: 'monthly' as const,
-    priority: 0.6,
-  }));
+  // Only curated sub-locations are indexable (see app/[slug]/[loc]/page.tsx robots
+  // gating). A noindex URL must not be advertised in the sitemap — mixed signal — so
+  // the thin long-tail is excluded here and re-enters automatically once curated.
+  const subLocationPages = allSubLocationPaths()
+    .filter(({ region, village }) => isCuratedSubLocation(region.slug, village.slug!))
+    .map(({ region, village }) => ({
+      url: `${SITE.origin}/${region.slug}/${village.slug}/`,
+      lastModified,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    }));
   return [home, regionsBrowser, ...regionPages, ...subLocationPages];
 }

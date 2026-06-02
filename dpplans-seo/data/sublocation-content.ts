@@ -14,7 +14,12 @@
  *
  * Editorial rule (same as region-content.ts): only claims verifiable from a primary or
  * near-primary source. When in doubt, omit.
+ *
+ * Bulk machine-generated entries (research + adversarial verification, the 'dpplans-town-seo'
+ * workflow) live in ./sublocation-content.generated.ts. The hand-curated SUBLOCATION_CONTENT
+ * below ALWAYS takes precedence over the generated map at lookup time.
  */
+import { GENERATED_SUBLOCATION_CONTENT } from './sublocation-content.generated';
 
 export type SubLocationContent = {
   // Overrides <title>, OpenGraph/Twitter title, and the on-page <h1>.
@@ -53,9 +58,182 @@ export const SUBLOCATION_CONTENT: Record<string, SubLocationContent> = {
       "PCMC's land-use is anchored by its industrial estates — the Bhosari (MIDC) estate, along with the Chinchwad, Pimpri and Akurdi industrial belts — and by the residential and commercial growth around Nigdi-Pradhikaran, Wakad and the Mumbai-Pune Expressway / old NH-48 corridor. The draft DP defines the residential, commercial, industrial, green and public-utility zones and the proposed road network across these areas; pan and zoom on the map above to trace any boundary against the current ground imagery.",
     ],
   },
+
+  // --- Solapur district: notable towns (taluka HQs / pilgrimage centres) ---
+  // Curated so they read as unique pages (not the 95%-identical village template) and
+  // become indexable. Each entry sticks to widely-verifiable facts; the DP head term
+  // for Pandharpur is intentionally avoided in titles (it's saturated by the 2026 govt
+  // corridor news + the Pandharpur Development Authority Act) in favour of map/zone intent.
+  'solapur-dp-plan/pandharpur': {
+    pageTitle: 'Pandharpur DP Plan map online — Development Plan zones & land use, Solapur',
+    description:
+      'See the Development Plan covering Pandharpur, Solapur district, Maharashtra, online. Interactive DP overlay on satellite imagery — read the land-use zone, reservations and road lines for any plot in and around the Pandharpur temple town and the Chandrabhaga riverfront.',
+    keywords: [
+      'pandharpur dp plan',
+      'pandharpur development plan map',
+      'pandharpur zoning map',
+      'pandharpur land use map',
+      'pandharpur development plan online',
+      'pandharpur solapur map',
+    ],
+    intro:
+      'Pandharpur is a temple town on the banks of the Bhima river — locally the Chandrabhaga — in Solapur district, Maharashtra, best known as the seat of the Vitthal-Rukmini temple and the destination of the Ashadhi and Kartiki Wari pilgrimages. This page opens the Development Plan layer covering Pandharpur as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and road alignment for any plot in and around the town.',
+    paragraphs: [
+      'Because Pandharpur draws very large pilgrim crowds, planning around the temple core, the Chandrabhaga ghats and the approach roads carries particular weight. Pan and zoom on the map above to trace any zone boundary, reservation or proposed road line against the current ground imagery.',
+      'Pandharpur lies roughly 41 km west of Solapur city. Use the search bar inside the full map to jump to a specific survey number, ward or landmark, then turn on the DP overlay to confirm the designated zone — residential, commercial, public-utility, green or reserved — before relying on it for any plot decision.',
+    ],
+  },
+  'solapur-dp-plan/akkalkot-tal-akkalkot': {
+    pageTitle: 'Akkalkot DP Plan map online — Development Plan zones & land use, Solapur',
+    description:
+      'See the Development Plan covering Akkalkot, Solapur district, Maharashtra, online. Interactive DP overlay on satellite imagery — read the land-use zone, reservations and road lines for any plot in and around the Akkalkot temple town near the Karnataka border.',
+    keywords: [
+      'akkalkot dp plan',
+      'akkalkot development plan map',
+      'akkalkot zoning map',
+      'akkalkot land use map',
+      'akkalkot development plan online',
+      'akkalkot solapur map',
+    ],
+    intro:
+      'Akkalkot is a town and taluka headquarters in the south-east of Solapur district, Maharashtra, close to the Karnataka border, widely known as a pilgrimage centre associated with Shri Swami Samarth. This page opens the Development Plan layer covering Akkalkot as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and road lines for any plot in the town.',
+    paragraphs: [
+      "Akkalkot sits about 57 km east of Solapur city. Steady pilgrim footfall around the temple precinct and the town's position on routes toward the Karnataka border both shape its growth. Pan and zoom on the map above to trace any zone boundary or proposed road against the current satellite imagery.",
+      'Use the search bar inside the full map to jump to a survey number or landmark in Akkalkot, then switch on the DP overlay to confirm the designated zone before relying on it for a plot decision.',
+    ],
+  },
+  'solapur-dp-plan/barshi': {
+    pageTitle: 'Barshi DP Plan map online — Development Plan zones & land use, Solapur',
+    description:
+      'See the Development Plan covering Barshi, Solapur district, Maharashtra, online. Interactive DP overlay on satellite imagery — read the land-use zone, reservations and road lines for any plot in and around Barshi town.',
+    keywords: [
+      'barshi dp plan',
+      'barshi development plan map',
+      'barshi zoning map',
+      'barshi land use map',
+      'barshi development plan online',
+      'barshi solapur map',
+    ],
+    intro:
+      'Barshi is a town and taluka headquarters in the north of Solapur district, Maharashtra, long known as a cotton-trading and textile centre and for the historic Bhagawant temple. This page opens the Development Plan layer covering Barshi as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and road lines for any plot in the town.',
+    paragraphs: [
+      'Barshi lies about 59 km north of Solapur city and is one of the larger towns in the district. Pan and zoom on the map above to trace any zone boundary, reservation or proposed road against current ground imagery.',
+      'Use the search bar inside the full map to jump to a survey number or landmark in Barshi, then turn on the DP overlay to confirm the designated zone — residential, commercial, industrial, green or reserved — before relying on it for a plot decision.',
+    ],
+  },
+  'solapur-dp-plan/mangalwedha': {
+    pageTitle: 'Mangalwedha DP Plan map online — Development Plan zones & land use, Solapur',
+    description:
+      'See the Development Plan covering Mangalwedha, Solapur district, Maharashtra, online. Interactive DP overlay on satellite imagery — read the land-use zone, reservations and road lines for any plot in and around Mangalwedha town.',
+    keywords: [
+      'mangalwedha dp plan',
+      'mangalvedha development plan map',
+      'mangalwedha zoning map',
+      'mangalwedha land use map',
+      'mangalwedha development plan online',
+      'mangalwedha solapur map',
+    ],
+    intro:
+      'Mangalwedha is a town and taluka headquarters about 34 km south-west of Solapur city in Maharashtra, often called a "land of saints" for its association with figures such as Sant Damaji, and known for its jowar (sorghum) growing belt. This page opens the Development Plan layer covering Mangalwedha as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and road lines for any plot in the town.',
+    paragraphs: [
+      'Pan and zoom on the map above to trace any zone boundary or proposed road line through Mangalwedha against the current ground imagery.',
+      'Use the search bar inside the full map to jump to a survey number or landmark, then turn on the DP overlay to confirm the designated zone before relying on it for a plot decision.',
+    ],
+  },
+  'solapur-dp-plan/madha': {
+    pageTitle: 'Madha DP Plan map online — Development Plan zones & land use, Solapur',
+    description:
+      'See the Development Plan covering Madha, Solapur district, Maharashtra, online. Interactive DP overlay on satellite imagery — read the land-use zone, reservations and road lines for any plot in and around Madha town.',
+    keywords: [
+      'madha dp plan',
+      'madha development plan map',
+      'madha zoning map',
+      'madha land use map',
+      'madha development plan online',
+      'madha solapur map',
+    ],
+    intro:
+      'Madha is a town and taluka headquarters in the north-west of Solapur district, Maharashtra, and gives its name to the Madha Lok Sabha constituency. This page opens the Development Plan layer covering Madha as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and road lines for any plot in the town.',
+    paragraphs: [
+      'Madha lies about 42 km north-west of Solapur city. Pan and zoom on the map above to trace any zone boundary or proposed road against the current ground imagery.',
+      'Use the search bar inside the full map to jump to a survey number or landmark in Madha, then turn on the DP overlay to confirm the designated zone before relying on it for a plot decision.',
+    ],
+  },
+  'solapur-dp-plan/mohol': {
+    pageTitle: 'Mohol DP Plan map online — Development Plan zones & land use, Solapur',
+    description:
+      'See the Development Plan covering Mohol, Solapur district, Maharashtra, online. Interactive DP overlay on satellite imagery — read the land-use zone, reservations and road lines for any plot in and around Mohol town.',
+    keywords: [
+      'mohol dp plan',
+      'mohol development plan map',
+      'mohol zoning map',
+      'mohol land use map',
+      'mohol development plan online',
+      'mohol solapur map',
+    ],
+    intro:
+      'Mohol is a town and taluka headquarters about 14 km north-west of Solapur city in Maharashtra, lying on the Solapur–Pune road and rail corridor — the closest taluka town to the district headquarters. This page opens the Development Plan layer covering Mohol as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and road lines for any plot in the town.',
+    paragraphs: [
+      "Its proximity to Solapur city and its position on the main Pune corridor shape Mohol's growth. Pan and zoom on the map above to trace any zone boundary or proposed road against current ground imagery.",
+      'Use the search bar inside the full map to jump to a survey number or landmark in Mohol, then turn on the DP overlay to confirm the designated zone before relying on it for a plot decision.',
+    ],
+  },
+  'solapur-dp-plan/akluj-tal-malshiras': {
+    pageTitle: 'Akluj DP Plan map online — Development Plan zones & land use, Solapur',
+    description:
+      'See the Development Plan covering Akluj, in Malshiras taluka of Solapur district, Maharashtra, online. Interactive DP overlay on satellite imagery — read the land-use zone, reservations and road lines for any plot in and around Akluj town.',
+    keywords: [
+      'akluj dp plan',
+      'akluj development plan map',
+      'akluj zoning map',
+      'akluj malshiras map',
+      'akluj land use map',
+      'akluj solapur map',
+    ],
+    intro:
+      "Akluj is a town in Malshiras taluka, in the west of Solapur district, Maharashtra, a commercial centre in the district's sugarcane and sugar-cooperative belt. This page opens the Development Plan layer covering Akluj as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and road lines for any plot in the town.",
+    paragraphs: [
+      'Akluj lies in the western part of the district, well away from Solapur city, amid an irrigated sugarcane region. Pan and zoom on the map above to trace any zone boundary or proposed road against the current ground imagery.',
+      'Use the search bar inside the full map to jump to a survey number or landmark in Akluj, then turn on the DP overlay to confirm the designated zone before relying on it for a plot decision.',
+    ],
+  },
+  'solapur-dp-plan/kurduwadi-tal-madha': {
+    pageTitle: 'Kurduwadi DP Plan map online — Development Plan zones & land use, Solapur',
+    description:
+      'See the Development Plan covering Kurduwadi, in Madha taluka of Solapur district, Maharashtra, online. Interactive DP overlay on satellite imagery — read the land-use zone, reservations and road lines for any plot in and around Kurduwadi town.',
+    keywords: [
+      'kurduwadi dp plan',
+      'kurduwadi development plan map',
+      'kurduwadi zoning map',
+      'kurduwadi madha map',
+      'kurduwadi land use map',
+      'kurduwadi solapur map',
+    ],
+    intro:
+      'Kurduwadi is a town in Madha taluka, Solapur district, Maharashtra, that grew around its railway junction on the Central Railway and the historic Barshi Light Railway. This page opens the Development Plan layer covering Kurduwadi as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and road lines for any plot in the town.',
+    paragraphs: [
+      "The railway junction and its associated yards have long anchored Kurduwadi's layout. Pan and zoom on the map above to trace any zone boundary or proposed road against the current ground imagery.",
+      'Use the search bar inside the full map to jump to a survey number or landmark in Kurduwadi, then turn on the DP overlay to confirm the designated zone before relying on it for a plot decision.',
+    ],
+  },
 };
 
-/** Look up SEO override content by region + village slug. Null when none is curated. */
+/**
+ * Look up SEO override content by region + village slug. Null when none is curated.
+ * Hand-curated SUBLOCATION_CONTENT wins over the machine-generated map.
+ */
 export function subLocationContent(regionSlug: string, locSlug: string): SubLocationContent | null {
-  return SUBLOCATION_CONTENT[`${regionSlug}/${locSlug}`] ?? null;
+  const key = `${regionSlug}/${locSlug}`;
+  return SUBLOCATION_CONTENT[key] ?? GENERATED_SUBLOCATION_CONTENT[key] ?? null;
+}
+
+/**
+ * True when a sub-location has unique curated content (hand-written OR verified-generated) —
+ * and is therefore worth indexing. Drives both the page's robots meta
+ * (app/[slug]/[loc]/page.tsx) and sitemap inclusion (app/sitemap.ts) off a single source of
+ * truth: add an entry and the page automatically becomes index,follow + re-enters the sitemap.
+ */
+export function isCuratedSubLocation(regionSlug: string, locSlug: string): boolean {
+  const key = `${regionSlug}/${locSlug}`;
+  return !!SUBLOCATION_CONTENT[key] || !!GENERATED_SUBLOCATION_CONTENT[key];
 }
