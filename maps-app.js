@@ -314,6 +314,7 @@
             } else {
                 document.getElementById('auth-dialog-desc').textContent =
                     'Sign in with your Google account to access premium maps, save purchases, and sync across devices.';
+                document.getElementById('auth-dialog-weblabel').style.display = 'block';
                 document.getElementById('auth-dialog-overlay').classList.add('open');
             }
         });
@@ -693,6 +694,7 @@
             if (!currentUser || currentUser.isAnonymous) {
                 pendingSupportOpen = { district: district, returnToPaywall: !!returnToPaywall };
                 document.getElementById('auth-dialog-desc').textContent = 'Please sign in to contact support.';
+                document.getElementById('auth-dialog-weblabel').style.display = 'none';
                 document.getElementById('auth-dialog-overlay').classList.add('open');
                 return;
             }
@@ -1105,6 +1107,7 @@
                 pendingPurchase = { productId, regionName };
                 document.getElementById('auth-dialog-desc').textContent =
                     'Sign in with your Google account to purchase the 7-Day Pass for ' + regionName + '.';
+                document.getElementById('auth-dialog-weblabel').style.display = 'block';
                 document.getElementById('auth-dialog-overlay').classList.add('open');
                 return;
             }
@@ -1275,6 +1278,7 @@
                 pendingPurchase = { productId, regionName, purchaseType: 'subscription' };
                 document.getElementById('auth-dialog-desc').textContent =
                     'Sign in with your Google account to subscribe to ' + regionName + '.';
+                document.getElementById('auth-dialog-weblabel').style.display = 'block';
                 document.getElementById('auth-dialog-overlay').classList.add('open');
                 return;
             }
@@ -2735,6 +2739,7 @@
                 if (!currentUser) {
                     pendingPurchase = null;
                     document.getElementById('auth-dialog-desc').textContent = 'Please sign in to contact support.';
+                    document.getElementById('auth-dialog-weblabel').style.display = 'none';
                     document.getElementById('auth-dialog-overlay').classList.add('open');
                     return;
                 }
@@ -8421,6 +8426,7 @@
                 pendingPurchase = { villageName: villageName, purchaseType: 'village' };
                 document.getElementById('auth-dialog-desc').textContent =
                     'Sign in with your Google account to purchase the village plan for ' + villageName + '.';
+                document.getElementById('auth-dialog-weblabel').style.display = 'block';
                 document.getElementById('auth-dialog-overlay').classList.add('open');
                 return;
             }
