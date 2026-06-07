@@ -66,7 +66,7 @@
   .toggle input{width:15px;height:15px;accent-color:var(--terra)}
 
   .canvas-frame{position:relative;width:100%;background:#fbf6ec;border:2px solid var(--line);border-radius:12px;overflow:hidden;touch-action:none}
-  svg.board{display:block;width:100%;height:auto;cursor:grab}
+  svg.board{display:block;width:100%;height:auto;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none}
   svg.board:active{cursor:grabbing}
 
   .handle{cursor:grab}
@@ -442,16 +442,32 @@
   }
 
   /* ---------- DRAG ---------- */
+  // convert a pointer/mouse/touch event to SVG viewBox coords
   function pt2svg(evt){
     const rect=svg.getBoundingClientRect();
-    const cx=(evt.touches?evt.touches[0].clientX:evt.clientX);
-    const cy=(evt.touches?evt.touches[0].clientY:evt.clientY);
+    const cx=(evt.clientX!=null)?evt.clientX:(evt.touches&&evt.touches[0]?evt.touches[0].clientX:0);
+    const cy=(evt.clientY!=null)?evt.clientY:(evt.touches&&evt.touches[0]?evt.touches[0].clientY:0);
     return {x:(cx-rect.left)/rect.width*W, y:(cy-rect.top)/rect.height*H};
   }
+  // pick the control point nearest to the touch — forgiving on small mobile targets
+  function nearestIdx(p){
+    let best=-1, bestD=Infinity;
+    pts.forEach((q,i)=>{
+      const dx=q.tx-p.x, dy=q.ty-p.y, d=dx*dx+dy*dy;
+      if(d<bestD){bestD=d; best=i;}
+    });
+    // generous grab radius (~38 viewBox units) so a fingertip near a point still catches it
+    return bestD<=38*38 ? best : -1;
+  }
   function startDrag(e){
-    const h=e.target.closest('.handle');
-    if(!h) return;
-    dragIdx=+h.getAttribute('data-i');
+    const p=pt2svg(e);
+    const idx=nearestIdx(p);
+    if(idx<0) return;
+    dragIdx=idx;
+    // keep receiving move/up even if the finger slides off the tiny handle
+    if(e.pointerId!=null && svg.setPointerCapture){
+      try{ svg.setPointerCapture(e.pointerId); }catch(_){}
+    }
     e.preventDefault();
   }
   function moveDrag(e){
@@ -464,12 +480,20 @@
   }
   function endDrag(){dragIdx=-1;}
 
-  svg.addEventListener('mousedown',startDrag);
-  window.addEventListener('mousemove',moveDrag);
-  window.addEventListener('mouseup',endDrag);
-  svg.addEventListener('touchstart',startDrag,{passive:false});
-  window.addEventListener('touchmove',moveDrag,{passive:false});
-  window.addEventListener('touchend',endDrag);
+  if(window.PointerEvent){
+    svg.addEventListener('pointerdown',startDrag);
+    svg.addEventListener('pointermove',moveDrag);
+    svg.addEventListener('pointerup',endDrag);
+    svg.addEventListener('pointercancel',endDrag);
+  }else{
+    // legacy fallback: mouse + touch
+    svg.addEventListener('mousedown',startDrag);
+    window.addEventListener('mousemove',moveDrag);
+    window.addEventListener('mouseup',endDrag);
+    svg.addEventListener('touchstart',startDrag,{passive:false});
+    svg.addEventListener('touchmove',moveDrag,{passive:false});
+    window.addEventListener('touchend',endDrag);
+  }
 
   /* ---------- CONTROLS ---------- */
   document.getElementById('modeSeg').addEventListener('click',e=>{
