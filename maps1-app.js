@@ -1,6 +1,11 @@
         // Global embed mode flag (checked before auth/session logic)
         const isEmbedMode = new URLSearchParams(window.location.search).get('embed') === '1';
 
+        // App version stamp — rendered into the Settings panel header so we can confirm at a
+        // glance that the freshly-deployed JS (not a stale cached copy) is the one running.
+        // BUMP THIS by one on every change you deploy (001 -> 002 -> ...).
+        var APP_VERSION = '001';
+
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
         googleProvider.setCustomParameters({ prompt: 'select_account' });
@@ -6881,6 +6886,10 @@
                 closeSettingsPanel();
                 openInstallInfo();
             });
+
+            // Stamp the running JS version into the Settings header (see APP_VERSION above).
+            var _verEl = document.getElementById('settings-version');
+            if (_verEl) _verEl.textContent = ': Ver -' + APP_VERSION;
 
             document.getElementById('settings-contact-support').addEventListener('click', function() {
                 closeSettingsPanel();
