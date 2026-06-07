@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Georeferencing, Live — Drag the Points and Watch the Map Bend</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Space+Mono:wght@400;700&family=Archivo:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#10221f; --paper:#f4ece0; --paper-2:#ece1cf;
+    --line:#0c3b30; --terra:#c5482e; --terra-soft:#e06a47;
+    --teal:#0f5d52; --gold:#d8a23a; --shadow:rgba(10,34,28,.18);
+    --grid:rgba(15,93,82,.16);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Archivo',sans-serif;background:var(--paper);color:var(--ink);
+    line-height:1.6;overflow-x:hidden;
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:42px 42px;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px;position:relative;z-index:2}
+
+  .hero{padding:60px 0 30px;text-align:center}
+  .kicker{
+    font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:.3em;
+    text-transform:uppercase;color:var(--terra);font-weight:700;display:inline-block;
+    border:1px solid var(--terra);padding:7px 16px;border-radius:40px;margin-bottom:22px;
+    background:rgba(197,72,46,.06);
+  }
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(2rem,6vw,3.6rem);line-height:1.03;letter-spacing:-.02em;margin-bottom:16px}
+  h1 em{font-style:italic;color:var(--terra)}
+  .lede{font-size:clamp(1rem,2.3vw,1.18rem);max-width:600px;margin:0 auto;color:#3b524d}
+
+  section{padding:34px 0}
+  .tag{font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:var(--teal);font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+  .tag::before{content:"";width:30px;height:2px;background:var(--terra)}
+  h2{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.5rem,4.2vw,2.3rem);line-height:1.08;letter-spacing:-.015em;margin-bottom:16px}
+  p.body{font-size:1.02rem;color:#33433f;margin-bottom:14px}
+  p.body strong{color:var(--ink);font-weight:700}
+
+  /* PLAYGROUND */
+  .lab{
+    background:var(--paper-2);border:2px solid var(--line);border-radius:18px;
+    padding:20px;margin:20px 0;box-shadow:6px 6px 0 var(--line);
+  }
+  .controls{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;align-items:center}
+  .seg{display:inline-flex;border:2px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{
+    font-family:'Space Mono',monospace;font-size:.74rem;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;padding:9px 13px;border:none;background:transparent;color:var(--line);
+    cursor:pointer;transition:.15s;
+  }
+  .seg button + button{border-left:2px solid var(--line)}
+  .seg button.active{background:var(--line);color:var(--paper)}
+  .btn{
+    font-family:'Space Mono',monospace;font-size:.74rem;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;padding:9px 14px;border:2px solid var(--terra);background:rgba(197,72,46,.07);
+    color:var(--terra);border-radius:10px;cursor:pointer;transition:.15s;
+  }
+  .btn:hover{background:var(--terra);color:var(--paper)}
+  .toggle{display:inline-flex;align-items:center;gap:7px;font-family:'Space Mono',monospace;font-size:.72rem;color:var(--teal);cursor:pointer;user-select:none}
+  .toggle input{width:15px;height:15px;accent-color:var(--terra)}
+
+  .canvas-frame{position:relative;width:100%;background:#fbf6ec;border:2px solid var(--line);border-radius:12px;overflow:hidden;touch-action:none}
+  svg.board{display:block;width:100%;height:auto;cursor:grab}
+  svg.board:active{cursor:grabbing}
+
+  .handle{cursor:grab}
+  .handle:active{cursor:grabbing}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;font-family:'Space Mono',monospace;font-size:.72rem;color:#3a4b47}
+  .legend .dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:middle;border:1.5px solid var(--ink)}
+  .readout{
+    display:flex;flex-wrap:wrap;gap:18px;margin-top:14px;padding-top:14px;border-top:1.5px dashed var(--line);
+    font-family:'Space Mono',monospace;font-size:.8rem;color:var(--line);
+  }
+  .readout b{color:var(--terra)}
+  .hint{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--teal);margin-top:10px;text-align:center}
+
+  .modecard{
+    background:#fff;border-left:5px solid var(--terra);border-radius:0 12px 12px 0;
+    padding:14px 18px;margin-top:14px;font-size:.95rem;color:#3a4b47;
+  }
+  .modecard b{color:var(--terra);font-family:'Space Mono',monospace;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:4px}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+  .card{background:var(--paper-2);border:2px solid var(--line);border-radius:14px;padding:20px;box-shadow:4px 4px 0 rgba(12,59,48,.2)}
+  .card h3{font-family:'Fraunces',serif;font-size:1.15rem;margin-bottom:8px;color:var(--line)}
+  .card p{font-size:.94rem;color:#3a4b47;margin-bottom:8px}
+  .card .pill{font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;display:inline-block;padding:3px 9px;border-radius:20px;margin-bottom:10px}
+  .pill.good{background:rgba(15,93,82,.12);color:var(--teal);border:1px solid var(--teal)}
+  .pill.warn{background:rgba(197,72,46,.1);color:var(--terra);border:1px solid var(--terra)}
+
+  .pull{margin:40px 0;text-align:center;padding:32px 18px;border-top:2px dashed var(--line);border-bottom:2px dashed var(--line)}
+  .pull p{font-family:'Fraunces',serif;font-style:italic;font-size:clamp(1.3rem,3.6vw,1.9rem);line-height:1.25;color:var(--line)}
+
+  .foot{padding:44px 0 64px;text-align:center}
+  .foot .line{width:60px;height:3px;background:var(--terra);margin:0 auto 20px}
+  .foot p{font-size:.95rem;color:#41524d;max-width:520px;margin:0 auto 16px}
+  .tags-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:20px}
+  .tags-row span{font-family:'Space Mono',monospace;font-size:.74rem;background:var(--paper-2);border:1px solid var(--line);padding:5px 12px;border-radius:30px;color:var(--teal)}
+
+  @media(max-width:620px){.grid2{grid-template-columns:1fr}.lab{box-shadow:4px 4px 0 var(--line)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="kicker">Interactive · GIS · Cartography</span>
+    <h1>Georeferencing, <em>live</em></h1>
+    <p class="lede">Drag the control points. Watch the old map bend in real time. See exactly why 3-point linear can only do so much — and why 5-point TPS bends to fit, for better <em>and</em> worse.</p>
+  </header>
+
+  <!-- THE PLAYGROUND -->
+  <section>
+    <div class="tag">The playground</div>
+    <h2>Move a point. Watch the whole map respond.</h2>
+    <p class="body">The faint grid is the <strong>original flat plan</strong>. The solid coloured points are <strong>control points</strong> — features you've matched to known real-world locations. Drag any solid point: the transformation recalculates instantly and warps the map to satisfy your points.</p>
+
+    <div class="lab">
+      <div class="controls">
+        <div class="seg" id="modeSeg">
+          <button data-mode="linear" class="active">Linear · 3 pts</button>
+          <button data-mode="affine">Affine · 3 pts</button>
+          <button data-mode="tps">TPS · 5 pts</button>
+        </div>
+        <button class="btn" id="resetBtn">Reset</button>
+        <label class="toggle"><input type="checkbox" id="showResid" checked> show error lines</label>
+      </div>
+
+      <div class="canvas-frame">
+        <svg class="board" id="board" viewBox="0 0 600 440" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+
+      <div class="legend">
+        <span><span class="dot" style="background:var(--teal)"></span>warped map grid</span>
+        <span><span class="dot" style="background:var(--terra)"></span>control point (drag me)</span>
+        <span><span class="dot" style="background:var(--gold)"></span>target location</span>
+        <span><span class="dot" style="background:#888"></span>original plan</span>
+      </div>
+
+      <div class="readout">
+        <span>mode: <b id="roMode">Linear</b></span>
+        <span>control points: <b id="roPts">3</b></span>
+        <span>RMSE (avg miss): <b id="roRmse">0.0 px</b></span>
+      </div>
+
+      <div class="modecard" id="modeNote"></div>
+      <p class="hint">Tip: drag a <b>red</b> point. The <b>gold</b> ring is where it's supposed to land — RMSE is how far you still are from a perfect fit.</p>
+    </div>
+  </section>
+
+  <!-- WHAT EACH CAN DO -->
+  <section>
+    <div class="tag">What's actually possible</div>
+    <h2>3-point linear vs 5-point TPS</h2>
+
+    <div class="grid2">
+      <div class="card">
+        <span class="pill good">Linear / Affine · few points</span>
+        <h3>One rule for the whole map</h3>
+        <p>With 3 points you can solve a <strong>linear (similarity)</strong> fit — shift, rotate and one uniform scale. The map stays perfectly rigid; angles and shape are untouched.</p>
+        <p><strong>Affine</strong> (also 3 points) adds shear and separate X/Y scaling: straight lines stay straight, parallels stay parallel, but squares can lean into parallelograms.</p>
+        <p>Crucially, <strong>the same equation applies everywhere</strong>. It can't fix local distortion — if the old map shrank more in one corner, linear/affine simply can't reach it. The error gets spread across all points and RMSE rarely hits zero.</p>
+      </div>
+      <div class="card">
+        <span class="pill good">TPS · 5+ points</span>
+        <h3>A rubber sheet pinned at each point</h3>
+        <p><strong>Thin Plate Spline</strong> treats the map as a flexible sheet. It bends <em>locally</em> to pass through <strong>every control point exactly</strong> — so with 5 well-placed points the map matches all five with essentially zero residual.</p>
+        <p>This is why TPS is <strong>better for old, warped, hand-drawn or unevenly shrunk maps</strong>: real historic distortion isn't uniform, and only a locally-bending model can follow it.</p>
+        <p>It minimises "bending energy" — it's the smoothest possible surface that still hits all your points, so it doesn't wobble more than it has to.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;border-color:var(--terra)">
+      <span class="pill warn">The drawback of TPS</span>
+      <h3>Flexibility cuts both ways</h3>
+      <p class="body" style="margin-bottom:8px">Because TPS bends to hit every point exactly, it trusts your points <em>completely</em> — including their mistakes:</p>
+      <p class="body" style="margin-bottom:8px">• <strong>A bad control point poisons the area around it.</strong> One mis-clicked point and the sheet warps violently nearby to obey it.</p>
+      <p class="body" style="margin-bottom:8px">• <strong>Wild extrapolation outside the points.</strong> Beyond the spread of your control points there's nothing pinning the sheet, so it can fold or balloon unpredictably.</p>
+      <p class="body" style="margin-bottom:0">• <strong>Zero residual is seductive.</strong> RMSE of 0 doesn't mean the map is <em>correct</em> — it means it perfectly hit the points you gave it, errors included. Affine's honest leftover error is sometimes more trustworthy. <em>(Switch to TPS above and drag one point far away to see the surrounding grid tear.)</em></p>
+    </div>
+  </section>
+
+  <div class="pull">
+    <p>"Linear asks the whole map to compromise. TPS obeys every point — and inherits every mistake you make."</p>
+  </div>
+
+  <footer class="foot">
+    <div class="line"></div>
+    <p>Pick the transformation that matches your <em>source</em>: rigid modern data loves affine; a cracked 1890s estate plan needs TPS — handled with care, and with control points you trust.</p>
+    <p style="font-family:'Space Mono',monospace;font-size:.82rem;color:var(--terra)">Affine or TPS — what do you reach for, and why?</p>
+    <div class="tags-row"><span>#GIS</span><span>#Georeferencing</span><span>#TPS</span><span>#Surveying</span><span>#Cartography</span><span>#Geospatial</span></div>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  const svg = document.getElementById('board');
+  const NS = 'http://www.w3.org/2000/svg';
+  const W = 600, H = 440;
+
+  // original grid definition (source space), in a centred box
+  const ox0=120, oy0=70, ow=360, oh=300, cols=6, rows=5;
+
+  // control point definitions: source positions on the original grid + draggable target
+  // we give each control a "source" (fixed, on original plan) and "target" (user-dragged)
+  function makePts(mode){
+    // anchor source coords spread over the plan
+    const base = [
+      {sx:ox0,        sy:oy0},                 // top-left
+      {sx:ox0+ow,     sy:oy0},                 // top-right
+      {sx:ox0+ow,     sy:oy0+oh},              // bottom-right
+      {sx:ox0,        sy:oy0+oh},              // bottom-left
+      {sx:ox0+ow/2,   sy:oy0+oh/2},            // centre
+    ];
+    const n = (mode==='tps') ? 5 : 3;
+    const pts=[];
+    for(let i=0;i<n;i++){
+      pts.push({sx:base[i].sx, sy:base[i].sy, tx:base[i].sx, ty:base[i].sy});
+    }
+    return pts;
+  }
+
+  let mode='linear';
+  let pts=makePts(mode);
+  let showResid=true;
+  let dragIdx=-1;
+
+  /* ---------- TRANSFORM SOLVERS ---------- */
+
+  // Solve affine: find a,b,c,d,e,f mapping (sx,sy)->(tx,ty) least squares
+  function solveAffine(pts){
+    // build normal equations for x: tx = a*sx + b*sy + c
+    // and y: ty = d*sx + e*sy + f
+    const n=pts.length;
+    let Sxx=0,Sxy=0,Syy=0,Sx=0,Sy=0,S1=n;
+    let Txx=0,Tyx=0,Tx=0, Txy2=0,Tyy=0,Ty=0;
+    for(const p of pts){
+      Sxx+=p.sx*p.sx; Sxy+=p.sx*p.sy; Syy+=p.sy*p.sy; Sx+=p.sx; Sy+=p.sy;
+      Txx+=p.sx*p.tx; Tyx+=p.sy*p.tx; Tx+=p.tx;
+      Txy2+=p.sx*p.ty; Tyy+=p.sy*p.ty; Ty+=p.ty;
+    }
+    const A=[[Sxx,Sxy,Sx],[Sxy,Syy,Sy],[Sx,Sy,S1]];
+    const bx=[Txx,Tyx,Tx], by=[Txy2,Tyy,Ty];
+    const cx=solve3(A,bx), cy=solve3(A,by);
+    return {type:'affine', cx,cy};
+  }
+
+  // Solve similarity (linear: rotation + uniform scale + translation) least squares
+  function solveSimilarity(pts){
+    const n=pts.length;
+    let msx=0,msy=0,mtx=0,mty=0;
+    for(const p of pts){msx+=p.sx;msy+=p.sy;mtx+=p.tx;mty+=p.ty;}
+    msx/=n;msy/=n;mtx/=n;mty/=n;
+    let a=0,b=0,d=0;
+    for(const p of pts){
+      const ux=p.sx-msx, uy=p.sy-msy, vx=p.tx-mtx, vy=p.ty-mty;
+      a+=ux*vx+uy*vy;   // cos term
+      b+=ux*vy-uy*vx;   // sin term
+      d+=ux*ux+uy*uy;
+    }
+    const scaleCos=a/d, scaleSin=b/d;
+    return {type:'sim', scaleCos,scaleSin,msx,msy,mtx,mty};
+  }
+
+  // Thin plate spline solve
+  function solveTPS(pts){
+    const n=pts.length;
+    const U=(r2)=> r2<=0?0:r2*Math.log(Math.sqrt(r2));
+    // L matrix (n+3)x(n+3)
+    const sz=n+3;
+    const L=[];
+    for(let i=0;i<sz;i++){L.push(new Array(sz).fill(0));}
+    for(let i=0;i<n;i++){
+      for(let j=0;j<n;j++){
+        const dx=pts[i].sx-pts[j].sx, dy=pts[i].sy-pts[j].sy;
+        L[i][j]=U(dx*dx+dy*dy);
+      }
+      L[i][n]=1; L[i][n+1]=pts[i].sx; L[i][n+2]=pts[i].sy;
+      L[n][i]=1; L[n+1][i]=pts[i].sx; L[n+2][i]=pts[i].sy;
+    }
+    const bx=new Array(sz).fill(0), by=new Array(sz).fill(0);
+    for(let i=0;i<n;i++){bx[i]=pts[i].tx; by[i]=pts[i].ty;}
+    const wx=solveLin(L,bx), wy=solveLin(L,by);
+    return {type:'tps', wx,wy,pts:pts.map(p=>({sx:p.sx,sy:p.sy})),n,U};
+  }
+
+  function applyTransform(t,x,y){
+    if(t.type==='affine'){
+      return [t.cx[0]*x+t.cx[1]*y+t.cx[2], t.cy[0]*x+t.cy[1]*y+t.cy[2]];
+    }
+    if(t.type==='sim'){
+      const ux=x-t.msx, uy=y-t.msy;
+      const nx=t.scaleCos*ux - t.scaleSin*uy + t.mtx;
+      const ny=t.scaleSin*ux + t.scaleCos*uy + t.mty;
+      return [nx,ny];
+    }
+    if(t.type==='tps'){
+      const n=t.n;
+      let fx=t.wx[n]+t.wx[n+1]*x+t.wx[n+2]*y;
+      let fy=t.wy[n]+t.wy[n+1]*x+t.wy[n+2]*y;
+      for(let i=0;i<n;i++){
+        const dx=x-t.pts[i].sx, dy=y-t.pts[i].sy;
+        const u=t.U(dx*dx+dy*dy);
+        fx+=t.wx[i]*u; fy+=t.wy[i]*u;
+      }
+      return [fx,fy];
+    }
+    return [x,y];
+  }
+
+  /* ---------- tiny linear algebra ---------- */
+  function solve3(A,b){
+    // Gaussian elim on 3x3 (copy)
+    const M=[[...A[0],b[0]],[...A[1],b[1]],[...A[2],b[2]]];
+    return gauss(M,3);
+  }
+  function solveLin(A,b){
+    const n=A.length;
+    const M=A.map((r,i)=>[...r,b[i]]);
+    return gauss(M,n);
+  }
+  function gauss(M,n){
+    for(let col=0;col<n;col++){
+      // pivot
+      let piv=col;
+      for(let r=col+1;r<n;r++){ if(Math.abs(M[r][col])>Math.abs(M[piv][col])) piv=r; }
+      [M[col],M[piv]]=[M[piv],M[col]];
+      const pv=M[col][col]||1e-9;
+      for(let c=col;c<=n;c++) M[col][c]/=pv;
+      for(let r=0;r<n;r++){
+        if(r===col) continue;
+        const f=M[r][col];
+        for(let c=col;c<=n;c++) M[r][c]-=f*M[col][c];
+      }
+    }
+    return M.map(r=>r[n]);
+  }
+
+  /* ---------- RENDER ---------- */
+  function el(tag,attrs){
+    const e=document.createElementNS(NS,tag);
+    for(const k in attrs) e.setAttribute(k,attrs[k]);
+    return e;
+  }
+
+  function getTransform(){
+    if(mode==='linear') return solveSimilarity(pts);
+    if(mode==='affine') return solveAffine(pts);
+    return solveTPS(pts);
+  }
+
+  function render(){
+    svg.innerHTML='';
+    const t=getTransform();
+
+    // 1. ghost original grid (light)
+    for(let r=0;r<=rows;r++){
+      const y=oy0+(oh/rows)*r;
+      svg.appendChild(el('line',{x1:ox0,y1:y,x2:ox0+ow,y2:y,stroke:'#aab4ab','stroke-width':1,'stroke-dasharray':'3 4'}));
+    }
+    for(let c=0;c<=cols;c++){
+      const x=ox0+(ow/cols)*c;
+      svg.appendChild(el('line',{x1:x,y1:oy0,x2:x,y2:oy0+oh,stroke:'#aab4ab','stroke-width':1,'stroke-dasharray':'3 4'}));
+    }
+
+    // 2. warped grid (fine subdivisions so curves show)
+    const SUB=4;
+    const tealLine={stroke:'#0f5d52','stroke-width':1.6,fill:'none','stroke-linejoin':'round'};
+    // horizontal warped lines
+    for(let r=0;r<=rows;r++){
+      let d='';
+      for(let c=0;c<=cols*SUB;c++){
+        const sx=ox0+(ow/(cols*SUB))*c;
+        const sy=oy0+(oh/rows)*r;
+        const [px,py]=applyTransform(t,sx,sy);
+        d+=(c===0?'M':'L')+px.toFixed(1)+' '+py.toFixed(1)+' ';
+      }
+      svg.appendChild(el('path',Object.assign({d},tealLine)));
+    }
+    for(let c=0;c<=cols;c++){
+      let d='';
+      for(let r=0;r<=rows*SUB;r++){
+        const sx=ox0+(ow/cols)*c;
+        const sy=oy0+(oh/(rows*SUB))*r;
+        const [px,py]=applyTransform(t,sx,sy);
+        d+=(r===0?'M':'L')+px.toFixed(1)+' '+py.toFixed(1)+' ';
+      }
+      svg.appendChild(el('path',Object.assign({d},tealLine)));
+    }
+
+    // 3. residual lines + target rings + handles
+    let sumSq=0;
+    pts.forEach((p,i)=>{
+      const [px,py]=applyTransform(t,p.sx,p.sy); // where the source point lands under transform
+      const dx=px-p.tx, dy=py-p.ty;
+      sumSq+=dx*dx+dy*dy;
+
+      // target ring (gold) = where user wants it
+      svg.appendChild(el('circle',{cx:p.tx,cy:p.ty,r:11,fill:'none',stroke:'#d8a23a','stroke-width':2.5}));
+
+      if(showResid){
+        svg.appendChild(el('line',{x1:px,y1:py,x2:p.tx,y2:p.ty,stroke:'#c5482e','stroke-width':1.4,'stroke-dasharray':'3 3',opacity:.7}));
+      }
+      // where it currently lands (small teal)
+      svg.appendChild(el('circle',{cx:px,cy:py,r:3.5,fill:'#0f5d52'}));
+
+      // draggable control handle (red) drawn at target
+      const g=el('g',{class:'handle','data-i':i});
+      g.appendChild(el('circle',{cx:p.tx,cy:p.ty,r:9,fill:'#c5482e',stroke:'#10221f','stroke-width':2}));
+      g.appendChild(el('text',{x:p.tx,y:p.ty+3.5,'text-anchor':'middle','font-size':9,'font-family':'Space Mono, monospace',fill:'#f4ece0','font-weight':700}, ));
+      const label=el('text',{x:p.tx,y:p.ty+3.5,'text-anchor':'middle','font-size':9,'font-family':'monospace',fill:'#f4ece0','font-weight':700});
+      label.textContent=(i+1);
+      g.appendChild(label);
+      svg.appendChild(g);
+    });
+
+    const rmse=Math.sqrt(sumSq/pts.length);
+    document.getElementById('roRmse').textContent=rmse.toFixed(1)+' px';
+    document.getElementById('roMode').textContent= mode==='linear'?'Linear':mode==='affine'?'Affine':'TPS';
+    document.getElementById('roPts').textContent=pts.length;
+
+    updateNote(rmse);
+  }
+
+  function updateNote(rmse){
+    const n=document.getElementById('modeNote');
+    if(mode==='linear'){
+      n.innerHTML='<b>Linear · similarity</b>The map can only shift, rotate and uniformly scale as one rigid block. Shape is preserved, so it usually <em>cannot</em> hit all 3 points at once — watch the red error lines stay nonzero. RMSE almost never reaches 0.';
+    }else if(mode==='affine'){
+      n.innerHTML='<b>Affine</b>Now shear and independent X/Y scaling are allowed — squares can become parallelograms. With exactly 3 points it can hit them all, but lines everywhere stay straight, so it still can\u2019t follow local warping.';
+    }else{
+      n.innerHTML='<b>TPS · thin plate spline</b>The grid bends locally to pass through all 5 points exactly — RMSE \u2248 0. Drag one point far out and watch the grid <em>tear and balloon</em> nearby: that\u2019s the cost of total flexibility. One bad point ruins its neighbourhood.';
+    }
+  }
+
+  /* ---------- DRAG ---------- */
+  function pt2svg(evt){
+    const rect=svg.getBoundingClientRect();
+    const cx=(evt.touches?evt.touches[0].clientX:evt.clientX);
+    const cy=(evt.touches?evt.touches[0].clientY:evt.clientY);
+    return {x:(cx-rect.left)/rect.width*W, y:(cy-rect.top)/rect.height*H};
+  }
+  function startDrag(e){
+    const h=e.target.closest('.handle');
+    if(!h) return;
+    dragIdx=+h.getAttribute('data-i');
+    e.preventDefault();
+  }
+  function moveDrag(e){
+    if(dragIdx<0) return;
+    const p=pt2svg(e);
+    pts[dragIdx].tx=Math.max(10,Math.min(W-10,p.x));
+    pts[dragIdx].ty=Math.max(10,Math.min(H-10,p.y));
+    render();
+    e.preventDefault();
+  }
+  function endDrag(){dragIdx=-1;}
+
+  svg.addEventListener('mousedown',startDrag);
+  window.addEventListener('mousemove',moveDrag);
+  window.addEventListener('mouseup',endDrag);
+  svg.addEventListener('touchstart',startDrag,{passive:false});
+  window.addEventListener('touchmove',moveDrag,{passive:false});
+  window.addEventListener('touchend',endDrag);
+
+  /* ---------- CONTROLS ---------- */
+  document.getElementById('modeSeg').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    [...e.currentTarget.children].forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    mode=b.dataset.mode;
+    pts=makePts(mode);
+    render();
+  });
+  document.getElementById('resetBtn').addEventListener('click',()=>{pts=makePts(mode);render();});
+  document.getElementById('showResid').addEventListener('change',e=>{showResid=e.target.checked;render();});
+
+  // small initial nudge so it's visibly "doing something"
+  pts[1].tx+=40; pts[1].ty-=18;
+  pts[2].tx-=22; pts[2].ty+=30;
+  render();
+})();
+</script>
+</body>
+</html>
