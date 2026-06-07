@@ -1002,7 +1002,15 @@
         // just-issued admin overrides, and cross-device purchases). Mirrors the
         // three-source filter in getPurchaseStatus/getActiveProductIntIds — if any
         // source has a live entry, we consider it an unlock.
-        async function checkFirebasePurchaseEntry(productId) {
+        // skipBackgroundSync: when true (passed only by the zoom paywall re-check), the
+        // fire-and-forget fetchPurchaseStatus(true) below is NOT run on a hit. That server
+        // re-fetch can, while the server's getPurchaseStatus is still lagging RTDB, clear
+        // and repopulate activePurchases WITHOUT the just-confirmed entry and re-clamp zoom
+        // to 14 — a brief snap right after this fresh client read unlocked the map. We already
+        // cached the entry (activePurchases.set) and refreshed the edge token, so the re-fetch
+        // is redundant here; other callers keep it (default false). Safety unchanged: we only
+        // reach this on a non-refunded, unexpired, authoritative grant.
+        async function checkFirebasePurchaseEntry(productId, skipBackgroundSync) {
             if (!currentUser || currentUser.isAnonymous || !currentUser.email || !productId) return false;
             try {
                 const emailKey = currentUser.email.replace(/\./g, ',');
@@ -1063,8 +1071,11 @@
                 // Await the cookie refresh — otherwise the caller will re-trigger tile
                 // loads before the new JWT is installed, and tiles 403 at the edge.
                 try { await fetchCloudFrontCookies(); } catch (e) { /* non-fatal; fall back to TTL-based refresh */ }
-                // Full sync in background (covers other purchases + keeps activePurchases honest)
-                fetchPurchaseStatus(true);
+                // Full sync in background (covers other purchases + keeps activePurchases honest).
+                // Skipped for the zoom paywall re-check (see skipBackgroundSync above) to avoid a
+                // lagging-server re-clamp right after this read unlocked the map; other sync
+                // triggers (auth, region change, tab focus, realtime listener) keep it honest.
+                if (!skipBackgroundSync) fetchPurchaseStatus(true);
                 return true;
             } catch (e) {
                 console.error('checkFirebasePurchaseEntry error:', e);
@@ -4667,7 +4678,9 @@
                                     _lastFirebaseCheckPid = pid;
                                     _lastFirebaseCheckTime = nowMs;
                                     var ownedFresh = false;
-                                    try { ownedFresh = await checkFirebasePurchaseEntry(pid); }
+                                    // skipBackgroundSync=true: this is the lag-rescue path, so don't
+                                    // let the redundant server re-fetch re-clamp zoom right after we unlock.
+                                    try { ownedFresh = await checkFirebasePurchaseEntry(pid, true); }
                                     catch (e) { /* network failed — fall through to paywall */ }
                                     if (ownedFresh) {
                                         var ov = document.getElementById('zoom-restrict-overlay');
