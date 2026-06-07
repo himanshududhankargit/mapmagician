@@ -4,7 +4,7 @@
         // App version stamp — rendered into the Settings panel header so we can confirm at a
         // glance that the freshly-deployed JS (not a stale cached copy) is the one running.
         // BUMP THIS by one on every change you deploy (001 -> 002 -> ...).
-        var APP_VERSION = '001';
+        var APP_VERSION = '003';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -1007,7 +1007,15 @@
         // just-issued admin overrides, and cross-device purchases). Mirrors the
         // three-source filter in getPurchaseStatus/getActiveProductIntIds — if any
         // source has a live entry, we consider it an unlock.
-        async function checkFirebasePurchaseEntry(productId) {
+        // skipBackgroundSync: when true (passed only by the zoom paywall re-check), the
+        // fire-and-forget fetchPurchaseStatus(true) below is NOT run on a hit. That server
+        // re-fetch can, while the server's getPurchaseStatus is still lagging RTDB, clear
+        // and repopulate activePurchases WITHOUT the just-confirmed entry and re-clamp zoom
+        // to 14 — a brief snap right after this fresh client read unlocked the map. We already
+        // cached the entry (activePurchases.set) and refreshed the edge token, so the re-fetch
+        // is redundant here; other callers keep it (default false). Safety unchanged: we only
+        // reach this on a non-refunded, unexpired, authoritative grant.
+        async function checkFirebasePurchaseEntry(productId, skipBackgroundSync) {
             if (!currentUser || currentUser.isAnonymous || !currentUser.email || !productId) return false;
             try {
                 const emailKey = currentUser.email.replace(/\./g, ',');
@@ -1023,9 +1031,13 @@
                 var webRaw = webSnap.val();
                 if (webRaw) {
                     var webExp = typeof webRaw === 'number' ? webRaw : (webRaw.expiry || 0);
-                    var webPlan = (typeof webRaw === 'object') ? (webRaw.plan || '') : '';
+                    // Default empty/missing/number-format plan to 'web' and accept it —
+                    // matches the server getPurchaseStatus, which treats a web node with no
+                    // plan as 'web'. The old `webPlan !== ''` guard wrongly refused those,
+                    // so the re-check could fail to rescue a genuinely-owned legacy entry.
+                    var webPlan = (typeof webRaw === 'object') ? (webRaw.plan || 'web') : 'web';
                     var webRef = (typeof webRaw === 'object') ? (webRaw.refunded === true) : false;
-                    if (!webRef && webExp > now && webPlan !== 'onetime' && webPlan !== '') {
+                    if (!webRef && webExp > now && webPlan !== 'onetime') {
                         entry = { expiry: webExp, plan: webPlan };
                     }
                 }
@@ -1050,6 +1062,12 @@
                     }
                 }
 
+                // NOTE: active subscriptions need no separate read here — the
+                // subscription.charged/confirm flow writes the granted expiry through to
+                // GISWebOneTimePurchases with plan:"subscription" (functions/index.js:1717),
+                // so the web read above already catches them. The only uncovered case is the
+                // 3-day renewing bridge with a stale local cache, which self-heals via the
+                // purchase listener; not worth an extra per-paywall read.
                 if (!entry) return false;
 
                 // Valid entry found — update in-memory cache and refresh mmp-token so
@@ -1058,8 +1076,11 @@
                 // Await the cookie refresh — otherwise the caller will re-trigger tile
                 // loads before the new JWT is installed, and tiles 403 at the edge.
                 try { await fetchCloudFrontCookies(); } catch (e) { /* non-fatal; fall back to TTL-based refresh */ }
-                // Full sync in background (covers other purchases + keeps activePurchases honest)
-                fetchPurchaseStatus(true);
+                // Full sync in background (covers other purchases + keeps activePurchases honest).
+                // Skipped for the zoom paywall re-check (see skipBackgroundSync above) to avoid a
+                // lagging-server re-clamp right after this read unlocked the map; other sync
+                // triggers (auth, region change, tab focus, realtime listener) keep it honest.
+                if (!skipBackgroundSync) fetchPurchaseStatus(true);
                 return true;
             } catch (e) {
                 console.error('checkFirebasePurchaseEntry error:', e);
@@ -1196,6 +1217,9 @@
                             lastCheckedRegionId = null; // force re-evaluate
                             stickyTile = null;
                             stickyDistrict = null;
+                            // Clear the paywall re-check debounce so an immediate re-zoom after
+                            // paying always does a fresh read instead of being skipped for ~2s.
+                            _lastFirebaseCheckPid = null;
                             updateStatus('Region activated!');
                             // If a village purchase was pending, show village dialog now
                             if (pendingVillageAfterDP) {
@@ -1646,7 +1670,6 @@
         // queued a fresh addListenerOnce('idle',...) and re-scanned all district
         // polygons; a 30-tick gesture queued 30 handlers that all fired at gesture end.
         let _pendingLockedIdle = false;
-        let _unlockedByFirebase = false;
 
         // Village-boundary geojson (ported from Android pipeline)
         const MIN_ZOOM_FOR_GEOJSON = 12;
@@ -4618,32 +4641,6 @@
                     setMapMaxZoom(MAX_FREE_ZOOM);
                     dialogTriggeredByRegionEntry = true;
 
-                    // Parallel Firebase re-check — safety net for cross-device purchases (e.g.
-                    // bought on the Android app) where the local hasPurchase() cache isn't synced.
-                    // _unlockedByFirebase is module-scoped so the single idle listener below can
-                    // see a late-arriving unlock even if it was registered on an earlier tick.
-                    // Debounced: skip if same productId checked within 2s (prevents rapid zoom spam).
-                    var _fbNow = Date.now();
-                    if (district.productPurchaseID !== _lastFirebaseCheckPid || _fbNow - _lastFirebaseCheckTime > 2000) {
-                    _lastFirebaseCheckPid = district.productPurchaseID;
-                    _lastFirebaseCheckTime = _fbNow;
-                    checkFirebasePurchaseEntry(district.productPurchaseID).then(function(found) {
-                        if (!found) return;
-                        _unlockedByFirebase = true;
-                        var ov = document.getElementById('zoom-restrict-overlay');
-                        if (ov && ov.classList.contains('open')) {
-                            ov.classList.remove('open');
-                            enableMapInteraction();
-                        }
-                        setMapMaxZoom(21);
-                        showUnlockToast(district.districtName);
-                        lastCheckedRegionId = null;
-                        stickyTile = null;
-                        stickyDistrict = null;
-                        checkRegionOnMove();
-                    }).catch(function() { /* network failed — defer to the idle handler */ });
-                    } // end debounce guard
-
                     // Defer the dialog until the camera animation settles at 14. zoom_changed
                     // fires on the input tick with the target zoom, but the visual animation
                     // takes another ~150–300 ms — showing the dialog now would catch the map
@@ -4651,23 +4648,56 @@
                     // Guarded so only one idle listener is queued per gesture, not per tick.
                     if (!_pendingLockedIdle) {
                         _pendingLockedIdle = true;
-                        _unlockedByFirebase = false;
                         google.maps.event.addListenerOnce(map, 'idle', function() {
                             _pendingLockedIdle = false;
-                            if (_unlockedByFirebase) return;
                             if (map.getZoom() < MAX_FREE_ZOOM) return;
                             var stillLocked = findDistrictAtCenterCached();
                             if (!stillLocked) return;
                             if (hasPurchase(stillLocked.productPurchaseID)) return;
-                            // If the user owns a confused-partner region (e.g. owns Pune,
-                            // zooming into PMRDA), clear up the confusion first, then the
-                            // paywall. Shown on every confused zoom-in (no suppression).
-                            var owned = ownedConfusionPartner(stillLocked.productPurchaseID);
+                            var pid = stillLocked.productPurchaseID;
+
+                            // Show the paywall IMMEDIATELY — no network wait, so it never feels
+                            // laggy. If the user owns a confused-partner region (owns Pune, zooming
+                            // into PMRDA), clear up the confusion first, then the paywall.
+                            var owned = ownedConfusionPartner(pid);
                             if (owned) {
                                 showRegionMismatchDialog(stillLocked, owned);
                             } else {
                                 showZoomRestrictionDialog(stillLocked);
                             }
+
+                            // Then re-check Firebase fresh in the BACKGROUND and auto-dismiss the
+                            // paywall if the user actually owns this region. The local hasPurchase()
+                            // cache can lag a just-completed purchase (the server getPurchaseStatus
+                            // that fills it races RTDB replication on its own backend connection), so
+                            // confirm against Firebase directly — a client read is fresher than the
+                            // server function. This only ever ADDS an unlock; a genuine non-owner
+                            // keeps the paywall, so it can never wrongly grant access.
+                            //
+                            // READS KEPT MINIMAL — at most one check per 2s per region (debounced),
+                            // and none at all for an owner whose cache is already synced (returned
+                            // above). Each check reads only this user's own nodes for this one pid.
+                            var nowMs = Date.now();
+                            if (pid === _lastFirebaseCheckPid && nowMs - _lastFirebaseCheckTime <= 2000) return;
+                            _lastFirebaseCheckPid = pid;
+                            _lastFirebaseCheckTime = nowMs;
+                            // skipBackgroundSync=true: this is the lag-rescue path, so don't let the
+                            // redundant server re-fetch re-clamp zoom right after we unlock.
+                            checkFirebasePurchaseEntry(pid, true).then(function(ownedFresh) {
+                                if (!ownedFresh) return;                     // genuinely not owned — paywall stays
+                                if (map.getZoom() < MAX_FREE_ZOOM) return;  // user zoomed out meanwhile
+                                var ov = document.getElementById('zoom-restrict-overlay');
+                                if (ov && ov.classList.contains('open')) {
+                                    ov.classList.remove('open');
+                                    enableMapInteraction();
+                                }
+                                setMapMaxZoom(21);
+                                showUnlockToast(stillLocked.districtName);
+                                lastCheckedRegionId = null;
+                                stickyTile = null;
+                                stickyDistrict = null;
+                                checkRegionOnMove();
+                            }).catch(function() { /* network failed — paywall stays, the correct default */ });
                         });
                     }
                 } else if (z < MAX_FREE_ZOOM && overlay.classList.contains('open')) {

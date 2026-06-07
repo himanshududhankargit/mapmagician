@@ -4,7 +4,7 @@
         // App version stamp — rendered into the Settings panel header so we can confirm at a
         // glance that the freshly-deployed JS (not a stale cached copy) is the one running.
         // BUMP THIS by one on every change you deploy (001 -> 002 -> ...).
-        var APP_VERSION = '002';
+        var APP_VERSION = '003';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
