@@ -1654,6 +1654,9 @@
         // queued a fresh addListenerOnce('idle',...) and re-scanned all district
         // polygons; a 30-tick gesture queued 30 handlers that all fired at gesture end.
         let _pendingLockedIdle = false;
+        // Re-entrancy guard for the async paywall idle callback (see zoom_changed): only one
+        // callback may run the read/paywall section at a time, since the await yields control.
+        let _idlePaywallActing = false;
 
         // Village-boundary geojson (ported from Android pipeline)
         const MIN_ZOOM_FOR_GEOJSON = 12;
@@ -4639,51 +4642,62 @@
                             if (!stillLocked) return;
                             if (hasPurchase(stillLocked.productPurchaseID)) return;
                             var pid = stillLocked.productPurchaseID;
-                            // Authoritative fresh client read BEFORE showing the paywall — the
-                            // local hasPurchase() cache can lag a just-completed purchase (the
-                            // server getPurchaseStatus that fills it races RTDB replication on
-                            // its own backend connection), so confirm against Firebase directly;
-                            // a client read is fresher than the server function, and this only
-                            // ever ADDS an unlock (can't re-paywall a sub the fast-path covers).
-                            //
-                            // READS KEPT MINIMAL — this single check REPLACES the old eager
-                            // zoom-tick re-check, so there is no double read. It runs at most
-                            // once per 2s per region (debounced) and not at all for an owner
-                            // whose cache is already synced (returned above); each check reads
-                            // only this user's own nodes for this one productId.
-                            var nowMs = Date.now();
-                            if (pid !== _lastFirebaseCheckPid || nowMs - _lastFirebaseCheckTime > 2000) {
-                                _lastFirebaseCheckPid = pid;
-                                _lastFirebaseCheckTime = nowMs;
-                                var ownedFresh = false;
-                                try { ownedFresh = await checkFirebasePurchaseEntry(pid); }
-                                catch (e) { /* network failed — fall through to paywall */ }
-                                if (ownedFresh) {
-                                    var ov = document.getElementById('zoom-restrict-overlay');
-                                    if (ov && ov.classList.contains('open')) {
-                                        ov.classList.remove('open');
-                                        enableMapInteraction();
+                            // Re-entrancy guard: the await below yields control, so a second zoom
+                            // gesture during the read could queue and run another idle callback
+                            // concurrently. Let only one act — otherwise a just-paid user could see
+                            // a transient paywall flash from the second callback before the first
+                            // callback's read resolves and unlocks. (finally resets on every path.)
+                            if (_idlePaywallActing) return;
+                            _idlePaywallActing = true;
+                            try {
+                                // Authoritative fresh client read BEFORE showing the paywall — the
+                                // local hasPurchase() cache can lag a just-completed purchase (the
+                                // server getPurchaseStatus that fills it races RTDB replication on
+                                // its own backend connection), so confirm against Firebase directly;
+                                // a client read is fresher than the server function, and this only
+                                // ever ADDS an unlock (can't re-paywall a sub the fast-path covers).
+                                //
+                                // READS KEPT MINIMAL — this single check REPLACES the old eager
+                                // zoom-tick re-check, so there is no double read. It runs at most
+                                // once per 2s per region (debounced) and not at all for an owner
+                                // whose cache is already synced (returned above); each check reads
+                                // only this user's own nodes for this one productId.
+                                var nowMs = Date.now();
+                                if (pid !== _lastFirebaseCheckPid || nowMs - _lastFirebaseCheckTime > 2000) {
+                                    _lastFirebaseCheckPid = pid;
+                                    _lastFirebaseCheckTime = nowMs;
+                                    var ownedFresh = false;
+                                    try { ownedFresh = await checkFirebasePurchaseEntry(pid); }
+                                    catch (e) { /* network failed — fall through to paywall */ }
+                                    if (ownedFresh) {
+                                        var ov = document.getElementById('zoom-restrict-overlay');
+                                        if (ov && ov.classList.contains('open')) {
+                                            ov.classList.remove('open');
+                                            enableMapInteraction();
+                                        }
+                                        setMapMaxZoom(21);
+                                        showUnlockToast(stillLocked.districtName);
+                                        lastCheckedRegionId = null;
+                                        stickyTile = null;
+                                        stickyDistrict = null;
+                                        checkRegionOnMove();
+                                        return;
                                     }
-                                    setMapMaxZoom(21);
-                                    showUnlockToast(stillLocked.districtName);
-                                    lastCheckedRegionId = null;
-                                    stickyTile = null;
-                                    stickyDistrict = null;
-                                    checkRegionOnMove();
-                                    return;
+                                    // Re-confirm nothing changed while we awaited the read.
+                                    if (hasPurchase(pid)) return;
+                                    if (map.getZoom() < MAX_FREE_ZOOM) return;
                                 }
-                                // Re-confirm nothing changed while we awaited the read.
-                                if (hasPurchase(pid)) return;
-                                if (map.getZoom() < MAX_FREE_ZOOM) return;
-                            }
-                            // Not owned (or re-checked within the last 2s and found nothing) —
-                            // show the paywall. If the user owns a confused-partner region (owns
-                            // Pune, zooming into PMRDA), clear up the confusion first.
-                            var owned = ownedConfusionPartner(pid);
-                            if (owned) {
-                                showRegionMismatchDialog(stillLocked, owned);
-                            } else {
-                                showZoomRestrictionDialog(stillLocked);
+                                // Not owned (or re-checked within the last 2s and found nothing) —
+                                // show the paywall. If the user owns a confused-partner region (owns
+                                // Pune, zooming into PMRDA), clear up the confusion first.
+                                var owned = ownedConfusionPartner(pid);
+                                if (owned) {
+                                    showRegionMismatchDialog(stillLocked, owned);
+                                } else {
+                                    showZoomRestrictionDialog(stillLocked);
+                                }
+                            } finally {
+                                _idlePaywallActing = false;
                             }
                         });
                     }
