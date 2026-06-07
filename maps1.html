@@ -662,6 +662,7 @@
         #zoom-restrict-overlay .zoom-dialog { max-height:calc(100dvh - 24px); display:flex; flex-direction:column; }
         #zoom-restrict-overlay .pd-body { overflow-y:auto; min-height:0; }
         #zoom-restrict-overlay .pd-footer { flex-shrink:0; }
+        #zoom-restrict-overlay .pd-cancel { flex-shrink:0; }
         .zoom-dialog h3 { margin:0 0 10px; font-size:20px; color:#212121; font-weight:700; }
         .zoom-dialog-desc { margin:0 0 16px; font-size:13px; color:#555; line-height:1.6; }
         .zoom-dialog-region { background:#E0F2F1; color:#00695C; padding:10px 16px; border-radius:8px; font-size:14px; font-weight:600; margin-bottom:16px; text-align:center; }
@@ -1682,7 +1683,7 @@
                             <div class="pd-card-benefits">
                                 <div class="pd-card-benefit" id="pd-sub-benefit-cost">&#10003; Lower weekly cost</div>
                                 <div class="pd-card-benefit">&#10003; Continuous access to maps</div>
-                                <div class="pd-card-benefit">&#10003; Works in any web browser (not the Android app)</div>
+                                <div class="pd-card-benefit">&#10003; Works in any web browser</div>
                                 <div class="pd-card-benefit">&#10003; Best for regular users</div>
                             </div>
                             <button class="pd-card-cta" id="zoom-restrict-sub-action" style="background:#4CAF50;">Subscribe Now</button>
@@ -1696,7 +1697,7 @@
                             <div class="pd-card-benefits">
                                 <div class="pd-card-benefit">&#10003; Non-recurring payment</div>
                                 <div class="pd-card-benefit">&#10003; 7-day full access</div>
-                                <div class="pd-card-benefit">&#10003; Works in any web browser (not the Android app)</div>
+                                <div class="pd-card-benefit">&#10003; Works in any web browser</div>
                                 <div class="pd-card-benefit">&#10003; Best for occasional use</div>
                             </div>
                             <button class="pd-card-cta" id="zoom-restrict-action" style="background:#2196F3;">Get 7-Day Access</button>
@@ -1712,8 +1713,9 @@
                 <!-- Hidden price containers for JS price loading (not displayed) -->
                 <div id="zoom-restrict-price" style="display:none;"></div>
                 <div id="zoom-restrict-sub-price" style="display:none;"></div>
-                <button class="pd-cancel" id="zoom-restrict-cancel">Not now</button>
             </div>
+            <!-- Pinned dismiss: sits between body and footer so scroll can't hide it -->
+            <button class="pd-cancel" id="zoom-restrict-cancel">Not now</button>
             <!-- Footer: mobile hint + support -->
             <div class="pd-footer">
                 <div class="pd-app-hints-row" id="pd-app-hints-scroll">

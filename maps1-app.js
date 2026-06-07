@@ -2635,15 +2635,16 @@
             infoBox.style.borderLeft = '3px solid #f9a825';
             infoBox.style.padding = '12px 14px';
             desc.style.color = '';
+            // Drop the redundant "Access high-resolution…" line in the purchase dialog
+            // (it duplicates the title). showNoDataDialog re-shows this shared span.
+            desc.style.display = 'none';
 
             if (district) {
                 title.textContent = 'Web Unlock ' + district.districtName;
-                desc.textContent = 'Access high-resolution development plan maps for ' + district.districtName + '.';
                 regionInfo.textContent = district.districtName + ' Region';
                 regionInfo.style.display = 'block';
             } else {
                 title.textContent = 'Web Unlock Premium Maps';
-                desc.textContent = 'Access high-resolution development plan maps directly in your browser.';
                 regionInfo.style.display = 'none';
             }
 
@@ -2878,6 +2879,7 @@
             const supportBtn = document.getElementById('zoom-restrict-support');
 
             title.textContent = 'No Map Data Available';
+            desc.style.display = '';  // re-show shared span (purchase dialog hides it)
             desc.textContent = 'There are no development plan maps available for this area. Browse available regions to explore maps.';
             // Hide the web-only purchase notice + amber styling — irrelevant on the no-data dialog
             document.getElementById('zoom-restrict-weblabel').style.display = 'none';
