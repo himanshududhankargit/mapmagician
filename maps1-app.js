@@ -3,8 +3,10 @@
 
         // App version stamp — rendered into the Settings panel header so we can confirm at a
         // glance that the freshly-deployed JS (not a stale cached copy) is the one running.
-        // BUMP THIS by one on every change you deploy (001 -> 002 -> ...).
-        var APP_VERSION = '003';
+        // Global build counter (like Android versionCode): +1 on EVERY push; only the file
+        // actually deployed in that push gets the new number. maps1 (staging) and maps (live)
+        // therefore hold the build number of their own most recent deploy. Next push -> 004.
+        var APP_VERSION = '002';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
