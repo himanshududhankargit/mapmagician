@@ -5,8 +5,10 @@
         // glance that the freshly-deployed JS (not a stale cached copy) is the one running.
         // Global build counter (like Android versionCode): +1 on EVERY push; only the file
         // actually deployed in that push gets the new number. maps1 (staging) and maps (live)
-        // therefore hold the build number of their own most recent deploy. Next push -> 004.
-        var APP_VERSION = '002';
+        // therefore hold the build number of their own most recent deploy. A staging (maps1) bump
+        // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
+        // monotonic across both files. Live was 003, staging 002 -> this push is 004. Next -> 005.
+        var APP_VERSION = '004';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -4630,8 +4632,11 @@
                     // Check if we're in a village area — allow zoom for village purchase via markers
                     var villageHere = findVillageAtCenterCached();
                     if (villageHere) {
-                        // In village area — unlock zoom so user can see markers and purchase
-                        setMapMaxZoom(MAX_ZOOM_FOR_VILLAGEMAP);
+                        // In village area — unlock zoom so user can see markers and purchase.
+                        // Uniform 21 ceiling (same as purchased-region paths) so each plan can be
+                        // zoomed to its own DB MaxZoom; per-link tile gating in CanvasMapType.getTile
+                        // stops actual tile fetches above each sheet's max (Solapur central → 19).
+                        setMapMaxZoom(21);
                         return;
                     }
                     // At zoom limit but no tile data here — lock zoom and show "no data" message
