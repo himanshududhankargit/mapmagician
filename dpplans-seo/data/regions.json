@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-10T16:40:33.867Z",
+  "generatedAt": "2026-06-10T16:57:07.464Z",
   "count": 41,
   "regions": [
     {
@@ -28177,8 +28177,8 @@
           "name": "KALYAN DOMBIVALI MUNCIPAL CORPORATION/KALYAN DOMBIWALI MUNCIPAL CORPORATION, Tal: Kalyan",
           "lat": 19.23102543959903,
           "lng": 73.13960066582919,
-          "displayName": "KALYAN DOMBIVALI MUNCIPAL CORPORATION",
-          "slug": "kalyan-dombivali-muncipal-corporation-kalyan-dombiwali-muncipal-corporation-tal-kalyan",
+          "displayName": "Kalyan-Dombivli",
+          "slug": "kalyan-dombivli",
           "skipPage": false,
           "distanceFromHqKm": 15.9,
           "bearingFromHq": "east"

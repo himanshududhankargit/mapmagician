@@ -48,6 +48,19 @@ const DISPLAY_NAME_ALIASES = {
   'beed region': 'Beed',
 };
 
+// Canonical overrides for specific messy sub-location names whose raw villagesJSON value
+// would otherwise produce a long/misspelled display name + URL slug (e.g. composite
+// "A/B, Tal: X" municipal-corporation rows). Matched against the raw name; sets BOTH the
+// display name and the slug. Keep this list tiny and specific.
+const LOCATION_ALIASES = [
+  { test: /kalyan.*dombi.*muncipal/i, name: 'Kalyan-Dombivli' },
+];
+function locationAlias(rawName) {
+  const s = String(rawName || '');
+  for (const a of LOCATION_ALIASES) if (a.test.test(s)) return a.name;
+  return null;
+}
+
 function readJson(p) {
   return JSON.parse(fs.readFileSync(p, 'utf8'));
 }
@@ -167,8 +180,9 @@ function attachVillageSlugs(region) {
   const regionShortSlug = slugify(region.shortName);
   const seen = new Map(); // baseSlug -> count
   for (const v of region.villages) {
-    v.displayName = cleanLocationDisplayName(v.name);
-    const cleaned = String(v.name).replace(/\([^)]*\)/g, '').trim() || v.name;
+    const alias = locationAlias(v.name);
+    v.displayName = alias || cleanLocationDisplayName(v.name);
+    const cleaned = alias || (String(v.name).replace(/\([^)]*\)/g, '').trim() || v.name);
     const base = slugify(cleaned);
     if (!base) { v.slug = ''; v.skipPage = true; continue; }
     if (base === regionShortSlug) { v.slug = base; v.skipPage = true; continue; }
