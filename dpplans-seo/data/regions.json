@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-10T16:57:07.464Z",
+  "generatedAt": "2026-06-10T17:11:18.723Z",
   "count": 41,
   "regions": [
     {
@@ -1259,8 +1259,8 @@
           "name": "Kasba Badnera, Tal: Amaravati",
           "lat": 20.8649631827193,
           "lng": 77.73314166863226,
-          "displayName": "Kasba Badnera",
-          "slug": "kasba-badnera-tal-amaravati",
+          "displayName": "Badnera",
+          "slug": "badnera",
           "skipPage": false,
           "distanceFromHqKm": 43,
           "bearingFromHq": "south-east"
@@ -8394,8 +8394,8 @@
           "name": "Kasbe Ghodbandar, Tal: Thane",
           "lat": 19.281070561820925,
           "lng": 72.88554636503814,
-          "displayName": "Kasbe Ghodbandar",
-          "slug": "kasbe-ghodbandar-tal-thane",
+          "displayName": "Ghodbunder",
+          "slug": "ghodbunder",
           "skipPage": false,
           "distanceFromHqKm": 2.3,
           "bearingFromHq": "east"
@@ -12403,7 +12403,7 @@
           "lat": 21.244127584636608,
           "lng": 79.10442879097326,
           "displayName": "Koradi",
-          "slug": "koradi-koradi-tal-kamptee",
+          "slug": "koradi",
           "skipPage": false,
           "distanceFromHqKm": 9.3,
           "bearingFromHq": "north-west"
@@ -21675,8 +21675,8 @@
           "name": "Jejuri Nagar Parishad",
           "lat": 18.27711504600255,
           "lng": 74.16253806335762,
-          "displayName": "Jejuri Nagar Parishad",
-          "slug": "jejuri-nagar-parishad",
+          "displayName": "Jejuri",
+          "slug": "jejuri",
           "skipPage": false,
           "distanceFromHqKm": 44.2,
           "bearingFromHq": "south-east"
@@ -29381,8 +29381,8 @@
           "name": "Buvanagiri",
           "lat": 17.49856,
           "lng": 78.91002,
-          "displayName": "Buvanagiri",
-          "slug": "buvanagiri",
+          "displayName": "Bhongir",
+          "slug": "bhongir",
           "skipPage": false,
           "distanceFromHqKm": 49,
           "bearingFromHq": "east"
@@ -29511,8 +29511,8 @@
           "name": "Medchal Qutubullapur",
           "lat": 17.64064,
           "lng": 78.46674,
-          "displayName": "Medchal Qutubullapur",
-          "slug": "medchal-qutubullapur",
+          "displayName": "Medchal",
+          "slug": "medchal",
           "skipPage": false,
           "distanceFromHqKm": 26.2,
           "bearingFromHq": "north"

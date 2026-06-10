@@ -54,6 +54,12 @@ const DISPLAY_NAME_ALIASES = {
 // display name and the slug. Keep this list tiny and specific.
 const LOCATION_ALIASES = [
   { test: /kalyan.*dombi.*muncipal/i, name: 'Kalyan-Dombivli' },
+  { test: /buvanagiri|bhuvanagiri|bhongir/i, name: 'Bhongir' },
+  { test: /medchal/i, name: 'Medchal' },
+  { test: /jejuri/i, name: 'Jejuri' },
+  { test: /koradi/i, name: 'Koradi' },
+  { test: /kasba badnera/i, name: 'Badnera' },
+  { test: /kasbe ghodbandar/i, name: 'Ghodbunder' },
 ];
 function locationAlias(rawName) {
   const s = String(rawName || '');
