@@ -106,6 +106,23 @@ function buildSlug(cleaned) {
   return `${base}-dp-plan`;
 }
 
+// Some villagesJSON rows aren't real places — they're polygon/classification labels
+// ("Reserved Forest", "Tank Water Limit", "Sea Sand, Mud & Rocks"), placeholder tokens
+// ("GAP", "URBAN", "null"), or blank. They must never become (even noindex) pages.
+const NON_PLACE_EXACT = new Set([
+  'null', 'undefined', 'gap', 'urban', 'top', 'cantonment', 'core area', 'hyderabad core area',
+]);
+const NON_PLACE_CONTAINS = ['reserved forest', 'protected forest', 'tank water limit', 'sea sand'];
+function isNonPlace(rawName) {
+  // Normalize exactly like the display name (strips "/", ", Tal: X", parens, brackets),
+  // so labels like "GAP, Tal: Haveli" or "null, Tal: Pen" are caught. cleanLocationDisplayName
+  // is a hoisted function declaration, so calling it here (before its definition) is fine.
+  const clean = cleanLocationDisplayName(rawName).toLowerCase();
+  if (!clean) return true;
+  if (NON_PLACE_EXACT.has(clean)) return true;
+  return NON_PLACE_CONTAINS.some(s => clean.includes(s));
+}
+
 // Parse "Name = lat, lng" lines from villagesJSON.
 function parseVillages(blob) {
   if (!blob) return [];
@@ -120,7 +137,9 @@ function parseVillages(blob) {
     const lat = parseFloat(m[1]);
     const lng = parseFloat(m[3]);
     if (!isFinite(lat) || !isFinite(lng)) continue;
-    out.push({ name: namePart.trim(), lat, lng });
+    const name = namePart.trim();
+    if (isNonPlace(name)) continue;   // drop null/blank/junk-label rows
+    out.push({ name, lat, lng });
   }
   return out;
 }
@@ -135,7 +154,8 @@ function cleanLocationDisplayName(raw) {
   let s = String(raw || '');
   s = s.split('/')[0];
   s = s.split(/,\s*Tal[:.]/i)[0];
-  s = s.replace(/\([^)]*\)/g, '');
+  s = s.replace(/\([^)]*\)/g, '');     // balanced parentheticals
+  s = s.replace(/[()\[\]{}]/g, '');    // residual stray brackets so titles read clean
   s = s.replace(/\s+/g, ' ').trim();
   return s || String(raw || '').trim();
 }

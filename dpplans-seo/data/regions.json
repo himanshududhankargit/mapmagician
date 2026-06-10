@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-10T15:50:14.003Z",
+  "generatedAt": "2026-06-10T16:40:33.867Z",
   "count": 41,
   "regions": [
     {
@@ -2624,7 +2624,7 @@
           "name": "Chanda khas Raiyyat (Chandrapur (MCI)), Tal: Chandrapur",
           "lat": 19.948676359101352,
           "lng": 79.29156410823465,
-          "displayName": "Chanda khas Raiyyat )",
+          "displayName": "Chanda khas Raiyyat",
           "slug": "chanda-khas-raiyyat-tal-chandrapur",
           "skipPage": false,
           "distanceFromHqKm": 1.4,
@@ -2644,7 +2644,7 @@
           "name": "Deoli Govindpur  tukum (Chandrapur (MCI))/Deoli Gowindpur  tukum (Chandrapur (MCI)), Tal: Chandrapur",
           "lat": 19.97624600124602,
           "lng": 79.29794828969682,
-          "displayName": "Deoli Govindpur tukum )",
+          "displayName": "Deoli Govindpur tukum",
           "slug": "deoli-govindpur-tukum-deoli-gowindpur-tukum-tal-chandrapur",
           "skipPage": false,
           "distanceFromHqKm": 2.2,
@@ -2664,7 +2664,7 @@
           "name": "Govindpur Rith (Chandrapur (MCI))/Gowindpur Rith (Chandrapur (MCI)), Tal: Chandrapur",
           "lat": 19.961934164076872,
           "lng": 79.2807000584287,
-          "displayName": "Govindpur Rith )",
+          "displayName": "Govindpur Rith",
           "slug": "govindpur-rith-gowindpur-rith-tal-chandrapur",
           "skipPage": false,
           "distanceFromHqKm": 2.3,
@@ -2674,7 +2674,7 @@
           "name": "Mana (Chandrapur (MCI)), Tal: Chandrapur",
           "lat": 19.91201473973575,
           "lng": 79.30036287085865,
-          "displayName": "Mana )",
+          "displayName": "Mana",
           "slug": "mana-tal-chandrapur",
           "skipPage": false,
           "distanceFromHqKm": 5,
@@ -2694,7 +2694,7 @@
           "name": "Wadgaon (Chandrapur (MCI))/Vadgaon (Chandrapur (MCI)), Tal: Chandrapur",
           "lat": 19.98572489380308,
           "lng": 79.27799318760778,
-          "displayName": "Wadgaon )",
+          "displayName": "Wadgaon",
           "slug": "wadgaon-vadgaon-tal-chandrapur",
           "skipPage": false,
           "distanceFromHqKm": 4.1,
@@ -3966,7 +3966,7 @@
           "name": "Ambetarakhar(Navi Mum (Panvel))/Ambetarakhar(Nawi Mum (Panwel)), Tal: Panvel",
           "lat": 19.031784566572767,
           "lng": 73.10629286701987,
-          "displayName": "Ambetarakhar)",
+          "displayName": "Ambetarakhar",
           "slug": "ambetarakhar-ambetarakhar-tal-panvel",
           "skipPage": false,
           "distanceFromHqKm": 13,
@@ -3986,7 +3986,7 @@
           "name": "Asudgaon(Navi Mum (Panvel, Ra))/Asudgaon(Nawi Mum (Panwel, Ra)), Tal: Panvel",
           "lat": 19.01145330241749,
           "lng": 73.11589329428601,
-          "displayName": "Asudgaon)",
+          "displayName": "Asudgaon",
           "slug": "asudgaon-asudgaon-tal-panvel",
           "skipPage": false,
           "distanceFromHqKm": 12.2,
@@ -4066,7 +4066,7 @@
           "name": "Kalamboli(Navi Mum (Panvel, Ra))/Kalamboli(Nawi Mum (Panwel, Ra)), Tal: Panvel",
           "lat": 19.023844416330157,
           "lng": 73.10630463882966,
-          "displayName": "Kalamboli)",
+          "displayName": "Kalamboli",
           "slug": "kalamboli-kalamboli-tal-panvel",
           "skipPage": false,
           "distanceFromHqKm": 13,
@@ -4086,7 +4086,7 @@
           "name": "Kamothe(Navi Mum (Panvel, Ra))/Kamothe(Nawi Mum (Panwel, Ra)), Tal: Panvel",
           "lat": 19.01705546692651,
           "lng": 73.09000241381462,
-          "displayName": "Kamothe)",
+          "displayName": "Kamothe",
           "slug": "kamothe-kamothe-tal-panvel",
           "skipPage": false,
           "distanceFromHqKm": 14.8,
@@ -4106,7 +4106,7 @@
           "name": "Kasbe panvel(Panvel (M Cl))/Kasbe panwel(Panwel (M Cl)), Tal: Panvel",
           "lat": 19.001365746668554,
           "lng": 73.11206852344283,
-          "displayName": "Kasbe panvel)",
+          "displayName": "Kasbe panvel",
           "slug": "kasbe-panvel-kasbe-panwel-tal-panvel",
           "skipPage": false,
           "distanceFromHqKm": 12.8,
@@ -4166,7 +4166,7 @@
           "name": "Kolhekhar(Navi Mum (Panvel, Ra))/Kolhekhar(Nawi Mum (Panwel, Ra)), Tal: Panvel",
           "lat": 19.033954942488137,
           "lng": 73.08980088394206,
-          "displayName": "Kolhekhar)",
+          "displayName": "Kolhekhar",
           "slug": "kolhekhar-kolhekhar-tal-panvel",
           "skipPage": false,
           "distanceFromHqKm": 14.7,
@@ -4226,7 +4226,7 @@
           "name": "Navandekhar(Navi Mum (Panvel))/Nawandekhar(Nawi Mum (Panwel)), Tal: Panvel",
           "lat": 19.04926576462445,
           "lng": 73.09459778144148,
-          "displayName": "Navandekhar)",
+          "displayName": "Navandekhar",
           "slug": "navandekhar-nawandekhar-tal-panvel",
           "skipPage": false,
           "distanceFromHqKm": 14.4,
@@ -4236,7 +4236,7 @@
           "name": "Navdhe(Navi Mum (Panvel, Ra))/Nawdhe(Nawi Mum (Panwel, Ra)), Tal: Panvel",
           "lat": 19.05278439197303,
           "lng": 73.10339852288993,
-          "displayName": "Navdhe)",
+          "displayName": "Navdhe",
           "slug": "navdhe-nawdhe-tal-panvel",
           "skipPage": false,
           "distanceFromHqKm": 13.5,
@@ -4306,7 +4306,7 @@
           "name": "Rodpali(Navi Mum (Panvel, Ra))/Rodpali(Nawi Mum (Panwel, Ra)), Tal: Panvel",
           "lat": 19.04218644282734,
           "lng": 73.1087207220605,
-          "displayName": "Rodpali)",
+          "displayName": "Rodpali",
           "slug": "rodpali-rodpali-tal-panvel",
           "skipPage": false,
           "distanceFromHqKm": 12.8,
@@ -4366,7 +4366,7 @@
           "name": "Thembhode(Navi Mum (Panvel, Ra))/Thembhode(Nawi Mum (Panwel, Ra)), Tal: Panvel",
           "lat": 19.02508519641624,
           "lng": 73.1213805276538,
-          "displayName": "Thembhode)",
+          "displayName": "Thembhode",
           "slug": "thembhode-thembhode-tal-panvel",
           "skipPage": false,
           "distanceFromHqKm": 11.4,
@@ -4406,7 +4406,7 @@
           "name": "Wadwali(Navi Mum (Panvel, Ra))/Vadvali(Nawi Mum (Panwel, Ra)), Tal: Panvel",
           "lat": 19.032957350610914,
           "lng": 73.1196863450554,
-          "displayName": "Wadwali)",
+          "displayName": "Wadwali",
           "slug": "wadwali-vadvali-tal-panvel",
           "skipPage": false,
           "distanceFromHqKm": 11.6,
@@ -4497,13 +4497,13 @@
       "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_kolhapur.png",
       "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
       "centroid": {
-        "lat": 16.652177,
-        "lng": 74.355111,
+        "lat": 16.667906,
+        "lng": 74.330955,
         "minZoom": null,
         "maxZoom": null
       },
       "bbox": [
-        74.149158,
+        74.098116,
         16.159657,
         74.632763,
         16.861237
@@ -4516,8 +4516,8 @@
           "displayName": "Kolhapur City",
           "slug": "kolhapur-city",
           "skipPage": false,
-          "distanceFromHqKm": 13,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 10,
+          "bearingFromHq": "west"
         },
         {
           "name": "Jaysingpur",
@@ -4526,7 +4526,7 @@
           "displayName": "Jaysingpur",
           "slug": "jaysingpur",
           "skipPage": false,
-          "distanceFromHqKm": 25.2,
+          "distanceFromHqKm": 26.6,
           "bearingFromHq": "north-east"
         },
         {
@@ -4536,7 +4536,7 @@
           "displayName": "Murgud",
           "slug": "murgud",
           "skipPage": false,
-          "distanceFromHqKm": 33.4,
+          "distanceFromHqKm": 33.7,
           "bearingFromHq": "south-west"
         },
         {
@@ -4546,8 +4546,18 @@
           "displayName": "Gadhinglaj",
           "slug": "gadhinglaj",
           "skipPage": false,
-          "distanceFromHqKm": 47.4,
+          "distanceFromHqKm": 49.2,
           "bearingFromHq": "south"
+        },
+        {
+          "name": "Panhala",
+          "lat": 16.81050713863009,
+          "lng": 74.10938604239128,
+          "displayName": "Panhala",
+          "slug": "panhala",
+          "skipPage": false,
+          "distanceFromHqKm": 28.4,
+          "bearingFromHq": "north-west"
         },
         {
           "name": "Ichalkaranji (Regional Plan)",
@@ -4556,7 +4566,7 @@
           "displayName": "Ichalkaranji",
           "slug": "ichalkaranji",
           "skipPage": false,
-          "distanceFromHqKm": 12.2,
+          "distanceFromHqKm": 13.5,
           "bearingFromHq": "north-east"
         },
         {
@@ -4566,7 +4576,7 @@
           "displayName": "Karvir",
           "slug": "karvir-karveer-growth-centre-complex",
           "skipPage": false,
-          "distanceFromHqKm": 5.9,
+          "distanceFromHqKm": 3.8,
           "bearingFromHq": "north"
         },
         {
@@ -4576,8 +4586,8 @@
           "displayName": "Kagal Municipal Council",
           "slug": "kagal-municipal-council",
           "skipPage": false,
-          "distanceFromHqKm": 8.3,
-          "bearingFromHq": "south-west"
+          "distanceFromHqKm": 8.9,
+          "bearingFromHq": "south"
         },
         {
           "name": "Agar, Tal: Shirol",
@@ -4586,7 +4596,7 @@
           "displayName": "Agar",
           "slug": "agar-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 25.6,
+          "distanceFromHqKm": 27.5,
           "bearingFromHq": "east"
         },
         {
@@ -4596,8 +4606,8 @@
           "displayName": "Ambap",
           "slug": "ambap-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 22.5,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 19.9,
+          "bearingFromHq": "north"
         },
         {
           "name": "Ambapwadi/Ambapvadi, Tal: Hatkalangale",
@@ -4606,7 +4616,7 @@
           "displayName": "Ambapwadi",
           "slug": "ambapwadi-ambapvadi-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 21.1,
+          "distanceFromHqKm": 18.4,
           "bearingFromHq": "north-west"
         },
         {
@@ -4616,7 +4626,7 @@
           "displayName": "Ambewadi",
           "slug": "ambewadi-ambevadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 16.9,
+          "distanceFromHqKm": 13.9,
           "bearingFromHq": "north-west"
         },
         {
@@ -4626,7 +4636,7 @@
           "displayName": "Balinge",
           "slug": "balinge-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 19.1,
+          "distanceFromHqKm": 16.2,
           "bearingFromHq": "west"
         },
         {
@@ -4636,7 +4646,7 @@
           "displayName": "Bhadgaon",
           "slug": "bhadgaon-tal-gadhinglaj",
           "skipPage": false,
-          "distanceFromHqKm": 51.5,
+          "distanceFromHqKm": 53.4,
           "bearingFromHq": "south"
         },
         {
@@ -4646,7 +4656,7 @@
           "displayName": "Bhavde",
           "slug": "bhavde-bhawde-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 14.6,
+          "distanceFromHqKm": 11.5,
           "bearingFromHq": "north-west"
         },
         {
@@ -4656,7 +4666,7 @@
           "displayName": "Bhuye",
           "slug": "bhuye-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 19.1,
+          "distanceFromHqKm": 16,
           "bearingFromHq": "north-west"
         },
         {
@@ -4666,7 +4676,7 @@
           "displayName": "Bhuyewadi",
           "slug": "bhuyewadi-bhuyevadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 19.9,
+          "distanceFromHqKm": 16.8,
           "bearingFromHq": "north-west"
         },
         {
@@ -4676,7 +4686,7 @@
           "displayName": "Chandur",
           "slug": "chandur-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 8.8,
+          "distanceFromHqKm": 11.4,
           "bearingFromHq": "east"
         },
         {
@@ -4686,7 +4696,7 @@
           "displayName": "Chikhali",
           "slug": "chikhali-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 19.8,
+          "distanceFromHqKm": 16.7,
           "bearingFromHq": "north-west"
         },
         {
@@ -4696,8 +4706,8 @@
           "displayName": "Chinchwad",
           "slug": "chinchwad-chinchvad-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 6.3,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 3.9,
+          "bearingFromHq": "north"
         },
         {
           "name": "Chipari, Tal: Shirol",
@@ -4706,7 +4716,7 @@
           "displayName": "Chipari",
           "slug": "chipari-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 22,
+          "distanceFromHqKm": 23.2,
           "bearingFromHq": "north-east"
         },
         {
@@ -4716,8 +4726,8 @@
           "displayName": "Dharangutti",
           "slug": "dharangutti-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 23.3,
-          "bearingFromHq": "north-east"
+          "distanceFromHqKm": 25,
+          "bearingFromHq": "east"
         },
         {
           "name": "Gadhinglaj, Tal: Gadhinglaj",
@@ -4726,18 +4736,8 @@
           "displayName": "Gadhinglaj",
           "slug": "gadhinglaj-tal-gadhinglaj",
           "skipPage": false,
-          "distanceFromHqKm": 46,
+          "distanceFromHqKm": 47.7,
           "bearingFromHq": "south"
-        },
-        {
-          "name": "GAP, Tal: Hatkalangale",
-          "lat": 16.785026859431873,
-          "lng": 74.28723690568289,
-          "displayName": "GAP",
-          "slug": "gap-tal-hatkalangale",
-          "skipPage": false,
-          "distanceFromHqKm": 16.4,
-          "bearingFromHq": "north-west"
         },
         {
           "name": "Gijavane/Gijawane, Tal: Gadhinglaj",
@@ -4746,7 +4746,7 @@
           "displayName": "Gijavane",
           "slug": "gijavane-gijawane-tal-gadhinglaj",
           "skipPage": false,
-          "distanceFromHqKm": 48.6,
+          "distanceFromHqKm": 50.3,
           "bearingFromHq": "south"
         },
         {
@@ -4756,8 +4756,8 @@
           "displayName": "Girgaon",
           "slug": "girgaon-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 14,
-          "bearingFromHq": "west"
+          "distanceFromHqKm": 12.2,
+          "bearingFromHq": "south-west"
         },
         {
           "name": "Gokul Shirgaon, Tal: Karvir",
@@ -4766,7 +4766,7 @@
           "displayName": "Gokul Shirgaon",
           "slug": "gokul-shirgaon-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 9,
+          "distanceFromHqKm": 6.9,
           "bearingFromHq": "west"
         },
         {
@@ -4776,8 +4776,8 @@
           "displayName": "Halondi",
           "slug": "halondi-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 10.4,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 7.7,
+          "bearingFromHq": "north"
         },
         {
           "name": "Halsavade/Halsawade, Tal: Karvir",
@@ -4786,8 +4786,8 @@
           "displayName": "Halsavade",
           "slug": "halsavade-halsawade-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 4.4,
-          "bearingFromHq": "south-west"
+          "distanceFromHqKm": 5.4,
+          "bearingFromHq": "south"
         },
         {
           "name": "Hanmantwadi/Hanmantvadi, Tal: Karvir",
@@ -4796,7 +4796,7 @@
           "displayName": "Hanmantwadi",
           "slug": "hanmantwadi-hanmantvadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 20.9,
+          "distanceFromHqKm": 17.8,
           "bearingFromHq": "west"
         },
         {
@@ -4806,8 +4806,8 @@
           "displayName": "Haroli",
           "slug": "haroli-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 20.1,
-          "bearingFromHq": "north-east"
+          "distanceFromHqKm": 21.9,
+          "bearingFromHq": "east"
         },
         {
           "name": "Herle, Tal: Hatkalangale",
@@ -4816,7 +4816,7 @@
           "displayName": "Herle",
           "slug": "herle-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 12.1,
+          "distanceFromHqKm": 9.9,
           "bearingFromHq": "north"
         },
         {
@@ -4826,8 +4826,8 @@
           "displayName": "Ichalakranji",
           "slug": "ichalakranji-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 11.1,
-          "bearingFromHq": "north-east"
+          "distanceFromHqKm": 13,
+          "bearingFromHq": "east"
         },
         {
           "name": "Jadhavwadi/Jadhawvadi, Tal: Karvir",
@@ -4836,7 +4836,7 @@
           "displayName": "Jadhavwadi",
           "slug": "jadhavwadi-jadhawvadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 11.5,
+          "distanceFromHqKm": 8.4,
           "bearingFromHq": "north-west"
         },
         {
@@ -4846,7 +4846,7 @@
           "displayName": "Jainapur",
           "slug": "jainapur-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 22.9,
+          "distanceFromHqKm": 24,
           "bearingFromHq": "north-east"
         },
         {
@@ -4856,8 +4856,8 @@
           "displayName": "Jambhali",
           "slug": "jambhali-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 18.7,
-          "bearingFromHq": "north-east"
+          "distanceFromHqKm": 20.5,
+          "bearingFromHq": "east"
         },
         {
           "name": "Jatharwadi/Jatharvadi, Tal: Karvir",
@@ -4866,7 +4866,7 @@
           "displayName": "Jatharwadi",
           "slug": "jatharwadi-jatharvadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 19.4,
+          "distanceFromHqKm": 16.4,
           "bearingFromHq": "north-west"
         },
         {
@@ -4876,7 +4876,7 @@
           "displayName": "Jayshingpur",
           "slug": "jayshingpur-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 25.2,
+          "distanceFromHqKm": 26.5,
           "bearingFromHq": "north-east"
         },
         {
@@ -4886,8 +4886,8 @@
           "displayName": "Kabnoor",
           "slug": "kabnoor-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 10.5,
-          "bearingFromHq": "north-east"
+          "distanceFromHqKm": 12.2,
+          "bearingFromHq": "east"
         },
         {
           "name": "Kagal (R), Tal: Kagal",
@@ -4896,8 +4896,8 @@
           "displayName": "Kagal",
           "slug": "kagal-tal-kagal",
           "skipPage": false,
-          "distanceFromHqKm": 8.5,
-          "bearingFromHq": "south-west"
+          "distanceFromHqKm": 9.1,
+          "bearingFromHq": "south"
         },
         {
           "name": "Kalambe Tarf Thane, Tal: Karvir",
@@ -4906,7 +4906,7 @@
           "displayName": "Kalambe Tarf Thane",
           "slug": "kalambe-tarf-thane-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 15.4,
+          "distanceFromHqKm": 13.1,
           "bearingFromHq": "west"
         },
         {
@@ -4916,7 +4916,7 @@
           "displayName": "Kandalgaon",
           "slug": "kandalgaon-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 11.5,
+          "distanceFromHqKm": 9.5,
           "bearingFromHq": "west"
         },
         {
@@ -4926,7 +4926,7 @@
           "displayName": "Kaneri",
           "slug": "kaneri-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 9.5,
+          "distanceFromHqKm": 8.3,
           "bearingFromHq": "south-west"
         },
         {
@@ -4936,7 +4936,7 @@
           "displayName": "Kaneriwadi",
           "slug": "kaneriwadi-kanerivadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 7.7,
+          "distanceFromHqKm": 6.6,
           "bearingFromHq": "south-west"
         },
         {
@@ -4946,7 +4946,7 @@
           "displayName": "Kapurwadi",
           "slug": "kapurwadi-kapurvadi-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 16.7,
+          "distanceFromHqKm": 15,
           "bearingFromHq": "north"
         },
         {
@@ -4956,7 +4956,7 @@
           "displayName": "Kasarwadi",
           "slug": "kasarwadi-kasarvadi-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 18.9,
+          "distanceFromHqKm": 16.1,
           "bearingFromHq": "north-west"
         },
         {
@@ -4966,7 +4966,7 @@
           "displayName": "Khotwadi",
           "slug": "khotwadi-khotvadi-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 15.5,
+          "distanceFromHqKm": 17,
           "bearingFromHq": "north-east"
         },
         {
@@ -4976,7 +4976,7 @@
           "displayName": "Kogil Bk.",
           "slug": "kogil-bk-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 11.7,
+          "distanceFromHqKm": 10.7,
           "bearingFromHq": "south-west"
         },
         {
@@ -4986,7 +4986,7 @@
           "displayName": "Kogil Kh.",
           "slug": "kogil-kh-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 12.9,
+          "distanceFromHqKm": 11.5,
           "bearingFromHq": "south-west"
         },
         {
@@ -4996,7 +4996,7 @@
           "displayName": "Kolhapur",
           "slug": "kolhapur-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 13.9,
+          "distanceFromHqKm": 11,
           "bearingFromHq": "west"
         },
         {
@@ -5006,7 +5006,7 @@
           "displayName": "Kondigre",
           "slug": "kondigre-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 18.8,
+          "distanceFromHqKm": 20.2,
           "bearingFromHq": "north-east"
         },
         {
@@ -5016,7 +5016,7 @@
           "displayName": "Korochi",
           "slug": "korochi-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 11.6,
+          "distanceFromHqKm": 12.6,
           "bearingFromHq": "north-east"
         },
         {
@@ -5026,7 +5026,7 @@
           "displayName": "Lingnur Dumala",
           "slug": "lingnur-dumala-tal-kagal",
           "skipPage": false,
-          "distanceFromHqKm": 10.5,
+          "distanceFromHqKm": 12.1,
           "bearingFromHq": "south"
         },
         {
@@ -5036,7 +5036,7 @@
           "displayName": "Mangaon",
           "slug": "mangaon-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 5.9,
+          "distanceFromHqKm": 6.2,
           "bearingFromHq": "north-east"
         },
         {
@@ -5046,8 +5046,8 @@
           "displayName": "Mangaonwadi",
           "slug": "mangaonwadi-mangaonvadi-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 10.1,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 10,
+          "bearingFromHq": "north-east"
         },
         {
           "name": "Mauje Vadgaon/Mauje Wadgaon, Tal: Hatkalangale",
@@ -5056,7 +5056,7 @@
           "displayName": "Mauje Vadgaon",
           "slug": "mauje-vadgaon-mauje-wadgaon-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 13.6,
+          "distanceFromHqKm": 11.2,
           "bearingFromHq": "north"
         },
         {
@@ -5066,7 +5066,7 @@
           "displayName": "Minche",
           "slug": "minche-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 18,
+          "distanceFromHqKm": 16.1,
           "bearingFromHq": "north"
         },
         {
@@ -5076,7 +5076,7 @@
           "displayName": "Morewadi",
           "slug": "morewadi-morevadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 11.1,
+          "distanceFromHqKm": 8.5,
           "bearingFromHq": "west"
         },
         {
@@ -5086,7 +5086,7 @@
           "displayName": "Mudsingi",
           "slug": "mudsingi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 6.4,
+          "distanceFromHqKm": 3.3,
           "bearingFromHq": "north-west"
         },
         {
@@ -5096,7 +5096,7 @@
           "displayName": "Murgud",
           "slug": "murgud-tal-kagal",
           "skipPage": false,
-          "distanceFromHqKm": 34.1,
+          "distanceFromHqKm": 34.6,
           "bearingFromHq": "south-west"
         },
         {
@@ -5106,7 +5106,7 @@
           "displayName": "Nagadewadi",
           "slug": "nagadewadi-nagadevadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 19.7,
+          "distanceFromHqKm": 16.8,
           "bearingFromHq": "west"
         },
         {
@@ -5116,8 +5116,8 @@
           "displayName": "Nagaon",
           "slug": "nagaon-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 13.1,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 10.4,
+          "bearingFromHq": "north"
         },
         {
           "name": "Nandani, Tal: Shirol",
@@ -5126,7 +5126,7 @@
           "displayName": "Nandani",
           "slug": "nandani-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 21.2,
+          "distanceFromHqKm": 23.1,
           "bearingFromHq": "east"
         },
         {
@@ -5136,7 +5136,7 @@
           "displayName": "Nandwal",
           "slug": "nandwal-nandval-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 18.1,
+          "distanceFromHqKm": 16,
           "bearingFromHq": "west"
         },
         {
@@ -5146,7 +5146,7 @@
           "displayName": "Nerli",
           "slug": "nerli-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 5.4,
+          "distanceFromHqKm": 4.6,
           "bearingFromHq": "south-west"
         },
         {
@@ -5156,7 +5156,7 @@
           "displayName": "Nigave Dumala",
           "slug": "nigave-dumala-nigawe-dumala-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 18.3,
+          "distanceFromHqKm": 15.2,
           "bearingFromHq": "north-west"
         },
         {
@@ -5166,7 +5166,7 @@
           "displayName": "Nimshirgaon",
           "slug": "nimshirgaon-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 19.9,
+          "distanceFromHqKm": 20.7,
           "bearingFromHq": "north-east"
         },
         {
@@ -5176,7 +5176,7 @@
           "displayName": "Nrusinhawadi",
           "slug": "nrusinhawadi-nrusinhavadi-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 27,
+          "distanceFromHqKm": 29.2,
           "bearingFromHq": "east"
         },
         {
@@ -5186,7 +5186,7 @@
           "displayName": "Pachgaon",
           "slug": "pachgaon-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 12.8,
+          "distanceFromHqKm": 10.4,
           "bearingFromHq": "west"
         },
         {
@@ -5196,7 +5196,7 @@
           "displayName": "Padali Kh.",
           "slug": "padali-kh-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 19.9,
+          "distanceFromHqKm": 17.2,
           "bearingFromHq": "west"
         },
         {
@@ -5206,7 +5206,7 @@
           "displayName": "Pimpalgaon Kh.",
           "slug": "pimpalgaon-kh-tal-kagal",
           "skipPage": false,
-          "distanceFromHqKm": 10.9,
+          "distanceFromHqKm": 11,
           "bearingFromHq": "south-west"
         },
         {
@@ -5216,7 +5216,7 @@
           "displayName": "Rajputwadi",
           "slug": "rajputwadi-rajputvadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 19.4,
+          "distanceFromHqKm": 16.3,
           "bearingFromHq": "north-west"
         },
         {
@@ -5226,8 +5226,8 @@
           "displayName": "Rui",
           "slug": "rui-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 6.3,
-          "bearingFromHq": "north-east"
+          "distanceFromHqKm": 7.7,
+          "bearingFromHq": "east"
         },
         {
           "name": "Rukadi, Tal: Hatkalangale",
@@ -5236,8 +5236,8 @@
           "displayName": "Rukadi",
           "slug": "rukadi-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 6.6,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 5.5,
+          "bearingFromHq": "north-east"
         },
         {
           "name": "Sajani, Tal: Hatkalangale",
@@ -5246,7 +5246,7 @@
           "displayName": "Sajani",
           "slug": "sajani-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 7.7,
+          "distanceFromHqKm": 8.3,
           "bearingFromHq": "north-east"
         },
         {
@@ -5256,8 +5256,8 @@
           "displayName": "Sambhapur",
           "slug": "sambhapur-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 18.2,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 15.7,
+          "bearingFromHq": "north"
         },
         {
           "name": "Sangaon Kasaba, Tal: Kagal",
@@ -5266,8 +5266,8 @@
           "displayName": "Sangaon Kasaba",
           "slug": "sangaon-kasaba-tal-kagal",
           "skipPage": false,
-          "distanceFromHqKm": 7.8,
-          "bearingFromHq": "south"
+          "distanceFromHqKm": 10.2,
+          "bearingFromHq": "south-east"
         },
         {
           "name": "Sangaon Mouje, Tal: Kagal",
@@ -5276,7 +5276,7 @@
           "displayName": "Sangaon Mouje",
           "slug": "sangaon-mouje-tal-kagal",
           "skipPage": false,
-          "distanceFromHqKm": 9.8,
+          "distanceFromHqKm": 11.8,
           "bearingFromHq": "south"
         },
         {
@@ -5286,8 +5286,8 @@
           "displayName": "Sangwade",
           "slug": "sangwade-sangvade-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 2.7,
-          "bearingFromHq": "west"
+          "distanceFromHqKm": 1.8,
+          "bearingFromHq": "south"
         },
         {
           "name": "Sangwadewadi/Sangvadevadi, Tal: Karvir",
@@ -5296,8 +5296,8 @@
           "displayName": "Sangwadewadi",
           "slug": "sangwadewadi-sangvadevadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 2.8,
-          "bearingFromHq": "west"
+          "distanceFromHqKm": 2.5,
+          "bearingFromHq": "south"
         },
         {
           "name": "Sarnobatwadi/Sarnobatvadi, Tal: Karvir",
@@ -5306,7 +5306,7 @@
           "displayName": "Sarnobatwadi",
           "slug": "sarnobatwadi-sarnobatvadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 9.2,
+          "distanceFromHqKm": 6.2,
           "bearingFromHq": "west"
         },
         {
@@ -5316,7 +5316,7 @@
           "displayName": "Savarde",
           "slug": "savarde-sawarde-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 17,
+          "distanceFromHqKm": 15.4,
           "bearingFromHq": "north"
         },
         {
@@ -5326,8 +5326,8 @@
           "displayName": "Shahapur",
           "slug": "shahapur-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 13.3,
-          "bearingFromHq": "north-east"
+          "distanceFromHqKm": 14.9,
+          "bearingFromHq": "east"
         },
         {
           "name": "Shelakewadi/Shelakevadi, Tal: Karvir",
@@ -5336,7 +5336,7 @@
           "displayName": "Shelakewadi",
           "slug": "shelakewadi-shelakevadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 21.3,
+          "distanceFromHqKm": 19.1,
           "bearingFromHq": "west"
         },
         {
@@ -5346,7 +5346,7 @@
           "displayName": "Shinganapur",
           "slug": "shinganapur-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 19.9,
+          "distanceFromHqKm": 16.9,
           "bearingFromHq": "west"
         },
         {
@@ -5356,7 +5356,7 @@
           "displayName": "Shirol",
           "slug": "shirol-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 27.3,
+          "distanceFromHqKm": 29.2,
           "bearingFromHq": "east"
         },
         {
@@ -5366,7 +5366,7 @@
           "displayName": "Shiroli",
           "slug": "shiroli-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 12.1,
+          "distanceFromHqKm": 9.2,
           "bearingFromHq": "north-west"
         },
         {
@@ -5376,7 +5376,7 @@
           "displayName": "Shiye",
           "slug": "shiye-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 16.9,
+          "distanceFromHqKm": 14,
           "bearingFromHq": "north-west"
         },
         {
@@ -5386,7 +5386,7 @@
           "displayName": "Takavade",
           "slug": "takavade-takawade-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 16.6,
+          "distanceFromHqKm": 18.8,
           "bearingFromHq": "east"
         },
         {
@@ -5396,8 +5396,8 @@
           "displayName": "Tamgaon",
           "slug": "tamgaon-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 5.4,
-          "bearingFromHq": "west"
+          "distanceFromHqKm": 3.2,
+          "bearingFromHq": "south-west"
         },
         {
           "name": "Tardal, Tal: Hatkalangale",
@@ -5406,7 +5406,7 @@
           "displayName": "Tardal",
           "slug": "tardal-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 15.4,
+          "distanceFromHqKm": 16.6,
           "bearingFromHq": "north-east"
         },
         {
@@ -5416,7 +5416,7 @@
           "displayName": "Tasgaon",
           "slug": "tasgaon-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 17.1,
+          "distanceFromHqKm": 14.9,
           "bearingFromHq": "north"
         },
         {
@@ -5426,7 +5426,7 @@
           "displayName": "Tilwani",
           "slug": "tilwani-tilvani-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 9.5,
+          "distanceFromHqKm": 10.2,
           "bearingFromHq": "north-east"
         },
         {
@@ -5436,17 +5436,7 @@
           "displayName": "Timbliewadi",
           "slug": "timbliewadi-timblievadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 10.9,
-          "bearingFromHq": "north-west"
-        },
-        {
-          "name": "Top, Tal: Hatkalangale",
-          "lat": 16.792656853287667,
-          "lng": 74.2768056533612,
-          "displayName": "Top",
-          "slug": "top-tal-hatkalangale",
-          "skipPage": false,
-          "distanceFromHqKm": 17.7,
+          "distanceFromHqKm": 7.8,
           "bearingFromHq": "north-west"
         },
         {
@@ -5456,7 +5446,7 @@
           "displayName": "Uchgaon",
           "slug": "uchgaon-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 9.2,
+          "distanceFromHqKm": 6.1,
           "bearingFromHq": "north-west"
         },
         {
@@ -5466,7 +5456,7 @@
           "displayName": "Udagaon",
           "slug": "udagaon-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 28.1,
+          "distanceFromHqKm": 29.5,
           "bearingFromHq": "north-east"
         },
         {
@@ -5476,7 +5466,7 @@
           "displayName": "Ujalaiwadi",
           "slug": "ujalaiwadi-ujalaivadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 9.5,
+          "distanceFromHqKm": 6.6,
           "bearingFromHq": "west"
         },
         {
@@ -5486,7 +5476,7 @@
           "displayName": "Umalwad",
           "slug": "umalwad-umalvad-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 26.7,
+          "distanceFromHqKm": 27.8,
           "bearingFromHq": "north-east"
         },
         {
@@ -5496,7 +5486,7 @@
           "displayName": "Vadgaon Kasaba",
           "slug": "vadgaon-kasaba-wadgaon-kasaba-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 19.5,
+          "distanceFromHqKm": 17.2,
           "bearingFromHq": "north"
         },
         {
@@ -5506,7 +5496,7 @@
           "displayName": "Peth Vadgaon",
           "slug": "peth-vadgaon-peth-wadgaon-kasaba-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 20.8,
+          "distanceFromHqKm": 18.7,
           "bearingFromHq": "north"
         },
         {
@@ -5516,7 +5506,7 @@
           "displayName": "Vathar Tarf Vadgaon",
           "slug": "vathar-tarf-vadgaon-wathar-tarf-wadgaon-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 22.5,
+          "distanceFromHqKm": 20.1,
           "bearingFromHq": "north"
         },
         {
@@ -5526,7 +5516,7 @@
           "displayName": "Vhannur",
           "slug": "vhannur-whannur-tal-kagal",
           "skipPage": false,
-          "distanceFromHqKm": 12.6,
+          "distanceFromHqKm": 12.2,
           "bearingFromHq": "south-west"
         },
         {
@@ -5536,7 +5526,7 @@
           "displayName": "Vikaswadi",
           "slug": "vikaswadi-wikasvadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 6,
+          "distanceFromHqKm": 5.6,
           "bearingFromHq": "south-west"
         },
         {
@@ -5546,7 +5536,7 @@
           "displayName": "Wadange",
           "slug": "wadange-vadange-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 17.3,
+          "distanceFromHqKm": 14.2,
           "bearingFromHq": "north-west"
         },
         {
@@ -5556,7 +5546,7 @@
           "displayName": "Wadipir",
           "slug": "wadipir-vadipir-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 18.1,
+          "distanceFromHqKm": 15.6,
           "bearingFromHq": "west"
         },
         {
@@ -5566,7 +5556,7 @@
           "displayName": "Walivade",
           "slug": "walivade-valiwade-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 8.6,
+          "distanceFromHqKm": 5.8,
           "bearingFromHq": "north-west"
         },
         {
@@ -5576,8 +5566,8 @@
           "displayName": "Wasagade",
           "slug": "wasagade-vasagade-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 4.4,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 2.4,
+          "bearingFromHq": "north"
         },
         {
           "name": "Washi/Vashi, Tal: Karvir",
@@ -5586,7 +5576,7 @@
           "displayName": "Washi",
           "slug": "washi-vashi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 19.9,
+          "distanceFromHqKm": 17.5,
           "bearingFromHq": "west"
         },
         {
@@ -5596,8 +5586,8 @@
           "displayName": "Yadrav",
           "slug": "yadrav-yadraw-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 16,
-          "bearingFromHq": "north-east"
+          "distanceFromHqKm": 17.7,
+          "bearingFromHq": "east"
         }
       ],
       "sourceLink": "https://dtp.maharashtra.gov.in/home/downloads/dp/?cities=kolhapur",
@@ -5615,31 +5605,31 @@
           "slug": "sangli-dp-plan",
           "displayName": "Sangli/Miraj Region",
           "shortName": "Sangli",
-          "distanceKm": 52.2
+          "distanceKm": 52.5
         },
         {
           "slug": "satara-region-dp-plan",
           "displayName": "Satara Region",
           "shortName": "Satara Region",
-          "distanceKm": 120.1
+          "distanceKm": 117.7
         },
         {
           "slug": "mahabaleshwar-msrdc-corridor",
           "displayName": "Mahabaleshwar – MSRDC Corridor",
           "shortName": "Mahabaleshwar - MSRDC Corridor",
-          "distanceKm": 120.7
+          "distanceKm": 117.9
         },
         {
           "slug": "solapur-dp-plan",
           "displayName": "Solapur",
           "shortName": "Solapur",
-          "distanceKm": 185.1
+          "distanceKm": 186
         },
         {
           "slug": "pmrda-development-plan",
           "displayName": "PMRDA",
           "shortName": "PMRDA",
-          "distanceKm": 220.9
+          "distanceKm": 218.7
         }
       ],
       "faqs": [
@@ -5653,7 +5643,7 @@
         },
         {
           "q": "Can I see specific villages or sectors inside Kolhapur?",
-          "a": "Yes — 109 sub-locations are indexed inside Kolhapur, including Kolhapur City, Jaysingpur, Murgud, Gadhinglaj and more. Each can be opened directly from the search bar on the map."
+          "a": "Yes — 108 sub-locations are indexed inside Kolhapur, including Kolhapur City, Jaysingpur, Murgud, Gadhinglaj and more. Each can be opened directly from the search bar on the map."
         },
         {
           "q": "Is access free?",
@@ -5670,7 +5660,7 @@
         "Search by survey number, village or landmark inside Kolhapur",
         "Measure distances and areas directly on the Kolhapur map",
         "Mobile-friendly — view Kolhapur DP zones on the go",
-        "109 indexed sub-locations inside Kolhapur"
+        "108 indexed sub-locations inside Kolhapur"
       ]
     },
     {
@@ -8294,16 +8284,16 @@
           "distanceKm": 113.7
         },
         {
+          "slug": "kolhapur-dp-plan",
+          "displayName": "Kolhapur",
+          "shortName": "Kolhapur",
+          "distanceKm": 117.9
+        },
+        {
           "slug": "pune-dp-plan",
           "displayName": "Pune",
           "shortName": "Pune",
           "distanceKm": 117.9
-        },
-        {
-          "slug": "kolhapur-dp-plan",
-          "displayName": "Kolhapur",
-          "shortName": "Kolhapur",
-          "distanceKm": 120.7
         }
       ],
       "faqs": [
@@ -9967,16 +9957,6 @@
           "skipPage": false,
           "distanceFromHqKm": 17,
           "bearingFromHq": "north-west"
-        },
-        {
-          "name": "Cantonment, Tal: Kamptee",
-          "lat": 21.22254746850097,
-          "lng": 79.20071861624851,
-          "displayName": "Cantonment",
-          "slug": "cantonment-tal-kamptee",
-          "skipPage": false,
-          "distanceFromHqKm": 8.4,
-          "bearingFromHq": "north-east"
         },
         {
           "name": "Chacher, Tal: Mauda",
@@ -11942,7 +11922,7 @@
           "name": "Khandala (M], Tal: Parseoni",
           "lat": 21.342951041141706,
           "lng": 79.10133389708271,
-          "displayName": "Khandala (M]",
+          "displayName": "Khandala M",
           "slug": "khandala-m-tal-parseoni",
           "skipPage": false,
           "distanceFromHqKm": 19.8,
@@ -14019,16 +13999,6 @@
           "bearingFromHq": "east"
         },
         {
-          "name": "Protected forest, Tal: Hingna",
-          "lat": 20.932835728902035,
-          "lng": 78.77232241535403,
-          "displayName": "Protected forest",
-          "slug": "protected-forest-tal-hingna",
-          "skipPage": false,
-          "distanceFromHqKm": 46.6,
-          "bearingFromHq": "south-west"
-        },
-        {
           "name": "Rahadi, Tal: Mauda",
           "lat": 21.17552501261688,
           "lng": 79.37951103125955,
@@ -14147,36 +14117,6 @@
           "skipPage": false,
           "distanceFromHqKm": 31.1,
           "bearingFromHq": "south-west"
-        },
-        {
-          "name": "RESERVED FOREST/RESERWED FOREST, Tal: Nagpur-rural",
-          "lat": 20.879620365580884,
-          "lng": 78.94469601534746,
-          "displayName": "RESERVED FOREST",
-          "slug": "reserved-forest-reserwed-forest-tal-nagpur-rural",
-          "skipPage": false,
-          "distanceFromHqKm": 38.2,
-          "bearingFromHq": "south-west"
-        },
-        {
-          "name": "RESERVED FOREST/RESERWED FOREST, Tal: Hingna",
-          "lat": 21.067213866355655,
-          "lng": 78.83998252194414,
-          "displayName": "RESERVED FOREST",
-          "slug": "reserved-forest-reserwed-forest-tal-hingna",
-          "skipPage": false,
-          "distanceFromHqKm": 33.5,
-          "bearingFromHq": "west"
-        },
-        {
-          "name": "RESERVED FOREST/RESERWED FOREST, Tal: Parseoni",
-          "lat": 21.535817661217767,
-          "lng": 79.1016492337387,
-          "displayName": "RESERVED FOREST",
-          "slug": "reserved-forest-reserwed-forest-tal-parseoni",
-          "skipPage": false,
-          "distanceFromHqKm": 41,
-          "bearingFromHq": "north"
         },
         {
           "name": "Rewaral/Revaral, Tal: Mauda",
@@ -14999,16 +14939,6 @@
           "bearingFromHq": "north-west"
         },
         {
-          "name": "Tank Water Limit/Tank Vater Limit, Tal: Parseoni",
-          "lat": 21.470601911573603,
-          "lng": 79.19394941290659,
-          "displayName": "Tank Water Limit",
-          "slug": "tank-water-limit-tank-vater-limit-tal-parseoni",
-          "skipPage": false,
-          "distanceFromHqKm": 34,
-          "bearingFromHq": "north"
-        },
-        {
           "name": "Tarodi, Tal: Mauda",
           "lat": 21.30053622848122,
           "lng": 79.41737890674051,
@@ -15792,7 +15722,7 @@
         },
         {
           "q": "Can I see specific villages or sectors inside Nagpur Metropolitan Region?",
-          "a": "Yes — 682 sub-locations are indexed inside Nagpur Metropolitan Region, including Nagpur Metropolitan, Adaka, Tal: Kamptee, Adasa, Tal: Mauda, Adegaon, Tal: Hingna and more. Each can be opened directly from the search bar on the map."
+          "a": "Yes — 676 sub-locations are indexed inside Nagpur Metropolitan Region, including Nagpur Metropolitan, Adaka, Tal: Kamptee, Adasa, Tal: Mauda, Adegaon, Tal: Hingna and more. Each can be opened directly from the search bar on the map."
         },
         {
           "q": "Is access free?",
@@ -15809,7 +15739,7 @@
         "Search by survey number, village or landmark inside Nagpur Metropolitan Region",
         "Measure distances and areas directly on the Nagpur Metropolitan Region map",
         "Mobile-friendly — view Nagpur Metropolitan Region DP zones on the go",
-        "682 indexed sub-locations inside Nagpur Metropolitan Region"
+        "676 indexed sub-locations inside Nagpur Metropolitan Region"
       ]
     },
     {
@@ -17396,16 +17326,6 @@
           "bearingFromHq": "north"
         },
         {
-          "name": "null, Tal: Pen",
-          "lat": 18.76095531436201,
-          "lng": 73.02648631871277,
-          "displayName": "null",
-          "slug": "null-tal-pen",
-          "skipPage": false,
-          "distanceFromHqKm": 23.5,
-          "bearingFromHq": "south-west"
-        },
-        {
           "name": "Odhangi, Tal: Pen",
           "lat": 18.743487796438128,
           "lng": 73.04932306252103,
@@ -18039,7 +17959,7 @@
         },
         {
           "q": "Can I see specific villages or sectors inside NAINA Region?",
-          "a": "Yes — 215 sub-locations are indexed inside NAINA Region, including Belavali, Bhilawale, Bhingar, Bhingarwadi and more. Each can be opened directly from the search bar on the map."
+          "a": "Yes — 214 sub-locations are indexed inside NAINA Region, including Belavali, Bhilawale, Bhingar, Bhingarwadi and more. Each can be opened directly from the search bar on the map."
         },
         {
           "q": "Is access free?",
@@ -18056,7 +17976,7 @@
         "Search by survey number, village or landmark inside NAINA Region",
         "Measure distances and areas directly on the NAINA Region map",
         "Mobile-friendly — view NAINA Region DP zones on the go",
-        "215 indexed sub-locations inside NAINA Region"
+        "214 indexed sub-locations inside NAINA Region"
       ]
     },
     {
@@ -20958,16 +20878,6 @@
           "bearingFromHq": "north"
         },
         {
-          "name": "Sea Sand, Mud & Rocks, Tal: Vasai",
-          "lat": 19.437258437962523,
-          "lng": 72.76395282910335,
-          "displayName": "Sea Sand, Mud & Rocks",
-          "slug": "sea-sand-mud-rocks-tal-vasai",
-          "skipPage": false,
-          "distanceFromHqKm": 27.5,
-          "bearingFromHq": "south-west"
-        },
-        {
           "name": "Shirgaon, Tal: Vasai",
           "lat": 19.487547460502455,
           "lng": 72.8430316788249,
@@ -21341,7 +21251,7 @@
         },
         {
           "q": "Can I see specific villages or sectors inside Palghar?",
-          "a": "Yes — 182 sub-locations are indexed inside Palghar, including Palghar, Vasai-Virar/ Nala Sopara, Dahanu, Actan, Tal: Vasai and more. Each can be opened directly from the search bar on the map."
+          "a": "Yes — 181 sub-locations are indexed inside Palghar, including Palghar, Vasai-Virar/ Nala Sopara, Dahanu, Actan, Tal: Vasai and more. Each can be opened directly from the search bar on the map."
         },
         {
           "q": "Is access free?",
@@ -21358,7 +21268,7 @@
         "Search by survey number, village or landmark inside Palghar",
         "Measure distances and areas directly on the Palghar map",
         "Mobile-friendly — view Palghar DP zones on the go",
-        "182 indexed sub-locations inside Palghar"
+        "181 indexed sub-locations inside Palghar"
       ]
     },
     {
@@ -24589,16 +24499,6 @@
           "bearingFromHq": "south-east"
         },
         {
-          "name": "GAP, Tal: Haveli",
-          "lat": 18.665939980846854,
-          "lng": 73.73051967740365,
-          "displayName": "GAP",
-          "slug": "gap-tal-haveli",
-          "skipPage": false,
-          "distanceFromHqKm": 9.3,
-          "bearingFromHq": "west"
-        },
-        {
           "name": "Hadapsar (Urban), Tal: Haveli",
           "lat": 18.497794641740118,
           "lng": 73.93321048043796,
@@ -24959,16 +24859,6 @@
           "bearingFromHq": "south-east"
         },
         {
-          "name": "URBAN, Tal: Haveli",
-          "lat": 18.525379825537286,
-          "lng": 73.87831724740008,
-          "displayName": "URBAN",
-          "slug": "urban-tal-haveli",
-          "skipPage": false,
-          "distanceFromHqKm": 14.4,
-          "bearingFromHq": "south-east"
-        },
-        {
           "name": "Uruli-dewachi, Tal: Haveli",
           "lat": 18.4508843965354,
           "lng": 73.9535959317285,
@@ -25092,7 +24982,7 @@
         },
         {
           "q": "Can I see specific villages or sectors inside Pune?",
-          "a": "Yes — 97 sub-locations are indexed inside Pune, including Pune, Pimpri Chinchwad Municipal Corporation(Draft 2025), Baramati, Lonavala and more. Each can be opened directly from the search bar on the map."
+          "a": "Yes — 95 sub-locations are indexed inside Pune, including Pune, Pimpri Chinchwad Municipal Corporation(Draft 2025), Baramati, Lonavala and more. Each can be opened directly from the search bar on the map."
         },
         {
           "q": "Is access free?",
@@ -25109,7 +24999,7 @@
         "Search by survey number, village or landmark inside Pune",
         "Measure distances and areas directly on the Pune map",
         "Mobile-friendly — view Pune DP zones on the go",
-        "97 indexed sub-locations inside Pune"
+        "95 indexed sub-locations inside Pune"
       ]
     },
     {
@@ -25636,16 +25526,6 @@
           "bearingFromHq": "south-east"
         },
         {
-          "name": "null, Tal: Khalapur",
-          "lat": 18.757208942143265,
-          "lng": 73.32116275973554,
-          "displayName": "null",
-          "slug": "null-tal-khalapur",
-          "skipPage": false,
-          "distanceFromHqKm": 14.1,
-          "bearingFromHq": "south-east"
-        },
-        {
           "name": "Pali Kh., Tal: Khalapur",
           "lat": 18.890139287348333,
           "lng": 73.2302839497063,
@@ -25949,7 +25829,7 @@
         },
         {
           "q": "Can I see specific villages or sectors inside Pune-Mumbai - MSRDC Corridor?",
-          "a": "Yes — 76 sub-locations are indexed inside Pune-Mumbai - MSRDC Corridor, including Pune–Mumbai – MSRDC Corridor, Adoshi, Tal: Khalapur, Ajivali/Ajiwali, Tal: Panvel, Ambivali T. Tungartan/Ambiwali T. Tungartan, Tal: Khalapur and more. Each can be opened directly from the search bar on the map."
+          "a": "Yes — 75 sub-locations are indexed inside Pune-Mumbai - MSRDC Corridor, including Pune–Mumbai – MSRDC Corridor, Adoshi, Tal: Khalapur, Ajivali/Ajiwali, Tal: Panvel, Ambivali T. Tungartan/Ambiwali T. Tungartan, Tal: Khalapur and more. Each can be opened directly from the search bar on the map."
         },
         {
           "q": "Is access free?",
@@ -25966,7 +25846,7 @@
         "Search by survey number, village or landmark inside Pune-Mumbai - MSRDC Corridor",
         "Measure distances and areas directly on the Pune-Mumbai - MSRDC Corridor map",
         "Mobile-friendly — view Pune-Mumbai - MSRDC Corridor DP zones on the go",
-        "76 indexed sub-locations inside Pune-Mumbai - MSRDC Corridor"
+        "75 indexed sub-locations inside Pune-Mumbai - MSRDC Corridor"
       ]
     },
     {
@@ -26188,7 +26068,7 @@
           "slug": "kolhapur-dp-plan",
           "displayName": "Kolhapur",
           "shortName": "Kolhapur",
-          "distanceKm": 52.2
+          "distanceKm": 52.5
         },
         {
           "slug": "satara-region-dp-plan",
@@ -26899,7 +26779,7 @@
           "slug": "kolhapur-dp-plan",
           "displayName": "Kolhapur",
           "shortName": "Kolhapur",
-          "distanceKm": 120.1
+          "distanceKm": 117.7
         }
       ],
       "faqs": [
@@ -29354,7 +29234,7 @@
           "name": "Ghodbabhul(Washim (M Cl))/Ghodbabhul(Vashim (M Cl))",
           "lat": 20.07994511431323,
           "lng": 77.13759411702357,
-          "displayName": "Ghodbabhul)",
+          "displayName": "Ghodbabhul",
           "slug": "ghodbabhul-ghodbabhul",
           "skipPage": false,
           "distanceFromHqKm": 2.2,
@@ -29364,7 +29244,7 @@
           "name": "Gondeshwar(Washim (M Cl))/Gondeshvar(Vashim (M Cl))",
           "lat": 20.1049465496442,
           "lng": 77.11651589267974,
-          "displayName": "Gondeshwar)",
+          "displayName": "Gondeshwar",
           "slug": "gondeshwar-gondeshvar",
           "skipPage": false,
           "distanceFromHqKm": 1.7,
@@ -29477,16 +29357,6 @@
         17.897048
       ],
       "villages": [
-        {
-          "name": "Hyderabad Core Area",
-          "lat": 17.357971988731087,
-          "lng": 78.47161651858734,
-          "displayName": "Hyderabad Core Area",
-          "slug": "hyderabad-core-area",
-          "skipPage": false,
-          "distanceFromHqKm": 5.4,
-          "bearingFromHq": "south"
-        },
         {
           "name": "Bibinagar",
           "lat": 17.4578,
@@ -29791,13 +29661,13 @@
       "sourceLink": "https://www.hmda.gov.in/masterplan-huda/",
       "price": "50",
       "focal": {
-        "lat": 17.357971988731087,
-        "lng": 78.47161651858734,
-        "source": "village:Hyderabad Core Area",
+        "lat": 17.4578,
+        "lng": 78.79541,
+        "source": "village:Bibinagar",
         "zoom": 13
       },
-      "fullMapUrl": "https://dpplans.com/maps.html?lat=17.357971988731087&lng=78.47161651858734&zoom=13",
-      "embedUrl": "https://dpplans.com/maps.html?lat=17.357971988731087&lng=78.47161651858734&zoom=13&embed=1",
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=17.4578&lng=78.79541&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=17.4578&lng=78.79541&zoom=13&embed=1",
       "nearby": [],
       "faqs": [
         {
@@ -29810,7 +29680,7 @@
         },
         {
           "q": "Can I see specific villages or sectors inside Hyderabad HMDA Periphery?",
-          "a": "Yes — 31 sub-locations are indexed inside Hyderabad HMDA Periphery, including Hyderabad Core Area, Bibinagar, Bommalaramaram, Buvanagiri and more. Each can be opened directly from the search bar on the map."
+          "a": "Yes — 30 sub-locations are indexed inside Hyderabad HMDA Periphery, including Bibinagar, Bommalaramaram, Buvanagiri, Chevella and more. Each can be opened directly from the search bar on the map."
         },
         {
           "q": "Is access free?",
@@ -29827,7 +29697,7 @@
         "Search by survey number, village or landmark inside Hyderabad HMDA Periphery",
         "Measure distances and areas directly on the Hyderabad HMDA Periphery map",
         "Mobile-friendly — view Hyderabad HMDA Periphery DP zones on the go",
-        "31 indexed sub-locations inside Hyderabad HMDA Periphery"
+        "30 indexed sub-locations inside Hyderabad HMDA Periphery"
       ]
     }
   ]
