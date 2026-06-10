@@ -40,6 +40,14 @@ function normalizeState(raw) {
   return STATE_ALIASES[s.toLowerCase()] || s;
 }
 
+// Public-facing region name overrides. menuGIS stores the in-app menu label
+// (e.g. "Beed Region"), but the SEO page should target the bare search term
+// ("Beed") for the H1, slug, title and FAQ prose. Keyed on the lowercased,
+// parenthetical-stripped name; applied inside cleanDisplayName.
+const DISPLAY_NAME_ALIASES = {
+  'beed region': 'Beed',
+};
+
 function readJson(p) {
   return JSON.parse(fs.readFileSync(p, 'utf8'));
 }
@@ -66,10 +74,11 @@ function slugify(str) {
 // "Ahmednagar / Ahilyanagar (Part) (new maps)" -> "Ahmednagar / Ahilyanagar"
 // "Solapur (Update 31-01-2026)" -> "Solapur"
 function cleanDisplayName(raw) {
-  return String(raw || '')
+  const cleaned = String(raw || '')
     .replace(/\([^)]*\)/g, '')
     .replace(/\s+/g, ' ')
     .trim();
+  return DISPLAY_NAME_ALIASES[cleaned.toLowerCase()] || cleaned;
 }
 
 // Pick a single short city name suitable for slug + H1 short form.

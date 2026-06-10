@@ -1,373 +1,7 @@
 {
-  "generatedAt": "2026-05-23T15:52:17.099Z",
-  "count": 40,
+  "generatedAt": "2026-06-10T15:50:14.003Z",
+  "count": 41,
   "regions": [
-    {
-      "slug": "hyderabad-hmda-periphery-dp-plan",
-      "productPurchaseID": "hyderabad_new",
-      "menuKey": "Hyderabad",
-      "displayName": "Hyderabad HMDA Periphery",
-      "rawDistrictName": "",
-      "shortName": "Hyderabad HMDA Periphery",
-      "state": "Telangana",
-      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/hydrabad.png",
-      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/hydrabad.png",
-      "centroid": {
-        "lat": 17.45362,
-        "lng": 78.478257,
-        "minZoom": 8,
-        "maxZoom": 18
-      },
-      "bbox": [
-        78.004312,
-        16.967978,
-        79.049735,
-        17.897048
-      ],
-      "villages": [
-        {
-          "name": "Bibinagar",
-          "lat": 17.4578,
-          "lng": 78.79541,
-          "displayName": "Bibinagar",
-          "slug": "bibinagar",
-          "skipPage": false,
-          "distanceFromHqKm": 33.6,
-          "bearingFromHq": "east"
-        },
-        {
-          "name": "Bommalaramaram",
-          "lat": 17.57464,
-          "lng": 78.7469,
-          "displayName": "Bommalaramaram",
-          "slug": "bommalaramaram",
-          "skipPage": false,
-          "distanceFromHqKm": 31.5,
-          "bearingFromHq": "north-east"
-        },
-        {
-          "name": "Buvanagiri",
-          "lat": 17.49856,
-          "lng": 78.91002,
-          "displayName": "Buvanagiri",
-          "slug": "buvanagiri",
-          "skipPage": false,
-          "distanceFromHqKm": 46.1,
-          "bearingFromHq": "east"
-        },
-        {
-          "name": "Chevella",
-          "lat": 17.31894,
-          "lng": 78.11464,
-          "displayName": "Chevella",
-          "slug": "chevella",
-          "skipPage": false,
-          "distanceFromHqKm": 41.4,
-          "bearingFromHq": "west"
-        },
-        {
-          "name": "Choutuppal",
-          "lat": 17.26335,
-          "lng": 78.87066,
-          "displayName": "Choutuppal",
-          "slug": "choutuppal",
-          "skipPage": false,
-          "distanceFromHqKm": 46.7,
-          "bearingFromHq": "south-east"
-        },
-        {
-          "name": "Faruqnagar",
-          "lat": 17.08686,
-          "lng": 78.20235,
-          "displayName": "Faruqnagar",
-          "slug": "faruqnagar",
-          "skipPage": false,
-          "distanceFromHqKm": 50.2,
-          "bearingFromHq": "south-west"
-        },
-        {
-          "name": "Ghatkesar",
-          "lat": 17.43692,
-          "lng": 78.70059,
-          "displayName": "Ghatkesar",
-          "slug": "ghatkesar",
-          "skipPage": false,
-          "distanceFromHqKm": 23.7,
-          "bearingFromHq": "east"
-        },
-        {
-          "name": "Hatnura",
-          "lat": 17.68506,
-          "lng": 78.20186,
-          "displayName": "Hatnura",
-          "slug": "hatnura",
-          "skipPage": false,
-          "distanceFromHqKm": 39,
-          "bearingFromHq": "north-west"
-        },
-        {
-          "name": "Hayathnagar",
-          "lat": 17.30812,
-          "lng": 78.685,
-          "displayName": "Hayathnagar",
-          "slug": "hayathnagar",
-          "skipPage": false,
-          "distanceFromHqKm": 27.3,
-          "bearingFromHq": "south-east"
-        },
-        {
-          "name": "Ibrahimpatnam Manchal",
-          "lat": 17.19131,
-          "lng": 78.66027,
-          "displayName": "Ibrahimpatnam Manchal",
-          "slug": "ibrahimpatnam-manchal",
-          "skipPage": false,
-          "distanceFromHqKm": 35,
-          "bearingFromHq": "south-east"
-        },
-        {
-          "name": "Jinnawaram FPLU",
-          "lat": 17.65156,
-          "lng": 78.34035,
-          "displayName": "Jinnawaram FPLU",
-          "slug": "jinnawaram-fplu",
-          "skipPage": false,
-          "distanceFromHqKm": 26.4,
-          "bearingFromHq": "north-west"
-        },
-        {
-          "name": "Kandukur",
-          "lat": 17.06247,
-          "lng": 78.48674,
-          "displayName": "Kandukur",
-          "slug": "kandukur",
-          "skipPage": false,
-          "distanceFromHqKm": 43.5,
-          "bearingFromHq": "south"
-        },
-        {
-          "name": "Kisara",
-          "lat": 17.53027,
-          "lng": 78.6659,
-          "displayName": "Kisara",
-          "slug": "kisara",
-          "skipPage": false,
-          "distanceFromHqKm": 21.6,
-          "bearingFromHq": "north-east"
-        },
-        {
-          "name": "Kothuru",
-          "lat": 17.12842,
-          "lng": 78.26582,
-          "displayName": "Kothuru",
-          "slug": "kothuru",
-          "skipPage": false,
-          "distanceFromHqKm": 42.6,
-          "bearingFromHq": "south-west"
-        },
-        {
-          "name": "Maheshwaram",
-          "lat": 17.13778,
-          "lng": 78.39352,
-          "displayName": "Maheshwaram",
-          "slug": "maheshwaram",
-          "skipPage": false,
-          "distanceFromHqKm": 36.3,
-          "bearingFromHq": "south"
-        },
-        {
-          "name": "Medchal Qutubullapur",
-          "lat": 17.64064,
-          "lng": 78.46674,
-          "displayName": "Medchal Qutubullapur",
-          "slug": "medchal-qutubullapur",
-          "skipPage": false,
-          "distanceFromHqKm": 20.8,
-          "bearingFromHq": "north"
-        },
-        {
-          "name": "Moinabad Rajendranagar",
-          "lat": 17.3248,
-          "lng": 78.28818,
-          "displayName": "Moinabad Rajendranagar",
-          "slug": "moinabad-rajendranagar",
-          "skipPage": false,
-          "distanceFromHqKm": 24.7,
-          "bearingFromHq": "south-west"
-        },
-        {
-          "name": "Mulug",
-          "lat": 17.71631,
-          "lng": 78.63889,
-          "displayName": "Mulug",
-          "slug": "mulug",
-          "skipPage": false,
-          "distanceFromHqKm": 33.8,
-          "bearingFromHq": "north-east"
-        },
-        {
-          "name": "Narsapur",
-          "lat": 17.75063,
-          "lng": 78.2638,
-          "displayName": "Narsapur",
-          "slug": "narsapur",
-          "skipPage": false,
-          "distanceFromHqKm": 40.1,
-          "bearingFromHq": "north-west"
-        },
-        {
-          "name": "Patancheruvu",
-          "lat": 17.54991,
-          "lng": 78.2163,
-          "displayName": "Patancheruvu",
-          "slug": "patancheruvu",
-          "skipPage": false,
-          "distanceFromHqKm": 29.8,
-          "bearingFromHq": "west"
-        },
-        {
-          "name": "Pochampalli",
-          "lat": 17.35717,
-          "lng": 78.81223,
-          "displayName": "Pochampalli",
-          "slug": "pochampalli",
-          "skipPage": false,
-          "distanceFromHqKm": 37,
-          "bearingFromHq": "east"
-        },
-        {
-          "name": "Sangareddy",
-          "lat": 17.586484,
-          "lng": 78.081933,
-          "displayName": "Sangareddy",
-          "slug": "sangareddy",
-          "skipPage": false,
-          "distanceFromHqKm": 44.5,
-          "bearingFromHq": "west"
-        },
-        {
-          "name": "Shahbad",
-          "lat": 17.17981,
-          "lng": 78.13107,
-          "displayName": "Shahbad",
-          "slug": "shahbad",
-          "skipPage": false,
-          "distanceFromHqKm": 47.8,
-          "bearingFromHq": "south-west"
-        },
-        {
-          "name": "Shahmirpet",
-          "lat": 17.62423,
-          "lng": 78.62416,
-          "displayName": "Shahmirpet",
-          "slug": "shahmirpet",
-          "skipPage": false,
-          "distanceFromHqKm": 24.5,
-          "bearingFromHq": "north-east"
-        },
-        {
-          "name": "Shamshabad",
-          "lat": 17.23315,
-          "lng": 78.3362,
-          "displayName": "Shamshabad",
-          "slug": "shamshabad",
-          "skipPage": false,
-          "distanceFromHqKm": 28.8,
-          "bearingFromHq": "south-west"
-        },
-        {
-          "name": "Shankarpalli Ramchandrapuram",
-          "lat": 17.43141,
-          "lng": 78.16524,
-          "displayName": "Shankarpalli Ramchandrapuram",
-          "slug": "shankarpalli-ramchandrapuram",
-          "skipPage": false,
-          "distanceFromHqKm": 33.3,
-          "bearingFromHq": "west"
-        },
-        {
-          "name": "Shivampet",
-          "lat": 17.79715,
-          "lng": 78.38087,
-          "displayName": "Shivampet",
-          "slug": "shivampet",
-          "skipPage": false,
-          "distanceFromHqKm": 39.6,
-          "bearingFromHq": "north"
-        },
-        {
-          "name": "Tupran",
-          "lat": 17.80339,
-          "lng": 78.47794,
-          "displayName": "Tupran",
-          "slug": "tupran",
-          "skipPage": false,
-          "distanceFromHqKm": 38.9,
-          "bearingFromHq": "north"
-        },
-        {
-          "name": "Wargal",
-          "lat": 17.79116,
-          "lng": 78.59261,
-          "displayName": "Wargal",
-          "slug": "wargal",
-          "skipPage": false,
-          "distanceFromHqKm": 39.4,
-          "bearingFromHq": "north"
-        },
-        {
-          "name": "Yacharam",
-          "lat": 17.07615,
-          "lng": 78.67112,
-          "displayName": "Yacharam",
-          "slug": "yacharam",
-          "skipPage": false,
-          "distanceFromHqKm": 46.7,
-          "bearingFromHq": "south-east"
-        }
-      ],
-      "sourceLink": "https://www.hmda.gov.in/masterplan-huda/",
-      "price": "50",
-      "focal": {
-        "lat": 17.4578,
-        "lng": 78.79541,
-        "source": "village:Bibinagar",
-        "zoom": 13
-      },
-      "fullMapUrl": "https://dpplans.com/maps.html?lat=17.4578&lng=78.79541&zoom=13",
-      "embedUrl": "https://dpplans.com/maps.html?lat=17.4578&lng=78.79541&zoom=13&embed=1",
-      "nearby": [],
-      "faqs": [
-        {
-          "q": "Where can I view the Hyderabad HMDA Periphery Development Plan online?",
-          "a": "You can view the Hyderabad HMDA Periphery DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Hyderabad HMDA Periphery, Hyderabad HMDA Periphery (Draft)."
-        },
-        {
-          "q": "Is the Hyderabad HMDA Periphery DP map official?",
-          "a": "The published Development Plan referenced here mirrors the source documents from Hyderabad HMDA Periphery (Draft) Town Planning. The official PDFs are linked from the source: https://www.hmda.gov.in/masterplan-huda/"
-        },
-        {
-          "q": "Can I see specific villages or sectors inside Hyderabad HMDA Periphery?",
-          "a": "Yes — 30 sub-locations are indexed inside Hyderabad HMDA Periphery, including Bibinagar, Bommalaramaram, Buvanagiri, Chevella and more. Each can be opened directly from the search bar on the map."
-        },
-        {
-          "q": "Is access free?",
-          "a": "Browsing the Hyderabad HMDA Periphery region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
-        },
-        {
-          "q": "What devices does the Hyderabad HMDA Periphery DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
-        }
-      ],
-      "features": [
-        "Interactive zoom and pan over the entire Hyderabad HMDA Periphery Development Plan area",
-        "Satellite + DP overlay so plot boundaries align with on-ground features",
-        "Search by survey number, village or landmark inside Hyderabad HMDA Periphery",
-        "Measure distances and areas directly on the Hyderabad HMDA Periphery map",
-        "Mobile-friendly — view Hyderabad HMDA Periphery DP zones on the go",
-        "30 indexed sub-locations inside Hyderabad HMDA Periphery"
-      ]
-    },
     {
       "slug": "bengaluru-dp-plan",
       "productPurchaseID": "bengaluru",
@@ -439,7 +73,7 @@
         },
         {
           "q": "What devices does the Bengaluru DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -752,7 +386,7 @@
         },
         {
           "q": "What devices does the Vijayapura DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -1054,10 +688,10 @@
           "distanceKm": 118.8
         },
         {
-          "slug": "jalna-region-dp-plan",
-          "displayName": "Jalna Region",
-          "shortName": "Jalna Region",
-          "distanceKm": 147.3
+          "slug": "beed-dp-plan",
+          "displayName": "Beed",
+          "shortName": "Beed",
+          "distanceKm": 125.4
         }
       ],
       "faqs": [
@@ -1079,7 +713,7 @@
         },
         {
           "q": "What devices does the Ahmednagar DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -1496,7 +1130,7 @@
         },
         {
           "q": "What devices does the Akola DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -1963,7 +1597,7 @@
         },
         {
           "q": "What devices does the Amravati DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -2283,6 +1917,12 @@
           "distanceKm": 89.6
         },
         {
+          "slug": "beed-dp-plan",
+          "displayName": "Beed",
+          "shortName": "Beed",
+          "distanceKm": 109.3
+        },
+        {
           "slug": "buldhana-region-dp-plan",
           "displayName": "Buldhana Region",
           "shortName": "Buldhana Region",
@@ -2293,12 +1933,6 @@
           "displayName": "Jalgaon Region",
           "shortName": "Jalgaon Region",
           "distanceKm": 131.9
-        },
-        {
-          "slug": "dhule-dp-plan",
-          "displayName": "Dhule",
-          "shortName": "Dhule",
-          "distanceKm": 132.5
         }
       ],
       "faqs": [
@@ -2320,7 +1954,7 @@
         },
         {
           "q": "What devices does the Aurangabad DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -2330,6 +1964,383 @@
         "Measure distances and areas directly on the Aurangabad map",
         "Mobile-friendly — view Aurangabad DP zones on the go",
         "26 indexed sub-locations inside Aurangabad"
+      ]
+    },
+    {
+      "slug": "beed-dp-plan",
+      "productPurchaseID": "beed",
+      "menuKey": "Beed",
+      "displayName": "Beed",
+      "rawDistrictName": "Beed Region",
+      "shortName": "Beed",
+      "state": "Maharashtra",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/beed_icon.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
+      "centroid": {
+        "lat": 18.936366,
+        "lng": 75.770261,
+        "minZoom": 11,
+        "maxZoom": 18
+      },
+      "bbox": [
+        75.038447,
+        18.681757,
+        76.444674,
+        19.349132
+      ],
+      "villages": [
+        {
+          "name": "Beed Municipal Corporation",
+          "lat": 18.988982865911442,
+          "lng": 75.75350762737936,
+          "displayName": "Beed Municipal Corporation",
+          "slug": "beed-municipal-corporation",
+          "skipPage": false,
+          "distanceFromHqKm": 6.1,
+          "bearingFromHq": "north"
+        },
+        {
+          "name": "Ambajogai Municipal Council",
+          "lat": 18.728175904613188,
+          "lng": 76.38837124280954,
+          "displayName": "Ambajogai Municipal Council",
+          "slug": "ambajogai-municipal-council",
+          "skipPage": false,
+          "distanceFromHqKm": 69,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Kada Growth Centre",
+          "lat": 18.897425490405748,
+          "lng": 75.07355818119606,
+          "displayName": "Kada Growth Centre",
+          "slug": "kada-growth-centre",
+          "skipPage": false,
+          "distanceFromHqKm": 73.4,
+          "bearingFromHq": "west"
+        },
+        {
+          "name": "Pathrud Growth Centre",
+          "lat": 19.093690517579034,
+          "lng": 76.21559246395765,
+          "displayName": "Pathrud Growth Centre",
+          "slug": "pathrud-growth-centre",
+          "skipPage": false,
+          "distanceFromHqKm": 50,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Shirsala Growth Centre",
+          "lat": 18.975514748245462,
+          "lng": 76.38137335358012,
+          "displayName": "Shirsala Growth Centre",
+          "slug": "shirsala-growth-centre",
+          "skipPage": false,
+          "distanceFromHqKm": 64.4,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Talwada Growth Centre",
+          "lat": 19.31041360172553,
+          "lng": 75.86175431609858,
+          "displayName": "Talwada Growth Centre",
+          "slug": "talwada-growth-centre",
+          "skipPage": false,
+          "distanceFromHqKm": 42.7,
+          "bearingFromHq": "north"
+        },
+        {
+          "name": "Aher Dhanora, Tal: Beed",
+          "lat": 18.953595605472877,
+          "lng": 75.74467797342908,
+          "displayName": "Aher Dhanora",
+          "slug": "aher-dhanora-tal-beed",
+          "skipPage": false,
+          "distanceFromHqKm": 3.3,
+          "bearingFromHq": "north-west"
+        },
+        {
+          "name": "Ambejogai (M Cl), Tal: Ambejogai",
+          "lat": 18.728175904613188,
+          "lng": 76.38837124280954,
+          "displayName": "Ambejogai",
+          "slug": "ambejogai-tal-ambejogai",
+          "skipPage": false,
+          "distanceFromHqKm": 69,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Ambejogai (Rural), Tal: Ambejogai",
+          "lat": 18.722955569819064,
+          "lng": 76.3874595248939,
+          "displayName": "Ambejogai",
+          "slug": "ambejogai-tal-ambejogai-2",
+          "skipPage": false,
+          "distanceFromHqKm": 69.2,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Anandwadi/Anandvadi, Tal: Beed",
+          "lat": 19.020960821742687,
+          "lng": 75.75766804061749,
+          "displayName": "Anandwadi",
+          "slug": "anandwadi-anandvadi-tal-beed",
+          "skipPage": false,
+          "distanceFromHqKm": 9.5,
+          "bearingFromHq": "north"
+        },
+        {
+          "name": "Bahirwadi/Bahirvadi, Tal: Beed",
+          "lat": 19.017506152303355,
+          "lng": 75.77490346184345,
+          "displayName": "Bahirwadi",
+          "slug": "bahirwadi-bahirvadi-tal-beed",
+          "skipPage": false,
+          "distanceFromHqKm": 9,
+          "bearingFromHq": "north"
+        },
+        {
+          "name": "Bid (M Cl), Tal: Beed",
+          "lat": 18.98036682101164,
+          "lng": 75.75747379844135,
+          "displayName": "Bid",
+          "slug": "bid-tal-beed",
+          "skipPage": false,
+          "distanceFromHqKm": 5.1,
+          "bearingFromHq": "north"
+        },
+        {
+          "name": "Bid (Rural), Tal: Beed",
+          "lat": 18.983146956448653,
+          "lng": 75.75772419661814,
+          "displayName": "Bid",
+          "slug": "bid-tal-beed-2",
+          "skipPage": false,
+          "distanceFromHqKm": 5.4,
+          "bearingFromHq": "north"
+        },
+        {
+          "name": "Chanai, Tal: Ambejogai",
+          "lat": 18.73637558867468,
+          "lng": 76.345175687478,
+          "displayName": "Chanai",
+          "slug": "chanai-tal-ambejogai",
+          "skipPage": false,
+          "distanceFromHqKm": 64.5,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Jirewadi/Jirevadi, Tal: Beed",
+          "lat": 19.02676506998642,
+          "lng": 75.75984135760777,
+          "displayName": "Jirewadi",
+          "slug": "jirewadi-jirevadi-tal-beed",
+          "skipPage": false,
+          "distanceFromHqKm": 10.1,
+          "bearingFromHq": "north"
+        },
+        {
+          "name": "Jogaiwadi/Jogaivadi, Tal: Ambejogai",
+          "lat": 18.701358494839894,
+          "lng": 76.37042922792082,
+          "displayName": "Jogaiwadi",
+          "slug": "jogaiwadi-jogaivadi-tal-ambejogai",
+          "skipPage": false,
+          "distanceFromHqKm": 68.4,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Kada, Tal: Ashti",
+          "lat": 18.906839142506772,
+          "lng": 75.06938422615549,
+          "displayName": "Kada",
+          "slug": "kada-tal-ashti",
+          "skipPage": false,
+          "distanceFromHqKm": 73.8,
+          "bearingFromHq": "west"
+        },
+        {
+          "name": "Magarwadi/Magarvadi, Tal: Ambejogai",
+          "lat": 18.71800555236876,
+          "lng": 76.41125322378652,
+          "displayName": "Magarwadi",
+          "slug": "magarwadi-magarvadi-tal-ambejogai",
+          "skipPage": false,
+          "distanceFromHqKm": 71.7,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Morewadi/Morevadi, Tal: Ambejogai",
+          "lat": 18.719091509839487,
+          "lng": 76.36911391079781,
+          "displayName": "Morewadi",
+          "slug": "morewadi-morevadi-tal-ambejogai",
+          "skipPage": false,
+          "distanceFromHqKm": 67.5,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Murshadpur, Tal: Ashti",
+          "lat": 18.803992197934026,
+          "lng": 75.15558419645708,
+          "displayName": "Murshadpur",
+          "slug": "murshadpur-tal-ashti",
+          "skipPage": false,
+          "distanceFromHqKm": 66.3,
+          "bearingFromHq": "west"
+        },
+        {
+          "name": "Neknoor, Tal: Beed",
+          "lat": 18.834320480225575,
+          "lng": 75.77504231666167,
+          "displayName": "Neknoor",
+          "slug": "neknoor-tal-beed",
+          "skipPage": false,
+          "distanceFromHqKm": 11.4,
+          "bearingFromHq": "south"
+        },
+        {
+          "name": "Palwan/Palvan, Tal: Beed",
+          "lat": 18.965000925007594,
+          "lng": 75.71567960674567,
+          "displayName": "Palwan",
+          "slug": "palwan-palvan-tal-beed",
+          "skipPage": false,
+          "distanceFromHqKm": 6.6,
+          "bearingFromHq": "north-west"
+        },
+        {
+          "name": "Patrud, Tal: Majalgaon",
+          "lat": 19.08805997132494,
+          "lng": 76.21741758355545,
+          "displayName": "Patrud",
+          "slug": "patrud-tal-majalgaon",
+          "skipPage": false,
+          "distanceFromHqKm": 49.9,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Samnapur, Tal: Beed",
+          "lat": 18.94944254142999,
+          "lng": 75.76523231681446,
+          "displayName": "Samnapur",
+          "slug": "samnapur-tal-beed",
+          "skipPage": false,
+          "distanceFromHqKm": 1.5,
+          "bearingFromHq": "north"
+        },
+        {
+          "name": "Shepwadi/Shepvadi, Tal: Ambejogai",
+          "lat": 18.747515808068847,
+          "lng": 76.4236543749691,
+          "displayName": "Shepwadi",
+          "slug": "shepwadi-shepvadi-tal-ambejogai",
+          "skipPage": false,
+          "distanceFromHqKm": 71.9,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Sirsala, Tal: Parli",
+          "lat": 18.977367521623318,
+          "lng": 76.38020941715848,
+          "displayName": "Sirsala",
+          "slug": "sirsala-tal-parli",
+          "skipPage": false,
+          "distanceFromHqKm": 64.3,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Talegaon, Tal: Beed",
+          "lat": 18.99482912068837,
+          "lng": 75.71166297927068,
+          "displayName": "Talegaon",
+          "slug": "talegaon-tal-beed",
+          "skipPage": false,
+          "distanceFromHqKm": 9,
+          "bearingFromHq": "north-west"
+        },
+        {
+          "name": "Wasanwadi/Vasanvadi, Tal: Beed",
+          "lat": 19.024558182235477,
+          "lng": 75.73846691722252,
+          "displayName": "Wasanwadi",
+          "slug": "wasanwadi-vasanvadi-tal-beed",
+          "skipPage": false,
+          "distanceFromHqKm": 10.4,
+          "bearingFromHq": "north"
+        }
+      ],
+      "sourceLink": "",
+      "price": "",
+      "focal": {
+        "lat": 18.988982865911442,
+        "lng": 75.75350762737936,
+        "source": "village:Beed Municipal Corporation",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=18.988982865911442&lng=75.75350762737936&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=18.988982865911442&lng=75.75350762737936&zoom=13&embed=1",
+      "nearby": [
+        {
+          "slug": "jalna-region-dp-plan",
+          "displayName": "Jalna Region",
+          "shortName": "Jalna Region",
+          "distanceKm": 102.8
+        },
+        {
+          "slug": "osmanabad-dp-plan",
+          "displayName": "Osmanabad/Dharashiv Region",
+          "shortName": "Osmanabad",
+          "distanceKm": 105.2
+        },
+        {
+          "slug": "parbhani-region-dp-plan",
+          "displayName": "Parbhani Region",
+          "shortName": "Parbhani Region",
+          "distanceKm": 106.7
+        },
+        {
+          "slug": "aurangabad-dp-plan",
+          "displayName": "Aurangabad/Chatrapati Sambhaji Nagar",
+          "shortName": "Aurangabad",
+          "distanceKm": 109.3
+        },
+        {
+          "slug": "latur-region-dp-plan",
+          "displayName": "Latur Region",
+          "shortName": "Latur Region",
+          "distanceKm": 120.2
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Where can I view the Beed Development Plan online?",
+          "a": "You can view the Beed DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Beed, Maharashtra."
+        },
+        {
+          "q": "Is the Beed DP map official?",
+          "a": "The Development Plan referenced here mirrors the latest publication from the local planning authority for Beed."
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Beed?",
+          "a": "Yes — 28 sub-locations are indexed inside Beed, including Beed Municipal Corporation, Ambajogai Municipal Council, Kada Growth Centre, Pathrud Growth Centre and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Beed region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Beed DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Beed Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Beed",
+        "Measure distances and areas directly on the Beed map",
+        "Mobile-friendly — view Beed DP zones on the go",
+        "28 indexed sub-locations inside Beed"
       ]
     },
     {
@@ -2447,7 +2458,7 @@
         },
         {
           "q": "What devices does the Bhandara Region DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -2554,7 +2565,7 @@
         },
         {
           "q": "What devices does the Buldhana Region DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -2751,7 +2762,7 @@
         },
         {
           "q": "What devices does the Chandrapur Region DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -2908,7 +2919,7 @@
         },
         {
           "q": "What devices does the Dhule DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -3135,7 +3146,7 @@
         },
         {
           "q": "What devices does the Hingoli DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -3242,7 +3253,7 @@
         },
         {
           "q": "What devices does the Jalgaon Region DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -3438,16 +3449,16 @@
           "distanceKm": 96.2
         },
         {
+          "slug": "beed-dp-plan",
+          "displayName": "Beed",
+          "shortName": "Beed",
+          "distanceKm": 102.8
+        },
+        {
           "slug": "hingoli-dp-plan",
           "displayName": "Hingoli",
           "shortName": "Hingoli",
           "distanceKm": 124.1
-        },
-        {
-          "slug": "washim-region-dp-plan",
-          "displayName": "Washim Region",
-          "shortName": "Washim Region",
-          "distanceKm": 125.3
         }
       ],
       "faqs": [
@@ -3469,7 +3480,7 @@
         },
         {
           "q": "What devices does the Jalna Region DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -3886,7 +3897,7 @@
         },
         {
           "q": "What devices does the Karjat - MSRDC Corridor DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -4463,7 +4474,7 @@
         },
         {
           "q": "What devices does the Kharghar DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -4486,16 +4497,16 @@
       "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_kolhapur.png",
       "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
       "centroid": {
-        "lat": 16.50644,
-        "lng": 74.34758,
+        "lat": 16.652177,
+        "lng": 74.355111,
         "minZoom": null,
         "maxZoom": null
       },
       "bbox": [
-        74.17707,
+        74.149158,
         16.159657,
-        74.568841,
-        16.794073
+        74.632763,
+        16.861237
       ],
       "villages": [
         {
@@ -4505,7 +4516,7 @@
           "displayName": "Kolhapur City",
           "slug": "kolhapur-city",
           "skipPage": false,
-          "distanceFromHqKm": 24,
+          "distanceFromHqKm": 13,
           "bearingFromHq": "north-west"
         },
         {
@@ -4515,7 +4526,7 @@
           "displayName": "Jaysingpur",
           "slug": "jaysingpur",
           "skipPage": false,
-          "distanceFromHqKm": 37.1,
+          "distanceFromHqKm": 25.2,
           "bearingFromHq": "north-east"
         },
         {
@@ -4525,7 +4536,7 @@
           "displayName": "Murgud",
           "slug": "murgud",
           "skipPage": false,
-          "distanceFromHqKm": 20.7,
+          "distanceFromHqKm": 33.4,
           "bearingFromHq": "south-west"
         },
         {
@@ -4535,7 +4546,7 @@
           "displayName": "Gadhinglaj",
           "slug": "gadhinglaj",
           "skipPage": false,
-          "distanceFromHqKm": 31.2,
+          "distanceFromHqKm": 47.4,
           "bearingFromHq": "south"
         },
         {
@@ -4545,8 +4556,38 @@
           "displayName": "Ichalkaranji",
           "slug": "ichalkaranji",
           "skipPage": false,
-          "distanceFromHqKm": 25.7,
+          "distanceFromHqKm": 12.2,
           "bearingFromHq": "north-east"
+        },
+        {
+          "name": "Karvir/ Karveer Growth Centre Complex",
+          "lat": 16.70186,
+          "lng": 74.33615,
+          "displayName": "Karvir",
+          "slug": "karvir-karveer-growth-centre-complex",
+          "skipPage": false,
+          "distanceFromHqKm": 5.9,
+          "bearingFromHq": "north"
+        },
+        {
+          "name": "Kagal Municipal Council (Draft 2025)",
+          "lat": 16.5898,
+          "lng": 74.3125,
+          "displayName": "Kagal Municipal Council",
+          "slug": "kagal-municipal-council",
+          "skipPage": false,
+          "distanceFromHqKm": 8.3,
+          "bearingFromHq": "south-west"
+        },
+        {
+          "name": "Agar, Tal: Shirol",
+          "lat": 16.739703883940873,
+          "lng": 74.57765340605732,
+          "displayName": "Agar",
+          "slug": "agar-tal-shirol",
+          "skipPage": false,
+          "distanceFromHqKm": 25.6,
+          "bearingFromHq": "east"
         },
         {
           "name": "Ambap, Tal: Hatkalangale",
@@ -4555,8 +4596,8 @@
           "displayName": "Ambap",
           "slug": "ambap-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 37.6,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 22.5,
+          "bearingFromHq": "north-west"
         },
         {
           "name": "Ambapwadi/Ambapvadi, Tal: Hatkalangale",
@@ -4565,8 +4606,8 @@
           "displayName": "Ambapwadi",
           "slug": "ambapwadi-ambapvadi-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 36,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 21.1,
+          "bearingFromHq": "north-west"
         },
         {
           "name": "Ambewadi/Ambevadi, Tal: Karvir",
@@ -4575,7 +4616,7 @@
           "displayName": "Ambewadi",
           "slug": "ambewadi-ambevadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 27.5,
+          "distanceFromHqKm": 16.9,
           "bearingFromHq": "north-west"
         },
         {
@@ -4585,8 +4626,8 @@
           "displayName": "Balinge",
           "slug": "balinge-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 27,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 19.1,
+          "bearingFromHq": "west"
         },
         {
           "name": "Bhadgaon, Tal: Gadhinglaj",
@@ -4595,7 +4636,7 @@
           "displayName": "Bhadgaon",
           "slug": "bhadgaon-tal-gadhinglaj",
           "skipPage": false,
-          "distanceFromHqKm": 35.4,
+          "distanceFromHqKm": 51.5,
           "bearingFromHq": "south"
         },
         {
@@ -4605,7 +4646,7 @@
           "displayName": "Bhavde",
           "slug": "bhavde-bhawde-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 27.4,
+          "distanceFromHqKm": 14.6,
           "bearingFromHq": "north-west"
         },
         {
@@ -4615,7 +4656,7 @@
           "displayName": "Bhuye",
           "slug": "bhuye-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 32.2,
+          "distanceFromHqKm": 19.1,
           "bearingFromHq": "north-west"
         },
         {
@@ -4625,7 +4666,7 @@
           "displayName": "Bhuyewadi",
           "slug": "bhuyewadi-bhuyevadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 32.7,
+          "distanceFromHqKm": 19.9,
           "bearingFromHq": "north-west"
         },
         {
@@ -4635,8 +4676,8 @@
           "displayName": "Chandur",
           "slug": "chandur-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 19.8,
-          "bearingFromHq": "north-east"
+          "distanceFromHqKm": 8.8,
+          "bearingFromHq": "east"
         },
         {
           "name": "Chikhali, Tal: Karvir",
@@ -4645,7 +4686,7 @@
           "displayName": "Chikhali",
           "slug": "chikhali-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 30.1,
+          "distanceFromHqKm": 19.8,
           "bearingFromHq": "north-west"
         },
         {
@@ -4655,8 +4696,28 @@
           "displayName": "Chinchwad",
           "slug": "chinchwad-chinchvad-tal-karvir",
           "skipPage": false,
+          "distanceFromHqKm": 6.3,
+          "bearingFromHq": "north-west"
+        },
+        {
+          "name": "Chipari, Tal: Shirol",
+          "lat": 16.774487133703424,
+          "lng": 74.51771942492014,
+          "displayName": "Chipari",
+          "slug": "chipari-tal-shirol",
+          "skipPage": false,
           "distanceFromHqKm": 22,
-          "bearingFromHq": "north"
+          "bearingFromHq": "north-east"
+        },
+        {
+          "name": "Dharangutti, Tal: Shirol",
+          "lat": 16.745393301683325,
+          "lng": 74.55128124779404,
+          "displayName": "Dharangutti",
+          "slug": "dharangutti-tal-shirol",
+          "skipPage": false,
+          "distanceFromHqKm": 23.3,
+          "bearingFromHq": "north-east"
         },
         {
           "name": "Gadhinglaj, Tal: Gadhinglaj",
@@ -4665,7 +4726,7 @@
           "displayName": "Gadhinglaj",
           "slug": "gadhinglaj-tal-gadhinglaj",
           "skipPage": false,
-          "distanceFromHqKm": 29.7,
+          "distanceFromHqKm": 46,
           "bearingFromHq": "south"
         },
         {
@@ -4675,8 +4736,8 @@
           "displayName": "GAP",
           "slug": "gap-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 31.6,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 16.4,
+          "bearingFromHq": "north-west"
         },
         {
           "name": "Gijavane/Gijawane, Tal: Gadhinglaj",
@@ -4685,7 +4746,7 @@
           "displayName": "Gijavane",
           "slug": "gijavane-gijawane-tal-gadhinglaj",
           "skipPage": false,
-          "distanceFromHqKm": 32.4,
+          "distanceFromHqKm": 48.6,
           "bearingFromHq": "south"
         },
         {
@@ -4695,8 +4756,8 @@
           "displayName": "Girgaon",
           "slug": "girgaon-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 17.7,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 14,
+          "bearingFromHq": "west"
         },
         {
           "name": "Gokul Shirgaon, Tal: Karvir",
@@ -4705,8 +4766,8 @@
           "displayName": "Gokul Shirgaon",
           "slug": "gokul-shirgaon-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 17.6,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 9,
+          "bearingFromHq": "west"
         },
         {
           "name": "Halondi, Tal: Hatkalangale",
@@ -4715,8 +4776,8 @@
           "displayName": "Halondi",
           "slug": "halondi-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 25.5,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 10.4,
+          "bearingFromHq": "north-west"
         },
         {
           "name": "Halsavade/Halsawade, Tal: Karvir",
@@ -4725,8 +4786,8 @@
           "displayName": "Halsavade",
           "slug": "halsavade-halsawade-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 12.7,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 4.4,
+          "bearingFromHq": "south-west"
         },
         {
           "name": "Hanmantwadi/Hanmantvadi, Tal: Karvir",
@@ -4735,8 +4796,18 @@
           "displayName": "Hanmantwadi",
           "slug": "hanmantwadi-hanmantvadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 30.3,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 20.9,
+          "bearingFromHq": "west"
+        },
+        {
+          "name": "Haroli, Tal: Shirol",
+          "lat": 16.72469246242021,
+          "lng": 74.5280351116368,
+          "displayName": "Haroli",
+          "slug": "haroli-tal-shirol",
+          "skipPage": false,
+          "distanceFromHqKm": 20.1,
+          "bearingFromHq": "north-east"
         },
         {
           "name": "Herle, Tal: Hatkalangale",
@@ -4745,7 +4816,7 @@
           "displayName": "Herle",
           "slug": "herle-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 28,
+          "distanceFromHqKm": 12.1,
           "bearingFromHq": "north"
         },
         {
@@ -4755,7 +4826,7 @@
           "displayName": "Ichalakranji",
           "slug": "ichalakranji-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 23.6,
+          "distanceFromHqKm": 11.1,
           "bearingFromHq": "north-east"
         },
         {
@@ -4765,8 +4836,28 @@
           "displayName": "Jadhavwadi",
           "slug": "jadhavwadi-jadhawvadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 23.9,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 11.5,
+          "bearingFromHq": "north-west"
+        },
+        {
+          "name": "Jainapur, Tal: Shirol",
+          "lat": 16.78396106113085,
+          "lng": 74.5204728474956,
+          "displayName": "Jainapur",
+          "slug": "jainapur-tal-shirol",
+          "skipPage": false,
+          "distanceFromHqKm": 22.9,
+          "bearingFromHq": "north-east"
+        },
+        {
+          "name": "Jambhali, Tal: Shirol",
+          "lat": 16.723393433737808,
+          "lng": 74.5142533458718,
+          "displayName": "Jambhali",
+          "slug": "jambhali-tal-shirol",
+          "skipPage": false,
+          "distanceFromHqKm": 18.7,
+          "bearingFromHq": "north-east"
         },
         {
           "name": "Jatharwadi/Jatharvadi, Tal: Karvir",
@@ -4775,8 +4866,8 @@
           "displayName": "Jatharwadi",
           "slug": "jatharwadi-jatharvadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 32.9,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 19.4,
+          "bearingFromHq": "north-west"
         },
         {
           "name": "Jayshingpur (Rural), Tal: Shirol",
@@ -4785,7 +4876,7 @@
           "displayName": "Jayshingpur",
           "slug": "jayshingpur-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 37.2,
+          "distanceFromHqKm": 25.2,
           "bearingFromHq": "north-east"
         },
         {
@@ -4795,8 +4886,18 @@
           "displayName": "Kabnoor",
           "slug": "kabnoor-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 23.7,
+          "distanceFromHqKm": 10.5,
           "bearingFromHq": "north-east"
+        },
+        {
+          "name": "Kagal (R), Tal: Kagal",
+          "lat": 16.58847735776155,
+          "lng": 74.31024357039493,
+          "displayName": "Kagal",
+          "slug": "kagal-tal-kagal",
+          "skipPage": false,
+          "distanceFromHqKm": 8.5,
+          "bearingFromHq": "south-west"
         },
         {
           "name": "Kalambe Tarf Thane, Tal: Karvir",
@@ -4805,8 +4906,8 @@
           "displayName": "Kalambe Tarf Thane",
           "slug": "kalambe-tarf-thane-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 20.8,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 15.4,
+          "bearingFromHq": "west"
         },
         {
           "name": "Kandalgaon, Tal: Karvir",
@@ -4815,8 +4916,8 @@
           "displayName": "Kandalgaon",
           "slug": "kandalgaon-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 17.8,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 11.5,
+          "bearingFromHq": "west"
         },
         {
           "name": "Kaneri, Tal: Karvir",
@@ -4825,8 +4926,8 @@
           "displayName": "Kaneri",
           "slug": "kaneri-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 14.6,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 9.5,
+          "bearingFromHq": "south-west"
         },
         {
           "name": "Kaneriwadi/Kanerivadi, Tal: Karvir",
@@ -4835,8 +4936,8 @@
           "displayName": "Kaneriwadi",
           "slug": "kaneriwadi-kanerivadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 14.4,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 7.7,
+          "bearingFromHq": "south-west"
         },
         {
           "name": "Kapurwadi/Kapurvadi, Tal: Hatkalangale",
@@ -4845,7 +4946,7 @@
           "displayName": "Kapurwadi",
           "slug": "kapurwadi-kapurvadi-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 32.9,
+          "distanceFromHqKm": 16.7,
           "bearingFromHq": "north"
         },
         {
@@ -4855,8 +4956,8 @@
           "displayName": "Kasarwadi",
           "slug": "kasarwadi-kasarvadi-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 33.7,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 18.9,
+          "bearingFromHq": "north-west"
         },
         {
           "name": "Khotwadi/Khotvadi, Tal: Hatkalangale",
@@ -4865,8 +4966,18 @@
           "displayName": "Khotwadi",
           "slug": "khotwadi-khotvadi-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 28.3,
+          "distanceFromHqKm": 15.5,
           "bearingFromHq": "north-east"
+        },
+        {
+          "name": "Kogil Bk., Tal: Karvir",
+          "lat": 16.600002572701626,
+          "lng": 74.25967372084781,
+          "displayName": "Kogil Bk.",
+          "slug": "kogil-bk-tal-karvir",
+          "skipPage": false,
+          "distanceFromHqKm": 11.7,
+          "bearingFromHq": "south-west"
         },
         {
           "name": "Kogil Kh., Tal: Karvir",
@@ -4875,8 +4986,8 @@
           "displayName": "Kogil Kh.",
           "slug": "kogil-kh-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 15.6,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 12.9,
+          "bearingFromHq": "south-west"
         },
         {
           "name": "Kolhapur, Tal: Karvir",
@@ -4885,8 +4996,18 @@
           "displayName": "Kolhapur",
           "slug": "kolhapur-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 23.7,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 13.9,
+          "bearingFromHq": "west"
+        },
+        {
+          "name": "Kondigre, Tal: Shirol",
+          "lat": 16.74558532154249,
+          "lng": 74.50206139119373,
+          "displayName": "Kondigre",
+          "slug": "kondigre-tal-shirol",
+          "skipPage": false,
+          "distanceFromHqKm": 18.8,
+          "bearingFromHq": "north-east"
         },
         {
           "name": "Korochi, Tal: Hatkalangale",
@@ -4895,8 +5016,18 @@
           "displayName": "Korochi",
           "slug": "korochi-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 25.8,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 11.6,
+          "bearingFromHq": "north-east"
+        },
+        {
+          "name": "Lingnur Dumala, Tal: Kagal",
+          "lat": 16.55938544411362,
+          "lng": 74.33759459712275,
+          "displayName": "Lingnur Dumala",
+          "slug": "lingnur-dumala-tal-kagal",
+          "skipPage": false,
+          "distanceFromHqKm": 10.5,
+          "bearingFromHq": "south"
         },
         {
           "name": "Mangaon, Tal: Hatkalangale",
@@ -4905,8 +5036,8 @@
           "displayName": "Mangaon",
           "slug": "mangaon-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 21.8,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 5.9,
+          "bearingFromHq": "north-east"
         },
         {
           "name": "Mangaonwadi/Mangaonvadi, Tal: Hatkalangale",
@@ -4915,7 +5046,7 @@
           "displayName": "Mangaonwadi",
           "slug": "mangaonwadi-mangaonvadi-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 26,
+          "distanceFromHqKm": 10.1,
           "bearingFromHq": "north"
         },
         {
@@ -4925,7 +5056,7 @@
           "displayName": "Mauje Vadgaon",
           "slug": "mauje-vadgaon-mauje-wadgaon-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 29.2,
+          "distanceFromHqKm": 13.6,
           "bearingFromHq": "north"
         },
         {
@@ -4935,7 +5066,7 @@
           "displayName": "Minche",
           "slug": "minche-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 34,
+          "distanceFromHqKm": 18,
           "bearingFromHq": "north"
         },
         {
@@ -4945,8 +5076,8 @@
           "displayName": "Morewadi",
           "slug": "morewadi-morevadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 19.9,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 11.1,
+          "bearingFromHq": "west"
         },
         {
           "name": "Mudsingi, Tal: Karvir",
@@ -4955,8 +5086,8 @@
           "displayName": "Mudsingi",
           "slug": "mudsingi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 20.6,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 6.4,
+          "bearingFromHq": "north-west"
         },
         {
           "name": "Murgud (R), Tal: Kagal",
@@ -4965,7 +5096,7 @@
           "displayName": "Murgud",
           "slug": "murgud-tal-kagal",
           "skipPage": false,
-          "distanceFromHqKm": 20.7,
+          "distanceFromHqKm": 34.1,
           "bearingFromHq": "south-west"
         },
         {
@@ -4975,8 +5106,8 @@
           "displayName": "Nagadewadi",
           "slug": "nagadewadi-nagadevadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 28,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 19.7,
+          "bearingFromHq": "west"
         },
         {
           "name": "Nagaon, Tal: Hatkalangale",
@@ -4985,8 +5116,18 @@
           "displayName": "Nagaon",
           "slug": "nagaon-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 28.2,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 13.1,
+          "bearingFromHq": "north-west"
+        },
+        {
+          "name": "Nandani, Tal: Shirol",
+          "lat": 16.723979792535683,
+          "lng": 74.53959578617317,
+          "displayName": "Nandani",
+          "slug": "nandani-tal-shirol",
+          "skipPage": false,
+          "distanceFromHqKm": 21.2,
+          "bearingFromHq": "east"
         },
         {
           "name": "Nandwal/Nandval, Tal: Karvir",
@@ -4995,8 +5136,8 @@
           "displayName": "Nandwal",
           "slug": "nandwal-nandval-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 21.2,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 18.1,
+          "bearingFromHq": "west"
         },
         {
           "name": "Nerli, Tal: Karvir",
@@ -5005,8 +5146,8 @@
           "displayName": "Nerli",
           "slug": "nerli-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 14.7,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 5.4,
+          "bearingFromHq": "south-west"
         },
         {
           "name": "Nigave  Dumala/Nigawe  Dumala, Tal: Karvir",
@@ -5015,8 +5156,28 @@
           "displayName": "Nigave Dumala",
           "slug": "nigave-dumala-nigawe-dumala-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 30.6,
+          "distanceFromHqKm": 18.3,
           "bearingFromHq": "north-west"
+        },
+        {
+          "name": "Nimshirgaon, Tal: Shirol",
+          "lat": 16.776298179691782,
+          "lng": 74.48947089344117,
+          "displayName": "Nimshirgaon",
+          "slug": "nimshirgaon-tal-shirol",
+          "skipPage": false,
+          "distanceFromHqKm": 19.9,
+          "bearingFromHq": "north-east"
+        },
+        {
+          "name": "Nrusinhawadi/Nrusinhavadi, Tal: Shirol",
+          "lat": 16.706858781641966,
+          "lng": 74.6018683435374,
+          "displayName": "Nrusinhawadi",
+          "slug": "nrusinhawadi-nrusinhavadi-tal-shirol",
+          "skipPage": false,
+          "distanceFromHqKm": 27,
+          "bearingFromHq": "east"
         },
         {
           "name": "Pachgaon, Tal: Karvir",
@@ -5025,8 +5186,8 @@
           "displayName": "Pachgaon",
           "slug": "pachgaon-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 20.4,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 12.8,
+          "bearingFromHq": "west"
         },
         {
           "name": "Padali Kh., Tal: Karvir",
@@ -5035,8 +5196,18 @@
           "displayName": "Padali Kh.",
           "slug": "padali-kh-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 26.6,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 19.9,
+          "bearingFromHq": "west"
+        },
+        {
+          "name": "Pimpalgaon Kh., Tal: Kagal",
+          "lat": 16.578899849615276,
+          "lng": 74.28647425180584,
+          "displayName": "Pimpalgaon Kh.",
+          "slug": "pimpalgaon-kh-tal-kagal",
+          "skipPage": false,
+          "distanceFromHqKm": 10.9,
+          "bearingFromHq": "south-west"
         },
         {
           "name": "Rajputwadi/Rajputvadi, Tal: Karvir",
@@ -5045,7 +5216,7 @@
           "displayName": "Rajputwadi",
           "slug": "rajputwadi-rajputvadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 30.1,
+          "distanceFromHqKm": 19.4,
           "bearingFromHq": "north-west"
         },
         {
@@ -5055,8 +5226,8 @@
           "displayName": "Rui",
           "slug": "rui-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 21.1,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 6.3,
+          "bearingFromHq": "north-east"
         },
         {
           "name": "Rukadi, Tal: Hatkalangale",
@@ -5065,7 +5236,7 @@
           "displayName": "Rukadi",
           "slug": "rukadi-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 22.8,
+          "distanceFromHqKm": 6.6,
           "bearingFromHq": "north"
         },
         {
@@ -5075,8 +5246,8 @@
           "displayName": "Sajani",
           "slug": "sajani-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 23.2,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 7.7,
+          "bearingFromHq": "north-east"
         },
         {
           "name": "Sambhapur, Tal: Hatkalangale",
@@ -5085,8 +5256,28 @@
           "displayName": "Sambhapur",
           "slug": "sambhapur-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 33.6,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 18.2,
+          "bearingFromHq": "north-west"
+        },
+        {
+          "name": "Sangaon Kasaba, Tal: Kagal",
+          "lat": 16.583263850621996,
+          "lng": 74.36782740612347,
+          "displayName": "Sangaon Kasaba",
+          "slug": "sangaon-kasaba-tal-kagal",
+          "skipPage": false,
+          "distanceFromHqKm": 7.8,
+          "bearingFromHq": "south"
+        },
+        {
+          "name": "Sangaon Mouje, Tal: Kagal",
+          "lat": 16.563923077202507,
+          "lng": 74.35492980486019,
+          "displayName": "Sangaon Mouje",
+          "slug": "sangaon-mouje-tal-kagal",
+          "skipPage": false,
+          "distanceFromHqKm": 9.8,
+          "bearingFromHq": "south"
         },
         {
           "name": "Sangwade/Sangvade, Tal: Karvir",
@@ -5095,8 +5286,8 @@
           "displayName": "Sangwade",
           "slug": "sangwade-sangvade-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 16.3,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 2.7,
+          "bearingFromHq": "west"
         },
         {
           "name": "Sangwadewadi/Sangvadevadi, Tal: Karvir",
@@ -5105,8 +5296,8 @@
           "displayName": "Sangwadewadi",
           "slug": "sangwadewadi-sangvadevadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 15.6,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 2.8,
+          "bearingFromHq": "west"
         },
         {
           "name": "Sarnobatwadi/Sarnobatvadi, Tal: Karvir",
@@ -5115,8 +5306,8 @@
           "displayName": "Sarnobatwadi",
           "slug": "sarnobatwadi-sarnobatvadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 21,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 9.2,
+          "bearingFromHq": "west"
         },
         {
           "name": "Savarde/Sawarde, Tal: Hatkalangale",
@@ -5125,7 +5316,7 @@
           "displayName": "Savarde",
           "slug": "savarde-sawarde-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 33.2,
+          "distanceFromHqKm": 17,
           "bearingFromHq": "north"
         },
         {
@@ -5135,7 +5326,7 @@
           "displayName": "Shahapur",
           "slug": "shahapur-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 26,
+          "distanceFromHqKm": 13.3,
           "bearingFromHq": "north-east"
         },
         {
@@ -5145,8 +5336,8 @@
           "displayName": "Shelakewadi",
           "slug": "shelakewadi-shelakevadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 24.9,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 21.3,
+          "bearingFromHq": "west"
         },
         {
           "name": "Shinganapur, Tal: Karvir",
@@ -5155,8 +5346,18 @@
           "displayName": "Shinganapur",
           "slug": "shinganapur-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 28.7,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 19.9,
+          "bearingFromHq": "west"
+        },
+        {
+          "name": "Shirol, Tal: Shirol",
+          "lat": 16.734091973898945,
+          "lng": 74.59660280334448,
+          "displayName": "Shirol",
+          "slug": "shirol-tal-shirol",
+          "skipPage": false,
+          "distanceFromHqKm": 27.3,
+          "bearingFromHq": "east"
         },
         {
           "name": "Shiroli, Tal: Hatkalangale",
@@ -5165,8 +5366,8 @@
           "displayName": "Shiroli",
           "slug": "shiroli-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 26.6,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 12.1,
+          "bearingFromHq": "north-west"
         },
         {
           "name": "Shiye, Tal: Karvir",
@@ -5175,8 +5376,18 @@
           "displayName": "Shiye",
           "slug": "shiye-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 31.2,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 16.9,
+          "bearingFromHq": "north-west"
+        },
+        {
+          "name": "Takavade/Takawade, Tal: Shirol",
+          "lat": 16.688358729064014,
+          "lng": 74.50625472843218,
+          "displayName": "Takavade",
+          "slug": "takavade-takawade-tal-shirol",
+          "skipPage": false,
+          "distanceFromHqKm": 16.6,
+          "bearingFromHq": "east"
         },
         {
           "name": "Tamgaon, Tal: Karvir",
@@ -5185,8 +5396,8 @@
           "displayName": "Tamgaon",
           "slug": "tamgaon-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 17.2,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 5.4,
+          "bearingFromHq": "west"
         },
         {
           "name": "Tardal, Tal: Hatkalangale",
@@ -5195,7 +5406,7 @@
           "displayName": "Tardal",
           "slug": "tardal-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 28.9,
+          "distanceFromHqKm": 15.4,
           "bearingFromHq": "north-east"
         },
         {
@@ -5205,7 +5416,7 @@
           "displayName": "Tasgaon",
           "slug": "tasgaon-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 32.9,
+          "distanceFromHqKm": 17.1,
           "bearingFromHq": "north"
         },
         {
@@ -5215,8 +5426,8 @@
           "displayName": "Tilwani",
           "slug": "tilwani-tilvani-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 24.6,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 9.5,
+          "bearingFromHq": "north-east"
         },
         {
           "name": "Timbliewadi/Timblievadi, Tal: Karvir",
@@ -5225,7 +5436,7 @@
           "displayName": "Timbliewadi",
           "slug": "timbliewadi-timblievadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 22.9,
+          "distanceFromHqKm": 10.9,
           "bearingFromHq": "north-west"
         },
         {
@@ -5235,8 +5446,8 @@
           "displayName": "Top",
           "slug": "top-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 32.7,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 17.7,
+          "bearingFromHq": "north-west"
         },
         {
           "name": "Uchgaon, Tal: Karvir",
@@ -5245,8 +5456,18 @@
           "displayName": "Uchgaon",
           "slug": "uchgaon-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 22.4,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 9.2,
+          "bearingFromHq": "north-west"
+        },
+        {
+          "name": "Udagaon, Tal: Shirol",
+          "lat": 16.786756408658654,
+          "lng": 74.57837860865149,
+          "displayName": "Udagaon",
+          "slug": "udagaon-tal-shirol",
+          "skipPage": false,
+          "distanceFromHqKm": 28.1,
+          "bearingFromHq": "north-east"
         },
         {
           "name": "Ujalaiwadi/Ujalaivadi, Tal: Karvir",
@@ -5255,8 +5476,18 @@
           "displayName": "Ujalaiwadi",
           "slug": "ujalaiwadi-ujalaivadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 20.3,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 9.5,
+          "bearingFromHq": "west"
+        },
+        {
+          "name": "Umalwad/Umalvad, Tal: Shirol",
+          "lat": 16.79749325357797,
+          "lng": 74.55450022877112,
+          "displayName": "Umalwad",
+          "slug": "umalwad-umalvad-tal-shirol",
+          "skipPage": false,
+          "distanceFromHqKm": 26.7,
+          "bearingFromHq": "north-east"
         },
         {
           "name": "Vadgaon Kasaba/Wadgaon Kasaba, Tal: Hatkalangale",
@@ -5265,7 +5496,17 @@
           "displayName": "Vadgaon Kasaba",
           "slug": "vadgaon-kasaba-wadgaon-kasaba-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 35.2,
+          "distanceFromHqKm": 19.5,
+          "bearingFromHq": "north"
+        },
+        {
+          "name": "Peth Vadgaon/Peth Wadgaon Kasaba, Tal: Hatkalangale",
+          "lat": 16.835114802654513,
+          "lng": 74.31407194269714,
+          "displayName": "Peth Vadgaon",
+          "slug": "peth-vadgaon-peth-wadgaon-kasaba-tal-hatkalangale",
+          "skipPage": false,
+          "distanceFromHqKm": 20.8,
           "bearingFromHq": "north"
         },
         {
@@ -5275,8 +5516,18 @@
           "displayName": "Vathar Tarf Vadgaon",
           "slug": "vathar-tarf-vadgaon-wathar-tarf-wadgaon-tal-hatkalangale",
           "skipPage": false,
-          "distanceFromHqKm": 38,
+          "distanceFromHqKm": 22.5,
           "bearingFromHq": "north"
+        },
+        {
+          "name": "Vhannur/Whannur, Tal: Kagal",
+          "lat": 16.576354198834686,
+          "lng": 74.26738609818909,
+          "displayName": "Vhannur",
+          "slug": "vhannur-whannur-tal-kagal",
+          "skipPage": false,
+          "distanceFromHqKm": 12.6,
+          "bearingFromHq": "south-west"
         },
         {
           "name": "Vikaswadi/Wikasvadi, Tal: Karvir",
@@ -5285,8 +5536,8 @@
           "displayName": "Vikaswadi",
           "slug": "vikaswadi-wikasvadi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 13.7,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 6,
+          "bearingFromHq": "south-west"
         },
         {
           "name": "Wadange/Vadange, Tal: Karvir",
@@ -5295,7 +5546,7 @@
           "displayName": "Wadange",
           "slug": "wadange-vadange-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 28.4,
+          "distanceFromHqKm": 17.3,
           "bearingFromHq": "north-west"
         },
         {
@@ -5305,8 +5556,8 @@
           "displayName": "Wadipir",
           "slug": "wadipir-vadipir-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 24.2,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 18.1,
+          "bearingFromHq": "west"
         },
         {
           "name": "Walivade/Valiwade, Tal: Karvir",
@@ -5315,8 +5566,8 @@
           "displayName": "Walivade",
           "slug": "walivade-valiwade-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 23.6,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 8.6,
+          "bearingFromHq": "north-west"
         },
         {
           "name": "Wasagade/Vasagade, Tal: Karvir",
@@ -5325,8 +5576,8 @@
           "displayName": "Wasagade",
           "slug": "wasagade-vasagade-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 20.3,
-          "bearingFromHq": "north"
+          "distanceFromHqKm": 4.4,
+          "bearingFromHq": "north-west"
         },
         {
           "name": "Washi/Vashi, Tal: Karvir",
@@ -5335,8 +5586,8 @@
           "displayName": "Washi",
           "slug": "washi-vashi-tal-karvir",
           "skipPage": false,
-          "distanceFromHqKm": 24.3,
-          "bearingFromHq": "north-west"
+          "distanceFromHqKm": 19.9,
+          "bearingFromHq": "west"
         },
         {
           "name": "Yadrav/Yadraw, Tal: Shirol",
@@ -5345,7 +5596,7 @@
           "displayName": "Yadrav",
           "slug": "yadrav-yadraw-tal-shirol",
           "skipPage": false,
-          "distanceFromHqKm": 27.8,
+          "distanceFromHqKm": 16,
           "bearingFromHq": "north-east"
         }
       ],
@@ -5364,31 +5615,31 @@
           "slug": "sangli-dp-plan",
           "displayName": "Sangli/Miraj Region",
           "shortName": "Sangli",
-          "distanceKm": 66.1
-        },
-        {
-          "slug": "mahabaleshwar-msrdc-corridor",
-          "displayName": "Mahabaleshwar – MSRDC Corridor",
-          "shortName": "Mahabaleshwar - MSRDC Corridor",
-          "distanceKm": 134.4
+          "distanceKm": 52.2
         },
         {
           "slug": "satara-region-dp-plan",
           "displayName": "Satara Region",
           "shortName": "Satara Region",
-          "distanceKm": 135.4
+          "distanceKm": 120.1
+        },
+        {
+          "slug": "mahabaleshwar-msrdc-corridor",
+          "displayName": "Mahabaleshwar – MSRDC Corridor",
+          "shortName": "Mahabaleshwar - MSRDC Corridor",
+          "distanceKm": 120.7
         },
         {
           "slug": "solapur-dp-plan",
           "displayName": "Solapur",
           "shortName": "Solapur",
-          "distanceKm": 196.4
+          "distanceKm": 185.1
         },
         {
           "slug": "pmrda-development-plan",
           "displayName": "PMRDA",
           "shortName": "PMRDA",
-          "distanceKm": 236.6
+          "distanceKm": 220.9
         }
       ],
       "faqs": [
@@ -5402,7 +5653,7 @@
         },
         {
           "q": "Can I see specific villages or sectors inside Kolhapur?",
-          "a": "Yes — 85 sub-locations are indexed inside Kolhapur, including Kolhapur City, Jaysingpur, Murgud, Gadhinglaj and more. Each can be opened directly from the search bar on the map."
+          "a": "Yes — 109 sub-locations are indexed inside Kolhapur, including Kolhapur City, Jaysingpur, Murgud, Gadhinglaj and more. Each can be opened directly from the search bar on the map."
         },
         {
           "q": "Is access free?",
@@ -5410,7 +5661,7 @@
         },
         {
           "q": "What devices does the Kolhapur DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -5419,7 +5670,7 @@
         "Search by survey number, village or landmark inside Kolhapur",
         "Measure distances and areas directly on the Kolhapur map",
         "Mobile-friendly — view Kolhapur DP zones on the go",
-        "85 indexed sub-locations inside Kolhapur"
+        "109 indexed sub-locations inside Kolhapur"
       ]
     },
     {
@@ -5636,16 +5887,16 @@
           "distanceKm": 104.3
         },
         {
+          "slug": "beed-dp-plan",
+          "displayName": "Beed",
+          "shortName": "Beed",
+          "distanceKm": 120.2
+        },
+        {
           "slug": "solapur-dp-plan",
           "displayName": "Solapur",
           "shortName": "Solapur",
           "distanceKm": 134.7
-        },
-        {
-          "slug": "hingoli-dp-plan",
-          "displayName": "Hingoli",
-          "shortName": "Hingoli",
-          "distanceKm": 152.8
         }
       ],
       "faqs": [
@@ -5667,7 +5918,7 @@
         },
         {
           "q": "What devices does the Latur Region DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -8052,7 +8303,7 @@
           "slug": "kolhapur-dp-plan",
           "displayName": "Kolhapur",
           "shortName": "Kolhapur",
-          "distanceKm": 134.4
+          "distanceKm": 120.7
         }
       ],
       "faqs": [
@@ -8074,7 +8325,7 @@
         },
         {
           "q": "What devices does the Mahabaleshwar - MSRDC Corridor DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -8311,7 +8562,7 @@
         },
         {
           "q": "What devices does the Mira-Bhayandar DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -8418,7 +8669,7 @@
         },
         {
           "q": "What devices does the Mumbai Eastern Suburbs DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -8525,7 +8776,7 @@
         },
         {
           "q": "What devices does the Mumbai Internal Island City DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -8632,7 +8883,7 @@
         },
         {
           "q": "What devices does the Mumbai Western Suburbs DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -15549,7 +15800,7 @@
         },
         {
           "q": "What devices does the Nagpur Metropolitan Region DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -17796,7 +18047,7 @@
         },
         {
           "q": "What devices does the NAINA Region DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -18053,7 +18304,7 @@
         },
         {
           "q": "What devices does the Nanded Waghala Municipal Corporation DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -18170,7 +18421,7 @@
         },
         {
           "q": "What devices does the Nandurbar Region DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -18557,7 +18808,7 @@
         },
         {
           "q": "What devices does the Nashik DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -18904,7 +19155,7 @@
         },
         {
           "q": "What devices does the Navi Mumbai Municipal Corporation DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -18927,8 +19178,8 @@
       "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/icon_osmanabad.png",
       "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/maharashtra.png",
       "centroid": {
-        "lat": 18.079715,
-        "lng": 76.195169,
+        "lat": 18.080135,
+        "lng": 76.195588,
         "minZoom": null,
         "maxZoom": null
       },
@@ -18936,7 +19187,7 @@
         75.626568,
         17.776024,
         76.65821,
-        18.503127
+        18.503518
       ],
       "villages": [
         {
@@ -19026,7 +19277,7 @@
           "displayName": "Dhoki",
           "slug": "dhoki-tal-osmanabad",
           "skipPage": false,
-          "distanceFromHqKm": 34.2,
+          "distanceFromHqKm": 34.1,
           "bearingFromHq": "north"
         },
         {
@@ -19076,7 +19327,7 @@
           "displayName": "Raghuchiwadi",
           "slug": "raghuchiwadi-raghuchivadi-tal-osmanabad",
           "skipPage": false,
-          "distanceFromHqKm": 20.9,
+          "distanceFromHqKm": 21,
           "bearingFromHq": "west"
         },
         {
@@ -19086,7 +19337,7 @@
           "displayName": "Tuljapur",
           "slug": "tuljapur-tal-tuljapur",
           "skipPage": false,
-          "distanceFromHqKm": 14.1,
+          "distanceFromHqKm": 14.2,
           "bearingFromHq": "south-west"
         },
         {
@@ -19096,7 +19347,7 @@
           "displayName": "Tuljapur",
           "slug": "tuljapur-tal-tuljapur-2",
           "skipPage": false,
-          "distanceFromHqKm": 15.2,
+          "distanceFromHqKm": 15.3,
           "bearingFromHq": "south-west"
         },
         {
@@ -19135,7 +19386,7 @@
           "slug": "solapur-dp-plan",
           "displayName": "Solapur",
           "shortName": "Solapur",
-          "distanceKm": 66.5
+          "distanceKm": 66.6
         },
         {
           "slug": "latur-region-dp-plan",
@@ -19144,22 +19395,22 @@
           "distanceKm": 68.5
         },
         {
+          "slug": "beed-dp-plan",
+          "displayName": "Beed",
+          "shortName": "Beed",
+          "distanceKm": 105.2
+        },
+        {
           "slug": "parbhani-region-dp-plan",
           "displayName": "Parbhani Region",
           "shortName": "Parbhani Region",
-          "distanceKm": 148.4
+          "distanceKm": 148.3
         },
         {
           "slug": "nanded-waghala-municipal-corporation-dp-plan",
           "displayName": "Nanded Waghala Municipal Corporation",
           "shortName": "Nanded Waghala Municipal Corporation",
-          "distanceKm": 168.9
-        },
-        {
-          "slug": "jalna-region-dp-plan",
-          "displayName": "Jalna Region",
-          "shortName": "Jalna Region",
-          "distanceKm": 197.6
+          "distanceKm": 168.8
         }
       ],
       "faqs": [
@@ -19181,7 +19432,7 @@
         },
         {
           "q": "What devices does the Osmanabad DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -21098,7 +21349,7 @@
         },
         {
           "q": "What devices does the Palghar DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -21225,7 +21476,7 @@
         },
         {
           "q": "What devices does the Parbhani Region DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -23782,7 +24033,7 @@
         },
         {
           "q": "What devices does the PMRDA DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -24849,7 +25100,7 @@
         },
         {
           "q": "What devices does the Pune DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -25706,7 +25957,7 @@
         },
         {
           "q": "What devices does the Pune-Mumbai - MSRDC Corridor DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -25937,7 +26188,7 @@
           "slug": "kolhapur-dp-plan",
           "displayName": "Kolhapur",
           "shortName": "Kolhapur",
-          "distanceKm": 66.1
+          "distanceKm": 52.2
         },
         {
           "slug": "satara-region-dp-plan",
@@ -25983,7 +26234,7 @@
         },
         {
           "q": "What devices does the Sangli DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -26648,7 +26899,7 @@
           "slug": "kolhapur-dp-plan",
           "displayName": "Kolhapur",
           "shortName": "Kolhapur",
-          "distanceKm": 135.4
+          "distanceKm": 120.1
         }
       ],
       "faqs": [
@@ -26670,7 +26921,7 @@
         },
         {
           "q": "What devices does the Satara Region DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -27371,7 +27622,7 @@
           "slug": "osmanabad-dp-plan",
           "displayName": "Osmanabad/Dharashiv Region",
           "shortName": "Osmanabad",
-          "distanceKm": 66.5
+          "distanceKm": 66.6
         },
         {
           "slug": "sangli-dp-plan",
@@ -27386,16 +27637,16 @@
           "distanceKm": 134.7
         },
         {
+          "slug": "beed-dp-plan",
+          "displayName": "Beed",
+          "shortName": "Beed",
+          "distanceKm": 137.2
+        },
+        {
           "slug": "satara-region-dp-plan",
           "displayName": "Satara Region",
           "shortName": "Satara Region",
           "distanceKm": 179.4
-        },
-        {
-          "slug": "kolhapur-dp-plan",
-          "displayName": "Kolhapur",
-          "shortName": "Kolhapur",
-          "distanceKm": 196.4
         }
       ],
       "faqs": [
@@ -27417,7 +27668,7 @@
         },
         {
           "q": "What devices does the Solapur DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -29054,7 +29305,7 @@
         },
         {
           "q": "What devices does the Thane DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -29191,7 +29442,7 @@
         },
         {
           "q": "What devices does the Washim Region DP viewer work on?",
-          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app for offline access."
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
         }
       ],
       "features": [
@@ -29201,6 +29452,382 @@
         "Measure distances and areas directly on the Washim Region map",
         "Mobile-friendly — view Washim Region DP zones on the go",
         "4 indexed sub-locations inside Washim Region"
+      ]
+    },
+    {
+      "slug": "hyderabad-hmda-periphery-dp-plan",
+      "productPurchaseID": "hyderabad_new",
+      "menuKey": "Hyderabad",
+      "displayName": "Hyderabad HMDA Periphery",
+      "rawDistrictName": "",
+      "shortName": "Hyderabad HMDA Periphery",
+      "state": "Telangana",
+      "iconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/hydrabad.png",
+      "stateIconUrl": "https://tiles.mapmagician.in/dpplans/0imagesGIS/hydrabad.png",
+      "centroid": {
+        "lat": 17.405002,
+        "lng": 78.459058,
+        "minZoom": 8,
+        "maxZoom": 18
+      },
+      "bbox": [
+        78.004312,
+        16.967978,
+        79.049735,
+        17.897048
+      ],
+      "villages": [
+        {
+          "name": "Hyderabad Core Area",
+          "lat": 17.357971988731087,
+          "lng": 78.47161651858734,
+          "displayName": "Hyderabad Core Area",
+          "slug": "hyderabad-core-area",
+          "skipPage": false,
+          "distanceFromHqKm": 5.4,
+          "bearingFromHq": "south"
+        },
+        {
+          "name": "Bibinagar",
+          "lat": 17.4578,
+          "lng": 78.79541,
+          "displayName": "Bibinagar",
+          "slug": "bibinagar",
+          "skipPage": false,
+          "distanceFromHqKm": 36.2,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Bommalaramaram",
+          "lat": 17.57464,
+          "lng": 78.7469,
+          "displayName": "Bommalaramaram",
+          "slug": "bommalaramaram",
+          "skipPage": false,
+          "distanceFromHqKm": 35.9,
+          "bearingFromHq": "north-east"
+        },
+        {
+          "name": "Buvanagiri",
+          "lat": 17.49856,
+          "lng": 78.91002,
+          "displayName": "Buvanagiri",
+          "slug": "buvanagiri",
+          "skipPage": false,
+          "distanceFromHqKm": 49,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Chevella",
+          "lat": 17.31894,
+          "lng": 78.11464,
+          "displayName": "Chevella",
+          "slug": "chevella",
+          "skipPage": false,
+          "distanceFromHqKm": 37.8,
+          "bearingFromHq": "west"
+        },
+        {
+          "name": "Choutuppal",
+          "lat": 17.26335,
+          "lng": 78.87066,
+          "displayName": "Choutuppal",
+          "slug": "choutuppal",
+          "skipPage": false,
+          "distanceFromHqKm": 46.4,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Faruqnagar",
+          "lat": 17.08686,
+          "lng": 78.20235,
+          "displayName": "Faruqnagar",
+          "slug": "faruqnagar",
+          "skipPage": false,
+          "distanceFromHqKm": 44.7,
+          "bearingFromHq": "south-west"
+        },
+        {
+          "name": "Ghatkesar",
+          "lat": 17.43692,
+          "lng": 78.70059,
+          "displayName": "Ghatkesar",
+          "slug": "ghatkesar",
+          "skipPage": false,
+          "distanceFromHqKm": 25.9,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Hatnura",
+          "lat": 17.68506,
+          "lng": 78.20186,
+          "displayName": "Hatnura",
+          "slug": "hatnura",
+          "skipPage": false,
+          "distanceFromHqKm": 41.4,
+          "bearingFromHq": "north-west"
+        },
+        {
+          "name": "Hayathnagar",
+          "lat": 17.30812,
+          "lng": 78.685,
+          "displayName": "Hayathnagar",
+          "slug": "hayathnagar",
+          "skipPage": false,
+          "distanceFromHqKm": 26.3,
+          "bearingFromHq": "south-east"
+        },
+        {
+          "name": "Ibrahimpatnam Manchal",
+          "lat": 17.19131,
+          "lng": 78.66027,
+          "displayName": "Ibrahimpatnam Manchal",
+          "slug": "ibrahimpatnam-manchal",
+          "skipPage": false,
+          "distanceFromHqKm": 32,
+          "bearingFromHq": "south-east"
+        },
+        {
+          "name": "Jinnawaram FPLU",
+          "lat": 17.65156,
+          "lng": 78.34035,
+          "displayName": "Jinnawaram FPLU",
+          "slug": "jinnawaram-fplu",
+          "skipPage": false,
+          "distanceFromHqKm": 30.2,
+          "bearingFromHq": "north-west"
+        },
+        {
+          "name": "Kandukur",
+          "lat": 17.06247,
+          "lng": 78.48674,
+          "displayName": "Kandukur",
+          "slug": "kandukur",
+          "skipPage": false,
+          "distanceFromHqKm": 38.2,
+          "bearingFromHq": "south"
+        },
+        {
+          "name": "Kisara",
+          "lat": 17.53027,
+          "lng": 78.6659,
+          "displayName": "Kisara",
+          "slug": "kisara",
+          "skipPage": false,
+          "distanceFromHqKm": 26,
+          "bearingFromHq": "north-east"
+        },
+        {
+          "name": "Kothuru",
+          "lat": 17.12842,
+          "lng": 78.26582,
+          "displayName": "Kothuru",
+          "slug": "kothuru",
+          "skipPage": false,
+          "distanceFromHqKm": 37,
+          "bearingFromHq": "south-west"
+        },
+        {
+          "name": "Maheshwaram",
+          "lat": 17.13778,
+          "lng": 78.39352,
+          "displayName": "Maheshwaram",
+          "slug": "maheshwaram",
+          "skipPage": false,
+          "distanceFromHqKm": 30.5,
+          "bearingFromHq": "south"
+        },
+        {
+          "name": "Medchal Qutubullapur",
+          "lat": 17.64064,
+          "lng": 78.46674,
+          "displayName": "Medchal Qutubullapur",
+          "slug": "medchal-qutubullapur",
+          "skipPage": false,
+          "distanceFromHqKm": 26.2,
+          "bearingFromHq": "north"
+        },
+        {
+          "name": "Moinabad Rajendranagar",
+          "lat": 17.3248,
+          "lng": 78.28818,
+          "displayName": "Moinabad Rajendranagar",
+          "slug": "moinabad-rajendranagar",
+          "skipPage": false,
+          "distanceFromHqKm": 20.2,
+          "bearingFromHq": "south-west"
+        },
+        {
+          "name": "Mulug",
+          "lat": 17.71631,
+          "lng": 78.63889,
+          "displayName": "Mulug",
+          "slug": "mulug",
+          "skipPage": false,
+          "distanceFromHqKm": 39.5,
+          "bearingFromHq": "north-east"
+        },
+        {
+          "name": "Narsapur",
+          "lat": 17.75063,
+          "lng": 78.2638,
+          "displayName": "Narsapur",
+          "slug": "narsapur",
+          "skipPage": false,
+          "distanceFromHqKm": 43.7,
+          "bearingFromHq": "north-west"
+        },
+        {
+          "name": "Patancheruvu",
+          "lat": 17.54991,
+          "lng": 78.2163,
+          "displayName": "Patancheruvu",
+          "slug": "patancheruvu",
+          "skipPage": false,
+          "distanceFromHqKm": 30.4,
+          "bearingFromHq": "north-west"
+        },
+        {
+          "name": "Pochampalli",
+          "lat": 17.35717,
+          "lng": 78.81223,
+          "displayName": "Pochampalli",
+          "slug": "pochampalli",
+          "skipPage": false,
+          "distanceFromHqKm": 37.9,
+          "bearingFromHq": "east"
+        },
+        {
+          "name": "Sangareddy",
+          "lat": 17.586484,
+          "lng": 78.081933,
+          "displayName": "Sangareddy",
+          "slug": "sangareddy",
+          "skipPage": false,
+          "distanceFromHqKm": 44.8,
+          "bearingFromHq": "north-west"
+        },
+        {
+          "name": "Shahbad",
+          "lat": 17.17981,
+          "lng": 78.13107,
+          "displayName": "Shahbad",
+          "slug": "shahbad",
+          "skipPage": false,
+          "distanceFromHqKm": 42.9,
+          "bearingFromHq": "south-west"
+        },
+        {
+          "name": "Shahmirpet",
+          "lat": 17.62423,
+          "lng": 78.62416,
+          "displayName": "Shahmirpet",
+          "slug": "shahmirpet",
+          "skipPage": false,
+          "distanceFromHqKm": 30,
+          "bearingFromHq": "north-east"
+        },
+        {
+          "name": "Shamshabad",
+          "lat": 17.23315,
+          "lng": 78.3362,
+          "displayName": "Shamshabad",
+          "slug": "shamshabad",
+          "skipPage": false,
+          "distanceFromHqKm": 23.1,
+          "bearingFromHq": "south-west"
+        },
+        {
+          "name": "Shankarpalli Ramchandrapuram",
+          "lat": 17.43141,
+          "lng": 78.16524,
+          "displayName": "Shankarpalli Ramchandrapuram",
+          "slug": "shankarpalli-ramchandrapuram",
+          "skipPage": false,
+          "distanceFromHqKm": 31.3,
+          "bearingFromHq": "west"
+        },
+        {
+          "name": "Shivampet",
+          "lat": 17.79715,
+          "lng": 78.38087,
+          "displayName": "Shivampet",
+          "slug": "shivampet",
+          "skipPage": false,
+          "distanceFromHqKm": 44.4,
+          "bearingFromHq": "north"
+        },
+        {
+          "name": "Tupran",
+          "lat": 17.80339,
+          "lng": 78.47794,
+          "displayName": "Tupran",
+          "slug": "tupran",
+          "skipPage": false,
+          "distanceFromHqKm": 44.3,
+          "bearingFromHq": "north"
+        },
+        {
+          "name": "Wargal",
+          "lat": 17.79116,
+          "lng": 78.59261,
+          "displayName": "Wargal",
+          "slug": "wargal",
+          "skipPage": false,
+          "distanceFromHqKm": 45.2,
+          "bearingFromHq": "north"
+        },
+        {
+          "name": "Yacharam",
+          "lat": 17.07615,
+          "lng": 78.67112,
+          "displayName": "Yacharam",
+          "slug": "yacharam",
+          "skipPage": false,
+          "distanceFromHqKm": 42.9,
+          "bearingFromHq": "south-east"
+        }
+      ],
+      "sourceLink": "https://www.hmda.gov.in/masterplan-huda/",
+      "price": "50",
+      "focal": {
+        "lat": 17.357971988731087,
+        "lng": 78.47161651858734,
+        "source": "village:Hyderabad Core Area",
+        "zoom": 13
+      },
+      "fullMapUrl": "https://dpplans.com/maps.html?lat=17.357971988731087&lng=78.47161651858734&zoom=13",
+      "embedUrl": "https://dpplans.com/maps.html?lat=17.357971988731087&lng=78.47161651858734&zoom=13&embed=1",
+      "nearby": [],
+      "faqs": [
+        {
+          "q": "Where can I view the Hyderabad HMDA Periphery Development Plan online?",
+          "a": "You can view the Hyderabad HMDA Periphery DP map on Map Magician’s interactive viewer. The plan is overlaid on satellite imagery so you can identify zones, reservations and road lines for any plot in Hyderabad HMDA Periphery, Telangana."
+        },
+        {
+          "q": "Is the Hyderabad HMDA Periphery DP map official?",
+          "a": "The published Development Plan referenced here mirrors the source documents from Telangana Town Planning. The official PDFs are linked from the source: https://www.hmda.gov.in/masterplan-huda/"
+        },
+        {
+          "q": "Can I see specific villages or sectors inside Hyderabad HMDA Periphery?",
+          "a": "Yes — 31 sub-locations are indexed inside Hyderabad HMDA Periphery, including Hyderabad Core Area, Bibinagar, Bommalaramaram, Buvanagiri and more. Each can be opened directly from the search bar on the map."
+        },
+        {
+          "q": "Is access free?",
+          "a": "Browsing the Hyderabad HMDA Periphery region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass."
+        },
+        {
+          "q": "What devices does the Hyderabad HMDA Periphery DP viewer work on?",
+          "a": "The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app."
+        }
+      ],
+      "features": [
+        "Interactive zoom and pan over the entire Hyderabad HMDA Periphery Development Plan area",
+        "Satellite + DP overlay so plot boundaries align with on-ground features",
+        "Search by survey number, village or landmark inside Hyderabad HMDA Periphery",
+        "Measure distances and areas directly on the Hyderabad HMDA Periphery map",
+        "Mobile-friendly — view Hyderabad HMDA Periphery DP zones on the go",
+        "31 indexed sub-locations inside Hyderabad HMDA Periphery"
       ]
     }
   ]

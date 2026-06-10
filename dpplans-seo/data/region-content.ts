@@ -603,6 +603,37 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
     ],
   },
 
+  // Sources: beed.gov.in (tehsils, municipal councils), Bindusara River / Beed /
+  // Ambajogai / Parli Vaijnath Wikipedia, maharashtratourism.gov.in.
+  'beed-dp-plan': {
+    description:
+      'View the Beed Development Plan and district Regional Plan online — interactive DP overlay over satellite imagery covering Beed city, the Ambajogai and Parli town plans and the regional growth centres across Marathwada, Maharashtra.',
+    keywords: [
+      'beed development plan',
+      'beed dp map',
+      'beed regional plan',
+      'ambajogai development plan',
+      'parli development plan',
+      'beed dp plan online',
+      'beed zoning map',
+    ],
+    paragraphs: [
+      'The Beed Development Plan covers the Beed municipal area together with the wider Beed district Regional Plan in the Marathwada region of central Maharashtra, prepared under the Maharashtra Regional and Town Planning Act, 1966. The Beed Municipal Council — an “A”-class council and the district headquarters’ civic body — is the planning authority for Beed town’s jurisdiction, while the District Planning Office and the Town Planning & Valuation Department of Maharashtra State administer the regional plan across the rest of the district. Separate Development Plans are published for the major towns of Ambajogai and Parli, alongside designated regional-plan growth centres at Kada, Pathrud, Shirsala, Neknur, Talwadha and Murshadpur.',
+      'Beed is one of the eight districts of the Marathwada region and lies centrally in Maharashtra within the Godavari basin, south of Chhatrapati Sambhajinagar (Aurangabad). The district headquarters, Beed city, sits on the left bank of the Bindusara (Bendsura) river — a tributary of the Sindphana and a sub-tributary of the Godavari. The district spans 11 tehsils: Beed, Ashti, Patoda, Shirur-Kasar, Georai, Majalgaon, Wadwani, Kaij, Dharur, Parli and Ambajogai. Sugarcane, cotton, soybean and jowar are the principal crops, and Beed is widely known across Maharashtra as a major source of seasonal sugarcane-cutting labour.',
+      'Notable centres within the plan area include Ambajogai — often called the cultural capital of Marathwada, home to the 10th-century Hemadpanti Yogeshwari Devi temple and the Swami Ramanand Teerth Rural Government Medical College — and Parli Vaijnath, site of one of the twelve Jyotirlingas of Lord Shiva and of MAHAGENCO’s Parli Thermal Power Station. The DP overlay on this page reflects the published municipal and regional zoning, reservation and land-use boundaries georeferenced over satellite imagery, covering Beed city, the town Development Plans, the regional-plan growth centres and the surrounding agricultural plains.',
+    ],
+    quickFacts: [
+      { label: 'Plan type', value: 'Municipal Development Plans + district Regional Plan' },
+      { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'City civic body', value: 'Beed Municipal Council (“A”-class)' },
+      { label: 'Region', value: 'Marathwada' },
+      { label: 'Tehsils', value: '11 (Beed, Ashti, Patoda, Shirur-Kasar, Georai, Majalgaon, Wadwani, Kaij, Dharur, Parli, Ambajogai)' },
+      { label: 'Key river', value: 'Bindusara (Bendsura) — Beed city on its left bank' },
+      { label: 'Regional-plan growth centres', value: 'Kada, Pathrud, Shirsala, Neknur, Talwadha, Murshadpur' },
+      { label: 'Distinguishing landmarks', value: 'Parli Vaijnath Jyotirlinga; Ambajogai Yogeshwari temple & SRTR Medical College' },
+    ],
+  },
+
   // Sources: washim.gov.in, indiandistricts.in Washim, UDCPR 2020.
   'washim-region-dp-plan': {
     paragraphs: [
