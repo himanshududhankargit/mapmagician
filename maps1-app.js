@@ -7,8 +7,8 @@
         // actually deployed in that push gets the new number. maps1 (staging) and maps (live)
         // therefore hold the build number of their own most recent deploy. A staging (maps1) bump
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
-        // monotonic across both files. Live 005, staging 009 -> max(005,009)+1 = this push is 010. Next -> 011.
-        var APP_VERSION = '010';
+        // monotonic across both files. Live 005, staging 010 -> max(005,010)+1 = this push is 011. Next -> 012.
+        var APP_VERSION = '011';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -4616,7 +4616,7 @@
             map.addListener('bounds_changed', debouncedLoadTiles);
 
             // --- Hover region-name tooltip (desktop only) ---
-            // While at free zoom (<= MAX_FREE_ZOOM), hovering a DP region shows a
+            // At every zoom level, hovering a DP region shows a
             // cursor-following tooltip with the region name (no map highlight):
             // green for purchased, orange with a lock for unpurchased. Isolated from
             // the center-based paywall: writes only the _hover* vars below, never
@@ -4653,7 +4653,7 @@
                 _hoverRaf = 0;
                 const e = _hoverPendingEvt; _hoverPendingEvt = null;
                 if (!e || !map) return;
-                if (map.getZoom() > MAX_FREE_ZOOM || !e.latLng) { _clearHover(); return; }
+                if (!e.latLng) { _clearHover(); return; }
                 const point = { lat: e.latLng.lat(), lng: e.latLng.lng() };
                 const hit = findDpEntryAtPoint(point);
                 if (!hit) { _clearHover(); return; }
@@ -4689,7 +4689,7 @@
             // fixed cursor pixel changes, so we reproject and refresh the label.
             function _refreshHoverAtCursor() {
                 _hoverRefreshRaf = 0;
-                if (!_cursorOverMap || !map || map.getZoom() > MAX_FREE_ZOOM) return;
+                if (!_cursorOverMap || !map) return;
                 const proj = _ensureProjOverlay().getProjection();
                 if (!proj) return;
                 const rect = map.getDiv().getBoundingClientRect();
@@ -4705,7 +4705,6 @@
                 if (!_hoverRefreshRaf) _hoverRefreshRaf = requestAnimationFrame(_refreshHoverAtCursor);
             }
             map.addListener('mousemove', function(e) {
-                if (map.getZoom() > MAX_FREE_ZOOM) { _clearHover(); return; }
                 // Tooltip follows every raw move (cheap); region recompute is rAF-throttled.
                 if (_lastHoverPid && e.domEvent) _positionHoverTooltip(e.domEvent.clientX, e.domEvent.clientY);
                 _hoverPendingEvt = e;
@@ -4722,9 +4721,6 @@
             map.getDiv().addEventListener('mouseleave', function() {
                 _cursorOverMap = false;
                 _clearHover();
-            });
-            map.addListener('zoom_changed', function() {
-                if (map.getZoom() > MAX_FREE_ZOOM) _clearHover();
             });
             // After a fling the map keeps gliding while the cursor sits still, so no
             // mousemove fires; re-detect the region under the cursor as the camera
