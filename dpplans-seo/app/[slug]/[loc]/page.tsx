@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { allSubLocationPaths, subLocationByPath, nearestSisters } from '@/lib/regions';
-import { subLocationContent } from '@/data/sublocation-content';
+import { subLocationContent, isCuratedSubLocation } from '@/data/sublocation-content';
 import { SITE } from '@/lib/site';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Faq } from '@/components/Faq';
@@ -68,7 +68,10 @@ export default function SubLocationPage({ params }: Props) {
   const heading = seo?.pageTitle ?? `${vname} Development Plan map — ${region.shortName} district`;
   const url = `${SITE.origin}/${region.slug}/${village.slug}/`;
   const mapUrl = `${SITE.fullMap}?lat=${village.lat}&lng=${village.lng}&zoom=13`;
-  const sisters = nearestSisters(region, village);
+  // Only link to other CURATED (indexable) sub-locations, so the internal-link graph
+  // and Google's crawl budget stay concentrated on pages worth indexing rather than the
+  // thin noindex long tail.
+  const sisters = nearestSisters(region, village, 6, v => isCuratedSubLocation(region.slug, v.slug!));
 
   const breadcrumbs = [
     { label: 'Regions', href: '/home/' },
@@ -277,7 +280,7 @@ export default function SubLocationPage({ params }: Props) {
           <div className="side-card">
             <h3>Parent district</h3>
             <p className="aux">
-              {vname} is one of {region.villages.filter(v => !v.skipPage).length} indexed sub-locations
+              {vname} is one of {region.villages.filter(v => !v.skipPage).length} mapped sub-locations
               inside {region.shortName}.
             </p>
             <Link className="btn btn-white btn-block" href={`/${region.slug}/`}>

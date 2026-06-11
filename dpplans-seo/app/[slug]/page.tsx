@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { allRegions, regionBySlug } from '@/lib/regions';
 import { regionContentBySlug } from '@/data/region-content';
 import { municipalCorporation } from '@/data/municipal-corporations';
+import { isCuratedSubLocation } from '@/data/sublocation-content';
 import { SITE, type RegionFaq } from '@/lib/site';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Faq } from '@/components/Faq';
@@ -67,6 +68,12 @@ export default function RegionPage({ params }: Props) {
       }]
     : [];
   const faqs: RegionFaq[] = [...corpFaq, ...region.faqs];
+  // Curated (indexable) sub-locations — surfaced prominently and the ONLY ones we
+  // internally link, so Google's crawl budget concentrates on pages worth indexing
+  // instead of being spread across the thin noindex long tail.
+  const curatedVillages = region.villages.filter(
+    v => v.slug && !v.skipPage && isCuratedSubLocation(region.slug, v.slug),
+  );
   const url = `${SITE.origin}/${region.slug}/`;
   const breadcrumbs = [
     { label: 'Regions', href: '/home/' },
@@ -232,6 +239,32 @@ export default function RegionPage({ params }: Props) {
             </section>
           )}
 
+          {curatedVillages.length > 0 && (
+            <section className="card sublocations notable-areas">
+              <h2>Notable areas in {region.shortName}</h2>
+              <p className="aux-text">
+                Detailed Development Plan pages for the most-searched towns and municipal-corporation areas
+                inside {region.shortName}.
+              </p>
+              <ul className="sublocation-list">
+                {curatedVillages.map((v, i) => (
+                  <li key={i}>
+                    <Link className="name" href={`/${region.slug}/${v.slug}/`}>{v.displayName || v.name}</Link>
+                    <a
+                      className="btn btn-primary btn-sm"
+                      href={`${SITE.fullMap}?lat=${v.lat}&lng=${v.lng}&zoom=13`}
+                      target="_blank"
+                      rel="noopener"
+                      aria-label={`Open ${v.name} on the full map`}
+                    >
+                      Open map
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           {region.villages.length > 0 && (
             <section className="card sublocations">
               <h2>Sub-locations in {region.shortName}</h2>
@@ -241,7 +274,7 @@ export default function RegionPage({ params }: Props) {
               <ul className="sublocation-list">
                 {region.villages.map((v, i) => (
                   <li key={i}>
-                    {v.slug && !v.skipPage ? (
+                    {v.slug && !v.skipPage && isCuratedSubLocation(region.slug, v.slug) ? (
                       <Link className="name" href={`/${region.slug}/${v.slug}/`}>{v.displayName || v.name}</Link>
                     ) : (
                       <span className="name">{v.displayName || v.name}</span>

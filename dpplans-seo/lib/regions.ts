@@ -53,7 +53,12 @@ export function subLocationByPath(regionSlug: string, locSlug: string): SubLocat
 // 6 closest sister sub-locations within the same region, by haversine. Cleaner UX
 // signal for users + builds the internal-link graph crawlers need to discover and
 // weight thousands of new URLs.
-export function nearestSisters(region: Region, here: RegionVillage, limit = 6): RegionVillage[] {
+export function nearestSisters(
+  region: Region,
+  here: RegionVillage,
+  limit = 6,
+  predicate?: (v: RegionVillage) => boolean,
+): RegionVillage[] {
   const R = 6371;
   const toRad = (x: number) => x * Math.PI / 180;
   const d = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
@@ -64,7 +69,7 @@ export function nearestSisters(region: Region, here: RegionVillage, limit = 6): 
     return 2 * R * Math.asin(Math.sqrt(h));
   };
   return region.villages
-    .filter(v => !v.skipPage && v.slug && v.slug !== here.slug)
+    .filter(v => !v.skipPage && v.slug && v.slug !== here.slug && (!predicate || predicate(v)))
     .map(v => ({ v, km: d(here, v) }))
     .sort((a, b) => a.km - b.km)
     .slice(0, limit)
