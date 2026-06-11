@@ -7,8 +7,8 @@
         // actually deployed in that push gets the new number. maps1 (staging) and maps (live)
         // therefore hold the build number of their own most recent deploy. A staging (maps1) bump
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
-        // monotonic across both files. Live was 003, staging 002 -> this push is 004. Next -> 005.
-        var APP_VERSION = '004';
+        // monotonic across both files. Live 005, staging 004 -> max(005,004)+1 = this push is 006. Next -> 007.
+        var APP_VERSION = '006';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -2602,6 +2602,53 @@
             return null;
         }
 
+        // Pure point -> DP region lookup for the hover-highlight preview. Mirrors
+        // the smallest-area selection of findDistrictAtCenter but deliberately does
+        // NOT read or mutate stickyTile/stickyDistrict — that sticky state belongs
+        // to the center-based zoom paywall and must stay isolated from hover.
+        // Returns { entry, district } or null. References the live dpLayerData
+        // binding each call so a mid-session layer refresh stays correct.
+        function findDpEntryAtPoint(point) {
+            if (!point || !dpLayerData || dpLayerData.length === 0) return null;
+            let bestEntry = null, bestDistrict = null, bestArea = Infinity;
+            const cands = _candidateIndicesAtPoint(dpLayerData, point);
+            for (let i = 0; i < cands.length; i++) {
+                const tile = dpLayerData[cands[i]];
+                const check = _checkLayerEntryAtPoint(tile, point);
+                if (!check.inside || check.area >= bestArea) continue;
+                // Same district-resolution fallback chain as findDistrictAtCenter.
+                let district = findDistrictByPurchaseId(tile.productPurchaseID);
+                if (!district) district = findDistrictByPurchaseId(tile.id);
+                if (!district && tile.link) {
+                    const parts = tile.link.replace(/^\/|\/$/g, '').split('/');
+                    for (const part of parts) { district = findDistrictByPurchaseId(part); if (district) break; }
+                }
+                if (!district) continue;
+                bestEntry = tile; bestDistrict = district; bestArea = check.area;
+            }
+            return bestEntry ? { entry: bestEntry, district: bestDistrict } : null;
+        }
+
+        // Build the ring list for the hover highlight Polygon.setPaths(). Merged DP
+        // entries store only a bbox rectangle as .polygon, so we draw their real
+        // shapes from subSheets; un-merged entries use their own polygon + holes.
+        // Google Maps' even-odd fill rule renders this correctly: disjoint outer
+        // rings each fill, hole rings subtract. Rings are already {lat,lng} literals.
+        function _buildHighlightPaths(entry) {
+            const paths = [];
+            if (!entry) return paths;
+            if (entry.isMerged && entry.subSheets) {
+                for (const sub of entry.subSheets) {
+                    if (sub.polygon && sub.polygon.length >= 3) paths.push(sub.polygon);
+                    if (sub.holes) for (const h of sub.holes) if (h && h.length >= 3) paths.push(h);
+                }
+            } else if (entry.polygon && entry.polygon.length >= 3) {
+                paths.push(entry.polygon);
+                if (entry.holes) for (const h of entry.holes) if (h && h.length >= 3) paths.push(h);
+            }
+            return paths;
+        }
+
         // Gesture-level memoization of findDistrictAtCenter. zoom_changed and
         // center_changed (via checkRegionOnMove) both call this, plus the idle
         // re-check at the end of a locked gesture — that's 3+ full polygon scans
@@ -4588,6 +4635,77 @@
             });
             map.addListener('bounds_changed', debouncedLoadTiles);
 
+            // --- Hover-to-highlight unpurchased DP regions (desktop only) ---
+            // While at free zoom (<= MAX_FREE_ZOOM), hovering an UNPURCHASED DP
+            // region fills its real KML shape and shows a cursor-following tooltip
+            // with the region name. Isolated from the center-based paywall: writes
+            // only the _hover* vars below, never sticky/district-cache state.
+            // mousemove never fires on touch, so mobile is unaffected.
+            let _hoverHighlight = null, _hoverTooltipEl = null, _lastHoverPid = null;
+            let _hoverRaf = 0, _hoverPendingEvt = null;
+
+            function _ensureHoverHighlight() {
+                if (_hoverHighlight) return _hoverHighlight;
+                _hoverHighlight = new google.maps.Polygon({
+                    map: null, clickable: false,
+                    strokeColor: '#1565C0', strokeOpacity: 0.9, strokeWeight: 2,
+                    fillColor: '#1565C0', fillOpacity: 0.18, zIndex: 5
+                });
+                return _hoverHighlight;
+            }
+            function _ensureHoverTooltip() {
+                if (_hoverTooltipEl) return _hoverTooltipEl;
+                _hoverTooltipEl = document.createElement('div');
+                _hoverTooltipEl.className = 'dp-hover-tooltip';
+                document.body.appendChild(_hoverTooltipEl);
+                return _hoverTooltipEl;
+            }
+            function _clearHoverHighlight() {
+                if (_hoverHighlight) _hoverHighlight.setMap(null);
+                if (_hoverTooltipEl) _hoverTooltipEl.style.display = 'none';
+                _lastHoverPid = null;
+            }
+            function _positionHoverTooltip(cx, cy) {
+                const el = _ensureHoverTooltip();
+                let x = cx + 14, y = cy + 16;
+                const w = el.offsetWidth || 160, h = el.offsetHeight || 28;
+                if (x + w > window.innerWidth)  x = cx - w - 14;
+                if (y + h > window.innerHeight) y = cy - h - 16;
+                el.style.left = x + 'px';
+                el.style.top = y + 'px';
+            }
+            function _processHoverMove() {
+                _hoverRaf = 0;
+                const e = _hoverPendingEvt; _hoverPendingEvt = null;
+                if (!e || !map) return;
+                if (map.getZoom() > MAX_FREE_ZOOM || !e.latLng) { _clearHoverHighlight(); return; }
+                const point = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+                const hit = findDpEntryAtPoint(point);
+                if (!hit || hasPurchase(hit.district.productPurchaseID)) { _clearHoverHighlight(); return; }
+                const pid = hit.district.productPurchaseID;
+                if (pid !== _lastHoverPid) {
+                    // Rebuild only on region transition — steady hover does no polygon work.
+                    _lastHoverPid = pid;
+                    const poly = _ensureHoverHighlight();
+                    poly.setPaths(_buildHighlightPaths(hit.entry));
+                    poly.setMap(map);
+                    const tip = _ensureHoverTooltip();
+                    tip.textContent = hit.district.districtName || '';
+                    tip.style.display = 'block';
+                }
+                if (e.domEvent) _positionHoverTooltip(e.domEvent.clientX, e.domEvent.clientY);
+            }
+            map.addListener('mousemove', function(e) {
+                if (map.getZoom() > MAX_FREE_ZOOM) { _clearHoverHighlight(); return; }
+                // Tooltip follows every raw move (cheap); region recompute is rAF-throttled.
+                if (_lastHoverPid && e.domEvent) _positionHoverTooltip(e.domEvent.clientX, e.domEvent.clientY);
+                _hoverPendingEvt = e;
+                if (!_hoverRaf) _hoverRaf = requestAnimationFrame(_processHoverMove);
+            });
+            map.getDiv().addEventListener('mouseleave', _clearHoverHighlight);
+            map.addListener('zoom_changed', function() {
+                if (map.getZoom() > MAX_FREE_ZOOM) _clearHoverHighlight();
+            });
 
             // Region detection on camera move (throttled 300ms, like Android)
             let lastRegionCheckTime = 0;

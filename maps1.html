@@ -886,6 +886,16 @@
             font-weight: 600; white-space: nowrap; pointer-events: none;
             box-shadow: 0 1px 3px rgba(0,0,0,0.25);
         }
+        /* Cursor-following tooltip for the hover region-highlight preview */
+        .dp-hover-tooltip {
+            position: fixed; left: 0; top: 0; display: none;
+            background: rgba(0,0,0,0.78); color: #fff;
+            padding: 4px 10px; border-radius: 6px;
+            font-size: 12px; font-weight: 600; white-space: nowrap;
+            pointer-events: none; z-index: 9998;
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+        }
         /* Vertex handle popup (move + delete) */
         .vertex-handle-container {
             position: absolute; transform: translate(-50%, -100%);
