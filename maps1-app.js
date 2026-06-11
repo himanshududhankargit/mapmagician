@@ -7,8 +7,8 @@
         // actually deployed in that push gets the new number. maps1 (staging) and maps (live)
         // therefore hold the build number of their own most recent deploy. A staging (maps1) bump
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
-        // monotonic across both files. Live 005, staging 008 -> max(005,008)+1 = this push is 009. Next -> 010.
-        var APP_VERSION = '009';
+        // monotonic across both files. Live 005, staging 009 -> max(005,009)+1 = this push is 010. Next -> 011.
+        var APP_VERSION = '010';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -4624,6 +4624,10 @@
             // is unaffected.
             let _hoverTooltipEl = null, _lastHoverPid = null;
             let _hoverRaf = 0, _hoverPendingEvt = null;
+            // Last cursor screen position + over-map flag, so we can re-detect the
+            // region under a stationary cursor while the map glides after a fling.
+            let _lastClientX = 0, _lastClientY = 0, _cursorOverMap = false;
+            let _hoverProjOverlay = null, _hoverRefreshRaf = 0;
 
             function _ensureHoverTooltip() {
                 if (_hoverTooltipEl) return _hoverTooltipEl;
@@ -4654,18 +4658,51 @@
                 const hit = findDpEntryAtPoint(point);
                 if (!hit) { _clearHover(); return; }
                 const pid = hit.district.productPurchaseID;
-                if (pid !== _lastHoverPid) {
-                    // Update text/colour only on region transition — steady hover is a no-op.
-                    _lastHoverPid = pid;
-                    const purchased = hasPurchase(pid);
-                    const name = hit.district.districtName || '';
-                    const tip = _ensureHoverTooltip();
-                    tip.textContent = purchased ? name : ('🔒 ' + name); // 🔒 for locked
-                    tip.classList.toggle('purchased', purchased);
-                    tip.classList.toggle('locked', !purchased);
-                    tip.style.display = 'block';
-                }
+                if (pid !== _lastHoverPid) _showHoverTooltip(hit.district, pid);
                 if (e.domEvent) _positionHoverTooltip(e.domEvent.clientX, e.domEvent.clientY);
+            }
+            // Set the tooltip text + colour for a region (text/colour change only on
+            // region transition, guarded by the pid check at each call site).
+            function _showHoverTooltip(district, pid) {
+                _lastHoverPid = pid;
+                const purchased = hasPurchase(pid);
+                const name = district.districtName || '';
+                const tip = _ensureHoverTooltip();
+                tip.textContent = purchased ? name : ('🔒 ' + name); // 🔒 for locked
+                tip.classList.toggle('purchased', purchased);
+                tip.classList.toggle('locked', !purchased);
+                tip.style.display = 'block';
+            }
+            // A bare OverlayView solely to expose the MapCanvasProjection, so we can
+            // convert the last cursor pixel back to a lat/lng without a mouse move.
+            function _ensureProjOverlay() {
+                if (_hoverProjOverlay) return _hoverProjOverlay;
+                _hoverProjOverlay = new google.maps.OverlayView();
+                _hoverProjOverlay.onAdd = function() {};
+                _hoverProjOverlay.draw = function() {};
+                _hoverProjOverlay.onRemove = function() {};
+                _hoverProjOverlay.setMap(map);
+                return _hoverProjOverlay;
+            }
+            // Re-detect the region under the (possibly stationary) cursor. Drives the
+            // post-fling update: as the map glides/settles, the geo-point under the
+            // fixed cursor pixel changes, so we reproject and refresh the label.
+            function _refreshHoverAtCursor() {
+                _hoverRefreshRaf = 0;
+                if (!_cursorOverMap || !map || map.getZoom() > MAX_FREE_ZOOM) return;
+                const proj = _ensureProjOverlay().getProjection();
+                if (!proj) return;
+                const rect = map.getDiv().getBoundingClientRect();
+                const ll = proj.fromContainerPixelToLatLng(
+                    new google.maps.Point(_lastClientX - rect.left, _lastClientY - rect.top));
+                if (!ll) return;
+                const hit = findDpEntryAtPoint({ lat: ll.lat(), lng: ll.lng() });
+                if (!hit) { _clearHover(); return; }
+                const pid = hit.district.productPurchaseID;
+                if (pid !== _lastHoverPid) _showHoverTooltip(hit.district, pid);
+            }
+            function _scheduleHoverRefresh() {
+                if (!_hoverRefreshRaf) _hoverRefreshRaf = requestAnimationFrame(_refreshHoverAtCursor);
             }
             map.addListener('mousemove', function(e) {
                 if (map.getZoom() > MAX_FREE_ZOOM) { _clearHover(); return; }
@@ -4679,12 +4716,23 @@
             // grabbed geo-point is pinned under the cursor while panning, so the
             // region name stays valid and we only need to keep repositioning.
             map.getDiv().addEventListener('mousemove', function(e) {
+                _lastClientX = e.clientX; _lastClientY = e.clientY; _cursorOverMap = true;
                 if (_lastHoverPid) _positionHoverTooltip(e.clientX, e.clientY);
             });
-            map.getDiv().addEventListener('mouseleave', _clearHover);
+            map.getDiv().addEventListener('mouseleave', function() {
+                _cursorOverMap = false;
+                _clearHover();
+            });
             map.addListener('zoom_changed', function() {
                 if (map.getZoom() > MAX_FREE_ZOOM) _clearHover();
             });
+            // After a fling the map keeps gliding while the cursor sits still, so no
+            // mousemove fires; re-detect the region under the cursor as the camera
+            // moves (rAF-throttled) and once it settles.
+            map.addListener('bounds_changed', _scheduleHoverRefresh);
+            map.addListener('idle', _refreshHoverAtCursor);
+            // Warm up the projection overlay now so it's ready before the first fling.
+            _ensureProjOverlay();
 
             // Region detection on camera move (throttled 300ms, like Android)
             let lastRegionCheckTime = 0;
