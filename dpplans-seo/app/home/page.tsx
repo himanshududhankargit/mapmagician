@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { regionsByState, allRegions } from '@/lib/regions';
 import { SITE } from '@/lib/site';
 import { JsonLd } from '@/components/JsonLd';
@@ -87,6 +88,18 @@ export default function HomePage() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container text-block">
+          <h2>Featured collection: MSRDC corridors</h2>
+          <p>
+            The Maharashtra State Road Development Corporation (MSRDC) prepares Development Plans for several expressway
+            and hill-station corridors rather than a single city. See the Mumbai–Pune Expressway, New Mahabaleshwar and
+            Karjat corridors together — and how MSRDC plans them — on the{' '}
+            <Link href="/msrdc-development-plan/">MSRDC Development Plans</Link> page.
+          </p>
         </div>
       </section>
 

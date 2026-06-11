@@ -706,6 +706,18 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
 
   // Sources: MSRDC SPA, Wikipedia MSRDC, Mumbai-Pune Expressway reporting.
   'karjat-msrdc-corridor': {
+    pageTitle: 'Karjat MSRDC Corridor Development Plan — DP map online',
+    description:
+      'View the MSRDC Special Planning Authority Development Plan for the Karjat corridor along the Mumbai–Pune Expressway online — 71 villages across the Panvel and Khalapur talukas of Raigad district as an interactive DP overlay over satellite imagery: zones, reservations and road lines.',
+    keywords: [
+      'karjat development plan',
+      'karjat msrdc corridor',
+      'msrdc development plan',
+      'karjat dp map',
+      'karjat raigad land use',
+      'panvel khalapur development plan',
+      'msrdc corridor dp map',
+    ],
     paragraphs: [
       'The Karjat – MSRDC Corridor Development Plan is administered by the Maharashtra State Road Development Corporation (MSRDC) acting as Special Planning Authority under the Maharashtra Regional and Town Planning Act, 1966. The notified Special Planning Authority area comprises 71 villages of the Panvel and Khalapur talukas of Raigad district, covering approximately 186.72 square kilometres along the Mumbai-Pune Expressway corridor. The 2011 Census recorded a population of about 1,01,175 within the SPA boundary.',
       'The corridor extends linearly along the Mumbai-Pune Expressway from Ariwali, Ajivali and Giravale villages at the northern tip to Chavani village at the southern end, spanning approximately 34 km. The area was previously part of the Navi Mumbai Airport Influence Notified Area (NAINA) under CIDCO before MSRDC was appointed as the SPA for this corridor segment. Four villages within the SPA — Nadhal, Adoshi, Chavani and Talavali — fall within the Western Ghats (Malabar Plains) Eco-Sensitive Area, with planning rules calibrated accordingly.',
@@ -725,6 +737,18 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
 
   // Sources: MSRDC SPA listings, expressway reporting.
   'pune-mumbai-msrdc-corridor': {
+    pageTitle: 'Pune–Mumbai Expressway MSRDC Development Plan — DP map online',
+    description:
+      'View the MSRDC Special Planning Authority Development Plan for the Mumbai–Pune Expressway corridor online — the ~2 km-wide notified stretch flanking the expressway between Mumbai and Pune as an interactive DP overlay over satellite imagery: zones, reservations and road lines.',
+    keywords: [
+      'msrdc development plan',
+      'mumbai pune expressway development plan',
+      'pune mumbai msrdc corridor',
+      'msrdc corridor dp map',
+      'lonavala khandala development plan',
+      'mumbai pune expressway land use',
+      'msrdc dp map',
+    ],
     paragraphs: [
       'The Pune-Mumbai – MSRDC Corridor Development Plan is administered by the Maharashtra State Road Development Corporation (MSRDC) acting as Special Planning Authority along the Mumbai-Pune Expressway under the Maharashtra Regional and Town Planning Act, 1966. The Government of Maharashtra appointed MSRDC as SPA for an approximately 2-km-wide stretch flanking the Mumbai-Pune Expressway corridor, with the notified area covering roughly 186.72 sq km strategically located between two important urban centres — Mumbai (about 45 km from the SPA boundary) and Pune (about 80 km) — with Navi Mumbai approximately 20 km away.',
       'The corridor is anchored by the Mumbai-Pune Expressway, India’s first six-lane access-controlled tolled expressway, with the recently opened Missing Link bypass at Khopoli (commissioned 1 May 2026) reducing total expressway length by approximately 6 km and shortening travel time. The MSRDC SPA boundary touches second- and third-tier nodes — Panvel (~30 km), Khopoli (~20 km), Lonavala (~12 km), Khandala (~8 km), Thane (~54 km), Kalyan (~52 km) and Karjat (~15 km).',
@@ -744,6 +768,18 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
 
   // Sources: Satara district notices, MSRDC New Mahabaleshwar reporting.
   'mahabaleshwar-msrdc-corridor': {
+    pageTitle: 'New Mahabaleshwar MSRDC Development Plan — hill-station DP map online',
+    description:
+      'View the MSRDC Development Plan for the New Mahabaleshwar Hill Station project in Satara district online — MSRDC was appointed Special Planning Authority in 2019 over the Jaoli, Mahabaleshwar, Satara and Patan talukas. Interactive DP overlay over satellite imagery: zones, reservations and road lines.',
+    keywords: [
+      'new mahabaleshwar development plan',
+      'mahabaleshwar msrdc development plan',
+      'msrdc development plan',
+      'new mahabaleshwar hill station plan',
+      'mahabaleshwar dp map',
+      'satara msrdc corridor',
+      'mahabaleshwar land use map',
+    ],
     paragraphs: [
       'The Mahabaleshwar – MSRDC Corridor Development Plan is administered by the Maharashtra State Road Development Corporation (MSRDC) acting as Special Planning Authority for the New Mahabaleshwar Hill Station project. MSRDC was appointed as SPA by the Government of Maharashtra in 2019 to draft the development plan for the proposed New Mahabaleshwar Hill Station area, under the Maharashtra Regional and Town Planning Act, 1966.',
       'The initial New Mahabaleshwar Town Area included 235 villages across four talukas of Satara district — Jaoli, Mahabaleshwar, Satara and Patan. The Maharashtra State Government subsequently approved an expansion of the project to incorporate 294 additional villages, bringing the total to 529 villages across the same four hilly tehsils, with a total project area of approximately 2,097 square kilometres.',

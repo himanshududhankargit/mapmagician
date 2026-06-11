@@ -21,6 +21,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: 'weekly' as const,
     priority: 0.9,
   };
+  // Hand-authored hub page (not driven by regions.json) — must be listed explicitly.
+  const msrdcHub = {
+    url: SITE.origin + '/msrdc-development-plan/',
+    lastModified,
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  };
   const regionPages = allRegions().map(r => ({
     url: `${SITE.origin}/${r.slug}/`,
     lastModified,
@@ -38,5 +45,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     }));
-  return [home, regionsBrowser, ...regionPages, ...subLocationPages];
+  return [home, regionsBrowser, msrdcHub, ...regionPages, ...subLocationPages];
 }

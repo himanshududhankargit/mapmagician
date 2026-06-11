@@ -4,7 +4,8 @@ import { Fragment } from 'react';
 import { notFound } from 'next/navigation';
 import { allRegions, regionBySlug } from '@/lib/regions';
 import { regionContentBySlug } from '@/data/region-content';
-import { SITE } from '@/lib/site';
+import { municipalCorporation } from '@/data/municipal-corporations';
+import { SITE, type RegionFaq } from '@/lib/site';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Faq } from '@/components/Faq';
 import { JsonLd } from '@/components/JsonLd';
@@ -55,6 +56,17 @@ export default function RegionPage({ params }: Props) {
   if (!region) notFound();
 
   const regionContent = regionContentBySlug(params.slug);
+  // Municipal-corporation targeting: when this region's plan covers a real municipal
+  // corporation, front-load a corporation-specific FAQ (visible + FAQPage JSON-LD) so the
+  // page ranks for "<City> Municipal Corporation development plan" searches.
+  const corp = municipalCorporation(params.slug);
+  const corpFaq: RegionFaq[] = corp
+    ? [{
+        q: `Is this the ${corp.name} Development Plan?`,
+        a: `Yes — this page covers the sanctioned Development Plan (DP) for the ${corp.name}${corp.abbr ? ` (${corp.abbr})` : ''} area${region.state ? `, ${region.state}` : ''}. The DP overlay shows land-use zones, reservations and road / road-widening lines across the municipal corporation limits — pan or search any survey number, locality or landmark to read its designated zone before relying on it.`,
+      }]
+    : [];
+  const faqs: RegionFaq[] = [...corpFaq, ...region.faqs];
   const url = `${SITE.origin}/${region.slug}/`;
   const breadcrumbs = [
     { label: 'Regions', href: '/home/' },
@@ -109,7 +121,7 @@ export default function RegionPage({ params }: Props) {
     {
       '@context': 'https://schema.org',
       '@type': 'FAQPage',
-      mainEntity: region.faqs.map(f => ({
+      mainEntity: faqs.map(f => ({
         '@type': 'Question',
         name: f.q,
         acceptedAnswer: { '@type': 'Answer', text: f.a },
@@ -188,6 +200,14 @@ export default function RegionPage({ params }: Props) {
               Free up to zoom level 14. High-detail tile layers (zoom 15 and beyond) unlock with a 7-day access pass
               for the {region.shortName} region.
             </p>
+            {corp && (
+              <p>
+                This page also covers the{' '}
+                <strong>{corp.name}{corp.abbr ? ` (${corp.abbr})` : ''} Development Plan</strong> — the statutory DP
+                for the {corp.name} area{region.state ? `, ${region.state}` : ''}, with land-use zones, reservations
+                and road lines drawn to the corporation limits.
+              </p>
+            )}
           </section>
 
           {regionContent && (
@@ -255,7 +275,7 @@ export default function RegionPage({ params }: Props) {
             </ul>
           </section>
 
-          <Faq items={region.faqs} />
+          <Faq items={faqs} />
         </div>
 
         <aside>
@@ -311,6 +331,19 @@ export default function RegionPage({ params }: Props) {
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {region.slug.endsWith('-msrdc-corridor') && (
+            <div className="side-card">
+              <h3>MSRDC corridors</h3>
+              <p className="aux">
+                This is one of the Maharashtra State Road Development Corporation (MSRDC) corridor Development Plans.
+                See all three corridors and how MSRDC plans them on one page.
+              </p>
+              <Link className="btn btn-white btn-block" href="/msrdc-development-plan/">
+                All MSRDC Development Plans →
+              </Link>
             </div>
           )}
         </aside>
