@@ -7,8 +7,8 @@
         // actually deployed in that push gets the new number. maps1 (staging) and maps (live)
         // therefore hold the build number of their own most recent deploy. A staging (maps1) bump
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
-        // monotonic across both files. Live 005, staging 006 -> max(005,006)+1 = this push is 007. Next -> 008.
-        var APP_VERSION = '007';
+        // monotonic across both files. Live 005, staging 007 -> max(005,007)+1 = this push is 008. Next -> 009.
+        var APP_VERSION = '008';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -4668,6 +4668,13 @@
                 if (_lastHoverPid && e.domEvent) _positionHoverTooltip(e.domEvent.clientX, e.domEvent.clientY);
                 _hoverPendingEvt = e;
                 if (!_hoverRaf) _hoverRaf = requestAnimationFrame(_processHoverMove);
+            });
+            // Google Maps' 'mousemove' stops firing during a drag-pan, which would
+            // freeze the tooltip in place. The raw DOM mousemove still fires; the
+            // grabbed geo-point is pinned under the cursor while panning, so the
+            // region name stays valid and we only need to keep repositioning.
+            map.getDiv().addEventListener('mousemove', function(e) {
+                if (_lastHoverPid) _positionHoverTooltip(e.clientX, e.clientY);
             });
             map.getDiv().addEventListener('mouseleave', _clearHover);
             map.addListener('zoom_changed', function() {
