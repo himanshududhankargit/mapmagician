@@ -886,7 +886,7 @@
             font-weight: 600; white-space: nowrap; pointer-events: none;
             box-shadow: 0 1px 3px rgba(0,0,0,0.25);
         }
-        /* Cursor-following tooltip for the hover region-highlight preview */
+        /* Cursor-following region-name tooltip on hover (green=purchased, orange+lock=locked) */
         .dp-hover-tooltip {
             position: fixed; left: 0; top: 0; display: none;
             background: rgba(0,0,0,0.78); color: #fff;
@@ -896,6 +896,8 @@
             font-family: 'Segoe UI', Roboto, Arial, sans-serif;
             box-shadow: 0 1px 4px rgba(0,0,0,0.35);
         }
+        .dp-hover-tooltip.purchased { background: #2e7d32; }  /* green */
+        .dp-hover-tooltip.locked    { background: #ef6c00; }  /* orange */
         /* Vertex handle popup (move + delete) */
         .vertex-handle-container {
             position: absolute; transform: translate(-50%, -100%);

@@ -7,8 +7,8 @@
         // actually deployed in that push gets the new number. maps1 (staging) and maps (live)
         // therefore hold the build number of their own most recent deploy. A staging (maps1) bump
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
-        // monotonic across both files. Live 005, staging 007 -> max(005,007)+1 = this push is 008. Next -> 009.
-        var APP_VERSION = '008';
+        // monotonic across both files. Live 005, staging 008 -> max(005,008)+1 = this push is 009. Next -> 010.
+        var APP_VERSION = '009';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -4616,11 +4616,12 @@
             map.addListener('bounds_changed', debouncedLoadTiles);
 
             // --- Hover region-name tooltip (desktop only) ---
-            // While at free zoom (<= MAX_FREE_ZOOM), hovering an UNPURCHASED DP
-            // region shows a cursor-following tooltip with the region name (no map
-            // highlight). Isolated from the center-based paywall: writes only the
-            // _hover* vars below, never sticky/district-cache state. mousemove never
-            // fires on touch, so mobile is unaffected.
+            // While at free zoom (<= MAX_FREE_ZOOM), hovering a DP region shows a
+            // cursor-following tooltip with the region name (no map highlight):
+            // green for purchased, orange with a lock for unpurchased. Isolated from
+            // the center-based paywall: writes only the _hover* vars below, never
+            // sticky/district-cache state. mousemove never fires on touch, so mobile
+            // is unaffected.
             let _hoverTooltipEl = null, _lastHoverPid = null;
             let _hoverRaf = 0, _hoverPendingEvt = null;
 
@@ -4651,13 +4652,17 @@
                 if (map.getZoom() > MAX_FREE_ZOOM || !e.latLng) { _clearHover(); return; }
                 const point = { lat: e.latLng.lat(), lng: e.latLng.lng() };
                 const hit = findDpEntryAtPoint(point);
-                if (!hit || hasPurchase(hit.district.productPurchaseID)) { _clearHover(); return; }
+                if (!hit) { _clearHover(); return; }
                 const pid = hit.district.productPurchaseID;
                 if (pid !== _lastHoverPid) {
-                    // Update text only on region transition — steady hover is a no-op.
+                    // Update text/colour only on region transition — steady hover is a no-op.
                     _lastHoverPid = pid;
+                    const purchased = hasPurchase(pid);
+                    const name = hit.district.districtName || '';
                     const tip = _ensureHoverTooltip();
-                    tip.textContent = hit.district.districtName || '';
+                    tip.textContent = purchased ? name : ('🔒 ' + name); // 🔒 for locked
+                    tip.classList.toggle('purchased', purchased);
+                    tip.classList.toggle('locked', !purchased);
                     tip.style.display = 'block';
                 }
                 if (e.domEvent) _positionHoverTooltip(e.domEvent.clientX, e.domEvent.clientY);
