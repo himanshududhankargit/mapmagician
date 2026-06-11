@@ -7,8 +7,8 @@
         // actually deployed in that push gets the new number. maps1 (staging) and maps (live)
         // therefore hold the build number of their own most recent deploy. A staging (maps1) bump
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
-        // monotonic across both files. Live 005, staging 004 -> max(005,004)+1 = this push is 006. Next -> 007.
-        var APP_VERSION = '006';
+        // monotonic across both files. Live 005, staging 006 -> max(005,006)+1 = this push is 007. Next -> 008.
+        var APP_VERSION = '007';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -2602,7 +2602,7 @@
             return null;
         }
 
-        // Pure point -> DP region lookup for the hover-highlight preview. Mirrors
+        // Pure point -> DP region lookup for the hover region-name tooltip. Mirrors
         // the smallest-area selection of findDistrictAtCenter but deliberately does
         // NOT read or mutate stickyTile/stickyDistrict — that sticky state belongs
         // to the center-based zoom paywall and must stay isolated from hover.
@@ -2627,26 +2627,6 @@
                 bestEntry = tile; bestDistrict = district; bestArea = check.area;
             }
             return bestEntry ? { entry: bestEntry, district: bestDistrict } : null;
-        }
-
-        // Build the ring list for the hover highlight Polygon.setPaths(). Merged DP
-        // entries store only a bbox rectangle as .polygon, so we draw their real
-        // shapes from subSheets; un-merged entries use their own polygon + holes.
-        // Google Maps' even-odd fill rule renders this correctly: disjoint outer
-        // rings each fill, hole rings subtract. Rings are already {lat,lng} literals.
-        function _buildHighlightPaths(entry) {
-            const paths = [];
-            if (!entry) return paths;
-            if (entry.isMerged && entry.subSheets) {
-                for (const sub of entry.subSheets) {
-                    if (sub.polygon && sub.polygon.length >= 3) paths.push(sub.polygon);
-                    if (sub.holes) for (const h of sub.holes) if (h && h.length >= 3) paths.push(h);
-                }
-            } else if (entry.polygon && entry.polygon.length >= 3) {
-                paths.push(entry.polygon);
-                if (entry.holes) for (const h of entry.holes) if (h && h.length >= 3) paths.push(h);
-            }
-            return paths;
         }
 
         // Gesture-level memoization of findDistrictAtCenter. zoom_changed and
@@ -4635,24 +4615,15 @@
             });
             map.addListener('bounds_changed', debouncedLoadTiles);
 
-            // --- Hover-to-highlight unpurchased DP regions (desktop only) ---
+            // --- Hover region-name tooltip (desktop only) ---
             // While at free zoom (<= MAX_FREE_ZOOM), hovering an UNPURCHASED DP
-            // region fills its real KML shape and shows a cursor-following tooltip
-            // with the region name. Isolated from the center-based paywall: writes
-            // only the _hover* vars below, never sticky/district-cache state.
-            // mousemove never fires on touch, so mobile is unaffected.
-            let _hoverHighlight = null, _hoverTooltipEl = null, _lastHoverPid = null;
+            // region shows a cursor-following tooltip with the region name (no map
+            // highlight). Isolated from the center-based paywall: writes only the
+            // _hover* vars below, never sticky/district-cache state. mousemove never
+            // fires on touch, so mobile is unaffected.
+            let _hoverTooltipEl = null, _lastHoverPid = null;
             let _hoverRaf = 0, _hoverPendingEvt = null;
 
-            function _ensureHoverHighlight() {
-                if (_hoverHighlight) return _hoverHighlight;
-                _hoverHighlight = new google.maps.Polygon({
-                    map: null, clickable: false,
-                    strokeColor: '#1565C0', strokeOpacity: 0.9, strokeWeight: 2,
-                    fillColor: '#1565C0', fillOpacity: 0.18, zIndex: 5
-                });
-                return _hoverHighlight;
-            }
             function _ensureHoverTooltip() {
                 if (_hoverTooltipEl) return _hoverTooltipEl;
                 _hoverTooltipEl = document.createElement('div');
@@ -4660,8 +4631,7 @@
                 document.body.appendChild(_hoverTooltipEl);
                 return _hoverTooltipEl;
             }
-            function _clearHoverHighlight() {
-                if (_hoverHighlight) _hoverHighlight.setMap(null);
+            function _clearHover() {
                 if (_hoverTooltipEl) _hoverTooltipEl.style.display = 'none';
                 _lastHoverPid = null;
             }
@@ -4678,17 +4648,14 @@
                 _hoverRaf = 0;
                 const e = _hoverPendingEvt; _hoverPendingEvt = null;
                 if (!e || !map) return;
-                if (map.getZoom() > MAX_FREE_ZOOM || !e.latLng) { _clearHoverHighlight(); return; }
+                if (map.getZoom() > MAX_FREE_ZOOM || !e.latLng) { _clearHover(); return; }
                 const point = { lat: e.latLng.lat(), lng: e.latLng.lng() };
                 const hit = findDpEntryAtPoint(point);
-                if (!hit || hasPurchase(hit.district.productPurchaseID)) { _clearHoverHighlight(); return; }
+                if (!hit || hasPurchase(hit.district.productPurchaseID)) { _clearHover(); return; }
                 const pid = hit.district.productPurchaseID;
                 if (pid !== _lastHoverPid) {
-                    // Rebuild only on region transition — steady hover does no polygon work.
+                    // Update text only on region transition — steady hover is a no-op.
                     _lastHoverPid = pid;
-                    const poly = _ensureHoverHighlight();
-                    poly.setPaths(_buildHighlightPaths(hit.entry));
-                    poly.setMap(map);
                     const tip = _ensureHoverTooltip();
                     tip.textContent = hit.district.districtName || '';
                     tip.style.display = 'block';
@@ -4696,15 +4663,15 @@
                 if (e.domEvent) _positionHoverTooltip(e.domEvent.clientX, e.domEvent.clientY);
             }
             map.addListener('mousemove', function(e) {
-                if (map.getZoom() > MAX_FREE_ZOOM) { _clearHoverHighlight(); return; }
+                if (map.getZoom() > MAX_FREE_ZOOM) { _clearHover(); return; }
                 // Tooltip follows every raw move (cheap); region recompute is rAF-throttled.
                 if (_lastHoverPid && e.domEvent) _positionHoverTooltip(e.domEvent.clientX, e.domEvent.clientY);
                 _hoverPendingEvt = e;
                 if (!_hoverRaf) _hoverRaf = requestAnimationFrame(_processHoverMove);
             });
-            map.getDiv().addEventListener('mouseleave', _clearHoverHighlight);
+            map.getDiv().addEventListener('mouseleave', _clearHover);
             map.addListener('zoom_changed', function() {
-                if (map.getZoom() > MAX_FREE_ZOOM) _clearHoverHighlight();
+                if (map.getZoom() > MAX_FREE_ZOOM) _clearHover();
             });
 
             // Region detection on camera move (throttled 300ms, like Android)
