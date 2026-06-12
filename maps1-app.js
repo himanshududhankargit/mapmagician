@@ -7,8 +7,8 @@
         // actually deployed in that push gets the new number. maps1 (staging) and maps (live)
         // therefore hold the build number of their own most recent deploy. A staging (maps1) bump
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
-        // monotonic across both files. Live and staging both at 011 -> max(011,011)+1 = this push is 012. Next -> 013.
-        var APP_VERSION = '012';
+        // monotonic across both files. Live 011, staging 012 -> max(011,012)+1 = this push is 013. Next -> 014.
+        var APP_VERSION = '013';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -1654,6 +1654,12 @@
         let lastToastedRegionId = null; // prevent repeated toasts when tiles oscillate
         let stickyTile = null;          // last detected tile — prevents false region switches during zoom
         let stickyDistrict = null;      // district result paired with stickyTile
+        // productPurchaseID of the region currently under the cursor (the zoom focus),
+        // or null. Maintained by the hover handlers (which already resolve the focus
+        // region every move/refresh) so the CENTER-based zoom-ceiling logic can keep
+        // zoom unlocked when the user points at a region they OWN even though the
+        // crosshair sits on an unowned neighbour. See the wheel pre-unlock + checkRegionOnMove.
+        let _cursorFocusPid = null;
         let lastRegionCenterLat = 0;   // center when region was last detected
         let lastRegionCenterLng = 0;   // used to distinguish zoom from pan
         let bannerDismissedForRegion = null; // track dismissed region to avoid re-showing
@@ -3153,6 +3159,16 @@
                 return;
             }
 
+            // Crosshair is on an unpurchased region — but if the cursor is hovering a region
+            // the user OWNS (zooming into an owned corner while the crosshair sits on an
+            // unowned neighbour), keep zoom unlocked so this center-based clamp doesn't yank
+            // the owned-region zoom back to the free limit. Mirrors the wheel pre-unlock; the
+            // zoom_changed handler still paywalls if the cursor focus is itself unowned at >14.
+            if (_cursorFocusPid && hasPurchase(_cursorFocusPid)) {
+                setMapMaxZoom(21);
+                return;
+            }
+
             // Unpurchased region — always enforce zoom lock
             lastToastedRegionId = null;
             setMapMaxZoom(MAX_FREE_ZOOM);
@@ -4639,6 +4655,7 @@
             function _clearHover() {
                 if (_hoverTooltipEl) _hoverTooltipEl.style.display = 'none';
                 _lastHoverPid = null;
+                _cursorFocusPid = null; // cursor is over no DP region / left the map
             }
             function _positionHoverTooltip(cx, cy) {
                 const el = _ensureHoverTooltip();
@@ -4658,6 +4675,7 @@
                 const hit = findDpEntryAtPoint(point);
                 if (!hit) { _clearHover(); return; }
                 const pid = hit.district.productPurchaseID;
+                _cursorFocusPid = pid; // keep the zoom-ceiling logic in sync with the cursor
                 if (pid !== _lastHoverPid) _showHoverTooltip(hit.district, pid);
                 if (e.domEvent) _positionHoverTooltip(e.domEvent.clientX, e.domEvent.clientY);
             }
@@ -4699,6 +4717,7 @@
                 const hit = findDpEntryAtPoint({ lat: ll.lat(), lng: ll.lng() });
                 if (!hit) { _clearHover(); return; }
                 const pid = hit.district.productPurchaseID;
+                _cursorFocusPid = pid; // keep the zoom-ceiling logic in sync with the cursor
                 if (pid !== _lastHoverPid) _showHoverTooltip(hit.district, pid);
             }
             // The zoom-focus point: where a wheel / double-click zoom is anchored. Google
@@ -4768,6 +4787,27 @@
                 _cursorOverMap = false;
                 _clearHover();
             });
+            // Wheel pre-unlock — breaks the maxZoom deadlock. When the crosshair is on an
+            // unowned region the center-based logic clamps maxZoom to MAX_FREE_ZOOM, which
+            // then blocks ALL zoom-in past 14 — even into a region the user owns sitting in
+            // a screen corner. Google anchors wheel zoom under the cursor, so if the user is
+            // scrolling to zoom IN over a region they own, lift the ceiling FIRST (capture
+            // phase, before Google reads maxZoom for this tick) so the owned-region zoom can
+            // proceed. Premium tiles stay gated at the CloudFront edge, so this leaks nothing.
+            map.getDiv().addEventListener('wheel', function(e) {
+                if (e.deltaY >= 0) return;                          // zoom-IN only
+                if (mapInteractionDisabled || zoomBypassActive) return;
+                if (!map || map.getZoom() < MAX_FREE_ZOOM) return;  // below the gate, already free
+                // The wheel event's own client coords are the freshest zoom anchor.
+                _lastClientX = e.clientX; _lastClientY = e.clientY; _cursorOverMap = true;
+                const focus = getZoomFocusPoint();
+                if (!focus) return;
+                const hit = findDpEntryAtPoint(focus);
+                if (hit && hasPurchase(hit.district.productPurchaseID)) {
+                    _cursorFocusPid = hit.district.productPurchaseID;
+                    setMapMaxZoom(21);                              // let the owned-region zoom through
+                }
+            }, { passive: true, capture: true });
             // After a fling the map keeps gliding while the cursor sits still, so no
             // mousemove fires; re-detect the region under the cursor as the camera
             // moves (rAF-throttled) and once it settles.
