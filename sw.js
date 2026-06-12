@@ -1,6 +1,6 @@
 // Service worker — caches app shell so the installed PWA opens offline
 // instead of showing "This site can't be reached".
-const SW_VERSION = 'v22-2026-05-24-search';
+const SW_VERSION = 'v23-2026-06-12-ver011';
 const CACHE_NAME = 'mm-shell-' + SW_VERSION;
 
 // Region-icon cache: cross-origin PNGs from CloudFront used by the splash
@@ -37,7 +37,11 @@ self.addEventListener('install', (e) => {
     // doesn't abort the whole install and leave us without an active SW.
     e.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => Promise.allSettled(SHELL_URLS.map(url => cache.add(url))))
+            // cache:'reload' forces each shell file to revalidate against the network
+            // instead of being satisfied from the browser HTTP cache — otherwise a file
+            // still inside its max-age (maps-app.js is max-age=14400 / 4h) could be
+            // re-stored STALE into the fresh cache, defeating the whole version bump.
+            .then(cache => Promise.allSettled(SHELL_URLS.map(url => cache.add(new Request(url, { cache: 'reload' })))))
             .then(() => self.skipWaiting())
     );
 });
