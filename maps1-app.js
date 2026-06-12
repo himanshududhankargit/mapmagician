@@ -7,8 +7,8 @@
         // actually deployed in that push gets the new number. maps1 (staging) and maps (live)
         // therefore hold the build number of their own most recent deploy. A staging (maps1) bump
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
-        // monotonic across both files. Live 005, staging 010 -> max(005,010)+1 = this push is 011. Next -> 012.
-        var APP_VERSION = '011';
+        // monotonic across both files. Live and staging both at 011 -> max(011,011)+1 = this push is 012. Next -> 013.
+        var APP_VERSION = '012';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -4701,6 +4701,52 @@
                 const pid = hit.district.productPurchaseID;
                 if (pid !== _lastHoverPid) _showHoverTooltip(hit.district, pid);
             }
+            // The zoom-focus point: where a wheel / double-click zoom is anchored. Google
+            // pins scroll & dblclick zoom under the cursor, so the live cursor latLng IS the
+            // focus. Returns {lat,lng} when the cursor is reliably over the map, else null —
+            // mobile pinch (no cursor) and +/- buttons / programmatic zoom are center-anchored,
+            // so the paywall falls back to map.getCenter() in that case. Reuses the same
+            // cursor pixel (_lastClientX/Y) + projection overlay the hover tooltip uses, so the
+            // paywall judges the exact region the hover label is already naming under the cursor.
+            function getZoomFocusPoint() {
+                if (!_cursorOverMap || !map) return null;
+                const proj = _ensureProjOverlay().getProjection();
+                if (!proj) return null;
+                const rect = map.getDiv().getBoundingClientRect();
+                const x = _lastClientX - rect.left, y = _lastClientY - rect.top;
+                if (x < 0 || y < 0 || x > rect.width || y > rect.height) return null; // stale / off-map
+                const ll = proj.fromContainerPixelToLatLng(new google.maps.Point(x, y));
+                return ll ? { lat: ll.lat(), lng: ll.lng() } : null;
+            }
+            // Paywall region detection that honours the zoom-FOCUS point (the cursor) rather
+            // than the map center. Google anchors scroll-wheel / double-click zoom under the
+            // cursor, so a zoom into a screen corner drifts the center onto a NEIGHBOURING
+            // district — the old center-based lookup then charged for the wrong region (zoom
+            // into Thane, asked to pay for Mira-Bhayandar). Detecting at the focus point judges
+            // the region the user actually zoomed INTO and also removes the boundary flicker
+            // (a symptom of that same center drift). Falls back to the center-based,
+            // sticky-stabilised path when there is no reliable focus point — mobile pinch (no
+            // cursor) and +/- buttons / programmatic zoom are center-anchored anyway. Lives in
+            // this (hover) scope so it can reach getZoomFocusPoint; findDpEntryAtPoint,
+            // findDistrictAtCenterCached and stickyTile/stickyDistrict are visible from the
+            // enclosing scope.
+            function findDistrictAtFocusOrCenter() {
+                const fp = getZoomFocusPoint();
+                if (fp) {
+                    const hit = findDpEntryAtPoint(fp);
+                    if (hit) {
+                        // Keep sticky aligned with the focus result so the region-mismatch
+                        // dialog, bottom-bar status and the post-unlock reset all agree.
+                        stickyTile = hit.entry;
+                        stickyDistrict = hit.district;
+                        return hit.district;
+                    }
+                    // Focus hit no DP polygon (cursor over a gap/sea): fall through to center
+                    // so we don't spuriously flash "No Data" — that's data-vs-nodata, not the
+                    // owned-vs-unpurchased boundary the strict focus policy governs.
+                }
+                return findDistrictAtCenterCached();
+            }
             function _scheduleHoverRefresh() {
                 if (!_hoverRefreshRaf) _hoverRefreshRaf = requestAnimationFrame(_refreshHoverAtCursor);
             }
@@ -4767,7 +4813,7 @@
                 if (!dpDataLoaded || !villageDataLoaded) return;
                 const z = map.getZoom();
                 const overlay = document.getElementById('zoom-restrict-overlay');
-                const district = findDistrictAtCenterCached();
+                const district = findDistrictAtFocusOrCenter();
 
                 if (z >= MAX_FREE_ZOOM && !district) {
                     // Check if we're in a village area — allow zoom for village purchase via markers
@@ -4799,7 +4845,7 @@
                         google.maps.event.addListenerOnce(map, 'idle', function() {
                             _pendingLockedIdle = false;
                             if (map.getZoom() < MAX_FREE_ZOOM) return;
-                            var stillLocked = findDistrictAtCenterCached();
+                            var stillLocked = findDistrictAtFocusOrCenter();
                             if (!stillLocked) return;
                             if (hasPurchase(stillLocked.productPurchaseID)) return;
                             var pid = stillLocked.productPurchaseID;
