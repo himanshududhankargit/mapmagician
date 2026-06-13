@@ -1362,6 +1362,20 @@ html, body {
 
   function runSearch(q, token) {
     if (token !== searchToken) return; // newer keystroke superseded us
+    // When the user has drilled into a district's village list, keep the search
+    // scoped to THAT district's villages — filter the in-view list rather than
+    // jumping back out to the global district-level search. Tapping a hit then
+    // opens the map directly at that village. (The full menu is already loaded
+    // here, since drilling into a district requires it.)
+    var current = historyStack[historyStack.length - 1];
+    if (current && current.level === 'village') {
+      var matches = current.items.filter(function (it) {
+        return it.name.toLowerCase().indexOf(q) > -1;
+      });
+      if (!matches.length) { showEmpty('No matching villages.'); return; }
+      paint(matches, 'village');
+      return;
+    }
     if (!menuLoaded) {
       showEmpty('Searching…');
       ensureMenuLoaded(function () { runSearch(q, token); });
