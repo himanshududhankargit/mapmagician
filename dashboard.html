@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Web Dashboard — Map Magician</title>
+<style>
+  :root {
+    --bg: #f1f3f4;
+    --card: #ffffff;
+    --line: #e0e3e7;
+    --ink: #202124;
+    --muted: #5f6368;
+    --brand: #1a73e8;
+    --good: #137333;
+    --bad: #c5221f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header h1 { font-size: 18px; margin: 0; font-weight: 500; }
+  header .sub { font-size: 12px; color: var(--muted); }
+  .spacer { flex: 1; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+  /* Controls */
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  select, button {
+    font: inherit;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    border-radius: 8px;
+    padding: 7px 12px;
+    cursor: pointer;
+  }
+  button.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+  button:disabled { opacity: .55; cursor: default; }
+  .toggle { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+
+  /* Cards */
+  .grid { display: grid; gap: 14px; }
+  .kpis { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .card .label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .card .value { font-size: 26px; font-weight: 500; letter-spacing: -.5px; }
+  .card .delta { font-size: 12px; margin-top: 6px; }
+  .delta.up { color: var(--good); }
+  .delta.down { color: var(--bad); }
+  .delta.flat { color: var(--muted); }
+
+  section { margin-top: 22px; }
+  section h2 { font-size: 15px; font-weight: 500; color: var(--muted); margin: 0 0 12px; }
+  .chart-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .chart-card h3 { margin: 0 0 10px; font-size: 14px; font-weight: 500; }
+  canvas { width: 100% !important; }
+  .two-col { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 760px) { .two-col { grid-template-columns: 1fr; } }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 500; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .banner {
+    background: #fff3cd; border: 1px solid #ffe69c; color: #664d03;
+    padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px;
+  }
+  /* Gate / states */
+  .center { min-height: 70vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; text-align: center; padding: 20px; }
+  .muted { color: var(--muted); }
+  #loading { font-size: 14px; color: var(--muted); }
+  .hidden { display: none !important; }
+  .gbtn {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #fff; border: 1px solid #dadce0; border-radius: 24px;
+    padding: 10px 18px; font-size: 14px; font-weight: 500; cursor: pointer; color: #3c4043;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ Sign-in gate ============ -->
+<div id="gate" class="center">
+  <div>
+    <h1 style="font-weight:500;">Map Magician — Web Dashboard</h1>
+    <p class="muted">Private. Admin sign-in required.</p>
+  </div>
+  <button id="signInBtn" class="gbtn">
+    <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+    Sign in with Google
+  </button>
+  <p id="gateMsg" class="muted"></p>
+</div>
+
+<!-- ============ Dashboard ============ -->
+<div id="app" class="hidden">
+  <header>
+    <div>
+      <h1>Web Dashboard</h1>
+      <div class="sub">Buyer conversion &amp; revenue — your web (Razorpay) business</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="controls">
+      <select id="period">
+        <option value="7">Last 7 days</option>
+        <option value="28" selected>Last 28 days</option>
+        <option value="90">Last 90 days</option>
+        <option value="365">Last 365 days</option>
+      </select>
+      <label class="toggle"><input type="checkbox" id="includeTest"> include test txns</label>
+      <button id="refreshBtn" class="primary">Refresh</button>
+      <button id="syncBtn" title="Pull latest payments from Razorpay into the ledger">Sync ledger</button>
+      <button id="signOutBtn">Sign out</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div id="loading" class="hidden">Loading…</div>
+    <div id="errorBox" class="banner hidden"></div>
+    <div id="truncBox" class="banner hidden"></div>
+
+    <!-- KPI cards -->
+    <section>
+      <h2 id="periodLabel">Last 28 days · vs previous period</h2>
+      <div class="grid kpis" id="kpis"></div>
+    </section>
+
+    <!-- Charts -->
+    <section class="two-col">
+      <div class="chart-card">
+        <h3>Net revenue (daily, ₹)</h3>
+        <canvas id="revChart" height="220"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Buyers (daily)</h3>
+        <canvas id="buyerChart" height="220"></canvas>
+      </div>
+    </section>
+
+    <!-- Tables -->
+    <section class="two-col">
+      <div class="chart-card">
+        <h3>Sales by region / district</h3>
+        <table id="regionTable">
+          <thead><tr><th>Region / district</th><th class="num">Buyers</th><th class="num">Txns</th><th class="num">Revenue</th><th class="num">ARPPU</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="chart-card">
+        <h3>Payment methods</h3>
+        <table id="methodTable">
+          <thead><tr><th>Method</th><th class="num">Txns</th><th class="num">Revenue</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <h3 style="margin-top:18px;">Currently active</h3>
+        <table id="activeTable">
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="muted" id="footer" style="font-size:12px;margin-top:18px;"></p>
+  </div>
+</div>
+
+<!-- Firebase (compat) + Chart.js -->
+<script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-functions-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  const ADMIN_EMAIL = "himanshududhankar@gmail.com";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDUjHKQ3g2yz2o4ax61QS7dq5z0FV8k5Ss",
+    authDomain: "sodium-hour-256110.firebaseapp.com",
+    databaseURL: "https://sodium-hour-256110.firebaseio.com",
+    projectId: "sodium-hour-256110",
+    storageBucket: "sodium-hour-256110.appspot.com",
+    messagingSenderId: "427608700943",
+    appId: "1:427608700943:web:4b79666808054be5654b7a"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const functions = firebase.app().functions('asia-south1');
+  const getWebDashboardStats = functions.httpsCallable('getWebDashboardStats');
+  const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+  // ---- DOM helpers ----
+  const $ = (id) => document.getElementById(id);
+  const inr0 = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
+  const num = new Intl.NumberFormat('en-IN');
+  const fmtMoney = (v) => inr0.format(Math.round(v || 0));
+  const fmtNum = (v) => num.format(v || 0);
+
+  function deltaHtml(pct, goodUp = true) {
+    if (pct === 0 || pct === undefined || pct === null) return '<span class="delta flat">no change</span>';
+    const positive = pct > 0;
+    const good = goodUp ? positive : !positive;
+    const arrow = positive ? '▲' : '▼';
+    const sign = positive ? '+' : '';
+    return `<span class="delta ${good ? 'up' : 'down'}">${arrow} ${sign}${pct}% vs prev</span>`;
+  }
+
+  function kpiCard(label, value, deltaPct, goodUp = true) {
+    return `<div class="card"><div class="label">${label}</div><div class="value">${value}</div>${
+      deltaPct === undefined ? '' : deltaHtml(deltaPct, goodUp)
+    }</div>`;
+  }
+
+  // ---- Charts ----
+  let revChart, buyerChart;
+  function drawCharts(series) {
+    const labels = series.map(s => s.date.slice(5)); // MM-DD
+    const rev = series.map(s => s.revenue);
+    const buyers = series.map(s => s.buyers);
+    const common = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 10, font: { size: 10 } } },
+                y: { beginAtZero: true, ticks: { font: { size: 10 } } } }
+    };
+    if (revChart) revChart.destroy();
+    if (buyerChart) buyerChart.destroy();
+    revChart = new Chart($('revChart'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data: rev, backgroundColor: '#1a73e8', borderRadius: 3 }] },
+      options: common
+    });
+    buyerChart = new Chart($('buyerChart'), {
+      type: 'line',
+      data: { labels, datasets: [{ data: buyers, borderColor: '#137333', backgroundColor: 'rgba(19,115,51,.08)', fill: true, tension: .3, pointRadius: 2 }] },
+      options: common
+    });
+  }
+
+  // ---- Render ----
+  function render(d) {
+    const c = d.current, dl = d.deltas;
+    $('periodLabel').textContent = `Last ${d.days} days · vs previous ${d.days} days` + (d.includeTest ? ' · incl. test' : '');
+
+    $('kpis').innerHTML = [
+      kpiCard('Net revenue', fmtMoney(c.revenueNet), dl.revenueNet, true),
+      kpiCard('All buyers', fmtNum(c.buyers), dl.buyers, true),
+      kpiCard('New buyers', fmtNum(c.newBuyers), dl.newBuyers, true),
+      kpiCard('Returning buyers', fmtNum(c.returningBuyers), dl.returningBuyers, true),
+      kpiCard('ARPPU', fmtMoney(c.arppu), dl.arppu, true),
+      kpiCard('Transactions', fmtNum(c.txns)),
+      kpiCard('Refunds', fmtMoney(c.refunds)),
+      kpiCard('Gross revenue', fmtMoney(c.revenueGross)),
+    ].join('');
+
+    drawCharts(d.series);
+
+    // Sales by region / district
+    $('regionTable').querySelector('tbody').innerHTML = (d.byRegion && d.byRegion.length)
+      ? d.byRegion.map(r => `<tr><td>${escapeHtml(r.region)}</td><td class="num">${fmtNum(r.buyers)}</td><td class="num">${fmtNum(r.txns)}</td><td class="num">${fmtMoney(r.revenue)}</td><td class="num">${fmtMoney(r.arppu)}</td></tr>`).join('')
+      : '<tr><td colspan="5" class="muted">No data yet — click “Sync ledger”.</td></tr>';
+
+    // Methods
+    $('methodTable').querySelector('tbody').innerHTML = d.methods.length
+      ? d.methods.map(m => `<tr><td>${escapeHtml(m.method)}</td><td class="num">${fmtNum(m.txns)}</td><td class="num">${fmtMoney(m.revenue)}</td></tr>`).join('')
+      : '<tr><td colspan="3" class="muted">—</td></tr>';
+
+    // Active + lifetime
+    $('activeTable').querySelector('tbody').innerHTML = [
+      `<tr><td>Active passes</td><td class="num">${fmtNum(d.active.activePasses)}</td></tr>`,
+      `<tr><td>Active subscriptions</td><td class="num">${fmtNum(d.active.activeSubscriptions)}</td></tr>`,
+      `<tr><td>Users with active access</td><td class="num">${fmtNum(d.active.activeUsers)}</td></tr>`,
+      `<tr><td>Lifetime net revenue</td><td class="num">${fmtMoney(d.lifetime.revenueNet)}</td></tr>`,
+      `<tr><td>Lifetime buyers</td><td class="num">${fmtNum(d.lifetime.buyers)}</td></tr>`,
+    ].join('');
+
+    // Ledger status
+    if (!d.meta || !d.meta.ledgerCount) {
+      $('truncBox').classList.remove('hidden');
+      $('truncBox').textContent = 'Ledger is empty — click “Sync ledger” to backfill from Razorpay (first run pulls full history).';
+    } else {
+      $('truncBox').classList.add('hidden');
+    }
+
+    const gen = new Date(d.generatedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+    const synced = d.meta.ledgerLastSync ? new Date(d.meta.ledgerLastSync).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : 'never';
+    $('footer').textContent = `${fmtNum(d.meta.ledgerCount || 0)} ledger rows · last sync ${synced} IST · generated ${gen} IST · revenue net of refunds`;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // ---- Load ----
+  let loading = false;
+  async function load() {
+    if (loading) return;
+    loading = true;
+    $('loading').classList.remove('hidden');
+    $('errorBox').classList.add('hidden');
+    $('refreshBtn').disabled = true;
+    try {
+      const res = await getWebDashboardStats({
+        days: Number($('period').value),
+        includeTest: $('includeTest').checked
+      });
+      render(res.data);
+    } catch (e) {
+      $('errorBox').classList.remove('hidden');
+      $('errorBox').textContent = 'Failed to load: ' + (e.message || e.code || 'unknown error');
+      console.error(e);
+    } finally {
+      loading = false;
+      $('loading').classList.add('hidden');
+      $('refreshBtn').disabled = false;
+    }
+  }
+
+  // ---- Auth wiring ----
+  $('signInBtn').onclick = () => {
+    $('gateMsg').textContent = '';
+    firebase.auth().signInWithPopup(googleProvider).catch(err => {
+      $('gateMsg').textContent = err.message || 'Sign-in failed.';
+    });
+  };
+  $('signOutBtn').onclick = () => firebase.auth().signOut();
+  $('refreshBtn').onclick = load;
+  $('period').onchange = load;
+  $('includeTest').onchange = load;
+  $('syncBtn').onclick = async () => {
+    const btn = $('syncBtn');
+    const original = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Syncing…';
+    $('errorBox').classList.add('hidden');
+    try {
+      await functions.httpsCallable('syncWebLedger')({});
+      await load();
+    } catch (e) {
+      $('errorBox').classList.remove('hidden');
+      $('errorBox').textContent = 'Sync failed: ' + (e.message || e.code || 'unknown error');
+    } finally {
+      btn.disabled = false; btn.textContent = original;
+    }
+  };
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (user && user.email === ADMIN_EMAIL) {
+      $('gate').classList.add('hidden');
+      $('app').classList.remove('hidden');
+      load();
+    } else if (user) {
+      // Signed in but not admin
+      $('app').classList.add('hidden');
+      $('gate').classList.remove('hidden');
+      $('gateMsg').textContent = `${user.email} is not authorized. Sign out and use the admin account.`;
+      $('signInBtn').textContent = 'Sign out';
+      $('signInBtn').onclick = () => { firebase.auth().signOut(); location.reload(); };
+    } else {
+      $('app').classList.add('hidden');
+      $('gate').classList.remove('hidden');
+    }
+  });
+</script>
+</body>
+</html>
