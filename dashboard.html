@@ -150,6 +150,12 @@
       <div class="grid kpis" id="kpis"></div>
     </section>
 
+    <!-- Revenue by type: one-time vs recurring -->
+    <section>
+      <h2>Revenue by type · one-time vs recurring</h2>
+      <div class="grid kpis" id="byType"></div>
+    </section>
+
     <!-- Charts -->
     <section class="two-col">
       <div class="chart-card">
@@ -232,6 +238,12 @@
     }</div>`;
   }
 
+  function typeCard(label, t) {
+    t = t || {};
+    return `<div class="card"><div class="label">${label}</div><div class="value">${fmtMoney(t.revenue || 0)}</div>`
+      + `<div class="delta flat">${fmtNum(t.buyers || 0)} buyers · ${fmtNum(t.txns || 0)} txns · ARPPU ${fmtMoney(t.arppu || 0)}</div></div>`;
+  }
+
   // ---- Charts ----
   let revChart, buyerChart;
   function drawCharts(series) {
@@ -273,6 +285,13 @@
       kpiCard('Transactions', fmtNum(c.txns)),
       kpiCard('Refunds', fmtMoney(c.refunds)),
       kpiCard('Gross revenue', fmtMoney(c.revenueGross)),
+    ].join('');
+
+    // Revenue by type (one-time vs recurring)
+    const bt = d.byType || {};
+    $('byType').innerHTML = [
+      typeCard('One-time passes', bt.oneTime),
+      typeCard('Subscriptions (recurring)', bt.subscription),
     ].join('');
 
     drawCharts(d.series);
@@ -355,7 +374,7 @@
     btn.disabled = true; btn.textContent = 'Syncing…';
     $('errorBox').classList.add('hidden');
     try {
-      await functions.httpsCallable('syncWebLedger')({});
+      await functions.httpsCallable('syncWebLedger')({ full: true });
       await load();
     } catch (e) {
       $('errorBox').classList.remove('hidden');
