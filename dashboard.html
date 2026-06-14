@@ -168,6 +168,20 @@
       </div>
     </section>
 
+    <!-- Monthly trend -->
+    <section>
+      <h2>Monthly revenue · month-by-month &amp; year-over-year</h2>
+      <div class="chart-card">
+        <div class="chart-box" style="height:260px;"><canvas id="monthChart"></canvas></div>
+      </div>
+      <div class="chart-card" style="margin-top:14px;">
+        <table id="monthTable">
+          <thead><tr><th>Month</th><th class="num">Revenue</th><th class="num">Buyers</th><th class="num">MoM&nbsp;%</th><th class="num">YoY&nbsp;%</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- Tables -->
     <section class="two-col">
       <div class="chart-card">
@@ -244,8 +258,37 @@
       + `<div class="delta flat">${fmtNum(t.buyers || 0)} buyers · ${fmtNum(t.txns || 0)} txns · ARPPU ${fmtMoney(t.arppu || 0)}</div></div>`;
   }
 
+  function pctCell(v) {
+    if (v === null || v === undefined) return '<td class="num muted">—</td>';
+    const cls = v >= 0 ? 'up' : 'down';
+    const sign = v > 0 ? '+' : '';
+    return `<td class="num"><span class="delta ${cls}">${sign}${v}%</span></td>`;
+  }
+
   // ---- Charts ----
-  let revChart, buyerChart;
+  let revChart, buyerChart, monthChart;
+  function drawMonthly(monthly) {
+    monthly = monthly || [];
+    const labels = monthly.map(m => m.month);
+    const rev = monthly.map(m => m.revenue);
+    const opts = {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                y: { beginAtZero: true, ticks: { font: { size: 10 } } } }
+    };
+    if (monthChart) monthChart.destroy();
+    monthChart = new Chart($('monthChart'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data: rev, backgroundColor: '#1a73e8', borderRadius: 3 }] },
+      options: opts
+    });
+    $('monthTable').querySelector('tbody').innerHTML = monthly.length
+      ? monthly.slice().reverse().map(m =>
+          `<tr><td>${m.month}</td><td class="num">${fmtMoney(m.revenue)}</td><td class="num">${fmtNum(m.buyers)}</td>${pctCell(m.momPct)}${pctCell(m.yoyPct)}</tr>`
+        ).join('')
+      : '<tr><td colspan="5" class="muted">No data yet.</td></tr>';
+  }
   function drawCharts(series) {
     const labels = series.map(s => s.date.slice(5)); // MM-DD
     const rev = series.map(s => s.revenue);
@@ -295,6 +338,7 @@
     ].join('');
 
     drawCharts(d.series);
+    drawMonthly(d.monthly);
 
     // Sales by region / district
     $('regionTable').querySelector('tbody').innerHTML = (d.byRegion && d.byRegion.length)
@@ -307,9 +351,13 @@
       : '<tr><td colspan="3" class="muted">—</td></tr>';
 
     // Active + lifetime
+    const ss = d.active.subStatus || {};
     $('activeTable').querySelector('tbody').innerHTML = [
       `<tr><td>Active passes</td><td class="num">${fmtNum(d.active.activePasses)}</td></tr>`,
-      `<tr><td>Active subscriptions</td><td class="num">${fmtNum(d.active.activeSubscriptions)}</td></tr>`,
+      `<tr><td>Active subscriptions <span class="muted">(status = active)</span></td><td class="num">${fmtNum(d.active.activeSubscriptions)}</td></tr>`,
+      `<tr><td style="padding-left:22px;" class="muted">↳ cancelling (access till expiry)</td><td class="num">${fmtNum(ss.cancelling)}</td></tr>`,
+      `<tr><td style="padding-left:22px;" class="muted">↳ halted (payment failed)</td><td class="num">${fmtNum(ss.halted)}</td></tr>`,
+      `<tr><td style="padding-left:22px;" class="muted">↳ pending</td><td class="num">${fmtNum(ss.pending)}</td></tr>`,
       `<tr><td>Users with active access</td><td class="num">${fmtNum(d.active.activeUsers)}</td></tr>`,
       `<tr><td>Lifetime net revenue</td><td class="num">${fmtMoney(d.lifetime.revenueNet)}</td></tr>`,
       `<tr><td>Lifetime buyers</td><td class="num">${fmtNum(d.lifetime.buyers)}</td></tr>`,
