@@ -76,7 +76,8 @@
   section h2 { font-size: 15px; font-weight: 500; color: var(--muted); margin: 0 0 12px; }
   .chart-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
   .chart-card h3 { margin: 0 0 10px; font-size: 14px; font-weight: 500; }
-  canvas { width: 100% !important; }
+  .chart-box { position: relative; height: 240px; width: 100%; }
+  .chart-box canvas { position: absolute; inset: 0; }
   .two-col { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; }
   @media (max-width: 760px) { .two-col { grid-template-columns: 1fr; } }
 
@@ -153,11 +154,11 @@
     <section class="two-col">
       <div class="chart-card">
         <h3>Net revenue (daily, ₹)</h3>
-        <canvas id="revChart" height="220"></canvas>
+        <div class="chart-box"><canvas id="revChart"></canvas></div>
       </div>
       <div class="chart-card">
         <h3>Buyers (daily)</h3>
-        <canvas id="buyerChart" height="220"></canvas>
+        <div class="chart-box"><canvas id="buyerChart"></canvas></div>
       </div>
     </section>
 
