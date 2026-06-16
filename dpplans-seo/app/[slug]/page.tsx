@@ -379,6 +379,19 @@ export default function RegionPage({ params }: Props) {
               </Link>
             </div>
           )}
+
+          {region.slug === 'pune-dp-plan' && (
+            <div className="side-card">
+              <h3>Twin city: PCMC</h3>
+              <p className="aux">
+                Pimpri-Chinchwad is planned by a separate corporation (PCMC), not PMC. View its own Draft Development
+                Plan 2025 — Bhosari, Chinchwad, Akurdi, Nigdi and Wakad — on the dedicated page.
+              </p>
+              <Link className="btn btn-white btn-block" href="/pcmc-development-plan/">
+                PCMC Development Plan →
+              </Link>
+            </div>
+          )}
         </aside>
       </div>
     </>

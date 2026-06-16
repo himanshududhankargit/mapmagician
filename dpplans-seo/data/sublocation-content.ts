@@ -35,27 +35,29 @@ export type SubLocationContent = {
 };
 
 export const SUBLOCATION_CONTENT: Record<string, SubLocationContent> = {
-  // PCMC — "pcmc draft development plan" is an Easy / >1000-volume query (Ahrefs).
-  // The generic template titled this "Pimpri Chinchwad Municipal Corporation
-  // Development Plan map — Pune district" — no acronym, no "draft", so it never
-  // matched the query. The DP layer we host is named "(Draft 2025)" in menuGIS.
+  // PCMC now has its OWN top-level hub at /pcmc-development-plan/ which owns the
+  // "pcmc draft development plan" head term (Easy / >1000-volume, Ahrefs). To stop the
+  // two PCMC pages cannibalising each other, this in-Pune sub-location page is re-pointed
+  // at the locality long-tail (Bhosari / Chinchwad / Akurdi / Nigdi) with prose kept
+  // distinct from the hub. The DP layer we host is named "(Draft 2025)" in menuGIS.
   'pune-dp-plan/pimpri-chinchwad-municipal-corporation': {
-    pageTitle: 'PCMC Draft Development Plan 2025 — Pimpri Chinchwad DP map online',
+    pageTitle: 'Pimpri Chinchwad DP map online — PCMC draft plan zones & land use',
     description:
-      'View the PCMC Draft Development Plan (2025) for the Pimpri Chinchwad Municipal Corporation online. Interactive DP overlay over satellite imagery — identify proposed zones, reservations and road lines for any plot across Pimpri, Chinchwad, Bhosari, Akurdi and Nigdi.',
+      'Open the PCMC Draft Development Plan (2025) on the map and read the proposed zone, reservations and road lines for Bhosari, Chinchwad, Pimpri, Akurdi, Nigdi-Pradhikaran and Wakad. See the dedicated PCMC Development Plan page for the full plan overview.',
     keywords: [
-      'pcmc draft development plan',
-      'pcmc development plan',
-      'pcmc dp plan 2025',
-      'pimpri chinchwad development plan',
-      'pimpri chinchwad dp map online',
-      'pcmc zoning map',
-      'pcmc draft dp 2025',
+      'pimpri chinchwad dp map',
+      'bhosari development plan',
+      'chinchwad zoning map',
+      'akurdi dp plan',
+      'nigdi development plan',
+      'pcmc land use map',
+      'wakad development plan',
     ],
     intro:
-      'The Pimpri-Chinchwad Municipal Corporation (PCMC) is the civic body and planning authority for the twin industrial city of Pimpri-Chinchwad in Pune district, Maharashtra, constituted in 1982 and operating under the Maharashtra Regional and Town Planning Act, 1966. This page renders the PCMC Draft Development Plan (2025) as an interactive overlay on satellite imagery, so you can read the proposed land-use zone, reservations and road alignment for any plot in the corporation area.',
+      'This page opens the PCMC Draft Development Plan (2025) on the map, zoomed to the Pimpri-Chinchwad Municipal Corporation area in Pune district, Maharashtra. Use it to read the proposed land-use zone, reservations and road lines for specific localities in the twin city — pan and zoom over satellite imagery to trace any boundary on the ground.',
     paragraphs: [
-      "PCMC's land-use is anchored by its industrial estates — the Bhosari (MIDC) estate, along with the Chinchwad, Pimpri and Akurdi industrial belts — and by the residential and commercial growth around Nigdi-Pradhikaran, Wakad and the Mumbai-Pune Expressway / old NH-48 corridor. The draft DP defines the residential, commercial, industrial, green and public-utility zones and the proposed road network across these areas; pan and zoom on the map above to trace any boundary against the current ground imagery.",
+      "Check the PCMC localities directly: the Bhosari (MIDC), Chinchwad, Pimpri and Akurdi industrial belts, and the residential and commercial growth around Nigdi-Pradhikaran, Sangvi, Wakad and Ravet along the Mumbai-Pune Expressway / old NH-48 corridor. The draft DP defines the residential, commercial, industrial, green and public-utility zones and the proposed road network across these areas; toggle the overlay to confirm the zone for any plot.",
+      'For the full PCMC plan overview, key facts and FAQs see the dedicated PCMC Development Plan page, and for the adjoining city see the Pune (PMC) Development Plan. This is the draft plan — confirm the final sanctioned plan with PCMC before relying on a zone for any decision.',
     ],
   },
 

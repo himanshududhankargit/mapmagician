@@ -36,19 +36,40 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   // nmrda.org, MIDC portal, Wikipedia citing primaries).
   // ===========================================================================
 
+  // Pune = the PMC (Pune Municipal Corporation) Development Plan. The adjoining twin
+  // city of Pimpri-Chinchwad is planned separately by PCMC and has its OWN top-level
+  // page (/pcmc-development-plan/), so this page stays PMC-focused — both head terms
+  // ("pmc development plan" vs "pcmc development plan") win on their own page instead
+  // of competing inside one merged URL. Cross-link to PCMC is the side-card in
+  // app/[slug]/page.tsx. Sources: pmc.gov.in, gazette notifications, Wikipedia (PMC).
   'pune-dp-plan': {
+    pageTitle: 'Pune DP Plan 2017 — PMC Development Plan map online',
+    description:
+      'View the Pune Municipal Corporation (PMC) Development Plan online — DP and DCPR sanctioned in 2017. Interactive overlay on satellite imagery: read the land-use zone, reservations and DP remark for any plot or survey number across PMC limits, including Kothrud, Hadapsar, Kharadi, Baner and Aundh.',
+    keywords: [
+      'pune dp plan',
+      'pmc development plan',
+      'pune development plan 2017',
+      'dcpr 2017 pune',
+      'pune dp map online',
+      'pune dp remark',
+      'pune zoning map',
+      'pune development plan map',
+      'pmc dp map',
+    ],
     paragraphs: [
-      'The Pune Development Plan is administered by the Pune Municipal Corporation (PMC). The Development Control and Promotion Regulations (DCPR) governing land use and building activities within PMC limits were sanctioned by the Maharashtra State Government on 5 January 2017, and the formal gazette notification for the sanctioned Development Plan of the old PMC limits was issued on 8 March 2019. The plan applies to building activities within the area first notified under Section 23 of the Maharashtra Regional and Town Planning Act, 1966 on 13 December 2007.',
-      "Pune's planning is split between two authorities: PMC handles the city core, while the Pune Metropolitan Region Development Authority (PMRDA) covers the broader metropolitan periphery — including the high-growth fringe villages and Town Planning Schemes outside PMC limits.",
-      'Major industrial and growth anchors in and around the PMC area include the Pimpri-Chinchwad Municipal Corporation (PCMC) industrial complex with its Bhosari and Chinchwad MIDC estates, the Hinjewadi Rajiv Gandhi Infotech Park (around 2,800 acres hosting over 800 IT companies), and connectivity provided by the Mumbai-Pune Expressway (NH-48) and the Pune Ring Road. The DP map on this page reflects these zoning, road and reservation boundaries as published by PMC, overlaid on satellite imagery so plot boundaries align with on-ground features.',
+      'The Pune Development Plan is the statutory land-use plan for the Pune Municipal Corporation (PMC) area, prepared under the Maharashtra Regional and Town Planning Act, 1966. The Development Control and Promotion Regulations (DCPR) governing land use and building activity within PMC limits were sanctioned by the Government of Maharashtra on 5 January 2017, and the sanctioned Development Plan for the old PMC limits was gazetted on 8 March 2019. The plan applies to the area first notified under Section 23 of the MRTP Act on 13 December 2007.',
+      'On this map the sanctioned plan is drawn as an interactive overlay on satellite imagery, so you can read the DP remark for any plot — its land-use zone (residential, commercial, industrial, public / semi-public, green or no-development), any public reservation falling on it, and the proposed road or road-widening lines crossing it. Search a survey number, CTS number, locality or landmark to jump straight to it, then toggle the overlay to confirm the designated zone before relying on it for a plot decision.',
+      'PMC limits span the historic city core and the fringe villages merged in over 2017–2021, covering well-known localities such as Kothrud, Hadapsar, Kharadi, Baner, Aundh, Viman Nagar, Wadgaon Sheri and Dhanori, with employment anchors at the Kharadi (EON) and Magarpatta IT hubs. The adjoining twin city of Pimpri-Chinchwad is a separate planning authority (PCMC) with its own Development Plan, while the wider metropolitan periphery outside PMC and PCMC falls under the Pune Metropolitan Region Development Authority (PMRDA).',
     ],
     quickFacts: [
       { label: 'Planning authority', value: 'Pune Municipal Corporation (PMC)' },
       { label: 'DCPR sanctioned', value: '5 January 2017' },
       { label: 'Gazette notification (old limits)', value: '8 March 2019' },
+      { label: 'Area first notified (Sec 23)', value: '13 December 2007' },
       { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
-      { label: 'Adjacent metropolitan authority', value: 'PMRDA (Pune Metropolitan Region Development Authority)' },
-      { label: 'Key industrial clusters', value: 'Hinjewadi IT Park, Bhosari MIDC, PCMC' },
+      { label: 'Twin city (planned separately)', value: 'Pimpri-Chinchwad (PCMC)' },
+      { label: 'Wider metropolitan authority', value: 'PMRDA (Pune Metropolitan Region Development Authority)' },
     ],
   },
 

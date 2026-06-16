@@ -103,6 +103,19 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="section">
+        <div className="container text-block">
+          <h2>Pune &amp; Pimpri-Chinchwad: two plans, two authorities</h2>
+          <p>
+            Pune city and the twin city of Pimpri-Chinchwad are planned by separate municipal corporations. The{' '}
+            <Link href="/pune-dp-plan/">Pune (PMC) Development Plan</Link> covers Pune Municipal Corporation limits,
+            while the <Link href="/pcmc-development-plan/">PCMC Development Plan</Link> renders the Pimpri-Chinchwad
+            Draft Development Plan 2025 — Bhosari, Chinchwad, Akurdi, Nigdi and Wakad. The wider metropolitan periphery
+            outside both is covered by the <Link href="/pmrda-development-plan/">PMRDA Development Plan</Link>.
+          </p>
+        </div>
+      </section>
+
       <section className="section alt">
         <div className="container text-block">
           <h2>About DPPlans</h2>
