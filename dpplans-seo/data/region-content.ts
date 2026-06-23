@@ -122,6 +122,18 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   },
 
   'thane-dp-plan': {
+    pageTitle: 'Thane Development Plan — TMC DP map online (incl. draft DP 2026-2046)',
+    description:
+      'View the Thane Municipal Corporation (TMC) Development Plan online — the sanctioned Thane DP (in force from 2003) together with the draft Thane DP 2026-2046 now in the public-objections stage. Interactive overlay on satellite imagery: read the land-use zone, reservations and DP remark for any plot across Thane, including Wagle Estate and the Ghodbunder Road growth corridor.',
+    keywords: [
+      'thane development plan',
+      'thane dp plan',
+      'tmc development plan',
+      'thane dp 2026-2046',
+      'thane dp map online',
+      'thane zoning map',
+      'ghodbunder road dp',
+    ],
     paragraphs: [
       'The Thane Development Plan is administered by the Thane Municipal Corporation (TMC). The principal Development Plan was sanctioned by the Maharashtra State Government on 4 October 1999, with the excluded part sanctioned on 3 April 2003; the consolidated plan came into force from 14 May 2003. A revised Thane DP 2026-2046 has been notified in draft and is currently in the public-objections and revision stage at TMC.',
       "Thane's industrial backbone is centred on the Wagle Industrial Estate — established by the Maharashtra Industrial Development Corporation in 1962, this was MIDC’s first industrial estate in the state. It hosts a mix of engineering, electronics, pharma, IT and BPO operations and is anchored by the Eastern Express Highway, directly accessible from Mumbai via Mulund and Bhandup.",
@@ -183,8 +195,20 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
 
   // Sources: pmrda.gov.in, Wikipedia PMRDA.
   'pmrda-development-plan': {
+    pageTitle: 'PMRDA Development Plan 2021 — Pune Metropolitan Region DP map online',
+    description:
+      'View the PMRDA (Pune Metropolitan Region Development Authority) Draft Development Plan 2021 online — the metropolitan-region DP covering ~6,052 sq km and 814 villages outside the PMC and PCMC limits. Interactive overlay on satellite imagery: read the land-use zone, reservations and DP remark for any plot along the Hinjewadi IT corridor, Mumbai-Pune Expressway and Pune-Nashik / Pune-Solapur corridors. Distinct from the Pune (PMC) city Development Plan.',
+    keywords: [
+      'pmrda development plan',
+      'pmrda dp plan 2021',
+      'pune metropolitan region development plan',
+      'pmrda draft development plan',
+      'pmrda dp map online',
+      'pmrda zoning map',
+      'pmrda masterplan',
+    ],
     paragraphs: [
-      'The Pune Metropolitan Region Development Authority (PMRDA) Development Plan is administered by PMRDA, established by the Government of Maharashtra in 2015 under the Maharashtra Regional and Town Planning Act, 1966. PMRDA has jurisdiction over approximately 7,246 square kilometres, and the Draft Development Plan 2021 covers approximately 6,052 sq km across 814 villages spanning 9 talukas of Pune district.',
+      'The Pune Metropolitan Region Development Authority (PMRDA) Development Plan is administered by PMRDA, established by the Government of Maharashtra in 2015 under the Maharashtra Regional and Town Planning Act, 1966. It is the metropolitan-region Development Plan for the Pune fringe outside the core city, and is distinct from the Pune Municipal Corporation (PMC) Development Plan that covers only Pune city limits. PMRDA has jurisdiction over approximately 7,246 square kilometres, and the Draft Development Plan 2021 covers approximately 6,052 sq km across 814 villages spanning 9 talukas of Pune district.',
       'PMRDA functions as the Special Planning Authority (SPA) for 697 villages of the Pune Metropolitan Region (excluding their gaothan areas), and additionally for 23 villages newly merged into the Pune Municipal Corporation. The plan defines zoning, road alignments, reservations and Town Planning Schemes for the peripheral metropolitan area outside the core PMC and PCMC limits — including the high-growth fringe along the Hinjewadi IT corridor, the Mumbai-Pune Expressway buffer, the Pune-Nashik Highway corridor, and the Pune-Solapur Highway corridor.',
       'Under the PMRDA Masterplan, Agricultural Non-Development Zone land cannot be used for private residential construction unless brought under a formal Town Planning Scheme approved by the state government. The DP overlay on this page reflects PMRDA’s published zoning, reservation, road-line and Town Planning Scheme boundaries georeferenced over satellite imagery.',
     ],
