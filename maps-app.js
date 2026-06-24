@@ -7,8 +7,8 @@
         // actually deployed in that push gets the new number. maps1 (staging) and maps (live)
         // therefore hold the build number of their own most recent deploy. A staging (maps1) bump
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
-        // monotonic across both files. Promoted from staging maps1 (013), so live now carries 013. Next -> 014.
-        var APP_VERSION = '013';
+        // monotonic across both files. Promoted from staging maps1 (014 — Kale/Paud CRLF tile-URL fix), so live now carries 014. Next -> 015.
+        var APP_VERSION = '014';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -9284,7 +9284,12 @@
             if (def.isMerged && def.subSheets && def.subSheets.length > 0) {
                 this._merged = true;
                 this._subSheets = def.subSheets.map(function(sub) {
-                    var lk = sub.link || '';
+                    // Strip stray CR/LF/tab + trim: link values can carry an
+                    // invisible trailing newline from copy-paste (Keep/txt).
+                    // The real tiles live at the clean path, so the request URL
+                    // must match it byte-for-byte (also keeps the edge-gate hash
+                    // in sync — see generateTileFolderMap.js folder-key normalize).
+                    var lk = (sub.link || '').replace(/[\r\n\t]/g, '').trim();
                     return {
                         bbox: sub.bbox,
                         polygon: sub.polygon,
@@ -9308,8 +9313,10 @@
             } else {
                 this._merged = false;
                 this._subSheets = null;
-                // Build tile URL prefix once.
-                var link = def.link || '';
+                // Build tile URL prefix once. Strip stray CR/LF/tab + trim
+                // (see merged-sheet note above) so a pasted-in newline can't
+                // desync the request path from where the tiles actually live.
+                var link = (def.link || '').replace(/[\r\n\t]/g, '').trim();
                 this.urlPrefix_ = tileBaseUrl + (link.endsWith('/') ? link : link + '/');
             }
         }
