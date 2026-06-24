@@ -1,13 +1,17 @@
 name: Republish districts
 
 # Fires when the Android admin app pushes d1.bin / d3.bin updates. Regenerates
-# tileFolderMap.json + cloudfront-gate.js in the GIS web repo and redeploys
-# both Firebase (getCloudFrontCookies) and CloudFront (mmp-tile-gate).
+# tileFolderMap.json in the GIS web repo, syncs the folder->districtId pairs into the
+# CloudFront KeyValueStore (mmp-tile-folders), and redeploys Firebase getCloudFrontCookies.
+# The CloudFront gate CODE is constant (reads the KVS) so it is only redeployed on the rare
+# run where cloudfront-gate.js itself changes.
 #
 # Required repo secrets (configure in Settings → Secrets and variables → Actions):
 #   GIS_WEB_PAT        fine-grained PAT with contents:write on the GIS web repo
 #   FIREBASE_SA_KEY    service-account JSON with Cloud Functions Admin on sodium-hour-256110
-#   AWS_ACCESS_KEY_ID  IAM user scoped to cloudfront:DescribeFunction/UpdateFunction/PublishFunction
+#   AWS_ACCESS_KEY_ID  IAM user with cloudfront:DescribeFunction/UpdateFunction/PublishFunction
+#                      AND cloudfront-keyvaluestore:DescribeKeyValueStore/UpdateKeys/ListKeys
+#                      on the mmp-tile-folders KVS (see functions/scripts/publish-kvs.js)
 #   AWS_SECRET_ACCESS_KEY
 #   NOTIFY_GMAIL_USER  Gmail address for sending notifications (same one can live in Firebase as SUPPORT_GMAIL_USER)
 #   NOTIFY_GMAIL_PASS  Gmail 16-char app password (NOT the account password)
@@ -79,12 +83,19 @@ jobs:
         run: |
           if [[ -z "$(git status --porcelain)" ]]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "No changes — tileFolderMap + cloudfront-gate already up-to-date"
+            echo "gate_changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes — tileFolderMap already up-to-date"
             exit 0
           fi
           git config user.name  mmp-bot
           git config user.email mmp-bot@users.noreply.github.com
           git add functions/tileFolderMap.json functions/cloudfront-gate.js
+          # The gate code is constant under KVS; only redeploy it if it actually changed.
+          if git diff --cached --name-only | grep -qx 'functions/cloudfront-gate.js'; then
+            echo "gate_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "gate_changed=false" >> "$GITHUB_OUTPUT"
+          fi
           git commit -m "chore: republish districts [skip ci]
 
           Triggered by mapmagician-main@${{ github.sha }}"
@@ -97,8 +108,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: CloudFront deploy
+      # Sync folder->districtId pairs into the CloudFront KeyValueStore on every change.
+      # This is what makes a newly added/renamed district reachable past zoom 14: the gate
+      # reads the KVS, so the district 403s above zoom 14 until this step runs. Upsert-only
+      # (publish-kvs.js never deletes), so it can never remove access from an existing folder.
+      - name: Sync KVS keys (folder -> district id)
         if: steps.commit.outputs.changed == 'true'
+        working-directory: gis-web/functions
+        run: node scripts/publish-kvs.js
+
+      # Gate CODE rarely changes (it reads the KVS); only redeploy it when it actually did.
+      - name: Deploy gate code (only when cloudfront-gate.js changed)
+        if: steps.commit.outputs.gate_changed == 'true'
         working-directory: gis-web/functions
         run: bash scripts/publish-cloudfront.sh
 
