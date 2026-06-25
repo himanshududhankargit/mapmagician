@@ -8,7 +8,7 @@
         // therefore hold the build number of their own most recent deploy. A staging (maps1) bump
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
         // monotonic across both files. Live 011, staging 012 -> max(011,012)+1 = this push is 013. Next -> 014.
-        var APP_VERSION = '014';
+        var APP_VERSION = '015';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -719,7 +719,12 @@
             document.getElementById('support-dialog-overlay').classList.remove('open');
             if (supportReturnToPaywall && supportPaywallDistrict) {
                 showZoomRestrictionDialog(supportPaywallDistrict);
-            } else if (supportReturnToPaywall) {
+            } else {
+                // Always restore map interaction when not re-showing the paywall. The
+                // send-success path clears supportReturnToPaywall, so the old
+                // "else if (supportReturnToPaywall)" branch was skipped after sending —
+                // leaving the map with scrollwheel/zoomControl/gestureHandling off
+                // (dead scroll-zoom + missing zoom buttons until reload).
                 enableMapInteraction();
             }
             supportReturnToPaywall = false;

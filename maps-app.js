@@ -8,7 +8,7 @@
         // therefore hold the build number of their own most recent deploy. A staging (maps1) bump
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
         // monotonic across both files. Promoted from staging maps1 (014 — Kale/Paud CRLF tile-URL fix), so live now carries 014. Next -> 015.
-        var APP_VERSION = '014';
+        var APP_VERSION = '015';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -719,7 +719,12 @@
             document.getElementById('support-dialog-overlay').classList.remove('open');
             if (supportReturnToPaywall && supportPaywallDistrict) {
                 showZoomRestrictionDialog(supportPaywallDistrict);
-            } else if (supportReturnToPaywall) {
+            } else {
+                // Always restore map interaction when not re-showing the paywall. The
+                // send-success path clears supportReturnToPaywall, so the old
+                // "else if (supportReturnToPaywall)" branch was skipped after sending —
+                // leaving the map with scrollwheel/zoomControl/gestureHandling off
+                // (dead scroll-zoom + missing zoom buttons until reload).
                 enableMapInteraction();
             }
             supportReturnToPaywall = false;
