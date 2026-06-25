@@ -61,6 +61,211 @@ export const SUBLOCATION_CONTENT: Record<string, SubLocationContent> = {
     ],
   },
 
+  // --- Pune (PMC) high-search city localities ---
+  // Each of these pulls real "<locality> dp plan" + "<locality> dp plan pdf download"
+  // search volume (Google Search Console). Curated here so they become indexable unique
+  // pages (index,follow + sitemap) instead of the thin noindex village template, and so
+  // they stop leaking impressions to the generic Pune page. Facts kept to widely-verifiable
+  // locality identity; the DP framing (zones / reservations / DP road lines, DCPR 2017,
+  // PMC limits, view-vs-download the official PMC sheets) is generic and source-safe.
+  'pune-dp-plan/lohegaon': {
+    pageTitle: 'Lohegaon DP Plan map online — PMC zones, DP road & land use, Pune',
+    description:
+      'View the Lohegaon section of the Pune (PMC) Development Plan online. Interactive DP overlay on satellite imagery near Pune Airport — read the land-use zone, reservations and DP road lines for any plot in Lohegaon, north-east Pune.',
+    keywords: [
+      'lohegaon dp plan',
+      'lohegaon dp plan map',
+      'lohegaon development plan',
+      'lohegaon dp road plan',
+      'lohegaon dp plan pdf download',
+      'lohegaon dp plan 2025',
+      'lohegaon zoning map',
+      'lohegaon pmc dp map',
+    ],
+    intro:
+      'Lohegaon is a north-east Pune locality best known as the home of Pune International Airport (the Lohegaon airbase), on the Vishrantwadi–Dhanori side of the city within Pune Municipal Corporation (PMC) limits. This page opens the sanctioned Pune Development Plan zoomed to Lohegaon as an interactive overlay on satellite imagery, so you can read the land-use zone, public reservations and proposed DP road lines for any plot here.',
+    paragraphs: [
+      'Lohegaon has grown quickly as a residential and rental belt around the airport and the Dhanori–Vishrantwadi corridor, which makes the DP road alignments and road-widening lines through the area particularly worth checking before any plot decision — search by survey or CTS number and toggle the overlay to confirm whether a proposed road, reservation or zone boundary falls on the plot.',
+      'PMC publishes the sanctioned DP sheets covering Lohegaon as PDFs on pmc.gov.in; rather than downloading and scanning a large sheet, you can read the same zone and DP remark for a specific plot directly on this map. Browsing Lohegaon is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass.',
+    ],
+  },
+  'pune-dp-plan/baner': {
+    pageTitle: 'Baner DP Plan map online — PMC zones & land use, Pune',
+    description:
+      'View the Baner section of the Pune (PMC) Development Plan online. Interactive DP overlay on satellite imagery along the Mumbai–Bangalore highway — read the land-use zone, reservations and DP road lines for any plot in Baner, north-west Pune.',
+    keywords: [
+      'baner dp plan',
+      'baner development plan',
+      'baner dp',
+      'baner dp plan pdf download',
+      'baner zoning map',
+      'baner pmc dp map',
+      'baner pune land use',
+    ],
+    intro:
+      'Baner is a fast-growing IT and residential suburb in north-west Pune, alongside Aundh, Balewadi and Pashan and close to the Mumbai–Bangalore Highway (old NH-4), within Pune Municipal Corporation (PMC) limits and below the Baner–Pashan biodiversity hill. This page opens the sanctioned Pune Development Plan zoomed to Baner as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and proposed DP road lines for any plot.',
+    paragraphs: [
+      'Rapid high-rise and office development along Baner Road and the highway service roads makes the DP zone and road-widening lines here worth confirming plot-by-plot — search a survey or CTS number and toggle the overlay to see the designated zone (residential, commercial, public-utility, green or no-development) and any reservation or DP road crossing it.',
+      'PMC publishes the sanctioned DP sheets covering Baner as PDFs on pmc.gov.in; instead of downloading a large sheet, you can read the same zone and DP remark for a specific plot here. Browsing Baner is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass.',
+    ],
+  },
+  'pune-dp-plan/kharadi': {
+    pageTitle: 'Kharadi DP Plan map online — PMC zones & land use, Pune',
+    description:
+      'View the Kharadi section of the Pune (PMC) Development Plan online. Interactive DP overlay on satellite imagery around the EON IT hub — read the land-use zone, reservations and DP road lines for any plot in Kharadi, east Pune.',
+    keywords: [
+      'kharadi dp plan',
+      'kharadi development plan',
+      'kharadi dp plan pdf download',
+      'kharadi zoning map',
+      'kharadi pmc dp map',
+      'kharadi eon it park',
+      'kharadi pune land use',
+    ],
+    intro:
+      'Kharadi is a major east-Pune IT and commercial hub built around the EON Free Zone IT park and the World Trade Center, on the Nagar Road / Mundhwa–Kharadi corridor within Pune Municipal Corporation (PMC) limits, next to Wagholi and Chandan Nagar. This page opens the sanctioned Pune Development Plan zoomed to Kharadi as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and proposed DP road lines for any plot.',
+    paragraphs: [
+      'With dense IT-led office, hospitality and residential growth, Kharadi carries significant commercial zoning and several proposed road and road-widening lines — search a survey or CTS number and toggle the overlay to confirm the zone and whether a reservation or DP road falls on the plot before relying on it.',
+      'PMC publishes the sanctioned DP sheets covering Kharadi as PDFs on pmc.gov.in; rather than downloading a large sheet, you can read the same zone and DP remark for a specific plot here. Browsing Kharadi is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass.',
+    ],
+  },
+  'pune-dp-plan/dhanori': {
+    pageTitle: 'Dhanori DP Plan map online — PMC zones & land use, Pune',
+    description:
+      'View the Dhanori section of the Pune (PMC) Development Plan online. Interactive DP overlay on satellite imagery near Lohegaon and Vishrantwadi — read the land-use zone, reservations and DP road lines for any plot in Dhanori, north-east Pune.',
+    keywords: [
+      'dhanori dp plan',
+      'dhanori development plan',
+      'dhanori dp plan pdf download',
+      'dhanori zoning map',
+      'dhanori pmc dp map',
+      'dhanori pune land use',
+    ],
+    intro:
+      'Dhanori is a rapidly developing residential locality in north-east Pune, between Vishrantwadi, Lohegaon and Kalas, within Pune Municipal Corporation (PMC) limits. This page opens the sanctioned Pune Development Plan zoomed to Dhanori as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and proposed DP road lines for any plot.',
+    paragraphs: [
+      'Heavy new housing along the Dhanori–Lohegaon and Dhanori–Kalas roads makes the DP road alignments and reservations here important to verify before buying or building — search a survey or CTS number and toggle the overlay to confirm the zone and any proposed road or reservation on the plot.',
+      'PMC publishes the sanctioned DP sheets covering Dhanori as PDFs on pmc.gov.in; instead of downloading a large sheet, you can read the same zone and DP remark for a specific plot here. Browsing Dhanori is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass.',
+    ],
+  },
+  'pune-dp-plan/balewadi': {
+    pageTitle: 'Balewadi DP Plan map online — PMC zones & land use, Pune',
+    description:
+      'View the Balewadi section of the Pune (PMC) Development Plan online. Interactive DP overlay on satellite imagery near the Shiv Chhatrapati Sports Complex — read the land-use zone, reservations and DP road lines for any plot in Balewadi, north-west Pune.',
+    keywords: [
+      'balewadi dp plan',
+      'dp plan balewadi',
+      'balewadi development plan',
+      'balewadi dp plan pdf download',
+      'balewadi zoning map',
+      'balewadi pmc dp map',
+      'balewadi stadium area',
+    ],
+    intro:
+      'Balewadi is a north-west Pune locality known for the Shree Shiv Chhatrapati Sports Complex (Balewadi Stadium) and high-rise residential growth beside Baner and Wakad, within Pune Municipal Corporation (PMC) limits near the Mula river and the Mumbai–Bangalore highway. This page opens the sanctioned Pune Development Plan zoomed to Balewadi as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and proposed DP road lines for any plot.',
+    paragraphs: [
+      'Balewadi has seen extensive township and high-rise development, so checking the DP zone and the proposed road-widening lines plot-by-plot matters — search a survey or CTS number and toggle the overlay to confirm the zone and any reservation or DP road crossing it.',
+      'PMC publishes the sanctioned DP sheets covering Balewadi as PDFs on pmc.gov.in; rather than downloading a large sheet, you can read the same zone and DP remark for a specific plot here. Browsing Balewadi is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass.',
+    ],
+  },
+  'pune-dp-plan/bavdhan': {
+    pageTitle: 'Bavdhan DP Plan map online — zones & land use, Pune',
+    description:
+      'View the Bavdhan section of the Pune Development Plan online. Interactive DP overlay on satellite imagery near Chandni Chowk and Kothrud — read the land-use zone, reservations and DP road lines for any plot in Bavdhan (Khurd & Budruk), west Pune.',
+    keywords: [
+      'bavdhan dp plan',
+      'bavdhan khurd dp plan',
+      'bavdhan development plan',
+      'bavdhan dp plan pdf download',
+      'bavdhan zoning map',
+      'bavdhan pune land use',
+    ],
+    intro:
+      'Bavdhan is a west-Pune residential suburb near Chandni Chowk, Kothrud, Pashan and the NDA hills, split between Bavdhan Khurd and Bavdhan Budruk along the Mumbai–Bangalore bypass. This page opens the sanctioned Development Plan zoomed to Bavdhan as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and proposed DP road lines for any plot.',
+    paragraphs: [
+      'Because parts of Bavdhan have developed across the Pune Municipal Corporation limit and the adjoining metropolitan periphery, confirming the exact zone and any proposed road line for a specific plot is especially worthwhile — search a survey number and toggle the overlay to read the designated zone and any reservation or DP road on it.',
+      'The sanctioned DP sheets covering Bavdhan are published as PDFs by the planning authority; rather than downloading a large sheet, you can read the same zone and DP remark for a specific plot here. Browsing Bavdhan is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day access pass.',
+    ],
+  },
+  'pune-dp-plan/hadapsar': {
+    pageTitle: 'Hadapsar DP Plan map online — PMC zones & land use, Pune',
+    description:
+      'View the Hadapsar section of the Pune (PMC) Development Plan online. Interactive DP overlay on satellite imagery around Magarpatta and the industrial estate — read the land-use zone, reservations and DP road lines for any plot in Hadapsar, south-east Pune.',
+    keywords: [
+      'hadapsar dp plan',
+      'hadapsar development plan',
+      'hadapsar dp plan pdf download',
+      'hadapsar zoning map',
+      'hadapsar pmc dp map',
+      'magarpatta hadapsar',
+      'hadapsar industrial estate',
+    ],
+    intro:
+      'Hadapsar is a large south-east Pune locality on the Solapur Road corridor, home to Magarpatta City, Amanora and the Hadapsar Industrial Estate, within Pune Municipal Corporation (PMC) limits. This page opens the sanctioned Pune Development Plan zoomed to Hadapsar as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and proposed DP road lines for any plot.',
+    paragraphs: [
+      'Hadapsar mixes industrial, IT-township, commercial and residential land, so the DP zone and the proposed road-widening lines vary sharply across the area — search a survey or CTS number and toggle the overlay to confirm the designated zone and whether a reservation or DP road falls on the plot.',
+      'PMC publishes the sanctioned DP sheets covering Hadapsar as PDFs on pmc.gov.in; rather than downloading a large sheet, you can read the same zone and DP remark for a specific plot here. Browsing Hadapsar is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass.',
+    ],
+  },
+  'pune-dp-plan/wadgaon-sheri': {
+    pageTitle: 'Vadgaon Sheri DP Plan map online — PMC zones & land use, Pune',
+    description:
+      'View the Vadgaon Sheri (Wadgaon Sheri) section of the Pune (PMC) Development Plan online. Interactive DP overlay on satellite imagery near Kalyani Nagar and Viman Nagar — read the land-use zone, reservations and DP road lines for any plot, east Pune.',
+    keywords: [
+      'vadgaon sheri dp plan',
+      'wadgaon sheri dp plan',
+      'vadgaon sheri dp plan pdf download',
+      'vadgaon sheri development plan',
+      'vadgaon sheri zoning map',
+      'vadgaon sheri pmc',
+    ],
+    intro:
+      'Vadgaon Sheri (also spelt Wadgaon Sheri) is an east-central Pune locality next to Kalyani Nagar, Viman Nagar and Kharadi, within Pune Municipal Corporation (PMC) limits. This page opens the sanctioned Pune Development Plan zoomed to Vadgaon Sheri as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and proposed DP road lines for any plot.',
+    paragraphs: [
+      'Sitting between established residential pockets and the IT belt, Vadgaon Sheri carries a mix of residential and commercial zoning with several proposed road lines — search a survey or CTS number and toggle the overlay to confirm the zone and any reservation or DP road on the plot.',
+      'PMC publishes the sanctioned DP sheets covering Vadgaon Sheri as PDFs on pmc.gov.in; rather than downloading a large sheet, you can read the same zone and DP remark for a specific plot here. Browsing the area is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass.',
+    ],
+  },
+  'pune-dp-plan/katraj': {
+    pageTitle: 'Katraj DP Plan map online — PMC zones & land use, Pune',
+    description:
+      'View the Katraj section of the Pune (PMC) Development Plan online. Interactive DP overlay on satellite imagery along the Katraj–Kondhwa road and Katraj ghat — read the land-use zone, reservations and DP road lines for any plot in Katraj, south Pune.',
+    keywords: [
+      'katraj dp plan',
+      'katraj dp plan pdf download',
+      'katraj development plan',
+      'katraj zoning map',
+      'katraj pmc dp map',
+      'katraj kondhwa road',
+      'katraj pune land use',
+    ],
+    intro:
+      'Katraj is a south-Pune locality known for Katraj Lake, the Rajiv Gandhi Zoological Park, the Katraj Dairy and the Katraj ghat on the old Pune–Satara road (NH-48), within Pune Municipal Corporation (PMC) limits next to Dhankwadi and Kondhwa. This page opens the sanctioned Pune Development Plan zoomed to Katraj as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and proposed DP road lines for any plot.',
+    paragraphs: [
+      'Katraj rises into hill slopes towards the ghat and the inner ring road, so zones shift between developable, green and hill / no-development bands across short distances — search a survey or CTS number and toggle the overlay to confirm the exact zone and any reservation or DP road on the plot before relying on it.',
+      'PMC publishes the sanctioned DP sheets covering Katraj as PDFs on pmc.gov.in; rather than downloading a large sheet, you can read the same zone and DP remark for a specific plot here. Browsing Katraj is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass.',
+    ],
+  },
+  'pune-dp-plan/dhayari': {
+    pageTitle: 'Dhayari DP Plan map online — PMC zones & land use, Pune',
+    description:
+      'View the Dhayari section of the Pune (PMC) Development Plan online. Interactive DP overlay on satellite imagery off Sinhagad Road — read the land-use zone, reservations and DP road lines for any plot in Dhayari, south-west Pune.',
+    keywords: [
+      'dhayari dp plan',
+      'dhayari development plan',
+      'dhayari dp plan pdf download',
+      'dhayari zoning map',
+      'dhayari sinhagad road',
+      'dhayari pune land use',
+    ],
+    intro:
+      'Dhayari is a south-west Pune residential locality off Sinhagad Road, near Narhe and on the approach towards Sinhagad fort, within Pune Municipal Corporation (PMC) limits. This page opens the sanctioned Pune Development Plan zoomed to Dhayari as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and proposed DP road lines for any plot.',
+    paragraphs: [
+      'Dhayari has filled in rapidly with residential development off Sinhagad Road, which makes the proposed DP road and road-widening lines worth checking plot-by-plot — search a survey or CTS number and toggle the overlay to confirm the zone and any reservation or DP road on the plot.',
+      'PMC publishes the sanctioned DP sheets covering Dhayari as PDFs on pmc.gov.in; rather than downloading a large sheet, you can read the same zone and DP remark for a specific plot here. Browsing Dhayari is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass.',
+    ],
+  },
+
   // --- Solapur district: notable towns (taluka HQs / pilgrimage centres) ---
   // Curated so they read as unique pages (not the 95%-identical village template) and
   // become indexable. Each entry sticks to widely-verifiable facts; the DP head term

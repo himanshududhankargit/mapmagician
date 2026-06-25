@@ -60,6 +60,11 @@ const LOCATION_ALIASES = [
   { test: /koradi/i, name: 'Koradi' },
   { test: /kasba badnera/i, name: 'Badnera' },
   { test: /kasbe ghodbandar/i, name: 'Ghodbunder' },
+  // Pune (PMC) localities whose raw menuGIS rows carry a "Tal: Haveli" suffix — collapse to
+  // the bare locality so the URL/H1 is "/pune-dp-plan/kharadi/" not "…/kharadi-tal-haveli/".
+  // These are curated, high-search SEO pages (see sublocation-content.ts).
+  { test: /^kharadi\b/i, name: 'Kharadi' },
+  { test: /^katraj\b/i, name: 'Katraj' },
 ];
 function locationAlias(rawName) {
   const s = String(rawName || '');

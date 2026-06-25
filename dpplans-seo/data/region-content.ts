@@ -45,10 +45,12 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   'pune-dp-plan': {
     pageTitle: 'Pune DP Plan 2017 — PMC Development Plan map online',
     description:
-      'View the Pune Municipal Corporation (PMC) Development Plan online — DP and DCPR sanctioned in 2017. Interactive overlay on satellite imagery: read the land-use zone, reservations and DP remark for any plot or survey number across PMC limits, including Kothrud, Hadapsar, Kharadi, Baner and Aundh.',
+      'View the Pune Municipal Corporation (PMC) Development Plan online — DP and DCPR sanctioned in 2017. Interactive overlay on satellite imagery: read the land-use zone, reservations and DP remark for any plot or survey number across PMC limits, including Kothrud, Hadapsar, Kharadi, Baner and Aundh. Free to view online, or download the official PMC DP sheets (PDF).',
     keywords: [
       'pune dp plan',
+      'pmc dp plan',
       'pmc development plan',
+      'pmc dp plan pdf download',
       'pune development plan 2017',
       'dcpr 2017 pune',
       'pune dp map online',
@@ -56,11 +58,20 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'pune zoning map',
       'pune development plan map',
       'pmc dp map',
+      'pmc limits map',
+      'pmc town planning',
+      'pune town planning map',
+      'pune dp road plan',
+      'tod map pmc',
+      'how to check dp plan online',
+      'what is dp plan',
     ],
     paragraphs: [
       'The Pune Development Plan is the statutory land-use plan for the Pune Municipal Corporation (PMC) area, prepared under the Maharashtra Regional and Town Planning Act, 1966. The Development Control and Promotion Regulations (DCPR) governing land use and building activity within PMC limits were sanctioned by the Government of Maharashtra on 5 January 2017, and the sanctioned Development Plan for the old PMC limits was gazetted on 8 March 2019. The plan applies to the area first notified under Section 23 of the MRTP Act on 13 December 2007.',
       'On this map the sanctioned plan is drawn as an interactive overlay on satellite imagery, so you can read the DP remark for any plot — its land-use zone (residential, commercial, industrial, public / semi-public, green or no-development), any public reservation falling on it, and the proposed road or road-widening lines crossing it. Search a survey number, CTS number, locality or landmark to jump straight to it, then toggle the overlay to confirm the designated zone before relying on it for a plot decision.',
       'PMC limits span the historic city core and the fringe villages merged in over 2017–2021, covering well-known localities such as Kothrud, Hadapsar, Kharadi, Baner, Aundh, Viman Nagar, Wadgaon Sheri and Dhanori, with employment anchors at the Kharadi (EON) and Magarpatta IT hubs. The adjoining twin city of Pimpri-Chinchwad is a separate planning authority (PCMC) with its own Development Plan, while the wider metropolitan periphery outside PMC and PCMC falls under the Pune Metropolitan Region Development Authority (PMRDA).',
+      'What is a DP plan? A Development Plan (commonly shortened to "DP plan") is the statutory land-use map prepared under the MRTP Act that fixes the zone of every plot, the public reservations on it, and the proposed road and road-widening lines crossing it — the combination is what people call the "DP remark". To check the Pune DP online, open the interactive map, search a survey number, CTS number, locality or landmark, then toggle the overlay to read the designated zone and any DP road or reservation. The plan also carries the Transit-Oriented Development (TOD) influence zones along the Pune Metro corridors, where higher FSI is permitted near stations.',
+      'PMC publishes the sanctioned Development Plan and its numbered DP sheets as large-format PDF scans on its official website (pmc.gov.in). Those sheets are detailed but heavy to download and hard to pinpoint a single plot on. This page renders the same sanctioned plan as an interactive overlay instead — so you can either download the official PMC DP sheet PDF from pmc.gov.in, or simply search your plot here and read its zone, reservation and DP road line without downloading anything. Browsing is free up to zoom level 14; the higher-detail DP tile layers (zoom 15 and beyond) unlock with a 7-day access pass for the Pune region.',
     ],
     quickFacts: [
       { label: 'Planning authority', value: 'Pune Municipal Corporation (PMC)' },
