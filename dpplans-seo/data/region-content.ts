@@ -180,6 +180,25 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   },
 
   'nagpur-metropolitan-region-dp-plan': {
+    // GSC (3-mo): 3,219 impressions at avg position 5.8 but only 5.1% CTR — the generic
+    // "Nagpur Metropolitan Region Development Plan" title wasn't matching how people
+    // actually search ("nagpur dp plan", "nmrda dp plan", "dp map nagpur"). Curated
+    // title + keywords front-load NMRDA / Nagpur DP Plan to lift CTR at the same rank.
+    pageTitle: 'Nagpur DP Plan (NMRDA) 2012-2032 — Development Plan map online',
+    description:
+      'View the Nagpur Metropolitan Region Development Plan (2012-2032) online — administered by NMRDA and prepared by the Nagpur Improvement Trust (NIT), covering ~3,567 sq km and 721 villages across 9 tehsils of Nagpur district. Interactive DP overlay over satellite imagery: read the land-use zone, reservations and road lines for any plot, survey number or locality, including the MIHAN and Butibori MIDC growth areas.',
+    keywords: [
+      'nagpur dp plan',
+      'nmrda dp plan',
+      'nmrda dp plan nagpur',
+      'dp map nagpur',
+      'nagpur development plan',
+      'nagpur development plan map',
+      'nmrda development plan',
+      'nit nagpur dp plan',
+      'nagpur metropolitan region map',
+      'nagpur dp map online',
+    ],
     paragraphs: [
       'The Nagpur Metropolitan Region Development Plan covers approximately 3,567 square kilometres encompassing 721 villages across 9 tehsils of Nagpur District. The plan was prepared by the Nagpur Improvement Trust (NIT) acting as the Special Planning Authority under the Maharashtra Regional and Town Planning Act, 1966, and is administered by the Nagpur Metropolitan Region Development Authority (NMRDA). The plan covers the period 2012-2032, and the associated Development Control and Promotion Regulations were notified in 2018.',
       'Major industrial anchors in the metropolitan region include the Butibori MIDC Industrial Estate, located approximately 25 km east of Nagpur city. Established in 1994 and covering around 23 square kilometres, Butibori is one of Asia’s largest planned industrial estates and was envisioned to support ancillary industries to the adjacent MIHAN (Multimodal International Cargo Hub and Airport at Nagpur) project. MIHAN itself integrates international air cargo, a Special Economic Zone, and warehousing close to the Nagpur airport.',
@@ -210,7 +229,13 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
     description:
       'View the PMRDA (Pune Metropolitan Region Development Authority) Draft Development Plan 2021 online — the metropolitan-region DP covering ~6,052 sq km and 814 villages outside the PMC and PCMC limits. Interactive overlay on satellite imagery: read the land-use zone, reservations and DP remark for any plot along the Hinjewadi IT corridor, Mumbai-Pune Expressway and Pune-Nashik / Pune-Solapur corridors. Distinct from the Pune (PMC) city Development Plan.',
     keywords: [
+      'pmrda dp plan',
       'pmrda development plan',
+      'pmrda map',
+      'pmrda village map',
+      'pmrda dp plan pdf download',
+      'pmrda dp plan map',
+      'pmrda map download',
       'pmrda dp plan 2021',
       'pune metropolitan region development plan',
       'pmrda draft development plan',
@@ -222,6 +247,7 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'The Pune Metropolitan Region Development Authority (PMRDA) Development Plan is administered by PMRDA, established by the Government of Maharashtra in 2015 under the Maharashtra Regional and Town Planning Act, 1966. It is the metropolitan-region Development Plan for the Pune fringe outside the core city, and is distinct from the Pune Municipal Corporation (PMC) Development Plan that covers only Pune city limits. PMRDA has jurisdiction over approximately 7,246 square kilometres, and the Draft Development Plan 2021 covers approximately 6,052 sq km across 814 villages spanning 9 talukas of Pune district.',
       'PMRDA functions as the Special Planning Authority (SPA) for 697 villages of the Pune Metropolitan Region (excluding their gaothan areas), and additionally for 23 villages newly merged into the Pune Municipal Corporation. The plan defines zoning, road alignments, reservations and Town Planning Schemes for the peripheral metropolitan area outside the core PMC and PCMC limits — including the high-growth fringe along the Hinjewadi IT corridor, the Mumbai-Pune Expressway buffer, the Pune-Nashik Highway corridor, and the Pune-Solapur Highway corridor.',
       'Under the PMRDA Masterplan, Agricultural Non-Development Zone land cannot be used for private residential construction unless brought under a formal Town Planning Scheme approved by the state government. The DP overlay on this page reflects PMRDA’s published zoning, reservation, road-line and Town Planning Scheme boundaries georeferenced over satellite imagery.',
+      'PMRDA village map and zone map: because the Draft DP 2021 spans 814 villages, the most practical way to read it is village by village. Use the interactive overlay on this page to open any PMRDA village, then read its proposed land-use zone, reservation or road / road-widening line directly over satellite imagery — the same detail published in the PMRDA DP zone and area maps, without downloading the full sheet set. The official sheet-wise DP PDFs remain available from PMRDA for an offline copy; this page is simply the online viewer for the same plan.',
     ],
     quickFacts: [
       { label: 'Planning authority', value: 'Pune Metropolitan Region Development Authority (PMRDA)' },
@@ -256,6 +282,26 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
 
   // Sources: NMMC official, Wikipedia NMMC/Navi Mumbai, CIDCO Maharashtra.
   'navi-mumbai-municipal-corporation-dp-plan': {
+    // GSC (3-mo): 1,666 impressions, pos 6.5, but only 6.4% CTR — the generic
+    // "...Municipal Corporation Development Plan" title buried the head term people
+    // actually type ("navi mumbai development plan", "navi mumbai dp plan", "nmmc dp
+    // plan"). Lead with the head term + NMMC. (Deliberately NOT claiming "official" —
+    // this is a third-party viewer, not the NMMC/CIDCO GIS portal.)
+    pageTitle: 'Navi Mumbai Development Plan (NMMC) — DP map online',
+    description:
+      'View the Navi Mumbai Municipal Corporation (NMMC) Development Plan online — the DP for the 44 villages under NMMC jurisdiction (29 from the CIDCO-sanctioned 1979-80 plan), covering Vashi, Nerul, Belapur, Airoli, Ghansoli and Koparkhairane. Interactive overlay over satellite imagery: read the land-use zone, reservation or road line for any plot, node or survey number across Navi Mumbai.',
+    keywords: [
+      'navi mumbai development plan',
+      'navi mumbai dp plan',
+      'nmmc dp plan',
+      'navi mumbai dp map',
+      'nmmc development plan',
+      'navi mumbai development plan map',
+      'nmmc map',
+      'navi mumbai municipal corporation map',
+      'navi mumbai dp plan 2034',
+      'navi mumbai development plan online',
+    ],
     paragraphs: [
       'The Navi Mumbai Municipal Corporation (NMMC) Development Plan is administered by NMMC under the Maharashtra Regional and Town Planning Act, 1966. The corporation came into existence on 1 January 1992, with jurisdiction covering 29 villages from the original Navi Mumbai project area and a further 15 villages from the Kalyan complex area — 44 villages in total.',
       'The original Development Plan for the wider Navi Mumbai region was sanctioned by the State Government in 1979-80 and came into effect from 1 March 1980 — this plan was structural in nature and was prepared by CIDCO, which was empowered under the MRTP Act to plan and develop Navi Mumbai. Out of the 44 villages within NMMC’s jurisdiction, 29 are part of the CIDCO-sanctioned Development Plan. Planning powers were delegated to NMMC partly in 1994 and again in 2008, although CIDCO continues to hold rights over open plots within the NMMC jurisdiction.',
@@ -829,6 +875,12 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'View the MSRDC Development Plan for the New Mahabaleshwar Hill Station project in Satara district online — MSRDC was appointed Special Planning Authority in 2019 over the Jaoli, Mahabaleshwar, Satara and Patan talukas. Interactive DP overlay over satellite imagery: zones, reservations and road lines.',
     keywords: [
       'new mahabaleshwar development plan',
+      'new mahabaleshwar project',
+      'new mahabaleshwar project map',
+      'new mahabaleshwar project village list',
+      'new mahabaleshwar map',
+      'navin mahabaleshwar project',
+      'where is new mahabaleshwar',
       'mahabaleshwar msrdc development plan',
       'msrdc development plan',
       'new mahabaleshwar hill station plan',

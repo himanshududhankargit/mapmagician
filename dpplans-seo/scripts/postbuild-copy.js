@@ -69,10 +69,20 @@ console.log('postbuild-copy: wrote out/CNAME = dpplans.com');
 
 // Splash promotion: out/index.html IS the homepage now. The previous redirect
 // (`/  /maps.html  302`) must not exist or Cloudflare honours it ahead of
-// index.html and the splash never renders. Writing an empty _redirects so
-// this deploy explicitly overwrites any stale rule from prior builds.
-fs.writeFileSync(path.join(OUT, '_redirects'), '# Splash is the homepage; / serves index.html directly\n');
-console.log('postbuild-copy: wrote out/_redirects (empty — / serves index.html)');
+// index.html and the splash never renders.
+//
+// Canonical host: 301 www -> apex. Search Console was showing BOTH
+// www.dpplans.com/<page> and dpplans.com/<page> indexed for the same pages,
+// which splits ranking signals (clicks/impressions) across two URLs. Per-page
+// <link rel="canonical"> already points at the apex, but that is only a hint;
+// a 301 is authoritative. Cloudflare Pages reads _redirects, evaluates it
+// top-to-bottom (first match wins), and supports a full-URL source with :splat.
+// Apex requests never match the www source, so there is no redirect loop.
+const redirects =
+  'https://www.dpplans.com/* https://dpplans.com/:splat 301\n' +
+  '# Splash is the homepage; / serves index.html directly\n';
+fs.writeFileSync(path.join(OUT, '_redirects'), redirects);
+console.log('postbuild-copy: wrote out/_redirects (www->apex 301; / serves index.html)');
 
 // Slim SEO lookup for index1.html — strips bbox/kml/centroid from regions.json
 // (~950 KB) down to a ~10 KB pid/slug/village-slug map. Lets the splash decide
