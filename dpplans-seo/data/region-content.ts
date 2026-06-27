@@ -232,7 +232,10 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'pmrda dp plan',
       'pmrda development plan',
       'pmrda map',
+      'pmrda area map',
       'pmrda village map',
+      'pmrda dp',
+      'pmrda nakasha',
       'pmrda dp plan pdf download',
       'pmrda dp plan map',
       'pmrda map download',
@@ -263,6 +266,24 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
 
   // Sources: CIDCO NAINA PDF, Wikipedia NAINA, Government Notification TPS-1712/475/CR-98/12/UD-12 dated 10/01/2013.
   'naina-development-plan': {
+    // GSC (3-mo): 1,398 impressions / 112 clicks but had NO curated title or
+    // keywords — the generic "NAINA Region Development Plan" buried how people
+    // search ("naina development plan", "naina dp", "naina map", "cidco naina").
+    pageTitle: 'NAINA Development Plan (CIDCO) — DP map online',
+    description:
+      'View the NAINA (Navi Mumbai Airport Influence Notified Area) Development Plan online — CIDCO is the Special Planning Authority for this ~473 sq km area of 175 villages across the Panvel, Pen and Uran talukas of Raigad, triggered by the 25 km influence radius of the Navi Mumbai International Airport. Interactive overlay over satellite imagery: read the proposed land-use zone, Town Planning Scheme, reservation or road line for any plot, village or survey number.',
+    keywords: [
+      'naina development plan',
+      'naina dp plan',
+      'naina dp',
+      'naina map',
+      'naina development plan map',
+      'naina village list',
+      'naina city map',
+      'naina area map',
+      'cidco naina',
+      'naina tps map',
+    ],
     paragraphs: [
       'The NAINA (Navi Mumbai Airport Influence Notified Area) Development Plan is administered by the City and Industrial Development Corporation of Maharashtra (CIDCO) as the Special Planning Authority. NAINA was notified by the Government of Maharashtra Urban Development Department vide Notification No. TPS-1712/475/CR-98/12/UD-12 dated 10 January 2013, under section 40(1)(b) of the Maharashtra Regional and Town Planning Act, 1966.',
       'The NAINA area encompasses approximately 473 square kilometres across 175 villages and 38 khopta areas, primarily in the Panvel, Pen and Uran talukas of Raigad district. The notified area was originally identified as the zone within a 25 km radius of the proposed Navi Mumbai International Airport, which sits at the heart of the SPA. NAINA’s planning vision is structured around airport-influence growth — including airport-supporting logistics, hospitality, residential and commercial development.',
@@ -850,6 +871,11 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'lonavala khandala development plan',
       'mumbai pune expressway land use',
       'msrdc dp map',
+      'msrdc dp plan',
+      'msrdc khalapur map',
+      'msrdc development plan khalapur',
+      'khalapur development plan',
+      'msrdc 71 village development plan',
     ],
     paragraphs: [
       'The Pune-Mumbai – MSRDC Corridor Development Plan is administered by the Maharashtra State Road Development Corporation (MSRDC) acting as Special Planning Authority along the Mumbai-Pune Expressway under the Maharashtra Regional and Town Planning Act, 1966. The Government of Maharashtra appointed MSRDC as SPA for an approximately 2-km-wide stretch flanking the Mumbai-Pune Expressway corridor, with the notified area covering roughly 186.72 sq km strategically located between two important urban centres — Mumbai (about 45 km from the SPA boundary) and Pune (about 80 km) — with Navi Mumbai approximately 20 km away.',
