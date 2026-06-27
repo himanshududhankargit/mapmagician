@@ -7,8 +7,9 @@
         // actually deployed in that push gets the new number. maps1 (staging) and maps (live)
         // therefore hold the build number of their own most recent deploy. A staging (maps1) bump
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
-        // monotonic across both files. Live 011, staging 012 -> max(011,012)+1 = this push is 013. Next -> 014.
-        var APP_VERSION = '015';
+        // monotonic across both files. Both at 015 -> max(015,015)+1 = this staging push is 016
+        // (single-session: per-browser localStorage id, no false "active on another device" kicks). Next -> 017.
+        var APP_VERSION = '016';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -336,11 +337,29 @@
         });
 
         // --- Single-session enforcement ---
-        function registerSession(email) {
-            const emailKey = email.replace(/\./g, ',');
-            currentSessionId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        // Stable per-browser session id (persisted in localStorage). All tabs/reloads of the SAME
+        // browser reuse it -> they write the same value to GISWebActiveSessions, so the realtime
+        // listener sees no change and no tab kicks another. A different browser/device has its own
+        // localStorage -> different id -> it overwrites the node and the old browser is signed out
+        // (intended single-session). localStorage is per-origin and never synced across devices, so
+        // the id can't be shared device-to-device. Falls back to a per-load random id if localStorage
+        // is unavailable (e.g. private mode), degrading to the old behaviour.
+        function getDeviceSessionId() {
+            var KEY = 'mm_session_id';
+            try {
+                var existing = localStorage.getItem(KEY);
+                if (existing) return existing;
+            } catch (e) {}
+            var fresh = (typeof crypto !== 'undefined' && crypto.randomUUID)
                 ? crypto.randomUUID()
                 : (Date.now() + '-' + Math.random().toString(36).slice(2));
+            try { localStorage.setItem(KEY, fresh); } catch (e) {}
+            return fresh;
+        }
+
+        function registerSession(email) {
+            const emailKey = email.replace(/\./g, ',');
+            currentSessionId = getDeviceSessionId();
             try { mmAnalytics.event('login', { method: 'google' }); } catch (e) {}
             const ref = firebase.database().ref('GISWebActiveSessions/' + emailKey);
 
