@@ -34,6 +34,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: 'weekly' as const,
     priority: 0.8,
   };
+  const kdmcHub = {
+    url: SITE.origin + '/kalyan-dombivli-development-plan/',
+    lastModified,
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  };
   const regionPages = allRegions().map(r => ({
     url: `${SITE.origin}/${r.slug}/`,
     lastModified,
@@ -51,5 +57,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     }));
-  return [home, regionsBrowser, msrdcHub, pcmcHub, ...regionPages, ...subLocationPages];
+  return [home, regionsBrowser, msrdcHub, pcmcHub, kdmcHub, ...regionPages, ...subLocationPages];
 }
