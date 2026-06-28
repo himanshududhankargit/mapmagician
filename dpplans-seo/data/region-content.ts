@@ -45,7 +45,7 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   'pune-dp-plan': {
     pageTitle: 'Pune DP Plan 2017 — PMC Development Plan map online',
     description:
-      'View the Pune Municipal Corporation (PMC) Development Plan online — DP and DCPR sanctioned in 2017. Interactive overlay on satellite imagery: read the land-use zone, reservations and DP remark for any plot or survey number across PMC limits, including Kothrud, Hadapsar, Kharadi, Baner and Aundh. Free to view online, or download the official PMC DP sheets (PDF).',
+      'View the Pune Municipal Corporation (PMC) Development Plan online — DP and DCPR sanctioned in 2017. Interactive overlay on satellite imagery: read the land-use zone, reservations and DP remark for any plot or survey number across PMC limits, including Kothrud, Hadapsar, Kharadi, Baner and Aundh. Free to view online, or download the official PMC DP sheets (PDF). पुणे (पीएमसी) विकास आराखडा (डीपी प्लॅन) ऑनलाइन नकाशावर पाहा.',
     keywords: [
       'pune dp plan',
       'pmc dp plan',
@@ -65,6 +65,9 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'tod map pmc',
       'how to check dp plan online',
       'what is dp plan',
+      'पुणे डीपी प्लॅन',
+      'पुणे विकास आराखडा',
+      'पुणे नकाशा',
     ],
     paragraphs: [
       'The Pune Development Plan is the statutory land-use plan for the Pune Municipal Corporation (PMC) area, prepared under the Maharashtra Regional and Town Planning Act, 1966. The Development Control and Promotion Regulations (DCPR) governing land use and building activity within PMC limits were sanctioned by the Government of Maharashtra on 5 January 2017, and the sanctioned Development Plan for the old PMC limits was gazetted on 8 March 2019. The plan applies to the area first notified under Section 23 of the MRTP Act on 13 December 2007.',
@@ -135,7 +138,7 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   'thane-dp-plan': {
     pageTitle: 'Thane Development Plan — TMC DP map online (incl. draft DP 2026-2046)',
     description:
-      'View the Thane Municipal Corporation (TMC) Development Plan online — the sanctioned Thane DP (in force from 2003) together with the draft Thane DP 2026-2046 now in the public-objections stage. Interactive overlay on satellite imagery: read the land-use zone, reservations and DP remark for any plot across Thane, including Wagle Estate and the Ghodbunder Road growth corridor.',
+      'View the Thane Municipal Corporation (TMC) Development Plan online — the sanctioned Thane DP (in force from 2003) together with the draft Thane DP 2026-2046 now in the public-objections stage. Interactive overlay on satellite imagery: read the land-use zone, reservations and DP remark for any plot across Thane, including Wagle Estate and the Ghodbunder Road growth corridor. ठाणे जिल्ह्याचा विकास आराखडा (डीपी प्लॅन) ऑनलाइन नकाशावर पाहा.',
     keywords: [
       'thane development plan',
       'thane dp plan',
@@ -144,6 +147,9 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'thane dp map online',
       'thane zoning map',
       'ghodbunder road dp',
+      'ठाणे डीपी प्लॅन',
+      'ठाणे विकास आराखडा',
+      'ठाणे नकाशा',
     ],
     paragraphs: [
       'The Thane Development Plan is administered by the Thane Municipal Corporation (TMC). The principal Development Plan was sanctioned by the Maharashtra State Government on 4 October 1999, with the excluded part sanctioned on 3 April 2003; the consolidated plan came into force from 14 May 2003. A revised Thane DP 2026-2046 has been notified in draft and is currently in the public-objections and revision stage at TMC.',
@@ -186,7 +192,7 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
     // title + keywords front-load NMRDA / Nagpur DP Plan to lift CTR at the same rank.
     pageTitle: 'Nagpur DP Plan (NMRDA) 2012-2032 — Development Plan map online',
     description:
-      'View the Nagpur Metropolitan Region Development Plan (2012-2032) online — administered by NMRDA and prepared by the Nagpur Improvement Trust (NIT), covering ~3,567 sq km and 721 villages across 9 tehsils of Nagpur district. Interactive DP overlay over satellite imagery: read the land-use zone, reservations and road lines for any plot, survey number or locality, including the MIHAN and Butibori MIDC growth areas.',
+      'View the Nagpur Metropolitan Region Development Plan (2012-2032) online — administered by NMRDA and prepared by the Nagpur Improvement Trust (NIT), covering ~3,567 sq km and 721 villages across 9 tehsils of Nagpur district. Interactive DP overlay over satellite imagery: read the land-use zone, reservations and road lines for any plot, survey number or locality, including the MIHAN and Butibori MIDC growth areas. नागपूर महानगर प्रदेशाचा विकास आराखडा (डीपी प्लॅन) ऑनलाइन नकाशावर पाहा.',
     keywords: [
       'nagpur dp plan',
       'nmrda dp plan',
@@ -198,6 +204,9 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'nit nagpur dp plan',
       'nagpur metropolitan region map',
       'nagpur dp map online',
+      'नागपूर डीपी प्लॅन',
+      'नागपूर विकास आराखडा',
+      'नागपूर नकाशा',
     ],
     paragraphs: [
       'The Nagpur Metropolitan Region Development Plan covers approximately 3,567 square kilometres encompassing 721 villages across 9 tehsils of Nagpur District. The plan was prepared by the Nagpur Improvement Trust (NIT) acting as the Special Planning Authority under the Maharashtra Regional and Town Planning Act, 1966, and is administered by the Nagpur Metropolitan Region Development Authority (NMRDA). The plan covers the period 2012-2032, and the associated Development Control and Promotion Regulations were notified in 2018.',
@@ -227,7 +236,7 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   'pmrda-development-plan': {
     pageTitle: 'PMRDA Development Plan 2021 — Pune Metropolitan Region DP map online',
     description:
-      'View the PMRDA (Pune Metropolitan Region Development Authority) Draft Development Plan 2021 online — the metropolitan-region DP covering ~6,052 sq km and 814 villages outside the PMC and PCMC limits. Interactive overlay on satellite imagery: read the land-use zone, reservations and DP remark for any plot along the Hinjewadi IT corridor, Mumbai-Pune Expressway and Pune-Nashik / Pune-Solapur corridors. Distinct from the Pune (PMC) city Development Plan.',
+      'View the PMRDA (Pune Metropolitan Region Development Authority) Draft Development Plan 2021 online — the metropolitan-region DP covering ~6,052 sq km and 814 villages outside the PMC and PCMC limits. Interactive overlay on satellite imagery: read the land-use zone, reservations and DP remark for any plot along the Hinjewadi IT corridor, Mumbai-Pune Expressway and Pune-Nashik / Pune-Solapur corridors. Distinct from the Pune (PMC) city Development Plan. पीएमआरडीए (पुणे महानगर प्रदेश) विकास आराखडा ऑनलाइन नकाशावर पाहा.',
     keywords: [
       'pmrda dp plan',
       'pmrda development plan',
@@ -245,6 +254,9 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'pmrda dp map online',
       'pmrda zoning map',
       'pmrda masterplan',
+      'पीएमआरडीए नकाशा',
+      'पीएमआरडीए विकास आराखडा',
+      'पीएमआरडीए डीपी प्लॅन',
     ],
     paragraphs: [
       'The Pune Metropolitan Region Development Authority (PMRDA) Development Plan is administered by PMRDA, established by the Government of Maharashtra in 2015 under the Maharashtra Regional and Town Planning Act, 1966. It is the metropolitan-region Development Plan for the Pune fringe outside the core city, and is distinct from the Pune Municipal Corporation (PMC) Development Plan that covers only Pune city limits. PMRDA has jurisdiction over approximately 7,246 square kilometres, and the Draft Development Plan 2021 covers approximately 6,052 sq km across 814 villages spanning 9 talukas of Pune district.',
@@ -271,7 +283,7 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
     // search ("naina development plan", "naina dp", "naina map", "cidco naina").
     pageTitle: 'NAINA Development Plan (CIDCO) — DP map online',
     description:
-      'View the NAINA (Navi Mumbai Airport Influence Notified Area) Development Plan online — CIDCO is the Special Planning Authority for this ~473 sq km area of 175 villages across the Panvel, Pen and Uran talukas of Raigad, triggered by the 25 km influence radius of the Navi Mumbai International Airport. Interactive overlay over satellite imagery: read the proposed land-use zone, Town Planning Scheme, reservation or road line for any plot, village or survey number.',
+      'View the NAINA (Navi Mumbai Airport Influence Notified Area) Development Plan online — CIDCO is the Special Planning Authority for this ~473 sq km area of 175 villages across the Panvel, Pen and Uran talukas of Raigad, triggered by the 25 km influence radius of the Navi Mumbai International Airport. Interactive overlay over satellite imagery: read the proposed land-use zone, Town Planning Scheme, reservation or road line for any plot, village or survey number. नैना (सिडको) विकास आराखडा ऑनलाइन नकाशावर पाहा.',
     keywords: [
       'naina development plan',
       'naina dp plan',
@@ -283,6 +295,9 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'naina area map',
       'cidco naina',
       'naina tps map',
+      'नैना विकास आराखडा',
+      'नैना नकाशा',
+      'नैना डीपी प्लॅन',
     ],
     paragraphs: [
       'The NAINA (Navi Mumbai Airport Influence Notified Area) Development Plan is administered by the City and Industrial Development Corporation of Maharashtra (CIDCO) as the Special Planning Authority. NAINA was notified by the Government of Maharashtra Urban Development Department vide Notification No. TPS-1712/475/CR-98/12/UD-12 dated 10 January 2013, under section 40(1)(b) of the Maharashtra Regional and Town Planning Act, 1966.',
@@ -310,7 +325,7 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
     // this is a third-party viewer, not the NMMC/CIDCO GIS portal.)
     pageTitle: 'Navi Mumbai Development Plan (NMMC) — DP map online',
     description:
-      'View the Navi Mumbai Municipal Corporation (NMMC) Development Plan online — the DP for the 44 villages under NMMC jurisdiction (29 from the CIDCO-sanctioned 1979-80 plan), covering Vashi, Nerul, Belapur, Airoli, Ghansoli and Koparkhairane. Interactive overlay over satellite imagery: read the land-use zone, reservation or road line for any plot, node or survey number across Navi Mumbai.',
+      'View the Navi Mumbai Municipal Corporation (NMMC) Development Plan online — the DP for the 44 villages under NMMC jurisdiction (29 from the CIDCO-sanctioned 1979-80 plan), covering Vashi, Nerul, Belapur, Airoli, Ghansoli and Koparkhairane. Interactive overlay over satellite imagery: read the land-use zone, reservation or road line for any plot, node or survey number across Navi Mumbai. नवी मुंबई (एनएमएमसी) विकास आराखडा (डीपी प्लॅन) ऑनलाइन नकाशावर पाहा.',
     keywords: [
       'navi mumbai development plan',
       'navi mumbai dp plan',
@@ -322,6 +337,9 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'navi mumbai municipal corporation map',
       'navi mumbai dp plan 2034',
       'navi mumbai development plan online',
+      'नवी मुंबई डीपी प्लॅन',
+      'नवी मुंबई विकास आराखडा',
+      'नवी मुंबई नकाशा',
     ],
     paragraphs: [
       'The Navi Mumbai Municipal Corporation (NMMC) Development Plan is administered by NMMC under the Maharashtra Regional and Town Planning Act, 1966. The corporation came into existence on 1 January 1992, with jurisdiction covering 29 villages from the original Navi Mumbai project area and a further 15 villages from the Kalyan complex area — 44 villages in total.',
@@ -471,7 +489,7 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
     // heavily; lead with the legacy name (still higher volume) and carry the new one.
     pageTitle: 'Aurangabad (Chhatrapati Sambhaji Nagar) Development Plan — DP map online',
     description:
-      'View the Aurangabad / Chhatrapati Sambhaji Nagar Development Plan online. Interactive DP overlay over satellite imagery: zoning, reservations and road lines across the corporation limits, the Waluj-Shendra-Bidkin MIDC belt and AURIC (DMIC).',
+      'View the Aurangabad / Chhatrapati Sambhaji Nagar Development Plan online. Interactive DP overlay over satellite imagery: zoning, reservations and road lines across the corporation limits, the Waluj-Shendra-Bidkin MIDC belt and AURIC (DMIC). छत्रपती संभाजीनगर (औरंगाबाद) चा विकास आराखडा (डीपी प्लॅन) ऑनलाइन नकाशावर पाहा.',
     keywords: [
       'aurangabad development plan',
       'chhatrapati sambhaji nagar development plan',
@@ -480,6 +498,9 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'chhatrapati sambhajinagar dp plan',
       'aurangabad municipal corporation development plan',
       'auric dmic map',
+      'छत्रपती संभाजीनगर डीपी प्लॅन',
+      'औरंगाबाद विकास आराखडा',
+      'औरंगाबाद नकाशा',
     ],
     paragraphs: [
       'The Aurangabad / Chhatrapati Sambhaji Nagar Development Plan is administered by the Chhatrapati Sambhaji Nagar Municipal Corporation (the city was officially renamed from Aurangabad). The original-limits town plan for Aurangabad city was sanctioned by the State Government in 1991 under the Maharashtra Regional and Town Planning Act, 1966.',
@@ -602,6 +623,20 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
 
   // Sources: CMC Chandrapur, Wikipedia, MPCB CEPI report.
   'chandrapur-region-dp-plan': {
+    // GSC: "chandrapur district development" etc. rank pos 7-14 but the generic
+    // "Chandrapur Region Development Plan" title doesn't say "district". Match search
+    // intent while staying accurate (this is a Regional Plan).
+    pageTitle: 'Chandrapur District Development Plan — DP map online',
+    description:
+      'View the Chandrapur district Regional / Development Plan online — the planning overlay for Chandrapur district in eastern Maharashtra, prepared under the MRTP Act, 1966. Interactive overlay on satellite imagery: read the zoning and land-use boundaries across the coal-mining belt, the industrial estates and the Tadoba forest corridor.',
+    keywords: [
+      'chandrapur district development plan',
+      'chandrapur district development',
+      'chandrapur development plan',
+      'chandrapur dp plan',
+      'chandrapur district map',
+      'chandrapur regional plan',
+    ],
     paragraphs: [
       'The Chandrapur Regional Plan covers Chandrapur district in eastern Maharashtra, prepared under the Maharashtra Regional and Town Planning Act, 1966. The Chandrapur City Municipal Corporation is the principal urban local body within the district and serves as the planning authority for the city’s jurisdiction. Surrounding municipal councils and the District Planning Office administer the rural and other urban portions of the plan area.',
       'Chandrapur is known as the City of Black Gold owing to its vast coal deposits — the district is one of India’s principal coal-producing regions and hosts the Chandrapur Super Thermal Power Station (one of the country’s largest coal-fired thermal plants), as well as cement factories and large paper-manufacturing units. Major industrial anchors include the Western Coalfields Limited (WCL) mining areas and the Chandrapur MIDC and Tadali industrial estates.',
@@ -619,6 +654,17 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
 
   // Sources: bhandara.gov.in, indiandistricts.in Bhandara.
   'bhandara-region-dp-plan': {
+    pageTitle: 'Bhandara District Development Plan — DP map online',
+    description:
+      'View the Bhandara district Regional / Development Plan online — the planning overlay for Bhandara district in eastern Maharashtra, prepared under the MRTP Act, 1966. Interactive overlay on satellite imagery: read the zoning and land-use boundaries across Bhandara, Tumsar and Pauni and the Wainganga paddy belt.',
+    keywords: [
+      'bhandara district development plan',
+      'bhandara district development',
+      'bhandara development plan',
+      'bhandara dp plan',
+      'bhandara district map',
+      'bhandara regional plan',
+    ],
     paragraphs: [
       'The Bhandara Regional Plan covers Bhandara district in eastern Maharashtra, governed under the Maharashtra Regional and Town Planning Act, 1966, with regional planning administered by the Town Planning and Valuation Department of Maharashtra State and the local planning authorities for the constituent municipal and tehsil units.',
       'Bhandara is widely recognised as the rice bowl of Maharashtra, with the Wainganga river — which flows southward through the district after entering from Madhya Pradesh — irrigating the sandy-loam (Sihar) soils that are well-suited to high-quality paddy cultivation. The district’s industrial landscape is dominated by small-scale, agro-processing units, with over 100 operational rice mills, alongside copper and brassware manufacturing in Bhandara town and adjoining tehsils. Indigenous rice varieties cultivated in the district include Chinnor, Dubraj, Kalimooch and Shriram.',
@@ -637,6 +683,17 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
 
   // Sources: buldhana.nic.in, UDCPR 2020.
   'buldhana-region-dp-plan': {
+    pageTitle: 'Buldhana District Development Plan — DP map online',
+    description:
+      'View the Buldhana district Regional / Development Plan online — the planning overlay for Buldhana district in the Vidarbha region, prepared under the MRTP Act, 1966 (with UDCPR 2020 additional regulations). Interactive overlay on satellite imagery: read the zoning and land-use boundaries across Buldhana, Khamgaon, Malkapur and Shegaon.',
+    keywords: [
+      'buldhana district development plan',
+      'buldhana district development',
+      'buldhana development plan',
+      'buldhana dp plan',
+      'buldhana district map',
+      'buldhana regional plan',
+    ],
     paragraphs: [
       'The Buldhana Regional Plan covers Buldhana district in Maharashtra’s Vidarbha region, prepared under the provisions of the Maharashtra Regional and Town Planning Act, 1966. The plan is administered by the Town Planning and Valuation Department of Maharashtra State and the District Planning Office at Buldhana, with the constituent municipal councils for Buldhana, Khamgaon, Malkapur, Shegaon and other tehsil towns acting as local planning authorities within their jurisdictions.',
       'Buldhana sits along the watershed dividing the Tapi and Godavari river basins, with the Painganga river (a tributary of the Godavari) and the Purna river (a tributary of the Tapi) crossing the district. The district lies along the historical trade route between Khandesh and the Deccan plateau, and is known for the Lonar Crater Lake — a meteorite-impact saline lake recognised as a Ramsar site since 2020 — and the temple town of Shegaon associated with Sant Gajanan Maharaj.',
@@ -759,6 +816,17 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
 
   // Sources: washim.gov.in, indiandistricts.in Washim, UDCPR 2020.
   'washim-region-dp-plan': {
+    pageTitle: 'Washim District Development Plan — DP map online',
+    description:
+      'View the Washim district Regional / Development Plan online — the planning overlay for Washim district in the Vidarbha region, prepared under the MRTP Act, 1966 (with UDCPR 2020 additional regulations). Interactive overlay on satellite imagery: read the zoning and land-use boundaries across Washim, Karanja, Mangrulpir and Risod.',
+    keywords: [
+      'washim district development plan',
+      'washim district development',
+      'washim development plan',
+      'washim dp plan',
+      'washim district map',
+      'washim regional plan',
+    ],
     paragraphs: [
       'The Washim Regional Plan covers Washim district in Maharashtra’s Vidarbha region, prepared under the Maharashtra Regional and Town Planning Act, 1966. The plan falls within the Hingoli-Buldhana-Washim-Yavatmal-Nanded group of regional plans for which the Unified Development Control and Promotion Regulations (UDCPR) 2020 provides additional Chapter 5 regulations applicable to plan areas. The District Planning Office at Washim administers the regional plan in conjunction with the constituent municipal councils.',
       'Washim district was carved out of Akola district on 1 July 1998 and lies in the cotton- and soybean-growing belt of western Vidarbha. The town of Washim is the district headquarters and a regional trade centre, while the historic pilgrimage town of Pohradevi (the home shrine of the Banjara community) and the Balaji Mandir at Karanja-Lad are notable cultural landmarks within the district.',
@@ -794,6 +862,17 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
 
   // Sources: Nandurbar district, DTP Maharashtra Nandurbar entry, Wikipedia.
   'nandurbar-region-dp-plan': {
+    pageTitle: 'Nandurbar District Development Plan — DP map online',
+    description:
+      'View the Nandurbar district Regional / Development Plan online — the Development Plan for Nandurbar (Revised Partly) under the MRTP Act, 1966, covering the tribal belt of north-western Maharashtra. Interactive overlay on satellite imagery: read the zoning and land-use boundaries across Nandurbar, Shahada, Taloda and Navapur.',
+    keywords: [
+      'nandurbar district development plan',
+      'nandurbar district development',
+      'nandurbar development plan',
+      'nandurbar dp plan',
+      'nandurbar district map',
+      'nandurbar regional plan',
+    ],
     paragraphs: [
       'The Nandurbar Regional / Development Plan is administered under the Maharashtra Regional and Town Planning Act, 1966, with an approved regional plan in force — referenced on the Directorate of Town Planning & Valuation, Maharashtra State as the Development Plan for Nandurbar (Revised Partly) under Section 31(1) of the MRTP Act. The District Branch Office for Town Planning at Nandurbar (Assistant Director of Town Planning) administers the plan in coordination with the constituent municipal councils.',
       'Nandurbar district was carved out of Dhule district on 1 July 1998 and lies in the tribal belt of north-western Maharashtra, bordering Gujarat and Madhya Pradesh. The district has the highest proportion of Scheduled Tribe population in Maharashtra and is dominated by hilly terrain, the Satpura range and the Narmada river basin in its northern reaches. The town of Nandurbar itself is a regional trading and administrative centre, with cotton, soybean and forest produce as the principal economic drivers.',

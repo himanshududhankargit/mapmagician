@@ -266,6 +266,91 @@ export const SUBLOCATION_CONTENT: Record<string, SubLocationContent> = {
     ],
   },
 
+  'pune-dp-plan/kothrud': {
+    pageTitle: 'Kothrud DP Plan map online — PMC zones & land use, Pune',
+    description:
+      'View the Kothrud section of the Pune (PMC) Development Plan online. Interactive DP overlay on satellite imagery in west Pune — read the land-use zone, reservations and DP road lines for any plot in Kothrud, along Karve Road and Paud Road.',
+    keywords: [
+      'kothrud dp plan',
+      'kothrud development plan',
+      'kothrud dp plan pdf download',
+      'kothrud dp plan pmc',
+      'kothrud zoning map',
+      'kothrud pmc dp map',
+      'kothrud pune land use',
+    ],
+    intro:
+      'Kothrud is a large, densely built residential suburb in west Pune along Karve Road and Paud Road — one of the city’s fastest-developed areas — within Pune Municipal Corporation (PMC) limits and adjoining Erandwane, Bavdhan and Warje. This page opens the sanctioned Pune Development Plan zoomed to Kothrud as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and proposed DP road lines for any plot.',
+    paragraphs: [
+      'With little open land left, Kothrud is dominated by residential and commercial zoning and several proposed road-widening lines along Karve Road, Paud Road and the Kothrud–Bavdhan link — search a survey or CTS number and toggle the overlay to confirm the zone and any reservation or DP road on the plot before relying on it.',
+      'PMC publishes the sanctioned DP sheets covering Kothrud as PDFs on pmc.gov.in; rather than downloading a large sheet, you can read the same zone and DP remark for a specific plot here. Browsing Kothrud is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass.',
+    ],
+  },
+  'pune-dp-plan/pashan': {
+    pageTitle: 'Pashan DP Plan map online — PMC zones & land use, Pune',
+    description:
+      'View the Pashan section of the Pune (PMC) Development Plan online. Interactive DP overlay on satellite imagery in north-west Pune — read the land-use zone, reservations and DP road lines for any plot in Pashan, by the Baner–Pashan hill and Pashan Lake.',
+    keywords: [
+      'pashan dp plan',
+      'pashan development plan',
+      'pashan dp plan pdf download',
+      'pashan zoning map',
+      'pashan pmc dp map',
+      'pashan pune land use',
+    ],
+    intro:
+      'Pashan is a north-west Pune locality known for Pashan Lake and the research and IT institutions nearby, below the Baner–Pashan biodiversity hill and adjoining Baner, Bavdhan and Sus, within Pune Municipal Corporation (PMC) limits. This page opens the sanctioned Pune Development Plan zoomed to Pashan as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and proposed DP road lines for any plot.',
+    paragraphs: [
+      'Pashan carries a mix of residential, institutional and green / hill-slope (BDP) zoning, so confirming the designated zone and any biodiversity-park or no-development boundary plot-by-plot matters here — search a survey or CTS number and toggle the overlay to read the zone and any reservation or DP road on the plot.',
+      'PMC publishes the sanctioned DP sheets covering Pashan as PDFs on pmc.gov.in; rather than downloading a large sheet, you can read the same zone and DP remark for a specific plot here. Browsing Pashan is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass.',
+    ],
+  },
+
+  // --- PMRDA (Pune Metropolitan Region) high-search fringe localities ---
+  // Planned by PMRDA (Draft Development Plan 2021), NOT the PMC — keep the wording
+  // PMRDA-specific. Curated so they become indexable unique pages instead of the thin
+  // noindex village template, and stop leaking impressions to the generic PMRDA page.
+  'pmrda-development-plan/hinjewadi': {
+    pageTitle: 'Hinjewadi DP Plan map online — PMRDA zones & land use, Pune',
+    description:
+      'View the Hinjewadi section of the PMRDA (Pune Metropolitan Region) Development Plan online. Interactive DP overlay on satellite imagery around the Rajiv Gandhi Infotech Park IT hub — read the land-use zone, reservations and road lines for any plot in Hinjewadi.',
+    keywords: [
+      'hinjewadi dp plan',
+      'hinjewadi development plan',
+      'hinjewadi pmrda dp plan',
+      'hinjewadi dp plan pdf download',
+      'hinjewadi zoning map',
+      'hinjewadi it park map',
+      'rajiv gandhi infotech park',
+    ],
+    intro:
+      'Hinjewadi (Hinjawadi) is Pune’s largest IT hub on the western metropolitan fringe, home to the Rajiv Gandhi Infotech Park (Phases I–III) along the Mumbai–Bangalore Highway and the Pune Metro Line 3 (Hinjewadi–Shivajinagar) corridor, planned by the Pune Metropolitan Region Development Authority (PMRDA) rather than the PMC. This page opens the PMRDA Development Plan zoomed to Hinjewadi as an interactive overlay on satellite imagery, so you can read the proposed zone, reservations and road lines for any plot.',
+    paragraphs: [
+      'With intense IT-led commercial and residential growth across Hinjewadi Phases I, II and III and the surrounding villages (Maan, Marunji, Nere), the PMRDA Draft Development Plan 2021 zoning and the proposed road and metro alignments are worth confirming plot-by-plot — search a survey number and toggle the overlay to see the designated zone and any reservation or road line crossing it.',
+      'Hinjewadi falls in the PMRDA jurisdiction outside the PMC and PCMC limits; rather than downloading the full PMRDA DP sheet set, you can read the zone and DP remark for a specific plot here. Browsing Hinjewadi is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day PMRDA access pass.',
+    ],
+  },
+  'pmrda-development-plan/wagholi': {
+    pageTitle: 'Wagholi DP Plan map online — PMRDA zones & land use, Pune',
+    description:
+      'View the Wagholi section of the PMRDA (Pune Metropolitan Region) Development Plan online. Interactive DP overlay on satellite imagery on the Nagar Road corridor — read the land-use zone, reservations and road lines for any plot in Wagholi, east Pune.',
+    keywords: [
+      'wagholi dp plan',
+      'wagholi development plan',
+      'wagholi pmrda dp plan',
+      'wagholi dp plan pdf download',
+      'wagholi zoning map',
+      'wagholi nagar road',
+      'wagholi pune land use',
+    ],
+    intro:
+      'Wagholi is a fast-growing residential and logistics belt on the Pune–Nagar Road east of Kharadi and Lohegaon, just outside the PMC limits within the Pune Metropolitan Region Development Authority (PMRDA) jurisdiction. This page opens the PMRDA Development Plan zoomed to Wagholi as an interactive overlay on satellite imagery, so you can read the proposed zone, reservations and road lines for any plot.',
+    paragraphs: [
+      'Rapid township and apartment development along Nagar Road has made the PMRDA Draft Development Plan 2021 zoning and the proposed road / road-widening lines through Wagholi particularly worth checking plot-by-plot — search a survey number and toggle the overlay to confirm the zone and any reservation or road line on the plot.',
+      'Wagholi falls in the PMRDA jurisdiction outside the PMC limits; rather than downloading the full PMRDA DP sheet set, you can read the zone and DP remark for a specific plot here. Browsing Wagholi is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day PMRDA access pass.',
+    ],
+  },
+
   // --- Solapur district: notable towns (taluka HQs / pilgrimage centres) ---
   // Curated so they read as unique pages (not the 95%-identical village template) and
   // become indexable. Each entry sticks to widely-verifiable facts; the DP head term
