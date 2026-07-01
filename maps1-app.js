@@ -9,7 +9,7 @@
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
         // monotonic across both files. Both at 015 -> max(015,015)+1 = this staging push is 016
         // (single-session: per-browser localStorage id, no false "active on another device" kicks). Next -> 017.
-        var APP_VERSION = '016';
+        var APP_VERSION = '017';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -2823,6 +2823,10 @@
                 smoothZoomTo(MAX_FREE_ZOOM - 1);
                 google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
             };
+
+            // Red Mac-style close (X) in the header — same dismiss as "Not now"
+            var _zrClose = document.getElementById('zoom-restrict-close');
+            if (_zrClose) _zrClose.onclick = () => document.getElementById('zoom-restrict-cancel').click();
 
             document.getElementById('zoom-restrict-support').onclick = () => {
                 overlay.classList.remove('open');
