@@ -11,6 +11,8 @@
  * When in doubt, omit. Each entry below was researched against the sources listed inline.
  */
 
+import type { RegionFaq } from '@/lib/site';
+
 export type RegionQuickFact = { label: string; value: string };
 
 export type RegionContent = {
@@ -28,6 +30,9 @@ export type RegionContent = {
   description?: string;
   // Replaces the generated keywords array with exact search phrases.
   keywords?: string[];
+  // Extra region-specific FAQs, merged ahead of the auto-generated region.faqs in the
+  // visible FAQ block + FAQPage JSON-LD. Use to reinforce a specific entity (e.g. NMRDA).
+  faqs?: RegionFaq[];
 };
 
 export const REGION_CONTENT: Record<string, RegionContent> = {
@@ -186,32 +191,52 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   },
 
   'nagpur-metropolitan-region-dp-plan': {
-    // GSC (3-mo): 3,219 impressions at avg position 5.8 but only 5.1% CTR — the generic
-    // "Nagpur Metropolitan Region Development Plan" title wasn't matching how people
-    // actually search ("nagpur dp plan", "nmrda dp plan", "dp map nagpur"). Curated
-    // title + keywords front-load NMRDA / Nagpur DP Plan to lift CTR at the same rank.
-    pageTitle: 'Nagpur DP Plan (NMRDA) 2012-2032 — Development Plan map online',
+    // GSC: the page already ranks (~pos 5.8) for "nagpur dp plan" terms but under-surfaces
+    // for the acronym "nmrda" / "nmrda development plan" — the proper entity name (Nagpur
+    // Metropolitan Region Development Authority). Title/H1, keywords and body now LEAD with
+    // "NMRDA Development Plan" as the head term (parity with the sibling PMRDA page) while
+    // keeping the layman phrase "Nagpur Development Plan" for searchers who don't know the
+    // acronym. Note: the bare query "nmrda" is dominated by the authority's own site; the
+    // winnable, high-intent terms are nmrda development plan / map / village map / dp plan.
+    pageTitle: 'NMRDA Development Plan 2012-2032 — Nagpur Metropolitan Region & Nagpur Development Plan map online',
     description:
-      'View the Nagpur Metropolitan Region Development Plan (2012-2032) online — administered by NMRDA and prepared by the Nagpur Improvement Trust (NIT), covering ~3,567 sq km and 721 villages across 9 tehsils of Nagpur district. Interactive DP overlay over satellite imagery: read the land-use zone, reservations and road lines for any plot, survey number or locality, including the MIHAN and Butibori MIDC growth areas. नागपूर महानगर प्रदेशाचा विकास आराखडा (डीपी प्लॅन) ऑनलाइन नकाशावर पाहा.',
+      'View the NMRDA Development Plan (Nagpur Metropolitan Region Development Authority, 2012-2032) online — the statutory Nagpur Development Plan prepared by the Nagpur Improvement Trust (NIT) and administered by NMRDA, covering ~3,567 sq km and 721 villages across 9 tehsils of Nagpur district. Interactive DP overlay over satellite imagery: read the land-use zone, reservations and road lines for any plot, survey number or locality, including the MIHAN and Butibori MIDC growth areas. नागपूर महानगर प्रदेश विकास प्राधिकरण (एनएमआरडीए) विकास आराखडा ऑनलाइन नकाशावर पाहा.',
     keywords: [
-      'nagpur dp plan',
+      'nmrda',
+      'nmrda development plan',
       'nmrda dp plan',
+      'nmrda map',
+      'nmrda village map',
+      'nmrda zone map',
+      'nmrda area map',
+      'nmrda dp',
       'nmrda dp plan nagpur',
-      'dp map nagpur',
+      'nmrda nakasha',
+      'nmrda dp plan pdf download',
+      'nmrda dp plan map',
+      'nmrda map download',
+      'nmrda zoning map',
+      'nmrda masterplan',
+      'nmrda draft development plan',
+      'nagpur metropolitan region development authority',
       'nagpur development plan',
       'nagpur development plan map',
-      'nmrda development plan',
-      'nit nagpur dp plan',
+      'nagpur dp plan',
+      'dp map nagpur',
       'nagpur metropolitan region map',
       'nagpur dp map online',
+      'nit nagpur dp plan',
       'नागपूर डीपी प्लॅन',
       'नागपूर विकास आराखडा',
       'नागपूर नकाशा',
+      'एनएमआरडीए विकास आराखडा',
+      'एनएमआरडीए नकाशा',
     ],
     paragraphs: [
-      'The Nagpur Metropolitan Region Development Plan covers approximately 3,567 square kilometres encompassing 721 villages across 9 tehsils of Nagpur District. The plan was prepared by the Nagpur Improvement Trust (NIT) acting as the Special Planning Authority under the Maharashtra Regional and Town Planning Act, 1966, and is administered by the Nagpur Metropolitan Region Development Authority (NMRDA). The plan covers the period 2012-2032, and the associated Development Control and Promotion Regulations were notified in 2018.',
+      'The NMRDA Development Plan — the Nagpur Development Plan administered by the Nagpur Metropolitan Region Development Authority (NMRDA) — covers approximately 3,567 square kilometres encompassing 721 villages across 9 tehsils of Nagpur District. It was prepared by the Nagpur Improvement Trust (NIT) acting as the Special Planning Authority under the Maharashtra Regional and Town Planning Act, 1966, covers the period 2012-2032, and the associated Development Control and Promotion Regulations were notified in 2018.',
       'Major industrial anchors in the metropolitan region include the Butibori MIDC Industrial Estate, located approximately 25 km east of Nagpur city. Established in 1994 and covering around 23 square kilometres, Butibori is one of Asia’s largest planned industrial estates and was envisioned to support ancillary industries to the adjacent MIHAN (Multimodal International Cargo Hub and Airport at Nagpur) project. MIHAN itself integrates international air cargo, a Special Economic Zone, and warehousing close to the Nagpur airport.',
       'Nagpur sits at the junction of two Asian Highways — AH-43 (Agra to Matara, Sri Lanka) and AH-46 (Kharagpur to Dhule) — and is also served by national highways NH-44 and NH-53, giving the metropolitan region direct connectivity to Mumbai, Delhi, Kolkata and Hyderabad. The DP overlay on this page reflects the NMRDA-administered zoning, road and reservation boundaries georeferenced over satellite imagery.',
+      'NMRDA map, village map and zone map: because the Development Plan spans 721 villages across the Nagpur Metropolitan Region, the most practical way to read it is village by village. Use the interactive overlay on this page to open any NMRDA village, then read its proposed land-use zone, reservation or road / road-widening line directly over satellite imagery — the same detail published in the NMRDA DP zone and area maps, without downloading the full sheet set. The official sheet-wise DP maps remain available from NMRDA for an offline copy; this page is simply the online viewer for the same Nagpur Metropolitan Region Development Authority plan.',
     ],
     quickFacts: [
       { label: 'Planning authority (plan-preparation)', value: 'Nagpur Improvement Trust (NIT)' },
@@ -222,6 +247,16 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       { label: 'Key industrial estate', value: 'Butibori MIDC (est. 1994, ~23 sq km)' },
       { label: 'Adjacent integrated project', value: 'MIHAN (cargo hub + SEZ)' },
       { label: 'Asian highways at junction', value: 'AH-43 and AH-46' },
+    ],
+    faqs: [
+      {
+        q: 'Is this the NMRDA (Nagpur Metropolitan Region Development Authority) Development Plan?',
+        a: 'Yes. This page is the online viewer for the Nagpur Metropolitan Region Development Plan (2012-2032) — the statutory Development Plan administered by the Nagpur Metropolitan Region Development Authority (NMRDA) and prepared by the Nagpur Improvement Trust (NIT). Pan, zoom or search any village, survey number or locality to read its land-use zone, reservation and road lines over satellite imagery.',
+      },
+      {
+        q: 'What is the difference between the NMRDA plan and the Nagpur Municipal Corporation (NMC) Development Plan?',
+        a: 'NMRDA is the metropolitan-region planning authority covering roughly 3,567 sq km and 721 villages around Nagpur (the wider Nagpur Metropolitan Region), while the Nagpur Municipal Corporation (NMC) Development Plan covers the Nagpur city limits within it. This page renders the NMRDA-administered plan for the metropolitan region, which includes the growth areas around the city such as MIHAN and Butibori.',
+      },
     ],
   },
 

@@ -67,7 +67,7 @@ export default function RegionPage({ params }: Props) {
         a: `Yes — this page covers the sanctioned Development Plan (DP) for the ${corp.name}${corp.abbr ? ` (${corp.abbr})` : ''} area${region.state ? `, ${region.state}` : ''}. The DP overlay shows land-use zones, reservations and road / road-widening lines across the municipal corporation limits — pan or search any survey number, locality or landmark to read its designated zone before relying on it.`,
       }]
     : [];
-  const faqs: RegionFaq[] = [...corpFaq, ...region.faqs];
+  const faqs: RegionFaq[] = [...corpFaq, ...(regionContent?.faqs ?? []), ...region.faqs];
   // Curated (indexable) sub-locations — surfaced prominently and the ONLY ones we
   // internally link, so Google's crawl budget concentrates on pages worth indexing
   // instead of being spread across the thin noindex long tail.
