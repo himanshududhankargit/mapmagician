@@ -9,7 +9,7 @@
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
         // monotonic across both files. Both at 015 -> max(015,015)+1 = this staging push is 016
         // (single-session: per-browser localStorage id, no false "active on another device" kicks). Next -> 017.
-        var APP_VERSION = '020';
+        var APP_VERSION = '022';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -3265,6 +3265,7 @@
         const DP_URL_DATABASE_NAME = "d1";
         const VILLAGE_URL_DATABASE_NAME = "d2";
         const OLD_DP_URL_DATABASE_NAME = "d3";
+        const MENU_URL_DATABASE_NAME = "d4";
         // dpplans.com Cloudflare Pages build doesn't ship data/database/ — fetch from mapmagician.in.
         const LAYER_JSON_BASE = ON_DPPLANS ? "https://www.mapmagician.in/data/database" : "data/database";
 
@@ -5351,12 +5352,13 @@
             });
         }
 
-        // --- Left Sidebar: Firebase menuGIS navigation ---
-        const MENU_DB_NAME = "menuGIS";
+        // --- Left Sidebar: region navigation (catalog from d4.bin, was menuGIS RTDB) ---
         const ICON_BASE_PRELOAD = `https://${TILE_HOST}/dpplans/0imagesGIS/`;
         let menuData = []; // all items from Firebase
         let stateList = []; // unique states for the rail
         let sidebarHistory = []; // breadcrumb: [{level, title, items}]
+        let menuDataLoaded = false; // true once the region catalog (d4.bin) is parsed
+        let regionBrowserAwaitingData = false; // browser opened before menu data was ready
 
         function initSidebar() {
             const sidebarPanel = document.getElementById('sidebar-panel');
@@ -5421,20 +5423,36 @@
                 });
             }
 
-            // Try loading from cache first, then fetch from Firebase
-            const cachedMenu = getCachedData('menu_regions');
-            if (cachedMenu) {
-                processMenuData(cachedMenu);
-                buildAfterMenuData();
+            // Region catalog loads from the static, browser-cacheable d4.bin
+            // (published from the menuGIS RTDB node) via the same version-gated
+            // getCachedOrFetchLayer path as the d1/d2/d3 layers — no full menuGIS
+            // RTDB read on every page load. Warm loads return the localStorage copy
+            // synchronously; cold loads / version bumps fetch d4.bin. Live edits are
+            // picked up automatically: a bump to appConfig/dataVersions/layer_menu
+            // re-runs this fetcher via the registered refetch callback.
+            function fetchMenuLayerData() {
+                getCachedOrFetchLayer('layer_menu', MENU_URL_DATABASE_NAME, 'layer_menu', fetchMenuLayerData)
+                    .then(function(data) {
+                        if (!data) return; // cold + not-yet-published: leave the loading state up
+                        processMenuData(data);
+                        buildAfterMenuData();
+                        menuDataLoaded = true;
+                        // If the user opened the region browser before data arrived, fill it in
+                        // now, reusing the single history entry the loading view already pushed.
+                        if (regionBrowserAwaitingData && regionBrowser.classList.contains('open')) {
+                            regionBrowserAwaitingData = false;
+                            var items = buildStateItems();
+                            regionHistory = [{ title: 'All Regions', items: items, type: 'state' }];
+                            regionTitle.textContent = 'All Regions';
+                            regionSearch.value = '';
+                            renderRegionGrid(items, 'state');
+                        }
+                    });
             }
-            // Always fetch fresh data from Firebase (updates cache + refreshes if stale)
-            database.ref(MENU_DB_NAME).once('value').then(snapshot => {
-                const data = snapshot.val();
-                if (!data) return;
-                setCachedData('menu_regions', data);
-                processMenuData(data);
-                buildAfterMenuData();
-            });
+            // One-time cleanup of the old RTDB-era menu cache (key 'menu_regions').
+            // The new path caches under 'layer_menu'; drop the stale ~200 KB copy.
+            try { localStorage.removeItem('menu_regions'); } catch (e) {}
+            fetchMenuLayerData();
 
             // Background-prefetch village layer (d2.bin) so the top search bar can
             // surface MahaVillage entries even when the village toggle is off.
@@ -5450,9 +5468,8 @@
             let regionHistory = []; // [{title, items, type}]
             const ICON_BASE = `https://${TILE_HOST}/dpplans/0imagesGIS/`;
 
-            openRegionsBrowser = function() {
-                regionHistory = [];
-                var items = stateList.map(function(st) {
+            function buildStateItems() {
+                return stateList.map(function(st) {
                     var districtCount = menuData.filter(function(m) { return m.state === st.name && m.district; }).length;
                     var locationCount = 0;
                     menuData.filter(function(m) { return m.state === st.name; }).forEach(function(m) {
@@ -5469,7 +5486,23 @@
                     }
                     return { name: st.name, sub: sub, icon: st.icon, hasChildren: true, productPurchaseID: pid };
                 });
-                pushRegionLevel('All Regions', items, 'state');
+            }
+
+            openRegionsBrowser = function() {
+                regionHistory = [];
+                // Cold cache: the region catalog (d4.bin) hasn't parsed yet. Show a small
+                // loading state and let fetchMenuLayerData populate it when it resolves.
+                if (!menuDataLoaded) {
+                    regionBrowserAwaitingData = true;
+                    regionTitle.textContent = 'All Regions';
+                    regionSearch.value = '';
+                    regionGrid.innerHTML = '<div style="grid-column:1/-1;padding:48px 16px;text-align:center;color:#888;font-size:14px;">Loading regions…</div>';
+                    regionBrowser.classList.add('open');
+                    history.pushState({ regionBrowser: true, depth: 1 }, '');
+                    return;
+                }
+                regionBrowserAwaitingData = false;
+                pushRegionLevel('All Regions', buildStateItems(), 'state');
                 regionBrowser.classList.add('open');
             };
 
