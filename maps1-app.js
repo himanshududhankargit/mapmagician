@@ -9,7 +9,7 @@
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
         // monotonic across both files. Both at 015 -> max(015,015)+1 = this staging push is 016
         // (single-session: per-browser localStorage id, no false "active on another device" kicks). Next -> 017.
-        var APP_VERSION = '021';
+        var APP_VERSION = '022';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -5449,6 +5449,9 @@
                         }
                     });
             }
+            // One-time cleanup of the old RTDB-era menu cache (key 'menu_regions').
+            // The new path caches under 'layer_menu'; drop the stale ~200 KB copy.
+            try { localStorage.removeItem('menu_regions'); } catch (e) {}
             fetchMenuLayerData();
 
             // Background-prefetch village layer (d2.bin) so the top search bar can
