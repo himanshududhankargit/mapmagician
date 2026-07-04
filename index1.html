@@ -133,10 +133,10 @@
 
 <!-- Warm the connection to the icon CDN; region cards each request one PNG from here. -->
 <link rel="preconnect" href="https://tiles.mapmagician.in" crossorigin>
-<!-- Warm the connection to Firebase RTDB so the on-demand menuGIS fetch (triggered
-     when the user opens a state) skips DNS+TLS. -->
-<link rel="preconnect" href="https://sodium-hour-256110.firebaseio.com" crossorigin>
-<link rel="dns-prefetch" href="https://sodium-hour-256110.firebaseio.com">
+<!-- Warm the connection to the static CDN so the on-demand menu fetch (d4.bin,
+     triggered when the user opens a state) skips DNS+TLS. -->
+<link rel="preconnect" href="https://www.mapmagician.in" crossorigin>
+<link rel="dns-prefetch" href="https://www.mapmagician.in">
 
 <!-- LCP preload: Maharashtra is the first state card painted, so its icon is
      the Largest Contentful Paint candidate. Without this preload, Lighthouse
@@ -706,7 +706,10 @@ html, body {
 (function () {
   'use strict';
 
-  var MENU_URL = 'https://sodium-hour-256110.firebaseio.com/menuGIS.json';
+  // Static, browser-cacheable snapshot of the menuGIS RTDB node (same JSON shape),
+  // published as d4.bin. Serves the full menu from CDN egress instead of a billed
+  // RTDB read. Republished (via the sheet/mobile publish) whenever menuGIS changes.
+  var MENU_URL = 'https://www.mapmagician.in/data/database/d4.bin';
   var STATES_URL = '/data/menu-states.json';
   var SEO_INDEX_URL = '/data/seo-index.json';
   var ICON_BASE = 'https://tiles.mapmagician.in/dpplans/0imagesGIS/';
@@ -1459,11 +1462,11 @@ html, body {
   // boot (Firebase SDK on gstatic, Google Maps JS API), so its DNS+TLS is
   // already done by the time the parser sees the <script> tags.
   //
-  // menuGIS.json (~167 KB) is the largest single request maps.html makes at
-  // boot (maps-app.js:4734) AND what the splash itself fetches on first state
-  // click. Prefetching it cross-origin requires as=fetch + crossorigin so
-  // the cached entry matches the eventual fetch()'s CORS mode and the bytes
-  // are reused instead of refetched.
+  // d4.bin (~194 KB, the static menu snapshot at MENU_URL) is what the splash
+  // fetches on first state click. Prefetching it cross-origin requires
+  // as=fetch + crossorigin so the cached entry matches the eventual fetch()'s
+  // CORS mode and the bytes are reused instead of refetched. It's free CDN
+  // egress now (was a billed menuGIS RTDB read).
   function prefetchMap() {
     [
       { href: MAP_URL, as: 'document' },
