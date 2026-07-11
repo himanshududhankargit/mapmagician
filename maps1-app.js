@@ -9,7 +9,7 @@
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
         // monotonic across both files. Both at 015 -> max(015,015)+1 = this staging push is 016
         // (single-session: per-browser localStorage id, no false "active on another device" kicks). Next -> 017.
-        var APP_VERSION = '022';
+        var APP_VERSION = '023';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -1599,6 +1599,14 @@
                 var getInvoice = functions.httpsCallable('getSubscriptionRenewInvoice');
                 var result = await getInvoice({ productId: productId });
                 var inv = result.data;
+                if (inv && inv.lapsed) {
+                    // Failed cycle is too old to revive fairly (server-side
+                    // withinReviveWindow). Fall back to the fresh-subscribe flow:
+                    // createSubscription cancels the dead sub and creates a new
+                    // one anchored to today, so the customer gets a full week.
+                    loadingOverlay.classList.remove('open');
+                    return subscribeRegion(productId, regionName);
+                }
                 if (!inv || !inv.invoiceId) {
                     loadingOverlay.classList.remove('open');
                     alert('Could not find a pending invoice to renew. Please refresh.');
