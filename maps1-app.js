@@ -9,7 +9,7 @@
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
         // monotonic across both files. Both at 015 -> max(015,015)+1 = this staging push is 016
         // (single-session: per-browser localStorage id, no false "active on another device" kicks). Next -> 017.
-        var APP_VERSION = '026';
+        var APP_VERSION = '027';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -3548,7 +3548,15 @@
                     if (m) allowed.add(m[1]);
                     if (d.subSheets) {
                         for (let si = 0; si < d.subSheets.length; si++) {
-                            const sm = (d.subSheets[si].urlPrefix || '').match(/\/dpplans\/([^/]+)\/?/);
+                            const sub = d.subSheets[si] || {};
+                            // A merged (multi-sheet) district carries link:'' at the top level
+                            // and the real paths on its sub-sheets, which the merge writes as
+                            // `link` (see the subSheets.push in processLayerData) — NOT
+                            // `urlPrefix`. Reading only urlPrefix silently dropped every
+                            // multi-sheet district from this set, so their paid tiles were
+                            // evicted on each purchase refresh and the stale-token self-heal
+                            // could never recognise them as owned.
+                            const sm = (sub.link || sub.urlPrefix || '').match(/\/dpplans\/([^/]+)\/?/);
                             if (sm) allowed.add(sm[1]);
                         }
                     }
