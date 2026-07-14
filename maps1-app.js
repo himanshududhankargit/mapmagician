@@ -9,7 +9,7 @@
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
         // monotonic across both files. Both at 015 -> max(015,015)+1 = this staging push is 016
         // (single-session: per-browser localStorage id, no false "active on another device" kicks). Next -> 017.
-        var APP_VERSION = '023';
+        var APP_VERSION = '025';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -144,9 +144,10 @@
                 var purchaseListenerSkipFirst = true; // Skip the initial .on() callback
                 purchaseListenerRef.on('value', function() {
                     if (purchaseListenerSkipFirst) { purchaseListenerSkipFirst = false; return; }
-                    // Data changed server-side — refresh everything
+                    // Data changed server-side (webhook write, another device, admin override).
+                    // fetchPurchaseStatus re-issues the mmp-token and rebuilds the DP overlays
+                    // when the entitlement set actually changed — see syncEdgeToEntitlements.
                     fetchPurchaseStatus(true).then(function() {
-                        loadTilesBasedOnViewport();
                         updateRegionStatus();
                     });
                     fetchSubscriptionStatus();
@@ -262,58 +263,127 @@
 
         // Fetch CloudFront signed cookies after login, with auto-refresh
         let cfCookieRefreshTimer = null;
-        async function fetchCloudFrontCookies() {
+        let _cfCookieInFlight = null;   // single-flight: concurrent callers share one request
+        let _cfGrantedPids = null;      // productIds granted by the token currently in the jar
+
+        function _sleep(ms) {
+            return new Promise(function(r) { setTimeout(r, ms); });
+        }
+
+        // Re-arm the pre-expiry auto-refresh. Deliberately OUTSIDE the fetch try/catch:
+        // if the timer is only armed on success, one failed refresh silently ends
+        // auto-refresh for the whole session.
+        function scheduleCfCookieRefresh(expiresAt) {
+            if (cfCookieRefreshTimer) clearTimeout(cfCookieRefreshTimer);
+            const refreshIn = expiresAt
+                ? expiresAt - Date.now() - 3600000   // 1 hour before expiry
+                : 300000;                            // fetch failed outright — try again in 5 min
+            cfCookieRefreshTimer = setTimeout(function() {
+                fetchCloudFrontCookies();
+            }, Math.max(60000, refreshIn));
+        }
+
+        function writeCfCookies(data) {
+            const expires = new Date(data.expiresAt).toUTCString();
+            document.cookie = `CloudFront-Policy=${data['CloudFront-Policy']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none; expires=${expires}`;
+            document.cookie = `CloudFront-Signature=${data['CloudFront-Signature']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none; expires=${expires}`;
+            document.cookie = `CloudFront-Key-Pair-Id=${data['CloudFront-Key-Pair-Id']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none; expires=${expires}`;
+            if (data['mmp-token']) {
+                document.cookie = `mmp-token=${data['mmp-token']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none; expires=${expires}`;
+            }
+            // Server tells us which productIds actually made it into the token, so callers
+            // can assert the district they just paid for is really in there.
+            _cfGrantedPids = Array.isArray(data.grantedPids) ? data.grantedPids : null;
+        }
+
+        // Issues a fresh CloudFront cookie + mmp-token pair. Resolves TRUE only when a new
+        // token was written; never throws. The previous version swallowed every error and
+        // always resolved, so `await fetchCloudFrontCookies()` reported success even when
+        // the token was never issued — and the caller then unlocked the map over tiles the
+        // edge was still 403ing.
+        //
+        // The mmp-token freezes the caller's purchased districts at issuance time, so ANY
+        // entitlement change must be followed by a call to this. Otherwise the edge keeps
+        // rejecting zoom>14 tiles the user has already paid for until they reload the page.
+        //
+        // expectPid: a productId the caller just bought. If the issued token doesn't grant
+        // it, the entitlement write likely wasn't visible to the function yet — retry.
+        function fetchCloudFrontCookies(expectPid) {
+            // Single-flight. Without this, the un-awaited call fired on page load can land
+            // AFTER a post-purchase call and overwrite the fresh token with the stale one.
+            if (_cfCookieInFlight) return _cfCookieInFlight;
+            const done = function() { _cfCookieInFlight = null; };
+            _cfCookieInFlight = _fetchCloudFrontCookiesOnce(expectPid).then(
+                function(ok) { done(); return ok; },
+                function() { done(); return false; }
+            );
+            return _cfCookieInFlight;
+        }
+
+        async function _fetchCloudFrontCookiesOnce(expectPid) {
             // Start layer data fetch immediately — it only needs auth, not cookies
             fetchLayerData();
-            try {
-                var als = document.getElementById('app-loading-status');
-                if (als) als.textContent = 'Connecting to tile server...';
-                const getCloudFrontCookies = functions.httpsCallable('getCloudFrontCookies');
-                const result = await getCloudFrontCookies();
-                const data = result.data;
-                const expires = new Date(data.expiresAt).toUTCString();
+            var als = document.getElementById('app-loading-status');
+            if (als) als.textContent = 'Connecting to tile server...';
 
-                document.cookie = `CloudFront-Policy=${data['CloudFront-Policy']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none; expires=${expires}`;
-                document.cookie = `CloudFront-Signature=${data['CloudFront-Signature']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none; expires=${expires}`;
-                document.cookie = `CloudFront-Key-Pair-Id=${data['CloudFront-Key-Pair-Id']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none; expires=${expires}`;
-                if (data['mmp-token']) {
-                    document.cookie = `mmp-token=${data['mmp-token']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none; expires=${expires}`;
-                }
+            const RETRY_DELAYS_MS = [0, 1000, 3000, 8000];
+            let data = null;
+            for (let attempt = 0; attempt < RETRY_DELAYS_MS.length; attempt++) {
+                if (RETRY_DELAYS_MS[attempt]) await _sleep(RETRY_DELAYS_MS[attempt]);
+                try {
+                    const getCloudFrontCookies = functions.httpsCallable('getCloudFrontCookies');
+                    // Pass our tile host explicitly: the function otherwise infers it from the
+                    // Origin header, which some browsers omit — and the wrong host yields a
+                    // signed policy that CloudFront rejects for EVERY tile, free ones included.
+                    const result = await getCloudFrontCookies({
+                        tileHost: typeof TILE_HOST === 'string' ? TILE_HOST : ''
+                    });
+                    data = result.data;
+                    writeCfCookies(data);
 
-                if (!cfCookiesReady) {
-                    cfCookiesReady = true;
-                    // Layer data already fetching in parallel — now cookies are set, trigger tile load
-                    loadTilesBasedOnViewport();
-                    // Dismiss loading screen after layer data triggers first tile load
-                    setTimeout(function() {
-                        var ls = document.getElementById('app-loading-screen');
-                        if (ls) {
-                            ls.style.opacity = '0';
-                            setTimeout(function() {
-                                // display:none instead of remove() — keeps splash banner
-                                // as the LCP candidate so PageSpeed reports LCP at first
-                                // paint (~1.4s) rather than at element-removal time (~7s).
-                                ls.style.display = 'none';
-                                ls.style.pointerEvents = 'none';
-                                if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
-                            }, 500);
-                        }
-                    }, 1500);
-                }
-
-                // Auto-refresh 1 hour before expiry
-                if (cfCookieRefreshTimer) clearTimeout(cfCookieRefreshTimer);
-                const refreshIn = data.expiresAt - Date.now() - 3600000; // 1 hour before
-                if (refreshIn > 0) {
-                    cfCookieRefreshTimer = setTimeout(() => {
-                        fetchCloudFrontCookies();
-                    }, refreshIn);
-                }
-            } catch (err) {
-                if (err.code !== 'permission-denied') {
-                    console.error('Failed to fetch CloudFront cookies:', err);
+                    if (expectPid && Array.isArray(data.grantedPids)
+                        && data.grantedPids.indexOf(expectPid) === -1
+                        && attempt < RETRY_DELAYS_MS.length - 1) {
+                        // Purchase is committed on our side but the token doesn't grant it —
+                        // the entitlement write hasn't propagated. Back off and ask again.
+                        console.warn('mmp-token missing just-purchased "' + expectPid + '" — retrying');
+                        data = null;
+                        continue;
+                    }
+                    break;
+                } catch (err) {
+                    if (err && err.code === 'permission-denied') {
+                        scheduleCfCookieRefresh(null);
+                        return false;
+                    }
+                    console.error('Failed to fetch CloudFront cookies (attempt ' + (attempt + 1) + '):', err);
                 }
             }
+
+            scheduleCfCookieRefresh(data ? data.expiresAt : null);
+            if (!data) return false;
+
+            if (!cfCookiesReady) {
+                cfCookiesReady = true;
+                // Layer data already fetching in parallel — now cookies are set, trigger tile load
+                loadTilesBasedOnViewport();
+                // Dismiss loading screen after layer data triggers first tile load
+                setTimeout(function() {
+                    var ls = document.getElementById('app-loading-screen');
+                    if (ls) {
+                        ls.style.opacity = '0';
+                        setTimeout(function() {
+                            // display:none instead of remove() — keeps splash banner
+                            // as the LCP candidate so PageSpeed reports LCP at first
+                            // paint (~1.4s) rather than at element-removal time (~7s).
+                            ls.style.display = 'none';
+                            ls.style.pointerEvents = 'none';
+                            if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
+                        }, 500);
+                    }
+                }, 1500);
+            }
+            return true;
         }
 
         // Profile button click (sign in / sign out)
@@ -409,10 +479,10 @@
         document.addEventListener('visibilitychange', function() {
             if (document.visibilityState !== 'visible') return;
             if (!currentUser || currentUser.isAnonymous) return;
-            // Snapshot current state to compare after fetch
-            var prevKeys = Array.from(activePurchases.entries()).map(function(e) {
-                return e[0] + ':' + (e[1].refunded ? 'R' : e[1].expiry);
-            }).sort().join(',');
+            // Snapshot current state to compare after fetch. The DP side (token refresh +
+            // overlay rebuild) is handled inside fetchPurchaseStatus; what's left here is
+            // the village layer, which is not edge-gated and so needs no token.
+            var prevKeys = _activePurchaseKeys();
             var prevVillageKeys = Array.from(villagePurchases.keys()).sort().join(',');
             Promise.all([
                 fetchPurchaseStatus(true),
@@ -420,9 +490,7 @@
                 fetchSubscriptionStatus(),
                 fetchPurchaseHistory()
             ]).then(function() {
-                var newKeys = Array.from(activePurchases.entries()).map(function(e) {
-                    return e[0] + ':' + (e[1].refunded ? 'R' : e[1].expiry);
-                }).sort().join(',');
+                var newKeys = _activePurchaseKeys();
                 var newVillageKeys = Array.from(villagePurchases.keys()).sort().join(',');
                 if (newKeys !== prevKeys || newVillageKeys !== prevVillageKeys) {
                     // Purchase data changed — reload tiles + update UI
@@ -435,15 +503,33 @@
             });
         });
 
-        let _fetchingPurchases = false;
-        async function fetchPurchaseStatus(force) {
-            if (!currentUser || currentUser.isAnonymous) return;
-            const now = Date.now();
-            if (!force && now - lastFetchTime < FETCH_COOLDOWN_MS) return;
-            if (_fetchingPurchases) return; // prevent concurrent calls
-            _fetchingPurchases = true;
-            lastFetchTime = now;
+        // Stable signature of the current entitlement set — used to detect changes.
+        function _activePurchaseKeys() {
+            return Array.from(activePurchases.entries()).map(function(e) {
+                return e[0] + ':' + (e[1].refunded ? 'R' : e[1].expiry);
+            }).sort().join(',');
+        }
 
+        let _fetchingPurchases = null;   // in-flight promise, shared by concurrent callers
+        let _purchaseSyncPrimed = false; // first successful fetch is the session baseline
+
+        function fetchPurchaseStatus(force, expectPid) {
+            if (!currentUser || currentUser.isAnonymous) return Promise.resolve();
+            const now = Date.now();
+            if (!force && now - lastFetchTime < FETCH_COOLDOWN_MS) return Promise.resolve();
+            // Concurrent callers share the in-flight request rather than getting an
+            // immediate do-nothing resolve. The activation poll, the realtime purchase
+            // listener and the visibility handler all race here, and the old guard made
+            // `await fetchPurchaseStatus(true)` a silent no-op for whichever lost.
+            if (_fetchingPurchases) return _fetchingPurchases;
+            lastFetchTime = now;
+            const done = function() { _fetchingPurchases = null; };
+            _fetchingPurchases = _fetchPurchaseStatusOnce(force, expectPid).then(done, done);
+            return _fetchingPurchases;
+        }
+
+        async function _fetchPurchaseStatusOnce(force, expectPid) {
+            const prevKeys = _activePurchaseKeys();
             try {
                 const getPurchaseStatus = functions.httpsCallable('getPurchaseStatus');
                 const { data } = await getPurchaseStatus();
@@ -462,6 +548,16 @@
                 // are preserved. Fire-and-forget — cache correctness is eventually
                 // consistent with purchase state.
                 revokeTilesNotInFolderSet(_computeAllowedTileFolders());
+
+                const changed = _activePurchaseKeys() !== prevKeys;
+                if (!_purchaseSyncPrimed) {
+                    // Baseline for this session. The auth path already issues a token that
+                    // reflects these purchases, so there is nothing to re-sync yet.
+                    _purchaseSyncPrimed = true;
+                } else if (changed) {
+                    await syncEdgeToEntitlements(expectPid);
+                }
+
                 // Only re-enable map and force re-check after an actual purchase (force=true),
                 // not on routine region-change polls which would cause spurious unlock toasts
                 if (force) {
@@ -473,9 +569,23 @@
                 }
             } catch (e) {
                 console.error('Failed to fetch purchase status:', e);
-            } finally {
-                _fetchingPurchases = false;
             }
+        }
+
+        // The CloudFront edge reads entitlements from the mmp-token, NOT from the database.
+        // So whenever the purchase set changes — a webhook write picked up by the realtime
+        // listener, a purchase made on another device, a subscription that activated after
+        // the checkout poll gave up — the token must be re-issued, or the user ends up with
+        // an unlocked zoom over tiles the edge is still 403ing. That is the "I paid but the
+        // map is still locked until I reload" bug.
+        async function syncEdgeToEntitlements(expectPid) {
+            await fetchCloudFrontCookies(expectPid);
+            // Tear the DP overlays down too. They may already hold blank 403 tiles fetched
+            // with the previous token, and loadTilesBasedOnViewport() will not re-request
+            // tiles for a layer it believes is already loaded.
+            clearAllLayersOfType(dpOverlays);
+            dpTileStatus = Array(dpLayerData.length).fill(false);
+            loadTilesBasedOnViewport();
         }
 
         // --- Subscription status ---
@@ -1230,15 +1340,11 @@
                                 });
                                 mmAnalytics.clarityTag('plan', 'paid');
                             } catch (e) {}
-                            await fetchPurchaseStatus(true);
-                            // Refresh CloudFront cookies + mmp-token so the new purchase's
-                            // district is in the edge-verified claims cookie immediately
-                            // (otherwise zoom 15+ tiles would 403 until the next TTL refresh).
-                            await fetchCloudFrontCookies();
-                            // Clear and reload tiles so they use the new access token
-                            clearAllLayersOfType(dpOverlays);
-                            dpTileStatus = Array(dpLayerData.length).fill(false);
-                            loadTilesBasedOnViewport();
+                            // Passing productId makes fetchPurchaseStatus re-issue the
+                            // mmp-token, assert the new district is actually in it, and
+                            // rebuild the DP overlays — otherwise zoom 15+ tiles would 403
+                            // at the edge until the user reloaded the page.
+                            await fetchPurchaseStatus(true, productId);
                             enableMapInteraction();
                             document.getElementById('zoom-restrict-overlay').classList.remove('open');
                             setMapMaxZoom(21); // unlock zoom after purchase
@@ -1389,7 +1495,7 @@
                         return;
                     }
                     setTimeout(async function() {
-                        await fetchPurchaseStatus(true);
+                        await fetchPurchaseStatus(true, pid);
                         if (hasPurchase(pid)) {
                             // Webhook confirmed — subscription is active
                             try {
@@ -1401,16 +1507,9 @@
                                 mmAnalytics.clarityTag('plan', 'paid');
                             } catch (e) {}
                             await fetchSubscriptionStatus();
-                            // Refresh CloudFront cookies + mmp-token so the new
-                            // subscription's productPurchaseID lands in the
-                            // edge-verified claims cookie immediately — otherwise
-                            // zoom 15+ tiles would 403 at the CF edge until the
-                            // user refreshes the tab. Mirrors the one-time path
-                            // at handler: callback above.
-                            try { await fetchCloudFrontCookies(); } catch (e) { /* non-fatal; TTL refresh will catch up */ }
-                            clearAllLayersOfType(dpOverlays);
-                            dpTileStatus = Array(dpLayerData.length).fill(false);
-                            loadTilesBasedOnViewport();
+                            // The mmp-token refresh + DP overlay rebuild already happened
+                            // inside the fetchPurchaseStatus(true, pid) call above, which
+                            // saw the entitlement appear. Nothing to redo here.
                             enableMapInteraction();
                             document.getElementById('zoom-restrict-overlay').classList.remove('open');
                             setMapMaxZoom(21);
@@ -1455,7 +1554,11 @@
                             // below waits for the webhook in that case.
                             console.warn('confirmSubscription fallback:', e && (e.message || e.code) || e);
                         }
-                        pollForSubscriptionActivation(productId, subscriptionId, 0, 10);
+                        // 60 x 3s = 3 minutes. UPI AutoPay mandates routinely take 1-2 min
+                        // between authorization and subscription.activated; the old 10-attempt
+                        // (30s) budget expired first and abandoned the only path that refreshed
+                        // the edge token, leaving paying customers on a blank premium map.
+                        pollForSubscriptionActivation(productId, subscriptionId, 0, 60);
                     },
                     modal: {
                         ondismiss: async function() {
@@ -1470,7 +1573,7 @@
                             } catch (e) {
                                 console.warn('confirmSubscription (ondismiss) fallback:', e && (e.message || e.code) || e);
                             }
-                            pollForSubscriptionActivation(productId, subscriptionId, 0, 5);
+                            pollForSubscriptionActivation(productId, subscriptionId, 0, 20);
                         }
                     }
                 };
@@ -3448,6 +3551,37 @@
             return allowed;
         }
 
+        // Stale-token self-heal. The mmp-token freezes entitlements at issuance, so a 403
+        // on a tile we BELIEVE we own means the edge is still holding a token minted before
+        // the purchase. That disagreement is the only reliable signal we have, so we key off
+        // it: re-issue the token once and retry the tile. This is the backstop for any
+        // stale-token path not covered by syncEdgeToEntitlements.
+        //
+        // Strictly rate-limited. A backend call per tile is what made the old serveTile proxy
+        // cost ~Rs.1000 in 3 days, so this must never approach per-tile: it only fires on the
+        // client/edge DISAGREEMENT (panning into a district we don't own 403s legitimately and
+        // triggers nothing), at most once a minute, a few times a session.
+        const TOKEN_HEAL_COOLDOWN_MS = 60000;
+        const TOKEN_HEAL_MAX_PER_SESSION = 3;
+        let _tokenHealLastAt = 0;
+        let _tokenHealCount = 0;
+        function healStaleTokenFor(url) {
+            const folder = _tileFolderFromUrl(url);
+            if (!folder) return Promise.resolve(false);                     // not an edge-gated tile
+            if (!_computeAllowedTileFolders().has(folder)) {
+                return Promise.resolve(false);                              // we don't own it — 403 is correct
+            }
+            // A refresh from another 403 in the same batch is already running — ride it
+            // instead of counting a second heal.
+            if (_cfCookieInFlight) return _cfCookieInFlight;
+            if (_tokenHealCount >= TOKEN_HEAL_MAX_PER_SESSION) return Promise.resolve(false);
+            if (Date.now() - _tokenHealLastAt < TOKEN_HEAL_COOLDOWN_MS) return Promise.resolve(false);
+            _tokenHealLastAt = Date.now();
+            _tokenHealCount++;
+            console.warn('403 on owned tile folder "' + folder + '" — refreshing stale mmp-token');
+            return fetchCloudFrontCookies();
+        }
+
         // Returns a blob URL for the tile (cached or freshly fetched), or null
         // on any failure. Caller uses null as the signal to fall back to a
         // direct img.src = url assignment (pre-cache behavior). Each call
@@ -3460,7 +3594,11 @@
                 catch (e) { return null; }
             }
             try {
-                const resp = await fetch(url, { credentials: 'include' });
+                let resp = await fetch(url, { credentials: 'include' });
+                if (resp.status === 403 && zoom > 14) {
+                    const healed = await healStaleTokenFor(url);
+                    if (healed) resp = await fetch(url, { credentials: 'include' });
+                }
                 if (resp.status !== 200) return null;
                 const blob = await resp.blob();
                 const folder = _tileFolderFromUrl(url);
