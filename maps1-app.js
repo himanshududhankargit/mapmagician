@@ -9,7 +9,7 @@
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
         // monotonic across both files. Both at 015 -> max(015,015)+1 = this staging push is 016
         // (single-session: per-browser localStorage id, no false "active on another device" kicks). Next -> 017.
-        var APP_VERSION = '025';
+        var APP_VERSION = '026';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -550,11 +550,17 @@
                 revokeTilesNotInFolderSet(_computeAllowedTileFolders());
 
                 const changed = _activePurchaseKeys() !== prevKeys;
+                // Belt-and-braces for the buyer: if the token in the jar still doesn't grant
+                // the district they just paid for, re-sync even when the purchase set looks
+                // unchanged — e.g. the realtime listener already recorded the purchase (so
+                // `changed` is false for this call) but its token refresh failed.
+                const tokenLacksExpected = !!expectPid && hasPurchase(expectPid)
+                    && Array.isArray(_cfGrantedPids) && _cfGrantedPids.indexOf(expectPid) === -1;
                 if (!_purchaseSyncPrimed) {
                     // Baseline for this session. The auth path already issues a token that
                     // reflects these purchases, so there is nothing to re-sync yet.
                     _purchaseSyncPrimed = true;
-                } else if (changed) {
+                } else if (changed || tokenLacksExpected) {
                     await syncEdgeToEntitlements(expectPid);
                 }
 
