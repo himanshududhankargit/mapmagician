@@ -24,7 +24,7 @@
 
     <!-- Additional Meta Tags -->
     <meta name="description" content="Free Android map overlay app — georeference any image, site plan, or scanned map on Google satellite imagery, measure area & distance, and export KMZ to Google Earth.">
-    <meta name="keywords" content="map overlay tool, map overlay app, map overlay app android, mobile georeferencing app, georeferencing app android, overlay image on google maps, overlay scanned map on google maps, superimpose site plan on satellite imagery, kmz export google earth android, georeference survey map, image overlay google earth mobile, survey overlay, satellite map overlay, qgis mobile, arcgis mobile, qgis mobile alternative, arcgis mobile alternative, qgis for android, arcgis for android, qgis alternative for android, qgis georeferencer alternative, georeferencing app like qgis, mobile georeferencing, georeferencing on mobile, mobile gis, mobile gis app, map over pro alternative, what is a map overlay, overlayr">
+    <meta name="keywords" content="map overlay tool, map overlay app, map overlay app android, mobile georeferencing app, georeferencing app android, overlay image on google maps, overlay scanned map on google maps, superimpose site plan on satellite imagery, kmz export google earth android, georeference survey map, image overlay google earth mobile, survey overlay, satellite map overlay, qgis mobile, arcgis mobile, qgis mobile alternative, arcgis mobile alternative, qgis for android, arcgis for android, qgis alternative for android, qgis georeferencer alternative, georeferencing app like qgis, mobile georeferencing, georeferencing on mobile, mobile gis, mobile gis app, map over pro alternative, what is a map overlay, world file export android, georeference image world file, export world file arcgis, overlayr">
     <meta name="author" content="MapMagician">
     <meta name="robots" content="index, follow, max-image-preview:large">
 
@@ -45,7 +45,7 @@
           "applicationCategory": "UtilitiesApplication",
           "url": "https://www.mapmagician.in/overlayr/",
           "downloadUrl": "https://play.google.com/store/apps/details?id=com.himanshu.overlayr",
-          "description": "Free Android map overlay tool and mobile georeferencing app — overlay any image, site plan, or scanned map on Google satellite imagery with desktop-grade precision. Survey overlay, KMZ export, and area/distance measurement.",
+          "description": "Free Android map overlay tool and mobile georeferencing app — overlay any image, site plan, or scanned map on Google satellite imagery with desktop-grade precision. Survey overlay, area/distance measurement, and export as KMZ, ArcGIS-compatible world file, or point ZIP.",
           "screenshot": [
             "https://www.mapmagician.in/AssetOverlayr/image-2.png",
             "https://www.mapmagician.in/AssetOverlayr/image-3.png",
@@ -110,10 +110,10 @@
             },
             {
               "@type": "Question",
-              "name": "How do I export my overlay to Google Earth (KMZ)?",
+              "name": "How do I export to Google Earth (KMZ), ArcGIS, or QGIS?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "After georeferencing, use Export → KMZ. The KMZ file opens directly in Google Earth (desktop and Pro) and imports into GIS software such as QGIS, with your image positioned at its true coordinates. You can also export high-resolution screenshots for reports."
+                "text": "After georeferencing, choose your export: KMZ opens directly in Google Earth (desktop and Pro) with your image at its true coordinates; an ArcGIS-compatible world file lets ArcGIS and QGIS load the georeferenced image natively; and a point ZIP package carries the image with its georeferencing data for GIS workflows. You can also export high-resolution screenshots for reports."
               }
             },
             {
@@ -145,7 +145,7 @@
               "name": "How does Overlayr compare to Map Over Pro?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Both are Android apps for overlaying an image on a map. Map Over Pro aligns an image using two matched points; Overlayr georeferences with 3 or more control points and live warping, which fits rotated or slightly distorted scans more accurately. Overlayr also adds area and distance measurement, KMZ export for Google Earth and GIS software, and is free to download. Overlayr is Android-only — for desktop work, export the KMZ and open it in Google Earth or QGIS on your PC."
+                "text": "They solve different problems. Map Over Pro is an older app built mainly for viewing a custom map overlay while hiking or navigating in remote areas, aligned with two matched points. Overlayr is built for professional georeferencing: 3 or more control points with live warping for an accurate fit, area and distance measurement, and GIS-grade exports — KMZ for Google Earth, an ArcGIS-compatible world file, and a point ZIP package that desktop GIS software reads directly. Overlayr is free to download."
               }
             },
             {
@@ -1352,7 +1352,7 @@
             <div class="hero-badges">
                 <span class="hero-badge">✅ Free download</span>
                 <span class="hero-badge">📴 Works offline</span>
-                <span class="hero-badge">🌍 KMZ export to Google Earth</span>
+                <span class="hero-badge">🌍 KMZ · world file · point ZIP export</span>
                 <span class="hero-badge">📄 JPG · PNG · PDF import</span>
             </div>
             <div class="hero-cta">
@@ -1383,9 +1383,10 @@
                     distance, and walk the site with GPS showing where you stand <em>on the overlaid plan</em>.
                 </p>
                 <p>
-                    When you're done, export the georeferenced overlay as a KMZ file that opens in Google Earth
-                    and imports into QGIS or any standard GIS software. What used to need a desktop workstation
-                    is now a two-minute job on Android — free to download, with offline support for field work.
+                    When you're done, export the georeferenced overlay as KMZ for Google Earth, as an
+                    ArcGIS-compatible world file, or as a point ZIP package — formats QGIS, ArcGIS, and any
+                    standard GIS software read directly. What used to need a desktop workstation is now a
+                    two-minute job on Android — free to download, with offline support for field work.
                 </p>
             </div>
         </div>
@@ -1451,8 +1452,8 @@
                 </div>
                 <div class="step-card">
                     <div class="step-number">4</div>
-                    <h3>Measure &amp; export KMZ</h3>
-                    <p>Measure area (m², hectares, acres) and distance directly on the overlay, then export as KMZ for Google Earth and GIS software, or share a high-res screenshot.</p>
+                    <h3>Measure &amp; export</h3>
+                    <p>Measure area (m², hectares, acres) and distance directly on the overlay, then export as KMZ for Google Earth, ArcGIS world file, or point ZIP for GIS software — or share a high-res screenshot.</p>
                 </div>
             </div>
         </div>
@@ -1477,7 +1478,7 @@
                 </div>
                 <div class="feature-card">
                     <h3>📤 Export &amp; Share</h3>
-                    <p>Export as KMZ for Google Earth &amp; GIS software, high-res screenshots, easy sharing via email and cloud apps, industry-standard formats</p>
+                    <p>Export as KMZ for Google Earth, ArcGIS-compatible world file, or point ZIP package for GIS software — plus high-res screenshots and easy sharing via email and cloud apps</p>
                 </div>
                 <div class="feature-card">
                     <h3>⚙️ Technical Power</h3>
@@ -1555,8 +1556,8 @@
                 <p>
                     To be clear: Overlayr is not a full GIS and doesn't try to be. It's the
                     <strong>georeferencing-and-overlay step made mobile</strong> — and because it exports
-                    standard KMZ, the result flows straight back into Google Earth, QGIS, or ArcGIS when
-                    you do need desktop analysis.
+                    standard KMZ, ArcGIS-compatible world files, and point ZIP packages, the result flows
+                    straight back into Google Earth, QGIS, or ArcGIS when you do need desktop analysis.
                 </p>
             </div>
             <div class="compare-wrap">
@@ -1605,6 +1606,12 @@
                             <td class="highlight">Built in (m², ha, acres)</td>
                             <td>Yes</td>
                             <td>Yes</td>
+                        </tr>
+                        <tr>
+                            <td>Export formats</td>
+                            <td class="highlight">KMZ · ArcGIS world file · point ZIP</td>
+                            <td>GeoTIFF and other rasters</td>
+                            <td>GeoTIFF and other rasters</td>
                         </tr>
                         <tr>
                             <td>Best for</td>
@@ -1682,8 +1689,8 @@
                     <p>Accuracy depends mainly on how carefully you place control points, not on the device. Overlayr provides magnified precision views while placing each point and live overlay transformation, so with 3 or more well-chosen points on recognizable features you can achieve desktop-grade alignment on satellite imagery.</p>
                 </details>
                 <details>
-                    <summary>How do I export my overlay to Google Earth (KMZ)?</summary>
-                    <p>After georeferencing, use Export → KMZ. The KMZ file opens directly in Google Earth (desktop and Pro) and imports into GIS software such as QGIS, with your image positioned at its true coordinates. You can also export high-resolution screenshots for reports.</p>
+                    <summary>How do I export to Google Earth (KMZ), ArcGIS, or QGIS?</summary>
+                    <p>After georeferencing, choose your export: KMZ opens directly in Google Earth (desktop and Pro) with your image at its true coordinates; an ArcGIS-compatible world file lets ArcGIS and QGIS load the georeferenced image natively; and a point ZIP package carries the image with its georeferencing data for GIS workflows. You can also export high-resolution screenshots for reports.</p>
                 </details>
                 <details>
                     <summary>Does Overlayr work offline?</summary>
@@ -1699,7 +1706,7 @@
                 </details>
                 <details>
                     <summary>How does Overlayr compare to Map Over Pro?</summary>
-                    <p>Both are Android apps for overlaying an image on a map. Map Over Pro aligns an image using two matched points; Overlayr georeferences with 3 or more control points and live warping, which fits rotated or slightly distorted scans more accurately. Overlayr also adds area and distance measurement, KMZ export for Google Earth and GIS software, and is free to download. Overlayr is Android-only — for desktop work, export the KMZ and open it in Google Earth or QGIS on your PC.</p>
+                    <p>They solve different problems. Map Over Pro is an older app built mainly for viewing a custom map overlay while hiking or navigating in remote areas, aligned with two matched points. Overlayr is built for professional georeferencing: 3 or more control points with live warping for an accurate fit, area and distance measurement, and GIS-grade exports — KMZ for Google Earth, an ArcGIS-compatible world file, and a point ZIP package that desktop GIS software reads directly. Overlayr is free to download.</p>
                 </details>
                 <details>
                     <summary>Can I run QGIS or ArcGIS on my Android phone?</summary>
