@@ -9,12 +9,12 @@ const APPS = [
     active: true,
   },
   {
-    href: `${ASSET}/#overlayr`,
+    href: `${ASSET}/overlayr/`,
     icon: `${ASSET}/AssetOverlayr/image-1.png`,
     label: 'Overlayr - Map Overlay Tool',
   },
   {
-    href: `${ASSET}/#location-plan-maker`,
+    href: `${ASSET}/location-plan-maker/`,
     icon: `${ASSET}/AssetsLocationPlanMaker/icon.png`,
     label: 'Location Plan Maker Pro',
   },
