@@ -24,7 +24,7 @@
 
     <!-- Additional Meta Tags -->
     <meta name="description" content="Free Android map overlay app — georeference any image, site plan, or scanned map on Google satellite imagery, measure area & distance, and export KMZ to Google Earth.">
-    <meta name="keywords" content="map overlay tool, map overlay app, map overlay app android, mobile georeferencing app, georeferencing app android, overlay image on google maps, overlay scanned map on google maps, superimpose site plan on satellite imagery, kmz export google earth android, georeference survey map, image overlay google earth mobile, survey overlay, satellite map overlay, overlayr">
+    <meta name="keywords" content="map overlay tool, map overlay app, map overlay app android, mobile georeferencing app, georeferencing app android, overlay image on google maps, overlay scanned map on google maps, superimpose site plan on satellite imagery, kmz export google earth android, georeference survey map, image overlay google earth mobile, survey overlay, satellite map overlay, qgis mobile alternative, arcgis mobile alternative, qgis alternative for android, qgis georeferencer alternative, georeferencing app like qgis, mobile gis app, overlayr">
     <meta name="author" content="MapMagician">
     <meta name="robots" content="index, follow, max-image-preview:large">
 
@@ -130,6 +130,22 @@
               "acceptedAnswer": {
                 "@type": "Answer",
                 "text": "JPG, PNG, and PDF. High-resolution images are supported and the app is optimized to stay responsive with large files, so detailed scans of survey sheets and development plans work well."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is there a QGIS or ArcGIS alternative for Android?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "For the georeferencing-and-overlay workflow, yes — Overlayr is a free mobile alternative to the QGIS Georeferencer and the ArcGIS georeferencing tools. You place control points on Google satellite imagery just like desktop GCPs and get a fitted overlay in minutes on your phone. For full spatial analysis (buffers, joins, styling, projections), a desktop GIS is still the right tool."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can Overlayr replace QGIS or ArcGIS?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "It replaces the desktop trip for field georeferencing — not the whole GIS. Use Overlayr on-site to georeference plans and check them against the ground, then export KMZ; the file imports directly into Google Earth, QGIS, or ArcGIS whenever you need deeper analysis. Many users pair Overlayr with desktop GIS exactly this way."
               }
             },
             {
@@ -828,6 +844,52 @@
             border: none;
         }
 
+        /* Comparison table */
+        .compare-wrap {
+            overflow-x: auto;
+            margin: 2rem 0 3rem;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            min-width: 640px;
+        }
+
+        .compare-table th,
+        .compare-table td {
+            padding: 0.9rem 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.95rem;
+            color: var(--text-light);
+            vertical-align: top;
+        }
+
+        .compare-table th {
+            background: var(--light-bg);
+            color: var(--text-dark);
+            font-weight: 700;
+        }
+
+        .compare-table td:first-child {
+            color: var(--text-dark);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .compare-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .compare-table td.highlight {
+            color: var(--text-dark);
+        }
+
         /* FAQ */
         .faq-list {
             max-width: 800px;
@@ -1286,8 +1348,8 @@
                 <p>
                     Every surveyor, valuer, and planner has faced the same problem: you have a map — a scanned
                     survey sheet, a PDF layout plan, a development plan extract — and you need to know exactly
-                    where it sits on the ground. Desktop GIS software can georeference it, but it's expensive,
-                    slow to learn, and useless when you're standing in the field.
+                    where it sits on the ground. Desktop GIS software like QGIS or ArcGIS can georeference it,
+                    but it's workstation-bound, slow to learn, and useless when you're standing in the field.
                 </p>
                 <p>
                     <strong>Overlayr solves this on your phone.</strong> Import the image, tap at least three
@@ -1447,10 +1509,81 @@
         </div>
     </section>
 
-    <!-- Mobile vs Desktop -->
-    <section class="app-section alt">
+    <!-- Mobile vs Desktop: QGIS / ArcGIS alternative -->
+    <section class="app-section alt" id="qgis-arcgis-alternative">
         <div class="container">
-            <h2 class="section-title">Mobile Georeferencing vs Desktop GIS</h2>
+            <h2 class="section-title">A Mobile Alternative to QGIS &amp; ArcGIS Georeferencing</h2>
+            <div class="content-block">
+                <p>
+                    On desktop, georeferencing means the QGIS Georeferencer or the ArcGIS georeferencing
+                    tools: load the raster, place ground control points, pick a transformation, export.
+                    Powerful — but tied to a workstation and a real learning curve. If what you actually
+                    need is to <strong>see where a plan sits on the ground and share it</strong>, Overlayr
+                    runs that same control-point workflow on your Android phone, standing on the site.
+                </p>
+                <p>
+                    To be clear: Overlayr is not a full GIS and doesn't try to be. It's the
+                    <strong>georeferencing-and-overlay step made mobile</strong> — and because it exports
+                    standard KMZ, the result flows straight back into Google Earth, QGIS, or ArcGIS when
+                    you do need desktop analysis.
+                </p>
+            </div>
+            <div class="compare-wrap">
+                <table class="compare-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Overlayr (Android)</th>
+                            <th>QGIS Georeferencer (desktop)</th>
+                            <th>ArcGIS (desktop)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Platform</td>
+                            <td class="highlight">Android phone / tablet</td>
+                            <td>Windows / Mac / Linux</td>
+                            <td>Windows</td>
+                        </tr>
+                        <tr>
+                            <td>Price</td>
+                            <td class="highlight">Free (optional Premium)</td>
+                            <td>Free, open source</td>
+                            <td>Paid licence</td>
+                        </tr>
+                        <tr>
+                            <td>Learning curve</td>
+                            <td class="highlight">Minutes — 3 taps to a fitted overlay</td>
+                            <td>Steep (GIS concepts, CRS, transformations)</td>
+                            <td>Steep (GIS concepts, CRS, transformations)</td>
+                        </tr>
+                        <tr>
+                            <td>Georeference an image</td>
+                            <td class="highlight">3+ control points on live satellite imagery</td>
+                            <td>GCPs + transformation settings</td>
+                            <td>GCPs + transformation settings</td>
+                        </tr>
+                        <tr>
+                            <td>Live GPS on the overlay in the field</td>
+                            <td class="highlight">Yes — walk the plot on your plan</td>
+                            <td>No</td>
+                            <td>Separate mobile apps required</td>
+                        </tr>
+                        <tr>
+                            <td>Measure area &amp; distance</td>
+                            <td class="highlight">Built in (m², ha, acres)</td>
+                            <td>Yes</td>
+                            <td>Yes</td>
+                        </tr>
+                        <tr>
+                            <td>Best for</td>
+                            <td class="highlight">Field georeferencing, overlay checks, quick sharing</td>
+                            <td>Full desktop GIS analysis</td>
+                            <td>Enterprise GIS workflows</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             <div class="features-grid">
                 <div class="feature-card">
                     <h3>⚡ Minutes, not hours</h3>
@@ -1528,6 +1661,14 @@
                 <details>
                     <summary>Which file formats can I import?</summary>
                     <p>JPG, PNG, and PDF. High-resolution images are supported and the app is optimized to stay responsive with large files, so detailed scans of survey sheets and development plans work well.</p>
+                </details>
+                <details>
+                    <summary>Is there a QGIS or ArcGIS alternative for Android?</summary>
+                    <p>For the georeferencing-and-overlay workflow, yes — Overlayr is a free mobile alternative to the QGIS Georeferencer and the ArcGIS georeferencing tools. You place control points on Google satellite imagery just like desktop GCPs and get a fitted overlay in minutes on your phone. For full spatial analysis (buffers, joins, styling, projections), a desktop GIS is still the right tool.</p>
+                </details>
+                <details>
+                    <summary>Can Overlayr replace QGIS or ArcGIS?</summary>
+                    <p>It replaces the desktop trip for field georeferencing — not the whole GIS. Use Overlayr on-site to georeference plans and check them against the ground, then export KMZ; the file imports directly into Google Earth, QGIS, or ArcGIS whenever you need deeper analysis. Many users pair Overlayr with desktop GIS exactly this way.</p>
                 </details>
                 <details>
                     <summary>Overlayr vs Location Plan Maker — which app do I need?</summary>
