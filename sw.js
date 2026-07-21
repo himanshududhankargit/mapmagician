@@ -1,6 +1,6 @@
 // Service worker — caches app shell so the installed PWA opens offline
 // instead of showing "This site can't be reached".
-const SW_VERSION = 'v23-2026-06-12-ver011';
+const SW_VERSION = 'v24-2026-07-21-hero-swr';
 const CACHE_NAME = 'mm-shell-' + SW_VERSION;
 
 // Region-icon cache: cross-origin PNGs from CloudFront used by the splash
@@ -28,7 +28,8 @@ const SHELL_URLS = [
     '/AssetsGIS/icons/icon-192x192.png',
     '/AssetsGIS/icons/icon-512x512.png',
     '/AssetsGIS/image-1.png',
-    '/AssetsGIS/hero-banner-1280.webp'
+    '/AssetsGIS/hero-banner-1280.webp',
+    '/AssetsGIS/hero-banner-768.webp'   // DPR-2 phones resolve srcset to 768w, not 1280w
 ];
 
 self.addEventListener('install', (e) => {
@@ -88,6 +89,31 @@ self.addEventListener('fetch', (e) => {
                 } catch (err) {
                     return new Response('', { status: 504, statusText: 'icon offline' });
                 }
+            })
+        );
+        return;
+    }
+
+    // Splash/banner hero images: cache-first with background refresh. They are
+    // the LCP element on / and /maps.html and effectively never change, but the
+    // generic same-origin branch below is network-first — so on a slow mobile
+    // network a repeat visitor's LCP waited on the network even though the image
+    // was already cached. Serve the cached copy instantly; the fire-and-forget
+    // refresh picks up any future redesign on the next visit.
+    if (url.origin === self.location.origin &&
+        (url.pathname.indexOf('/AssetsGIS/hero-banner-') === 0 ||
+         url.pathname.indexOf('/AssetsGIS/splash-hero-') === 0)) {
+        e.respondWith(
+            caches.open(CACHE_NAME).then(async cache => {
+                const cached = await cache.match(e.request);
+                const refresh = fetch(e.request).then(resp => {
+                    if (resp && resp.ok) {
+                        cache.put(e.request, resp.clone()).catch(() => {});
+                    }
+                    return resp;
+                }).catch(() => null);
+                if (cached) return cached;
+                return refresh.then(r => r || new Response('', { status: 504, statusText: 'hero offline' }));
             })
         );
         return;
