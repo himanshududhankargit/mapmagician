@@ -46,6 +46,13 @@
     <link rel="icon" type="image/png" href="AssetsGIS/mapmagiciansmall.png">
     <link rel="apple-touch-icon" href="AssetsGIS/mapmagiciansmall.png">
 
+    <!-- Preload the map banner image — it is the mobile LCP element, so start the
+         fetch during head parse (same pattern as maps.html). -->
+    <link rel="preload" as="image" type="image/webp" fetchpriority="high"
+          href="AssetsGIS/hero-banner-1280.webp"
+          imagesrcset="AssetsGIS/hero-banner-768.webp 768w, AssetsGIS/hero-banner-1280.webp 1280w, AssetsGIS/hero-banner-1920.webp 1920w"
+          imagesizes="100vw">
+
     <!-- JSON-LD: FAQ targeting informational queries (what is GIS, how to overlay maps, etc.) -->
     <script type="application/ld+json">
     {
@@ -330,7 +337,7 @@
             transition: filter 0.25s;
         }
         .map-banner:hover { filter: brightness(1.05); }
-        .map-banner:focus-visible { outline: 3px solid var(--primary-color); outline-offset: -3px; }
+        .map-banner:focus-within { outline: 3px solid var(--primary-color); outline-offset: -3px; }
         .map-banner-img {
             position: absolute;
             top: 70px;
@@ -356,6 +363,10 @@
             pointer-events: none;
         }
         .map-banner-overlay .map-banner-cta { pointer-events: auto; }
+        /* Stretched link: the CTA anchor's ::after covers the whole banner, so a click
+           anywhere opens the map without needing role="link"/onclick on the <section>
+           (fixes the "ARIA role should be appropriate for the element" audit). */
+        .map-banner-cta::after { content: ''; position: absolute; inset: 0; }
         .map-banner-badge {
             display: inline-flex;
             align-items: center;
@@ -1278,9 +1289,7 @@
     </nav>
 
     <!-- Map Banner (static preview — click anywhere to open the interactive map) -->
-    <section class="map-banner" id="map-showcase" aria-label="Open Interactive Map" role="link" tabindex="0"
-             onclick="window.open('../maps.html?lat=19.076&amp;lng=72.877&amp;zoom=13', '_blank', 'noopener')"
-             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.open('../maps.html?lat=19.076&amp;lng=72.877&amp;zoom=13', '_blank', 'noopener');}">
+    <section class="map-banner" id="map-showcase">
         <picture>
             <source
                 type="image/webp"
@@ -1311,8 +1320,7 @@
                target="_blank"
                rel="noopener"
                class="map-banner-cta"
-               aria-label="Open Interactive Map"
-               onclick="event.stopPropagation()">
+               aria-label="Open Interactive Map">
                 Open Interactive Map
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
@@ -1377,10 +1385,10 @@
                     <div class="app-card-cta">
                         <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en"
                            target="_blank" class="app-store-btn">
-                            <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" width="200" height="60" fetchpriority="high" decoding="async">
+                            <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" width="155" height="60" fetchpriority="high" decoding="async">
                         </a>
                         <a href="#development-plan" class="learn-more-btn">
-                            Learn More 
+                            Explore Development Plan GIS
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M5 12h14m-7-7l7 7-7 7"/>
                             </svg>
@@ -1406,10 +1414,10 @@
                     <div class="app-card-cta">
                         <a href="https://play.google.com/store/apps/details?id=com.himanshu.overlayr&hl=en"
                            target="_blank" class="app-store-btn">
-                            <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" width="200" height="60" fetchpriority="high" decoding="async">
+                            <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" width="155" height="60" fetchpriority="high" decoding="async">
                         </a>
                         <a href="overlayr/" class="learn-more-btn">
-                            Learn More
+                            Explore Overlayr
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M5 12h14m-7-7l7 7-7 7"/>
                             </svg>
@@ -1435,10 +1443,10 @@
                     <div class="app-card-cta">
                         <a href="https://play.google.com/store/apps/details?id=com.himanshu.locationplanmaker"
                            target="_blank" class="app-store-btn">
-                            <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" width="200" height="60" fetchpriority="high" decoding="async">
+                            <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" width="155" height="60" fetchpriority="high" decoding="async">
                         </a>
                         <a href="location-plan-maker/" class="learn-more-btn">
-                            Learn More
+                            Explore Location Plan Maker
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M5 12h14m-7-7l7 7-7 7"/>
                             </svg>
@@ -1636,7 +1644,7 @@
                 <p>Access development plans for 157+ locations across India</p>
                 <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en"
                    target="_blank" class="play-store-button">
-                    <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" width="200" height="60" loading="lazy" decoding="async" style="height: 60px;">
+                    <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" width="155" height="60" loading="lazy" decoding="async">
                 </a>
             </div>
         </div>
@@ -1793,7 +1801,7 @@
                 <div class="cta-buttons">
                     <a href="https://play.google.com/store/apps/details?id=com.himanshu.overlayr&hl=en" 
                        target="_blank" class="play-store-button">
-                        <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" style="height: 60px;">
+                        <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" width="155" height="60" loading="lazy" decoding="async">
                     </a>
                     <a href="https://www.youtube.com/playlist?list=PLLqkqPMZldH9vswRWN-QZJDYjpI_mmBMa"
                        target="_blank" class="cta-button">
@@ -2018,7 +2026,7 @@
                 <div class="cta-buttons">
                     <a href="https://play.google.com/store/apps/details?id=com.himanshu.locationplanmaker"
                        target="_blank" class="play-store-button">
-                        <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" width="200" height="60" loading="lazy" decoding="async" style="height: 60px;">
+                        <img src="AssetsGIS/getitonplaystore.png" alt="Get it on Google Play" width="155" height="60" loading="lazy" decoding="async">
                     </a>
                 </div>
             </div>
