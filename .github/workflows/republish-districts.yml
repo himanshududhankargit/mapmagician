@@ -1,14 +1,28 @@
 name: Republish districts
 
 # Fires when the Android admin app pushes d1.bin / d3.bin updates. Regenerates
-# tileFolderMap.json in the GIS web repo, syncs the folder->districtId pairs into the
-# CloudFront KeyValueStore (mmp-tile-folders), and redeploys Firebase getCloudFrontCookies.
+# tileFolderMap.json in the GIS web repo and syncs the folder->districtId pairs into the
+# CloudFront KeyValueStore (mmp-tile-folders). That KVS sync is the step that makes a new
+# district reachable past zoom 14 — it is the whole point of this workflow.
 # The CloudFront gate CODE is constant (reads the KVS) so it is only redeployed on the rare
 # run where cloudfront-gate.js itself changes.
 #
+# 🛑 This workflow does NOT deploy Firebase Functions, deliberately. It used to run
+#    `firebase deploy --only functions:getCloudFrontCookies` from the gis-web checkout, which
+#    was wrong twice over:
+#      1. It failed outright — functions/index.js (and subPeriod/subGrace/tileGateSync/
+#         moneyAtRisk) are intentionally NOT committed to gis-web; the working tree is the
+#         source of truth for the backend.
+#      2. Had it worked, it would have deployed the STALE committed backend over the live one.
+#         That is the 2026-07-28 incident: getCloudFrontCookies silently reverted to a
+#         Phase-A-era build (no `m` claim, no `s:1`), breaking mobile entitlement.
+#    Instead, when the generator assigns NEW productIds the run now flags it in the success
+#    email so a human redeploys from the working tree. Nothing is silently skipped, and this
+#    is rarely needed anyway — getCloudFrontCookies merges the tileGate/productIds RTDB
+#    overlay at runtime, so a brand-new id already works before any redeploy.
+#
 # Required repo secrets (configure in Settings → Secrets and variables → Actions):
 #   GIS_WEB_PAT        fine-grained PAT with contents:write on the GIS web repo
-#   FIREBASE_SA_KEY    service-account JSON with Cloud Functions Admin on sodium-hour-256110
 #   AWS_ACCESS_KEY_ID  IAM user with cloudfront:DescribeFunction/UpdateFunction/PublishFunction
 #                      AND cloudfront-keyvaluestore:DescribeKeyValueStore/UpdateKeys/ListKeys
 #                      on the mmp-tile-folders KVS (see functions/scripts/publish-kvs.js)
@@ -76,6 +90,10 @@ jobs:
             cat regen.log
             echo "__EOF__"
           } >> "$GITHUB_OUTPUT"
+          # "  productIds:   45 (+2 new)" -> 2. Only a NEW id needs a backend redeploy;
+          # a changed folder list is pure KVS and is handled by the sync step below.
+          new_pids=$(sed -n 's/.*productIds:.*(+\([0-9][0-9]*\) new).*/\1/p' regen.log | head -1)
+          echo "new_pids=${new_pids:-0}" >> "$GITHUB_OUTPUT"
 
       - name: Commit regenerated files back to GIS web
         id: commit
@@ -123,17 +141,13 @@ jobs:
         working-directory: gis-web/functions
         run: bash scripts/publish-cloudfront.sh
 
-      # Skip when regenerate was a no-op — identical tileFolderMap.json means
-      # getCloudFrontCookies would redeploy byte-identical code. Saves ~2 min.
-      - name: Firebase deploy
-        if: steps.commit.outputs.changed == 'true'
-        working-directory: gis-web
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+      # See the 🛑 note at the top of this file: CI must never deploy the backend, because
+      # gis-web does not carry functions/index.js and a checkout-based deploy would overwrite
+      # the live function with a stale build. We only report that a redeploy is warranted.
+      - name: Flag new productIds (backend redeploy needed)
+        if: steps.regen.outputs.new_pids != '0'
         run: |
-          printf '%s' '${{ secrets.FIREBASE_SA_KEY }}' > "$GOOGLE_APPLICATION_CREDENTIALS"
-          npx firebase-tools deploy --only functions:getCloudFrontCookies \
-            --project sodium-hour-256110 --non-interactive
+          echo "::warning title=New productIds — redeploy getCloudFrontCookies::${{ steps.regen.outputs.new_pids }} new productId(s) were assigned. Run 'firebase deploy --only functions:getCloudFrontCookies' from your WORKING TREE (never a clean checkout) to pin them into the deployed code. Access already works via the tileGate/productIds runtime overlay."
 
       - name: Notify — success
         if: success()
@@ -146,13 +160,25 @@ jobs:
           password: ${{ secrets.NOTIFY_GMAIL_PASS }}
           from: Map Magician CI <${{ secrets.NOTIFY_GMAIL_USER }}>
           to: himanshududhankar@gmail.com
-          subject: "[mmp] Districts republished — ${{ github.event.head_commit.message && github.event.head_commit.id || github.sha }}"
+          subject: "[mmp]${{ steps.regen.outputs.new_pids != '0' && ' ACTION NEEDED —' || '' }} Districts republished — ${{ github.event.head_commit.message && github.event.head_commit.id || github.sha }}"
           body: |
             Republish succeeded.
+            ${{ steps.regen.outputs.new_pids != '0' && format('
+            ⚠ ACTION NEEDED: {0} new productId(s) were assigned this run.
+            Redeploy the backend so the ids are pinned into the deployed code:
 
+                cd "C:/MyData/GIS web"
+                firebase deploy --only functions:getCloudFrontCookies
+
+            Deploy from your WORKING TREE, never a clean checkout — the committed copy is
+            stale and would revert the live function (2026-07-28 incident).
+            Not urgent: getCloudFrontCookies merges the tileGate/productIds RTDB overlay at
+            runtime, so the new districts already grant correctly.
+            ', steps.regen.outputs.new_pids) || '' }}
             Trigger: ${{ github.event_name }} on ${{ github.ref_name }}
             Commit (mapmagician-main): ${{ github.sha }}
             Gis-web files changed: ${{ steps.commit.outputs.changed }}
+            New productIds: ${{ steps.regen.outputs.new_pids }}
             Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
             Generator summary:
