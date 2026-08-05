@@ -9,7 +9,7 @@
         // = higher of live maps-app.js and staging maps1-app.js, + 1, so the counter stays globally
         // monotonic across both files. Both at 015 -> max(015,015)+1 = this staging push is 016
         // (single-session: per-browser localStorage id, no false "active on another device" kicks). Next -> 017.
-        var APP_VERSION = '029';
+        var APP_VERSION = '032';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -2811,6 +2811,119 @@
             return null;
         }
 
+        // --- Legend (ported from the Android app's "Legends" bottom sheet) ---
+        // Android bundles three static legend PNGs and chooses between them with a
+        // 3-way `when` on the product id, defaulting to Maharashtra for everything
+        // else (viewMapOnlyWithGPS.kt updateLegend). We key on the same two product
+        // ids, but the catch-all falls back on the region's STATE instead of blindly
+        // serving the Maharashtra sheet — captioning a Karnataka or Telangana plan
+        // with Maharashtra's land-use colours would be actively misleading in a
+        // planning tool. A region we have no legend for says so.
+        //
+        // Note the id is normalised with the same `gst$` strip used everywhere else:
+        // Android's own updateLegend compares against the BARE ids while the value it
+        // is handed has always been gst-suffixed, which is why its Hyderabad and
+        // Bengaluru legends are effectively unreachable on device. Don't copy that.
+        const LEGEND_ART = {
+            maharashtra: { src: 'AssetsGIS/legends/legend-maharashtra.webp', tall: true,
+                           alt: 'Maharashtra Development Plan legend' },
+            hyderabad:   { src: 'AssetsGIS/legends/legend-hyderabad.webp',   tall: true,
+                           alt: 'Hyderabad HMDA master plan legend' },
+            bengaluru:   { src: 'AssetsGIS/legends/legend-bengaluru.webp',   tall: false,
+                           alt: 'Bengaluru Revised Master Plan legend' }
+        };
+        // Exact product-id overrides — mirrors Android's Constants.kt.
+        const LEGEND_BY_PID = { 'hyderabad_new': 'hyderabad', 'bengaluru': 'bengaluru' };
+        // Fallback keyed on the region's state (prefix match, lower-cased). Karnataka
+        // plans outside Bengaluru (e.g. Vijayapura) use the same statewide KTCP zoning
+        // convention as the BDA sheet.
+        const LEGEND_BY_STATE = { 'maharashtra': 'maharashtra', 'karnataka': 'bengaluru' };
+
+        let _legendMountedKey;   // legend art currently in the DOM (undefined = nothing rendered yet)
+        let _legendOpen = false;
+
+        // Which legend applies to the region under the map centre, or null if none.
+        // Centre-based, matching Android, where the sheet reflects whatever plan the
+        // camera is sitting on rather than a user-picked layer.
+        function resolveLegendKey(district) {
+            if (!district) return null;
+            const pid = String(district.productPurchaseID || '').toLowerCase().replace(/gst$/, '');
+            if (LEGEND_BY_PID[pid]) return LEGEND_BY_PID[pid];
+            let state = '';
+            for (let i = 0; i < menuData.length; i++) {
+                const mp = String(menuData[i].productPurchaseID || '').toLowerCase().replace(/gst$/, '');
+                if (mp === pid) { state = String(menuData[i].state || '').toLowerCase(); break; }
+            }
+            for (const s in LEGEND_BY_STATE) {
+                if (state.indexOf(s) === 0) return LEGEND_BY_STATE[s];
+            }
+            return null;
+        }
+
+        // Paints the panel for the current map centre. Cheap to call repeatedly — the
+        // artwork is only re-mounted when the applicable legend actually changes, so
+        // panning within one region doesn't restart the image decode or lose scroll.
+        function renderLegend() {
+            const body = document.getElementById('legend-body');
+            const nameEl = document.getElementById('legend-region-name');
+            if (!body) return;
+            // Opened during a cold start, before the region catalog has landed. Say so
+            // rather than claiming there's no plan here, and leave _legendMountedKey
+            // unset so the next call — from fetchMenuLayerData or the next map idle —
+            // repaints for real.
+            if (!menuData || menuData.length === 0) {
+                if (nameEl) nameEl.textContent = '';
+                body.innerHTML = '<div class="legend-empty">Loading regions…</div>';
+                _legendMountedKey = undefined;
+                return;
+            }
+            const district = findDistrictAtCenterCached();
+            const key = resolveLegendKey(district);
+            if (nameEl) {
+                nameEl.textContent = district ? (district.districtName || '') : 'No plan under map centre';
+            }
+            if (key === _legendMountedKey) return;
+            _legendMountedKey = key;
+            if (!key) {
+                body.innerHTML = '<div class="legend-empty">' + (district
+                    ? 'A legend for this region has not been published yet.'
+                    : 'Move the map over a Development Plan region to see its legend.') + '</div>';
+                return;
+            }
+            // src is assigned on first mount, so the artwork costs nothing to the
+            // users who never open the panel.
+            const art = LEGEND_ART[key];
+            const img = document.createElement('img');
+            img.src = art.src;
+            img.alt = art.alt;
+            img.decoding = 'async';
+            if (art.tall) img.className = 'legend-tall';
+            // These are dense reference charts squeezed into a 320px column; linking
+            // the artwork to itself hands the reader the browser's own pinch-zoom
+            // instead of us reimplementing one.
+            const link = document.createElement('a');
+            link.className = 'legend-art';
+            link.href = art.src;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.title = 'Open full size';
+            link.appendChild(img);
+            const hint = document.createElement('div');
+            hint.className = 'legend-fullsize-hint';
+            hint.textContent = 'Tap the legend to open it full size';
+            body.innerHTML = '';
+            body.appendChild(link);
+            body.appendChild(hint);
+            body.scrollTop = 0;
+        }
+
+        // Called from the map idle handler so the open panel tracks the map as the
+        // user pans — the drawer sits beside a still-usable map on desktop, unlike
+        // the Android sheet which snapshots its legend at open time.
+        function updateLegendPanel() {
+            if (_legendOpen) renderLegend();
+        }
+
         function disableMapInteraction() {
             mapInteractionDisabled = true;
             if (map) map.setOptions({ draggable: false, scrollwheel: false, disableDoubleClickZoom: true, zoomControl: false, gestureHandling: 'none' });
@@ -4779,6 +4892,8 @@
                 updateRegionStatus();
                 // Show/hide old maps button based on current region
                 updateOldMapsButtonVisibility();
+                // Keep an open legend panel in sync with the region under the centre
+                updateLegendPanel();
                 // Warn user when current zoom exceeds the maxZoom of every active overlay covering the center
                 checkOverlayZoomLimit(z, c);
                 // PERF (perf #2 of next round): updateVillagePolylines() removed
@@ -5601,6 +5716,10 @@
                         processMenuData(data);
                         buildAfterMenuData();
                         menuDataLoaded = true;
+                        // A legend panel opened during the cold-start window is showing
+                        // "Loading regions…" — repaint it now that the catalog is here,
+                        // since nothing else guarantees another map idle.
+                        updateLegendPanel();
                         // If the user opened the region browser before data arrived, fill it in
                         // now, reusing the single history entry the loading view already pushed.
                         if (regionBrowserAwaitingData && regionBrowser.classList.contains('open')) {
@@ -7387,6 +7506,61 @@
             }
             document.getElementById('layer-panel-close').addEventListener('click', closeLayerPanel);
             layerOverlay.addEventListener('click', closeLayerPanel);
+
+            // Legend panel open/close. The pill toggles, matching the other stateful
+            // pills (.pill-btn.active), while the X and the dimmer only close.
+            const legendPanel = document.getElementById('legend-panel');
+            const legendBtn = document.getElementById('btn-legend');
+            function openLegendPanel() {
+                _legendOpen = true;
+                renderLegend();             // paint before the slide-in, not after
+                legendPanel.classList.add('open');
+                legendBtn.classList.add('active');
+                try { mmAnalytics.event('legend_open', { legend: _legendMountedKey || 'none' }); } catch (e) {}
+            }
+            function closeLegendPanel() {
+                _legendOpen = false;
+                legendPanel.classList.remove('open');
+                legendBtn.classList.remove('active');
+            }
+            legendBtn.addEventListener('click', function() {
+                if (_legendOpen) closeLegendPanel(); else openLegendPanel();
+            });
+            document.getElementById('legend-panel-close').addEventListener('click', closeLegendPanel);
+            // With no dimmer to click away on, Esc is the desktop escape hatch
+            // (mobile has swipe-down and Back).
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && _legendOpen) closeLegendPanel();
+            });
+
+            // Swipe-down-to-dismiss on the mobile bottom sheet, mirroring the Android
+            // sheet where any downward drag snaps it straight to hidden. Bound to the
+            // grabber only, so a drag never fights the scrolling legend image below it.
+            // On desktop the grabber is display:none and this is dead weight.
+            (function wireLegendSheetDrag() {
+                const grabber = document.getElementById('legend-grabber');
+                if (!grabber || !window.PointerEvent) return;
+                let startY = 0, dy = 0, dragging = false;
+                grabber.addEventListener('pointerdown', function(e) {
+                    dragging = true; startY = e.clientY; dy = 0;
+                    legendPanel.classList.add('dragging');
+                    try { grabber.setPointerCapture(e.pointerId); } catch (err) {}
+                });
+                grabber.addEventListener('pointermove', function(e) {
+                    if (!dragging) return;
+                    dy = Math.max(0, e.clientY - startY);   // down only; no rubber-banding up
+                    legendPanel.style.transform = 'translateY(' + dy + 'px)';
+                });
+                function endLegendDrag() {
+                    if (!dragging) return;
+                    dragging = false;
+                    legendPanel.classList.remove('dragging');
+                    legendPanel.style.transform = '';       // hand control back to the CSS class
+                    if (dy > 60) closeLegendPanel();
+                }
+                grabber.addEventListener('pointerup', endLegendDrag);
+                grabber.addEventListener('pointercancel', endLegendDrag);
+            })();
 
             // GPS button — continuous location tracking (3-state: off → following → tracking → off)
             let gpsWatchId = null;

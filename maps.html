@@ -420,6 +420,78 @@
         }
         .layer-overlay.open { display: block; }
 
+        /* --- Legend panel (ported from the Android "Legends" bottom sheet) ---
+           Desktop: a right-edge drawer in the same tier as .layer-panel, but wider
+           because the legend art is a tall image that gets unreadable under ~320px.
+           Mobile: a bottom sheet (drag handle, swipe-down to dismiss) that slides up
+           to FULL height — these are dense, very tall reference charts (Maharashtra
+           is 300x2066) and a half-height sheet meant scrolling four screens through a
+           letterbox. The desktop/mobile split uses the 700px breakpoint that the
+           bottom bar and FAB stack already flip on — don't introduce a new one. */
+        .legend-panel {
+            position: absolute; z-index: 2000; background: #fff;
+            display: flex; flex-direction: column;
+            /* Mobile-first: full-height sheet, hidden below the fold. */
+            left: 0; right: 0; bottom: 0; top: 0;
+            height: 100%; max-height: 100%;
+            box-shadow: 0 -2px 12px rgba(0,0,0,0.3);
+            transform: translateY(101%);
+            transition: transform 0.28s ease;
+            will-change: transform;
+        }
+        .legend-panel.open { transform: translateY(0); }
+        /* Suppress the slide animation while a finger is dragging the sheet. */
+        .legend-panel.dragging { transition: none; }
+        .legend-grabber {
+            flex-shrink: 0; padding: 8px 0 2px; display: flex; justify-content: center;
+            cursor: grab; touch-action: none;
+        }
+        .legend-grabber::before {
+            content: ''; width: 36px; height: 4px; border-radius: 2px; background: #DADCE0;
+        }
+        .legend-panel-header {
+            flex-shrink: 0;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 6px 16px 12px; border-bottom: 1px solid #E0E0E0;
+        }
+        .legend-panel-header h3 {
+            font-size: 16px; color: #212121; margin: 0;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .legend-region-name {
+            display: block; font-size: 11px; font-weight: 400; color: #757575;
+            margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .legend-body {
+            flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+            padding: 16px; text-align: center;
+        }
+        .legend-body a.legend-art { display: block; text-decoration: none; }
+        .legend-body img {
+            width: 100%; max-width: 100%; height: auto; display: block;
+            margin: 0 auto; border-radius: 4px;
+        }
+        .legend-fullsize-hint {
+            margin-top: 10px; font-size: 11px; color: #9AA0A6;
+        }
+        /* Bengaluru art is wide-format; the rest are tall and narrow, so cap the
+           tall ones so they don't blur when stretched across a wide desktop drawer. */
+        .legend-body img.legend-tall { max-width: 320px; }
+        .legend-empty {
+            padding: 32px 12px; font-size: 13px; color: #757575; line-height: 1.5;
+        }
+        @media (min-width: 700px) {
+            .legend-panel {
+                top: 0; bottom: 0; right: 0; left: auto;
+                width: 360px; max-height: none;
+                box-shadow: -2px 0 8px rgba(0,0,0,0.3);
+                transform: translateX(101%);
+            }
+            .legend-panel.open { transform: translateX(0); }
+            .legend-grabber { display: none; }
+            .legend-panel-header { padding: 16px 16px 12px; }
+        }
+
         /* Bottom navigation bar (Google Maps style tabs) */
         /* Unified bottom bar */
         .bottom-bar {
@@ -1138,6 +1210,7 @@
     <div class="toolbar-scroll">
         <button class="pill-btn" id="btn-addon-maps" style="display:none;background:#2E7D32;color:#fff;font-weight:600;">0 Add-On Maps</button>
         <button class="pill-btn" id="btn-old-maps" style="display:none">Load Old Maps</button>
+        <button class="pill-btn" id="btn-legend">Legend</button>
         <button class="pill-btn" id="btn-measure-area">Measure Area<span class="measure-clear-x" id="clear-area-x">✕</span></button>
         <button class="pill-btn" id="btn-measure-length">Measure Length<span class="measure-clear-x" id="clear-length-x">✕</span></button>
         <button class="pill-btn" id="btn-compass">Compass</button>
@@ -1293,6 +1366,24 @@
                        style="flex:1;height:4px;-webkit-appearance:none;appearance:none;background:#ccc;border-radius:2px;outline:none;">
                 <span id="opacity-value" style="font-size:13px;color:#212121;min-width:36px;">50%</span>
             </div>
+        </div>
+    </div>
+
+    <!-- Legend panel — right drawer on desktop, bottom sheet on mobile.
+         Deliberately has NO dimmer, unlike the layer/settings drawers: a legend is a
+         reference you read WHILE working the map, and the Android sheet it is ported
+         from has no scrim either. A dimmer would also swallow map gestures and so
+         break the "legend follows the map centre" behaviour. Dismissal is the X, the
+         pill, Esc, Back, or a swipe down on mobile. -->
+    <div class="legend-panel" id="legend-panel" data-dismiss="legend-panel-close">
+        <div class="legend-grabber" id="legend-grabber" aria-hidden="true"></div>
+        <div class="legend-panel-header">
+            <h3>Legend<span class="legend-region-name" id="legend-region-name"></span></h3>
+            <button class="layer-panel-close" id="legend-panel-close" aria-label="Close legend">&times;</button>
+        </div>
+        <div class="legend-body" id="legend-body">
+            <!-- Populated by renderLegend(); img src is set on first open so the
+                 artwork never costs anything to users who don't tap Legend. -->
         </div>
     </div>
 
@@ -2428,7 +2519,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps-app.js?v=029" defer></script>
+    <script src="maps-app.js?v=032" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
