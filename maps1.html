@@ -423,17 +423,17 @@
         /* --- Legend panel (ported from the Android "Legends" bottom sheet) ---
            Desktop: a right-edge drawer in the same tier as .layer-panel, but wider
            because the legend art is a tall image that gets unreadable under ~320px.
-           Mobile: a real bottom sheet (rounded top, drag handle, swipe-down to
-           dismiss) mirroring the Android BottomSheetBehavior, which opens to half
-           screen height. The desktop/mobile split uses the 700px breakpoint that
-           the bottom bar and FAB stack already flip on — don't introduce a new one. */
+           Mobile: a bottom sheet (drag handle, swipe-down to dismiss) that slides up
+           to FULL height — these are dense, very tall reference charts (Maharashtra
+           is 300x2066) and a half-height sheet meant scrolling four screens through a
+           letterbox. The desktop/mobile split uses the 700px breakpoint that the
+           bottom bar and FAB stack already flip on — don't introduce a new one. */
         .legend-panel {
             position: absolute; z-index: 2000; background: #fff;
             display: flex; flex-direction: column;
-            /* Mobile-first: bottom sheet, hidden below the fold. */
-            left: 0; right: 0; bottom: 0; top: auto;
-            height: 55vh; max-height: 55vh;
-            border-radius: 16px 16px 0 0;
+            /* Mobile-first: full-height sheet, hidden below the fold. */
+            left: 0; right: 0; bottom: 0; top: 0;
+            height: 100%; max-height: 100%;
             box-shadow: 0 -2px 12px rgba(0,0,0,0.3);
             transform: translateY(101%);
             transition: transform 0.28s ease;
@@ -483,8 +483,7 @@
         @media (min-width: 700px) {
             .legend-panel {
                 top: 0; bottom: 0; right: 0; left: auto;
-                width: 360px; height: 100%; max-height: none;
-                border-radius: 0;
+                width: 360px; max-height: none;
                 box-shadow: -2px 0 8px rgba(0,0,0,0.3);
                 transform: translateX(101%);
             }
@@ -2520,7 +2519,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=030" defer></script>
+    <script src="maps1-app.js?v=031" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
