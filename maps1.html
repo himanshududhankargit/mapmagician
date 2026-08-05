@@ -1,0 +1,2538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Development Plan &amp; Master Plan Maps Online – Pune, Mumbai, Hyderabad, Bengaluru, Solapur, Nashik & 40+ Indian Regions | MapMagician</title>
+    <meta name="description" content="Online viewer for Development Plan (DP) and Master Plan maps across 40+ regions in India — Pune, Mumbai, Thane, Solapur, Nashik, Nagpur, Hyderabad HMDA, Bengaluru, Chhatrapati Sambhaji Nagar (Aurangabad), Kolhapur, Satara and more. Peripheral village plans available. Interactive GIS with survey overlay, distance & area measurement tools. Georeferenced maps for Maharashtra. Expanding to new cities and states.">
+    <meta name="keywords" content="development plan map, master plan map, DP map, India DP, Maharashtra DP, Telangana DP, Karnataka DP, Pune DP, Mumbai DP, Hyderabad DP, Bengaluru DP, Solapur DP, Nashik DP, Nagpur DP, village map, gaon nakasha, PMRDA, NAINA, HMDA, BBMP, MSRDC corridor, regional plan, land use map, TP scheme, draft development plan, georeferenced map maharashtra, georeferenced map, survey overlay, map overlay, satellite map overlay, development plan gis, solapur town planning map, nashik dp plan map, dpplans, dp plans, dpplans.com, DP plans India, dp plans online">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="author" content="MapMagician">
+    <!-- Google Search Console verification for the dpplans.com property. -->
+    <meta name="google-site-verification" content="xFVARIJYEs3hLQyWWu6u3qgdQVJPiMR0QQII8oXZqmI">
+    <link rel="canonical" href="https://www.mapmagician.in/maps.html">
+
+    <!-- Open Graph Meta Tags for Social Media Sharing.
+         og:image upgraded from mapmagiciansmall.png (tiny logo) to the splash
+         hero (1280x676, ~1.89:1) so WhatsApp/Twitter/LinkedIn/Slack render a
+         rich landscape preview matching dpplans.com/'s card. The asset exists
+         on both mapmagician.in and dpplans.com under AssetsGIS/. -->
+    <meta property="og:title" content="Development Plan &amp; Master Plan Maps – Pune, Mumbai, Hyderabad, Bengaluru & 40+ Regions">
+    <meta property="og:description" content="Interactive GIS viewer for Development Plan and Master Plan maps across Indian cities and districts — Pune, Mumbai Metropolitan, Hyderabad HMDA, Bengaluru, Thane, PMRDA, NAINA, MSRDC corridors, and more. Peripheral village plans available. Expanding to new regions.">
+    <meta property="og:image" content="https://www.mapmagician.in/AssetsGIS/splash-hero-desktop-1280.jpg">
+    <meta property="og:image:width" content="1280">
+    <meta property="og:image:height" content="676">
+    <meta property="og:image:alt" content="Development Plan map overlay on satellite imagery">
+    <meta property="og:url" content="https://www.mapmagician.in/maps.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="MapMagician">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Development Plan &amp; Master Plan Maps – Pune, Mumbai, Hyderabad, Bengaluru & 40+ Regions">
+    <meta name="twitter:description" content="Interactive GIS viewer for Development Plan and Master Plan maps across Indian cities and districts — Pune, Mumbai Metropolitan, Hyderabad HMDA, Bengaluru, Thane, PMRDA, NAINA, MSRDC corridors, and more. Expanding to new regions.">
+    <meta name="twitter:image" content="https://www.mapmagician.in/AssetsGIS/splash-hero-desktop-1280.jpg">
+    <meta name="twitter:image:alt" content="Development Plan map overlay on satellite imagery">
+
+    <!-- JSON-LD: FAQ targeting DP-map-specific informational queries -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How can I view Development Plan (DP) and Master Plan maps online?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Open mapmagician.in/maps.html in any browser. The interactive viewer overlays official Development Plan, Master Plan, and Village maps for 40+ Indian regions on Google satellite imagery. The base viewer is open to all users; high-zoom premium tiles for individual districts are unlocked via a 7-day pass."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between a Development Plan, Master Plan, and Village Map?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A Development Plan (DP) — often called a Master Plan — is a long-term land-use plan for a city or planning region. It shows zoning (residential, commercial, industrial, etc.) and reservations. A Village Map (gaon nakasha) shows survey-number boundaries within a revenue village. MapMagician serves both layer types where available."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which cities in India have Development Plan maps available?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Pune, PMRDA, Mumbai (Western/Eastern Suburbs, Island City), Navi Mumbai, Thane, Mira-Bhayandar, Palghar, Panvel-Kharghar, Solapur, Nashik, Nagpur Metropolitan Region, Chhatrapati Sambhaji Nagar (Aurangabad), Kolhapur, Satara, Sangli, Ahilyanagar (Ahmednagar), Hyderabad HMDA Periphery, Bengaluru, plus NAINA, MSRDC corridors (Mumbai-Pune Expressway, Karjat, Mahabaleshwar) and Maharashtra-wide regional/draft DPs."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Are these Development Plan maps official?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes — DP, Master Plan, and Village maps are sourced from the publishing authorities (PMRDA, NAINA, HMDA, BBMP, MCGM, MSRDC, individual municipal corporations, and state town planning departments). MapMagician georeferences these documents and serves them as map tiles for online viewing."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I measure distance and area on the maps?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. The viewer includes built-in distance and area measurement tools. You can also use the survey overlay feature to verify boundaries against satellite imagery."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- JSON-LD Structured Data (schema.org) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "MapMagician — Development Plan & Master Plan GIS Viewer",
+      "url": "https://www.mapmagician.in/maps.html",
+      "description": "Interactive Development Plan and Master Plan map viewer for 40+ regions across India — Maharashtra, Telangana, Karnataka and expanding. Peripheral village plans available.",
+      "applicationCategory": "GISApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires HTML5 + JavaScript",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+      "publisher": {
+        "@type": "Organization",
+        "name": "MapMagician",
+        "url": "https://www.mapmagician.in",
+        "sameAs": [
+          "https://www.mapmagician.in",
+          "https://dpplans.com",
+          "https://www.dpplans.com",
+          "https://www.linkedin.com/company/mapmagician"
+        ]
+      },
+      "areaServed": [
+        { "@type": "AdministrativeArea", "name": "Pune", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Pimpri Chinchwad Municipal Corporation", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Mumbai Western Suburbs", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Mumbai Eastern Suburbs", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Mumbai Internal Island City", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Navi Mumbai Municipal Corporation", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Thane / Dombivali", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Mira-Bhayandar", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Palghar / Vasai-Virar", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Panvel / Kharghar", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Solapur", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Nashik", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Nagpur Metropolitan Region", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Chhatrapati Sambhaji Nagar (Aurangabad)", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Kolhapur", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Satara", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Ahilyanagar (Ahmednagar)", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Sangli / Miraj", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Dharashiv (Osmanabad)", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Latur", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Jalna", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Parbhani", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Amravati", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Akola", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Nanded Waghala Municipal Corporation", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Dhule", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Nandurbar", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Jalgaon", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Buldhana", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Bhandara", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Washim", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Hingoli", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Chandrapur", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "PMRDA Region", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "NAINA Region", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "MSRDC Mumbai-Pune Expressway Corridor", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "MSRDC Karjat Corridor", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "MSRDC Mahabaleshwar Corridor", "containedInPlace": "Maharashtra, India" },
+        { "@type": "AdministrativeArea", "name": "Hyderabad HMDA Periphery", "containedInPlace": "Telangana, India" },
+        { "@type": "AdministrativeArea", "name": "Bengaluru", "containedInPlace": "Karnataka, India" }
+      ]
+    }
+    </script>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#008577">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="AssetsGIS/mapmagiciansmall.png">
+    <link rel="apple-touch-icon" href="AssetsGIS/mapmagiciansmall.png">
+
+    <!-- Resource hints — warm up TLS for the third-party origins we hit early. -->
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://maps.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://maps.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://tiles.mapmagician.in" crossorigin>
+    <link rel="dns-prefetch" href="https://www.clarity.ms">
+    <link rel="dns-prefetch" href="https://checkout.razorpay.com">
+
+    <!-- Preload the splash banner image. It is the LCP element, so we want the
+         browser fetching it during head parse, in parallel with the rest of the page. -->
+    <link rel="preload" as="image" type="image/webp" fetchpriority="high"
+          href="AssetsGIS/hero-banner-1280.webp"
+          imagesrcset="AssetsGIS/hero-banner-768.webp 768w, AssetsGIS/hero-banner-1280.webp 1280w, AssetsGIS/hero-banner-1920.webp 1920w"
+          imagesizes="100vw">
+    <!--
+    SECURITY NOTES – Firebase & API Keys
+    =====================================
+    1. The Firebase API key below is a PUBLIC project identifier, NOT a secret.
+       It is safe to include in client-side code. Firebase API keys do not grant
+       data access — security is enforced by:
+       - Firebase Security Rules (Realtime Database / Firestore / Storage)
+       - Authorized domains (Firebase Console → Authentication → Settings)
+       - API key restrictions (Google Cloud Console → Credentials)
+
+    2. BEFORE PUBLISHING, you MUST:
+       a. Restrict the Google Maps API key to your domain's HTTP referrer
+          (Google Cloud Console → APIs & Services → Credentials)
+       b. Restrict the Firebase API key to your domain's HTTP referrer
+          (same location in Google Cloud Console)
+       c. Set Firebase Realtime Database rules to restrict write access:
+          {"rules": {".read": true, ".write": "auth != null"}}
+       d. Configure authorized domains in Firebase Authentication settings
+          to only allow sign-in from your production domain(s)
+    -->
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; overflow: hidden; height: 100%; width: 100%; position: fixed; touch-action: manipulation; }
+        #map { height: 100vh; width: 100%; touch-action: auto; }
+        /* Visually hidden but accessible to screen readers and crawlers (SEO content) */
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+        /* Prevent native image drag / long-press-save on tile imagery. */
+        #map img, #magnifier-map img {
+            -webkit-user-drag: none;
+            user-drag: none;
+            -webkit-touch-callout: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Custom right-click menu (replaces native browser context menu on the map). */
+        .map-ctx-menu {
+            position: fixed;
+            z-index: 10000;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+            padding: 4px 0;
+            min-width: 200px;
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            font-size: 13px;
+            display: none;
+        }
+        .map-ctx-menu.visible { display: block; }
+        .map-ctx-menu-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            color: #202124;
+            white-space: nowrap;
+            user-select: none;
+        }
+        .map-ctx-menu-item:hover { background: #f1f3f4; }
+        .map-ctx-menu-coord {
+            padding: 6px 16px 8px;
+            color: #5f6368;
+            font-size: 11px;
+            border-bottom: 1px solid #e0e0e0;
+            font-family: monospace;
+        }
+
+        /* Top search row (Google Maps style pill) */
+        .top-search-row {
+            position: absolute; top: 8px; left: 8px; right: 8px;
+            height: 48px; display: flex; align-items: center; gap: 8px; z-index: 1000;
+            background: #fff; border-radius: 24px; padding: 0 8px 0 16px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        #search-input {
+            flex: 1; min-width: 0; height: 40px; border: none; outline: none;
+            border-radius: 0; padding: 0 8px; font-size: 14px;
+            background: transparent;
+        }
+        #map-type {
+            height: 32px; border: 1px solid #e0e0e0; border-radius: 16px;
+            padding: 0 10px; font-size: 11px; background: #f5f5f5;
+            cursor: pointer; outline: none; -webkit-appearance: none; appearance: none;
+        }
+        .profile-btn {
+            height: 36px; border-radius: 18px; border: none;
+            background: #e3f2fd; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; font-size: 12px; font-weight: 600; color: #1976D2;
+            flex-shrink: 0; overflow: hidden; padding: 0 12px; gap: 6px;
+            white-space: nowrap; transition: all 0.2s;
+        }
+        .profile-btn.signed-in {
+            width: 36px; height: 36px; padding: 0; border-radius: 50%;
+        }
+        .profile-btn img { width: 36px; height: 36px; border-radius: 50%; }
+        .coord-btn-search {
+            width: 36px; height: 36px; border-radius: 50%; border: none;
+            background: #e0f2f1; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; flex-shrink: 0; padding: 0; transition: background 0.2s;
+        }
+        .coord-btn-search:hover { background: #b2dfdb; }
+
+        @media (max-width: 480px) {
+            .top-search-row { padding: 0 8px; gap: 6px; }
+            #map-type { padding: 0 6px; font-size: 10px; }
+            .profile-btn { width: 36px; padding: 0; border-radius: 50%; }
+            .profile-btn:not(.signed-in) #profile-btn-icon { display: none; }
+        }
+
+        /* Horizontal toolbar buttons */
+        .toolbar-scroll {
+            position: absolute; top: 60px; left: 8px; right: 0;
+            z-index: 1000; overflow-x: auto; overflow-y: hidden;
+            white-space: nowrap; padding: 4px 8px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .toolbar-scroll::-webkit-scrollbar { display: none; }
+        .pill-btn {
+            display: inline-block; height: 32px; line-height: 32px;
+            padding: 0 12px; margin-right: 4px;
+            border-radius: 24px; border: none;
+            background: #fff; color: #000; font-size: 11px;
+            cursor: pointer; white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            transition: background 0.15s;
+        }
+        .pill-btn:hover { background: #e8e8e8; }
+        .pill-btn.active { background: #008577; color: #fff; }
+        .measure-clear-x { display:none; margin-left:6px; width:18px; height:18px; line-height:18px; text-align:center; border-radius:50%; background:#f44336; color:#fff; font-weight:700; font-size:11px; vertical-align:middle; }
+
+        /* Compass button — mobile only (device with coarse/touch pointer) */
+        #btn-compass { display: none; }
+        @media (pointer: coarse) { #btn-compass { display: inline-block; } }
+
+        /* Compass overlay (full-screen modal with dial + level meter) */
+        #compass-overlay { display: none; position: fixed; inset: 0; z-index: 9999; background: #0A1929; color: #fff; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
+        #compass-overlay.open { display: flex; }
+        #compass-close { position: absolute; top: 16px; right: 16px; width: 44px; height: 44px; background: rgba(255,255,255,0.12); border: none; color: #fff; border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+        .compass-title { font-size: 12px; letter-spacing: 2px; opacity: 0.6; margin-bottom: 16px; }
+        .compass-ring-wrap { width: min(82vmin, 360px); height: min(82vmin, 360px); }
+        .compass-ring-wrap svg { width: 100%; height: 100%; display: block; }
+        .compass-heading-text { font-size: 40px; font-weight: 700; color: #8BC34A; margin-top: 24px; line-height: 1; }
+        .compass-subtitle { font-size: 12px; opacity: 0.6; margin-top: 6px; letter-spacing: 1px; }
+        #compass-perm-banner { margin-top: 22px; text-align: center; }
+        #compass-perm-banner p { margin: 0 0 12px; font-size: 13px; opacity: 0.8; max-width: 280px; }
+        #compass-perm-btn { background: #1976D2; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600; font-family: inherit; }
+        #compass-no-sensor { margin-top: 20px; font-size: 13px; opacity: 0.7; text-align: center; max-width: 280px; }
+
+        /* Center crosshair */
+        .crosshair {
+            position: absolute; top: 50%; left: 50%;
+            width: 40px; height: 40px;
+            transform: translate(-50%, -50%);
+            pointer-events: none; z-index: 999;
+        }
+        .crosshair::before {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            width: 20px; height: 2px; background: #FF0000;
+            transform: translate(-50%, -50%);
+        }
+        .crosshair::after {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            width: 2px; height: 20px; background: #FF0000;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Right-side floating buttons */
+        .fab-stack {
+            position: absolute; right: 8px; z-index: 1000;
+            display: flex; flex-direction: column; gap: 8px;
+            bottom: 90px;
+        }
+        .fab {
+            width: 48px; height: 48px; border-radius: 50%;
+            border: none; background: #fff; cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s;
+        }
+        .fab:hover { background: #f0f0f0; }
+        .fab svg { width: 24px; height: 24px; }
+
+        /* Layer panel (slide-in from right) */
+        .layer-panel {
+            position: absolute; top: 0; right: -300px; width: 280px;
+            height: 100%; background: #fff; z-index: 2000;
+            box-shadow: -2px 0 8px rgba(0,0,0,0.3);
+            transition: right 0.3s ease; padding: 16px;
+            overflow-y: auto;
+        }
+        .layer-panel.open { right: 0; }
+        .layer-panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #E0E0E0;
+        }
+        .layer-panel-header h3 { font-size: 16px; color: #212121; margin: 0; }
+        .layer-panel-close {
+            width: 32px; height: 32px; border: none; background: none;
+            cursor: pointer; font-size: 20px; color: #757575;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        }
+        .layer-panel-close:hover { background: #f0f0f0; }
+        .layer-section { margin-bottom: 16px; }
+        .layer-section-title {
+            font-size: 11px; font-weight: 600; color: #757575;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+        }
+        .dp-region-link {
+            display: block; padding: 7px 10px; margin-top: 4px;
+            font-size: 13px; color: #00695C; text-decoration: none;
+            font-family: inherit; border-radius: 6px;
+            transition: background 0.15s;
+        }
+        .dp-region-link:hover { background: #E0F2F1; text-decoration: underline; }
+        .dp-region-link-all { margin-top: 8px; font-weight: 600; color: #008577; }
+        .layer-toggle {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 0; cursor: pointer;
+        }
+        .layer-toggle input[type="checkbox"] { display: none; }
+        .toggle-track {
+            width: 36px; height: 20px; border-radius: 10px;
+            background: #ccc; position: relative; transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .toggle-track::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #fff; transition: transform 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .layer-toggle input:checked + .toggle-track {
+            background: #008577;
+        }
+        .layer-toggle input:checked + .toggle-track::after {
+            transform: translateX(16px);
+        }
+        .layer-toggle-label { font-size: 14px; color: #212121; }
+
+        /* Layer panel overlay (dim background) */
+        .layer-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3); z-index: 1999;
+            display: none;
+        }
+        .layer-overlay.open { display: block; }
+
+        /* --- Legend panel (ported from the Android "Legends" bottom sheet) ---
+           Desktop: a right-edge drawer in the same tier as .layer-panel, but wider
+           because the legend art is a tall image that gets unreadable under ~320px.
+           Mobile: a real bottom sheet (rounded top, drag handle, swipe-down to
+           dismiss) mirroring the Android BottomSheetBehavior, which opens to half
+           screen height. The desktop/mobile split uses the 700px breakpoint that
+           the bottom bar and FAB stack already flip on — don't introduce a new one. */
+        .legend-panel {
+            position: absolute; z-index: 2000; background: #fff;
+            display: flex; flex-direction: column;
+            /* Mobile-first: bottom sheet, hidden below the fold. */
+            left: 0; right: 0; bottom: 0; top: auto;
+            height: 55vh; max-height: 55vh;
+            border-radius: 16px 16px 0 0;
+            box-shadow: 0 -2px 12px rgba(0,0,0,0.3);
+            transform: translateY(101%);
+            transition: transform 0.28s ease;
+            will-change: transform;
+        }
+        .legend-panel.open { transform: translateY(0); }
+        /* Suppress the slide animation while a finger is dragging the sheet. */
+        .legend-panel.dragging { transition: none; }
+        .legend-grabber {
+            flex-shrink: 0; padding: 8px 0 2px; display: flex; justify-content: center;
+            cursor: grab; touch-action: none;
+        }
+        .legend-grabber::before {
+            content: ''; width: 36px; height: 4px; border-radius: 2px; background: #DADCE0;
+        }
+        .legend-panel-header {
+            flex-shrink: 0;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 6px 16px 12px; border-bottom: 1px solid #E0E0E0;
+        }
+        .legend-panel-header h3 {
+            font-size: 16px; color: #212121; margin: 0;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .legend-region-name {
+            display: block; font-size: 11px; font-weight: 400; color: #757575;
+            margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .legend-body {
+            flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+            padding: 16px; text-align: center;
+        }
+        .legend-body a.legend-art { display: block; text-decoration: none; }
+        .legend-body img {
+            width: 100%; max-width: 100%; height: auto; display: block;
+            margin: 0 auto; border-radius: 4px;
+        }
+        .legend-fullsize-hint {
+            margin-top: 10px; font-size: 11px; color: #9AA0A6;
+        }
+        /* Bengaluru art is wide-format; the rest are tall and narrow, so cap the
+           tall ones so they don't blur when stretched across a wide desktop drawer. */
+        .legend-body img.legend-tall { max-width: 320px; }
+        .legend-empty {
+            padding: 32px 12px; font-size: 13px; color: #757575; line-height: 1.5;
+        }
+        @media (min-width: 700px) {
+            .legend-panel {
+                top: 0; bottom: 0; right: 0; left: auto;
+                width: 360px; height: 100%; max-height: none;
+                border-radius: 0;
+                box-shadow: -2px 0 8px rgba(0,0,0,0.3);
+                transform: translateX(101%);
+            }
+            .legend-panel.open { transform: translateX(0); }
+            .legend-grabber { display: none; }
+            .legend-panel-header { padding: 16px 16px 12px; }
+        }
+
+        /* Bottom navigation bar (Google Maps style tabs) */
+        /* Unified bottom bar */
+        .bottom-bar {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(255,255,255,0.97); z-index: 1000;
+            box-shadow: 0 -1px 4px rgba(0,0,0,0.1);
+            display: flex; flex-wrap: wrap; align-items: center;
+            justify-content: center; padding: 6px 12px; gap: 6px;
+        }
+        .bottom-bar-left {
+            display: flex; align-items: center; gap: 6px; order: -1;
+        }
+        .bottom-bar-center { order: -1; text-align: center; }
+        .bottom-bar-right {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 10px; color: #555;
+        }
+        .bottom-bar-right .dock-divider { width: 1px; height: 14px; background: rgba(0,0,0,0.12); }
+        .coord-chip { font-size: 10px; color: #333; white-space: nowrap; cursor: pointer; }
+        #zoom-level { font-size: 10px; color: #555; white-space: nowrap; }
+        /* Wide: single row — opacity left, button center, coords right */
+        @media (min-width: 700px) {
+            .bottom-bar { flex-wrap: nowrap; padding: 8px 16px; }
+            .bottom-bar-left { flex: 1; min-width: 0; order: 0; }
+            .bottom-bar-center { order: 0; width: auto; flex-shrink: 0; }
+            .bottom-bar-right { flex: 1; min-width: 0; justify-content: flex-end; }
+            .opacity-strip-slider { max-width: 200px; }
+            .nav-regions-btn { height: 36px; padding: 0 20px; font-size: 13px; gap: 8px; }
+            .fab-stack { bottom: 52px; }
+        }
+        .nav-regions-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            height: 34px; padding: 0 14px; border: none; border-radius: 17px;
+            background: #008577; color: #fff; font-size: 12px; font-weight: 600;
+            cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            transition: background 0.2s; white-space: nowrap;
+        }
+        .nav-regions-btn:hover { background: #00695C; }
+        .nav-regions-btn svg { flex-shrink: 0; }
+        .home-btn {
+            width: 34px; height: 34px; border: none; border-radius: 50%;
+            background: #fff; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            margin-right: 8px; flex-shrink: 0; transition: background 0.2s;
+        }
+        .home-btn:hover { background: #f0f0f0; }
+
+        /* Fullscreen region browser */
+        .region-browser {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #ECEFF1; z-index: 3500;
+            display: none; flex-direction: column;
+        }
+        .region-browser.open { display: flex; }
+        .region-browser-header {
+            background: #fff; padding: 12px 16px; display: flex; align-items: center;
+            gap: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); flex-shrink: 0; z-index: 1;
+        }
+        .region-browser-back {
+            width: 36px; height: 36px; border: none; background: none; cursor: pointer;
+            font-size: 22px; color: #333; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center;
+        }
+        .region-browser-back:hover { background: #f0f0f0; }
+        .region-browser-title { font-size: 18px; font-weight: 700; color: #212121; flex: 1; }
+        .region-browser-search {
+            display: block; width: auto; margin: 12px 16px; padding: 12px 16px;
+            border: 1px solid #e0e0e0; border-radius: 28px; font-size: 14px;
+            outline: none; background: #fff; flex-shrink: 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .region-browser-search:focus { border-color: #008577; box-shadow: 0 0 0 2px rgba(0,133,119,0.15); }
+        .region-browser-body {
+            flex: 1; overflow-y: auto; padding: 12px;
+        }
+        .region-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 12px; max-width: 600px; margin: 0 auto;
+        }
+        .region-card {
+            background: #fff; border-radius: 10px; overflow: hidden;
+            cursor: pointer; position: relative;
+            transition: transform 0.12s, box-shadow 0.12s;
+            border: 2px solid #e0e0e0;
+        }
+        .region-card.has-purchase { border-color: #A5D6A7; }
+        .region-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+        .region-card:active { transform: scale(0.97); }
+        .region-card-img {
+            width: 100%; aspect-ratio: 4/3; object-fit: contain; display: block;
+            background: #fff; padding: 8px;
+        }
+        .region-card-placeholder {
+            width: 100%; aspect-ratio: 4/3; display: flex; align-items: center;
+            justify-content: center; background: #f5f5f5;
+            font-size: 36px; font-weight: 800; color: #B0BEC5;
+        }
+        .region-card-body { padding: 6px 8px 10px; text-align: center; }
+        .region-card-name {
+            font-size: 13px; font-weight: 600; color: #212121; line-height: 1.3;
+            overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+            -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        }
+        .region-card-sub { font-size: 10px; color: #999; margin-top: 2px; }
+        .region-card-badge {
+            position: absolute; top: 8px; right: 8px; font-size: 10px; font-weight: 600;
+            color: #fff; padding: 3px 10px; border-radius: 10px;
+        }
+        .region-card-badge.purchased { background: #2196F3; }
+        .region-card-badge.buy { background: #FF9800; cursor: pointer; }
+        @media (min-width: 600px) {
+            .region-grid { grid-template-columns: repeat(3, 1fr); max-width: 750px; }
+        }
+        @media (min-width: 900px) {
+            .region-grid { grid-template-columns: repeat(4, 1fr); max-width: 950px; }
+        }
+        /* Info strip below nav bar */
+        .opacity-strip-slider { flex: 1; max-width: 120px; height: 3px; -webkit-appearance: none; appearance: none; background: #ddd; border-radius: 2px; outline: none; }
+        .opacity-strip-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #008577; cursor: pointer; }
+        .opacity-strip-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #008577; cursor: pointer; border: none; }
+        .opacity-strip-label { font-size: 10px; color: #555; min-width: 28px; text-align: center; }
+
+        /* Custom search results dropdown (above Google Places pac-container) */
+        .search-results {
+            position: absolute; top: 60px; left: 8px; right: 8px;
+            max-height: 320px; overflow-y: auto; z-index: 99999;
+            background: #fff; border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            display: none;
+        }
+        .search-results.open { display: block; }
+        /* Push Google Places dropdown below ours */
+        .pac-container { display: none !important; }
+        .search-result-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 14px; cursor: pointer; border: none;
+            background: none; width: 100%; text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item:hover { background: #f5f5f5; }
+        .search-result-item.active { background: #e8f5e9; }
+        .search-result-icon {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: #e8f5e9; display: flex; align-items: center;
+            justify-content: center; font-size: 14px; font-weight: 700;
+            color: #2E7D32; flex-shrink: 0;
+        }
+        .search-result-text { flex: 1; min-width: 0; }
+        .search-result-name { font-size: 13px; color: #212121; font-weight: 500; }
+        .search-result-name mark { background: #fff3cd; border-radius: 2px; padding: 1px 0; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+        .search-result-path { font-size: 11px; color: #757575; margin-top: 1px; }
+        .search-result-header {
+            padding: 6px 14px; font-size: 10px; font-weight: 600;
+            color: #008577; text-transform: uppercase; letter-spacing: 0.5px;
+            background: #f9f9f9; border-bottom: 1px solid #eee;
+        }
+        /* Recent-pick chips shown when search input is empty */
+        .search-chip-row {
+            display: flex; flex-wrap: wrap; gap: 6px;
+            padding: 10px 12px; background: #fafafa;
+            border-bottom: 1px solid #eee;
+        }
+        .search-chip {
+            display: inline-flex; align-items: center;
+            max-width: 180px; height: 26px; padding: 0 10px;
+            border-radius: 13px; border: none;
+            background: #e8f5e9; color: #2E7D32;
+            font-size: 11px; font-weight: 500; cursor: pointer;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .search-chip:hover { background: #c8e6c9; }
+        .search-chip-clear {
+            background: transparent; border: none; cursor: pointer;
+            color: #999; font-size: 10px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px; padding: 0 6px;
+        }
+        .search-chip-clear:hover { color: #d32f2f; }
+
+        /* Expanded sidebar panel */
+        .sidebar-panel {
+            position: absolute; top: 0; left: -340px; width: 320px;
+            height: 100%; background: #fff; z-index: 2500;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.25);
+            transition: left 0.3s ease; display: flex; flex-direction: column;
+        }
+        .sidebar-panel.open { left: 0; }
+        .sidebar-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3); z-index: 2499; display: none;
+        }
+        .sidebar-overlay.open { display: block; }
+
+        /* Login-required dialog */
+        .auth-dialog-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:3000; display:none; align-items:center; justify-content:center; }
+        .auth-dialog-overlay.open { display:flex; }
+        .auth-dialog { background:#fff; border-radius:28px; padding:40px 32px 32px; max-width:380px; width:90%; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.12),0 8px 24px rgba(0,0,0,0.14); font-family:'Google Sans','Segoe UI',Roboto,Arial,sans-serif; }
+        .auth-dialog h3 { margin:0 0 8px; font-size:24px; color:#202124; font-weight:400; }
+        .auth-dialog p { margin:0 0 28px; font-size:14px; color:#5f6368; line-height:1.6; }
+        .auth-dialog-btn { display:inline-flex; align-items:center; gap:12px; padding:0 24px; height:44px; border:1px solid #dadce0; border-radius:22px; background:#fff; color:#3c4043; font-size:14px; font-weight:500; cursor:pointer; font-family:'Google Sans','Segoe UI',Roboto,Arial,sans-serif; transition:background 0.2s,box-shadow 0.2s; }
+        .auth-dialog-btn:hover { background:#f7f8f8; box-shadow:0 1px 3px rgba(60,64,67,0.3); }
+        .auth-dialog-cancel { display:block; margin:20px auto 0; background:none; border:none; color:#1a73e8; font-size:14px; font-weight:500; cursor:pointer; font-family:'Google Sans','Segoe UI',Roboto,Arial,sans-serif; }
+        .auth-dialog-cancel:hover { color:#174ea6; background:rgba(26,115,232,0.04); border-radius:4px; padding:4px 8px; }
+
+        /* Go to Coordinates dialog */
+        .coord-dialog-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:3000; display:none; align-items:center; justify-content:center; }
+        .coord-dialog-overlay.open { display:flex; }
+        .coord-dialog { background:#fff; border-radius:12px; padding:20px 24px 16px; max-width:400px; width:92%; box-shadow:0 8px 32px rgba(0,0,0,0.25); font-family:'Segoe UI',Roboto,Arial,sans-serif; }
+        .coord-dialog h3 { margin:0 0 6px; font-size:20px; color:#212121; font-weight:600; text-align:left; }
+        .coord-dialog-sub { margin:0 0 14px; font-size:13px; color:#555; text-align:left; }
+        .coord-tabs { display:flex; gap:6px; margin-bottom:18px; background:#f0f0f0; border-radius:8px; padding:4px; }
+        .coord-tab { flex:1; height:36px; border:none; background:transparent; border-radius:6px; font-size:13px; font-weight:600; color:#555; cursor:pointer; transition:all 0.15s; }
+        .coord-tab.active { background:#2196f3; color:#fff; }
+        .coord-panel { display:flex; flex-direction:column; gap:14px; margin-bottom:12px; }
+        .coord-input { height:36px; border:none; border-bottom:1px solid #ccc; outline:none; font-size:15px; padding:0 2px; background:transparent; font-family:inherit; color:#212121; }
+        .coord-input:focus { border-bottom-color:#2196f3; border-bottom-width:2px; }
+        .coord-input::placeholder { color:#999; }
+        .coord-input-small { flex:1; min-width:0; }
+        .coord-row { display:flex; gap:12px; }
+        .coord-row select.coord-input { cursor:pointer; }
+        .coord-hint { font-size:12px; color:#888; margin-top:-4px; }
+        .coord-label { font-size:13px; font-weight:700; color:#212121; margin-bottom:-6px; }
+        .coord-dms-row { display:flex; gap:10px; align-items:flex-end; }
+        .coord-input-tiny { flex:1; min-width:0; text-align:left; }
+        .coord-dir-toggle { display:flex; gap:4px; flex-shrink:0; }
+        .coord-dir-btn { width:34px; height:34px; border:none; border-radius:6px; background:#e0e0e0; color:#555; font-size:13px; font-weight:700; cursor:pointer; transition:background 0.15s,color 0.15s; padding:0; font-family:inherit; }
+        .coord-dir-btn:hover { background:#d0d0d0; }
+        .coord-dir-btn.active { background:#2196f3; color:#fff; }
+        .coord-dir-btn.active:hover { background:#1e88e5; }
+        .coord-error { font-size:12px; color:#d32f2f; min-height:16px; margin:4px 0 6px; }
+        .coord-dialog-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
+        .coord-dialog-btn { background:none; border:none; font-size:14px; font-weight:600; color:#2196f3; padding:10px 16px; cursor:pointer; border-radius:4px; font-family:inherit; letter-spacing:0.5px; }
+        .coord-dialog-btn:hover { background:rgba(33,150,243,0.08); }
+
+        /* Zoom restriction dialog */
+        .zoom-dialog-overlay { position:fixed; top:0; left:0; width:100vw; height:100dvh; background:rgba(0,0,0,0.5); z-index:3000; display:none; align-items:center; justify-content:center; overflow-y:auto; padding:12px 0; box-sizing:border-box; }
+        .zoom-dialog-overlay.open { display:flex; }
+        .zoom-dialog { background:#fff; border-radius:16px; max-width:400px; width:92%; box-shadow:0 8px 32px rgba(0,0,0,0.25); overflow:hidden; }
+        #zoom-restrict-overlay .zoom-dialog { max-height:calc(100dvh - 24px); display:flex; flex-direction:column; }
+        #zoom-restrict-overlay .pd-body { overflow-y:auto; min-height:0; }
+        #zoom-restrict-overlay .pd-footer { flex-shrink:0; }
+        #zoom-restrict-overlay .pd-cancel { flex-shrink:0; }
+        .zoom-dialog h3 { margin:0 0 10px; font-size:20px; color:#212121; font-weight:700; }
+        .zoom-dialog-desc { margin:0 0 16px; font-size:13px; color:#555; line-height:1.6; }
+        .zoom-dialog-region { background:#E0F2F1; color:#00695C; padding:10px 16px; border-radius:8px; font-size:14px; font-weight:600; margin-bottom:16px; text-align:center; }
+        .zoom-dialog-buttons { display:flex; gap:12px; justify-content:center; margin-bottom:14px; }
+        .zoom-dialog-btn { padding:12px 28px; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
+        .zoom-btn-access { background:#00796B; color:#fff; }
+        .zoom-btn-access:hover { background:#00695C; }
+        .zoom-btn-dismiss { background:#f44336; color:#fff; }
+        .zoom-btn-dismiss:hover { background:#e53935; }
+        .zoom-dialog-support { display:block; margin:0 auto; padding:8px 20px; border:none; border-radius:8px; background:#3F51B5; color:#fff; font-size:13px; font-weight:500; cursor:pointer; }
+        .zoom-dialog-support:hover { background:#3949AB; }
+        /* Purchase dialog (pd-*) styles — matching maps.html design */
+        .pd-header { position:relative; background:linear-gradient(135deg,#00796B,#004D40); padding:24px 24px 20px; text-align:center; color:#fff; }
+        .pd-close { position:absolute; top:14px; right:14px; width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.14); border:none; color:rgba(255,255,255,0.85); font-size:18px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; transition:background 0.15s,transform 0.1s; }
+        .pd-close:hover { background:rgba(255,95,87,0.9); color:#fff; }
+        .pd-close:active { transform:scale(0.92); }
+        .pd-header-icon { width:44px; height:44px; background:rgba(255,255,255,0.14); border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; }
+        .pd-kicker { font-size:10px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase; opacity:0.75; margin-bottom:4px; }
+        .pd-header .pd-title { margin:0; font-size:20px; color:#fff; font-weight:700; letter-spacing:-0.2px; line-height:1.3; word-break:break-word; }
+        .pd-body { padding:20px 24px 4px; }
+        .pd-region-label { font-size:10px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:#00796B; text-align:center; margin-bottom:10px; }
+        .pd-price-card { background:#F5FBFA; border:1px solid #B2DFDB; border-radius:14px; padding:22px 20px 16px; text-align:center; margin-bottom:18px; }
+        .pd-price-row { display:flex; align-items:baseline; justify-content:center; gap:10px; margin-bottom:8px; }
+        .pd-price-amount { font-size:44px; font-weight:800; color:#00695C; line-height:1; letter-spacing:-1px; }
+        .pd-price-unit { font-size:14px; font-weight:600; color:#546E7A; line-height:1.3; text-align:left; }
+        .pd-price-note { font-size:12px; color:#78909C; line-height:1.5; }
+        .pd-desc { margin:0 0 16px; font-size:13px; color:#607D8B; line-height:1.55; text-align:center; }
+        .pd-features { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+        .pd-feat { display:flex; align-items:center; gap:10px; font-size:13px; color:#37474F; font-weight:500; }
+        .pd-feat svg { flex-shrink:0; }
+        .pd-carousel-wrap { position:relative; margin-bottom:16px; }
+        .pd-cards-row { display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:4px 0; }
+        .pd-cards-row::-webkit-scrollbar { display:none; }
+        .pd-plan-card { position:relative; flex:0 0 calc(50% - 6px); min-width:240px; background:#fff; border-radius:16px; border:1px solid #E0E0E0; padding:18px 16px; display:flex; flex-direction:column; scroll-snap-align:start; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+        .pd-carousel-arrow { display:none; position:absolute; top:50%; transform:translateY(-60%); width:32px; height:32px; border-radius:50%; border:1px solid #ddd; background:#fff; color:#333; font-size:20px; line-height:28px; text-align:center; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.15); z-index:2; }
+        .pd-carousel-arrow:hover { background:#f5f5f5; }
+        .pd-arrow-left { left:-6px; }
+        .pd-arrow-right { right:-6px; }
+        .pd-dots { display:none; justify-content:center; gap:8px; margin-top:10px; }
+        .pd-dot { width:8px; height:8px; border-radius:50%; background:#ccc; transition:background 0.2s; }
+        .pd-dot-active { background:#00796B; }
+        .pd-app-hint-dots { display:flex; justify-content:center; gap:8px; margin-top:10px; }
+        .pd-app-hint-dot { width:8px; height:8px; border-radius:50%; background:#cfd8dc; cursor:pointer; transition:background 0.2s, transform 0.2s; }
+        .pd-app-hint-dot:hover { background:#b0bec5; }
+        .pd-app-hint-dot-active { background:#00796B; transform:scale(1.2); }
+        @media (max-width: 520px) { .pd-plan-card { flex:0 0 82%; min-width:0; } .pd-carousel-arrow { display:block; } .pd-dots { display:flex; } }
+        .pd-card-badge { position:absolute; top:12px; right:12px; z-index:1; font-size:9px; font-weight:700; color:#fff; padding:3px 8px; border-radius:4px; text-transform:uppercase; letter-spacing:0.8px; box-shadow:0 1px 2px rgba(0,0,0,0.15); }
+        .pd-card-name { font-size:17px; font-weight:700; line-height:1.3; margin-bottom:10px; }
+        .pd-card-price { margin-bottom:4px; }
+        .pd-card-subtitle { font-size:11px; color:#888; margin-bottom:12px; }
+        .pd-card-divider { height:1px; background:#F0F0F0; margin-bottom:12px; }
+        .pd-card-benefits { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; flex:1; }
+        .pd-card-benefit { font-size:12px; color:#555; line-height:1.4; }
+        .pd-card-cta { width:100%; padding:12px; font-size:14px; font-weight:600; border:none; border-radius:10px; color:#fff; cursor:pointer; transition:opacity 0.15s; }
+        .pd-card-cta:hover { opacity:0.9; }
+        @media (max-width: 520px) { .pd-plan-card { flex:0 0 80%; min-width:0; } }
+        .pd-cta { width:100%; padding:14px; font-size:15px; font-weight:600; border:none; border-radius:10px; background:#00796B; color:#fff; cursor:pointer; letter-spacing:0.2px; transition:background 0.15s,transform 0.1s; box-shadow:0 1px 3px rgba(0,121,107,0.25); }
+        .pd-cta:hover { background:#00695C; }
+        .pd-cta:active { transform:scale(0.99); }
+        .pd-cancel { width:100%; padding:12px; border:none; background:none; color:#90A4AE; font-size:13px; font-weight:500; cursor:pointer; margin-top:4px; }
+        .pd-cancel:hover { color:#546E7A; }
+        .pd-footer { padding:14px 24px 18px; border-top:1px solid #ECEFF1; }
+        .pd-mobile-hint { display:flex; align-items:center; gap:12px; background:#FAFAFA; border-radius:10px; padding:10px 12px; font-size:12px; color:#546E7A; line-height:1.45; }
+        .pd-app-icon { width:36px; height:36px; border-radius:8px; flex-shrink:0; box-shadow:0 1px 3px rgba(0,0,0,0.12); background:#fff; }
+        .pd-mobile-hint-text { flex:1; min-width:0; }
+        .pd-mobile-hint-text strong { color:#37474F; font-weight:600; display:block; margin-bottom:1px; }
+        .pd-play-btn { display:inline-flex; align-items:center; gap:6px; background:#fff; color:#1B5E20; font-size:11px; font-weight:700; text-decoration:none; padding:7px 11px; border-radius:7px; border:1px solid #C8E6C9; flex-shrink:0; white-space:nowrap; transition:background 0.15s; }
+        .pd-play-btn:hover { background:#F1F8E9; }
+        .pd-play-btn svg { flex-shrink:0; }
+        .pd-ms-btn { color:#0078D4; border-color:#B3D7F2; }
+        .pd-ms-btn:hover { background:#E8F4FD; }
+        .pd-app-hints-row { display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+        .pd-app-hints-row::-webkit-scrollbar { display:none; }
+        .pd-app-hints-row .pd-mobile-hint { flex:0 0 100%; scroll-snap-align:start; min-width:0; box-sizing:border-box; }
+        @media (min-width:521px) { .pd-app-hints-row .pd-mobile-hint { flex:0 0 calc(50% - 5px); } }
+        @media (min-width:521px) { #pd-app-hint-dots { display:none; } }
+        /* Village dialog is only 400px wide — force one-hint-at-a-time regardless of viewport */
+        #village-app-hints-scroll .pd-mobile-hint { flex:0 0 100% !important; }
+        .pd-support { display:block; margin:12px auto 0; padding:6px 14px; background:#E3F2FD; border:1px solid #90CAF9; border-radius:999px; color:#1565C0; font-size:12px; font-weight:600; cursor:pointer; width:fit-content; max-width:100%; text-align:center; transition:background 0.15s, border-color 0.15s; font-family:inherit; white-space:nowrap; }
+        .pd-support:hover { background:#BBDEFB; border-color:#64B5F6; color:#0D47A1; }
+        #addon-panel-search::placeholder { color:#c8e6c9; opacity:1; }
+        .unlock-toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:#2E7D32; color:#fff; padding:12px 24px; border-radius:8px; font-size:14px; font-weight:500; box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:4000; opacity:0; transition:opacity 0.3s,transform 0.3s; pointer-events:none; font-family:'Segoe UI',Roboto,Arial,sans-serif; display:flex; align-items:center; gap:8px; }
+        .unlock-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+        .zoom-info-toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:#ef6c00; color:#fff; padding:12px 20px; border-radius:8px; font-size:13px; font-weight:500; box-shadow:0 4px 12px rgba(0,0,0,0.25); z-index:4000; opacity:0; transition:opacity 0.3s,transform 0.3s; pointer-events:none; font-family:'Segoe UI',Roboto,Arial,sans-serif; display:flex; align-items:center; gap:8px; max-width:92vw; }
+        .zoom-info-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+        /* First-visit disclaimer */
+        .disclaimer-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:20000; display:flex; align-items:center; justify-content:center; padding:16px; box-sizing:border-box; }
+        .disclaimer-box { background:#fff; border-radius:14px; max-width:540px; width:100%; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.3); }
+        .disclaimer-title { font-size:18px; font-weight:800; color:#C62828; text-align:center; padding:20px 24px 14px; letter-spacing:0.5px; }
+        .disclaimer-body { padding:0 24px 16px; font-size:14px; color:#333; line-height:1.6; overflow-y:auto; flex:1; }
+        .disclaimer-body p { margin:0 0 12px; }
+        .disclaimer-body p:last-child { margin-bottom:0; }
+        .disclaimer-body strong { color:#212121; }
+        .disclaimer-section-title { font-weight:700; color:#C62828; font-size:14px; margin:14px 0 8px; }
+        .disclaimer-list { padding-left:20px; margin:0 0 12px; }
+        .disclaimer-list li { margin-bottom:2px; }
+        .disclaimer-italic { font-style:italic; color:#555; font-size:13px; }
+        .disclaimer-actions { display:flex; gap:12px; padding:14px 24px 20px; justify-content:flex-end; flex-shrink:0; border-top:1px solid #eee; }
+        .disclaimer-btn { padding:10px 28px; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
+        /* Button colors meet WCAG AA contrast (4.5:1) for white text. */
+        .disclaimer-btn-disagree { background:#C62828; color:#fff; }
+        .disclaimer-btn-disagree:hover { background:#B71C1C; }
+        .disclaimer-btn-agree { background:#2E7D32; color:#fff; }
+        .disclaimer-btn-agree:hover { background:#1B5E20; }
+        @media (max-width:480px) {
+            .disclaimer-title { font-size:16px; padding:16px 18px 12px; }
+            .disclaimer-body { padding:14px 18px; font-size:13px; }
+            .disclaimer-actions { padding:12px 14px 14px; }
+        }
+
+        /* Install buttons */
+        .sidebar-install-btn { display:inline-flex; align-items:center; gap:10px; margin:0 auto 12px; padding:10px 18px; background:#E0F2F1; color:#00695C; border:1px solid #80CBC4; border-radius:22px; cursor:pointer; text-align:left; transition:background 0.15s,border-color 0.15s,transform 0.12s; font-family:inherit; font-size:13px; box-shadow:0 1px 3px rgba(0,105,92,0.12); }
+        .sidebar-install-btn:hover { background:#B2DFDB; border-color:#4DB6AC; }
+        .sidebar-install-btn:active { transform:scale(0.97); }
+        .sidebar-install-icon { width:18px; height:18px; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#00695C; }
+        .sidebar-install-text { display:flex; align-items:baseline; gap:8px; }
+        .sidebar-install-title { font-size:13px; font-weight:600; color:#00695C; }
+        .sidebar-install-sub { font-size:12px; color:#00897B; }
+        .sidebar-install-btn.installed { background:#E8F5E9; color:#2E7D32; border-color:#A5D6A7; cursor:default; }
+        .sidebar-install-btn.installed:hover { background:#E8F5E9; border-color:#A5D6A7; }
+        .sidebar-install-btn.installed .sidebar-install-title { color:#2E7D32; }
+        .sidebar-install-btn.installed .sidebar-install-icon { color:#2E7D32; }
+        .sidebar-install-btn.installed .sidebar-install-sub { color:#388E3C; }
+        .bottombar-install-btn { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border:1px solid #B2DFDB; border-radius:16px; background:#E0F2F1; color:#00695C; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; transition:background 0.15s; white-space:nowrap; }
+        .bottombar-install-btn:hover { background:#B2DFDB; border-color:#4DB6AC; }
+        .bottombar-install-btn.installed { background:#E8F5E9; color:#2E7D32; border-color:#A5D6A7; cursor:default; }
+        .bottombar-install-btn.installed:hover { background:#E8F5E9; border-color:#A5D6A7; }
+        @media (max-width:768px) { .bottombar-install-btn { display:none !important; } }
+
+        .offline-banner { position:fixed; top:0; left:0; right:0; background:#F44336; color:#fff; text-align:center; padding:10px 16px; font-size:13px; font-weight:600; z-index:10000; font-family:'Segoe UI',Roboto,Arial,sans-serif; display:none; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+        .offline-banner.show { display:flex; }
+        .offline-banner svg { flex-shrink:0; }
+
+        /* Bottom bar region status */
+        .region-status { font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px; flex-shrink:1; }
+        .region-status.subscribed { background:#E8F5E9; color:#2E7D32; }
+        .region-status.not-subscribed { background:#FFEBEE; color:#C62828; }
+
+        /* Payment loading overlay */
+        .payment-loading-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(255,255,255,0.85); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:3000; display:none; align-items:center; justify-content:center; flex-direction:column; }
+        .payment-loading-overlay.open { display:flex; }
+        .payment-spinner { width:36px; height:36px; border:3px solid #e0e0e0; border-top-color:#00796B; border-radius:50%; animation:spin 0.8s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .payment-loading-text { margin-top:16px; font-size:16px; color:#1a1a1a; font-weight:600; letter-spacing:-0.3px; }
+        .payment-loading-sub { margin-top:4px; font-size:13px; color:#888; }
+
+        .sidebar-header {
+            padding: 12px 16px; border-bottom: 1px solid #E0E0E0;
+            display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+        }
+        .sidebar-back {
+            width: 32px; height: 32px; border: none; background: none;
+            cursor: pointer; font-size: 20px; color: #333; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .sidebar-back:hover { background: #f0f0f0; }
+        .sidebar-title { font-size: 16px; font-weight: 600; color: #212121; }
+        .sidebar-search {
+            margin: 8px 12px; padding: 8px 12px; border: 1px solid #ddd;
+            border-radius: 20px; font-size: 13px; outline: none;
+        }
+        .sidebar-search:focus { border-color: #008577; }
+        .sidebar-list {
+            flex: 1; overflow-y: auto; padding: 4px 0;
+        }
+        .sidebar-list-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 16px; cursor: pointer; border: none;
+            background: none; width: 100%; text-align: left;
+            transition: background 0.15s; border-bottom: 1px solid #f5f5f5;
+        }
+        .sidebar-list-item:hover { background: #f5f5f5; }
+        .sidebar-list-icon {
+            width: 40px; height: 40px; border-radius: 8px;
+            background: #e8f5e9; display: flex; align-items: center;
+            justify-content: center; font-size: 18px; font-weight: 700;
+            color: #2E7D32; flex-shrink: 0;
+        }
+        .sidebar-list-text { flex: 1; min-width: 0; }
+        .sidebar-list-name {
+            font-size: 14px; color: #212121; font-weight: 500;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .sidebar-list-sub {
+            font-size: 11px; color: #757575; margin-top: 1px;
+        }
+        .sidebar-list-arrow { color: #999; font-size: 16px; flex-shrink: 0; }
+
+        /* Measurement toolbar */
+        .measure-toolbar {
+            position: absolute; bottom: 64px; left: 8px; right: 8px;
+            height: 44px; display: none; align-items: center; gap: 6px;
+            z-index: 1001; background: #fff; border-radius: 22px;
+            padding: 0 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .measure-toolbar.active { display: flex; }
+        .measure-btn {
+            height: 30px; line-height: 30px; padding: 0 12px;
+            border-radius: 15px; border: none; font-size: 11px;
+            font-weight: 600; cursor: pointer; white-space: nowrap;
+            background: #f0f0f0; color: #333;
+        }
+        .measure-btn:disabled { opacity: 0.4; cursor: default; }
+        .measure-btn-done { background: #008577; color: #fff; }
+        .measure-btn-cancel { background: #f44336; color: #fff; }
+        .measure-unit-select {
+            height: 30px; border: 1px solid #e0e0e0; border-radius: 15px;
+            padding: 0 8px; font-size: 11px; background: #f5f5f5;
+            cursor: pointer; outline: none; -webkit-appearance: none; appearance: none;
+        }
+        .measure-info {
+            position: absolute; bottom: 116px; left: 50%;
+            transform: translateX(-50%); background: rgba(0,0,0,0.75);
+            color: #fff; padding: 8px 18px; border-radius: 20px;
+            font-size: 13px; font-weight: 600; z-index: 1001;
+            pointer-events: none; white-space: nowrap; display: none;
+        }
+        .measure-info.active { display: block; }
+        .measure-label {
+            position: absolute; transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.92); color: #333;
+            padding: 2px 6px; border-radius: 4px; font-size: 11px;
+            font-weight: 600; white-space: nowrap; pointer-events: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+        }
+        /* Cursor-following region-name tooltip on hover (green=purchased, orange+lock=locked) */
+        .dp-hover-tooltip {
+            position: fixed; left: 0; top: 0; display: none;
+            background: rgba(0,0,0,0.78); color: #fff;
+            padding: 4px 10px; border-radius: 6px;
+            font-size: 12px; font-weight: 600; white-space: nowrap;
+            pointer-events: none; z-index: 9998;
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+        }
+        .dp-hover-tooltip.purchased { background: #2e7d32; }  /* green */
+        .dp-hover-tooltip.locked    { background: #ef6c00; }  /* orange */
+        /* Vertex handle popup (move + delete) */
+        .vertex-handle-container {
+            position: absolute; transform: translate(-50%, -100%);
+            display: flex; align-items: center; gap: 6px;
+            pointer-events: auto; padding-bottom: 14px;
+            animation: vtx-pop 0.15s ease-out;
+        }
+        @keyframes vtx-pop {
+            from { opacity: 0; transform: translate(-50%, -100%) scale(0.5); }
+            to   { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+        }
+        .vertex-move-handle {
+            width: 40px; height: 40px; background: #FF5722;
+            border: 2px solid #fff; border-radius: 50%; cursor: grab;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+            user-select: none; touch-action: none;
+        }
+        .vertex-move-handle:active { cursor: grabbing; background: #E64A19; }
+        .vertex-move-handle svg { width: 22px; height: 22px; }
+        .vertex-del-btn {
+            width: 30px; height: 30px; background: #fff;
+            border: 2px solid #D32F2F; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            color: #D32F2F; font-size: 18px; font-weight: 700; line-height: 1;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .vertex-del-btn:active { background: #FFEBEE; }
+        /* Magnifier loupe for vertex dragging */
+        .magnifier {
+            position: fixed; width: 120px; height: 120px;
+            border-radius: 50%; overflow: hidden;
+            border: 3px solid #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+            pointer-events: none; z-index: 9999; display: none;
+        }
+        .magnifier-map { width: 100%; height: 100%; }
+        .magnifier-crosshair-h {
+            position: absolute; top: 50%; left: 0; right: 0;
+            height: 1px; background: #F44336; pointer-events: none;
+        }
+        .magnifier-crosshair-v {
+            position: absolute; left: 50%; top: 0; bottom: 0;
+            width: 1px; background: #F44336; pointer-events: none;
+        }
+        .magnifier-dot {
+            position: absolute; top: 50%; left: 50%;
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #F44336; transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        /* GPS button states */
+        .fab.gps-following { background: #4285F4 !important; }
+        .fab.gps-following svg { stroke: #fff; }
+        .fab.gps-tracking { background: #E3F2FD !important; }
+        .fab.gps-tracking svg { stroke: #4285F4; }
+
+        /* Embed/preview mode — hides all UI chrome for iframe embedding */
+        body.embed-mode .top-search-row,
+        body.embed-mode .toolbar-scroll,
+        body.embed-mode .fab-stack,
+        body.embed-mode .bottom-bar,
+        body.embed-mode .crosshair,
+        body.embed-mode .measure-toolbar,
+        body.embed-mode .measure-info,
+        body.embed-mode #floating-signin-btn,
+        body.embed-mode .unlock-toast { display: none !important; }
+        body.embed-mode { overflow: hidden; }
+        @media print { body { display: none !important; } }
+    </style>
+</head>
+<body>
+    <!-- SEO-only H1: the visual UI is a full-viewport map app with no chrome H1.
+         .sr-only (line 192) keeps this out of the visual layout but in the DOM, so
+         Googlebot can read the page topic. Do not remove without an alternative H1. -->
+    <h1 class="sr-only">Development Plan Maps — Pune, Mumbai, Hyderabad, Bengaluru, Nashik, Nagpur, Thane and 40+ Indian Regions</h1>
+    <!-- App loading screen — banner image is the LCP element so first paint is fast.
+         Existing IDs preserved so the dpplans rebrand script and fade-out logic still work. -->
+    <div id="app-loading-screen" style="position:fixed;inset:0;z-index:99999;background:#111827;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;overflow:hidden;">
+        <picture aria-hidden="true">
+            <source type="image/webp"
+                    srcset="AssetsGIS/hero-banner-768.webp 768w, AssetsGIS/hero-banner-1280.webp 1280w, AssetsGIS/hero-banner-1920.webp 1920w"
+                    sizes="100vw">
+            <img src="AssetsGIS/hero-banner-1280.jpg"
+                 srcset="AssetsGIS/hero-banner-768.jpg 768w, AssetsGIS/hero-banner-1280.jpg 1280w, AssetsGIS/hero-banner-1920.jpg 1920w"
+                 sizes="100vw" width="1920" height="640" alt=""
+                 fetchpriority="high" decoding="async"
+                 style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;display:block;">
+        </picture>
+        <div style="position:relative;z-index:1;background:rgba(255,255,255,0.94);padding:32px 44px;border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,0.25);display:flex;flex-direction:column;align-items:center;max-width:90%;">
+            <div class="app-icon-animated" style="margin-bottom:16px;">
+                <svg width="72" height="72" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="m30,62v-8h24v-20h8v28z" fill="#f0d0b4"/>
+                    <path d="m46,26h8v8,20h-24,-8v-8h24z" fill="#ffeaa7"/>
+                    <path d="m37.89,18h8.11v8,20h-24,-8v-9.03c1.88,0.67 3.9,1.03 6,1.03 6.24,0 11.74,-3.18 14.96,-8 1.92,-2.86 3.04,-6.3 3.04,-10 0,-0.68 -0.04,-1.34 -0.11,-2z" fill="#e6e9ed"/>
+                    <path d="M20,20m-18,0a18,18 0,1 1,36 0a18,18 0,1 1,-36 0" fill="#69d6f4"/>
+                    <path fill="#000" d="m55,33v-8h-8v-8h-8.261c-1.445,-9.053 -9.286,-16 -18.739,-16 -10.477,0 -19,8.523 -19,19 0,8.003 4.981,14.852 12,17.647v9.353h8v8h8v8h34v-30zM3.051,21h7.993c0.127,2.996 0.789,5.682 1.708,8h-7.148c-1.472,-2.347 -2.382,-5.073 -2.553,-8zM20,3.401c0.902,0.935 2.579,2.868 4.073,5.599h-8.146c1.494,-2.731 3.171,-4.664 4.073,-5.599zM25.054,11c1.002,2.283 1.758,4.977 1.901,8h-13.91c0.143,-3.023 0.9,-5.717 1.901,-8zM36.949,19h-7.993c-0.127,-2.996 -0.789,-5.682 -1.708,-8h7.148c1.472,2.347 2.382,5.073 2.553,8zM11.043,19h-7.992c0.172,-2.927 1.081,-5.653 2.554,-8h7.148c-0.92,2.318 -1.583,5.004 -1.71,8zM13.045,21h13.911c-0.143,3.023 -0.9,5.717 -1.901,8h-10.109c-1.001,-2.283 -1.758,-4.977 -1.901,-8zM24.073,31c-1.494,2.731 -3.171,4.664 -4.073,5.599 -0.902,-0.935 -2.579,-2.869 -4.073,-5.599zM26.362,31h6.576c-2.6,3.053 -6.256,5.164 -10.4,5.789 1.132,-1.322 2.579,-3.276 3.824,-5.789zM34.396,29h-7.148c0.919,-2.318 1.582,-5.004 1.708,-8h7.993c-0.171,2.927 -1.081,5.653 -2.553,8zM32.938,9h-6.576c-1.245,-2.513 -2.692,-4.467 -3.824,-5.789 4.144,0.624 7.801,2.736 10.4,5.789zM17.461,3.211c-1.131,1.322 -2.578,3.276 -3.823,5.789h-6.576c2.599,-3.053 6.256,-5.165 10.399,-5.789zM7.062,31h6.576c1.245,2.513 2.692,4.467 3.823,5.789 -4.143,-0.625 -7.8,-2.736 -10.399,-5.789zM15,38.31c1.596,0.437 3.267,0.69 5,0.69 10.477,0 19,-8.523 19,-19 0,-0.338 -0.033,-0.667 -0.051,-1h6.051v26h-30zM23,47h24v-20h6v26h-30zM61,61h-30v-6h24v-20h6z"/>
+                    <path fill="#000" d="m15,15h2v2h-2zm4,0h2v2h-2zm4,0h2v2h-2zm-8,8h2v2h-2zm4,0h2v2h-2zm4,0h2v2h-2zm-6,18h2v2h-2zm4,0h2v2h-2zm4,0h2v2h-2zm14,-12h2v2h-2zm0,4h2v2h-2zm0,4h2v2h-2zm-16,16h2v2h-2zm4,0h2v2h-2zm4,0h2v2h-2z"/>
+                </svg>
+            </div>
+            <div id="splash-brand-title" style="font-size:22px;font-weight:700;color:#1a1a1a;letter-spacing:-0.5px;font-family:'Segoe UI',Roboto,Arial,sans-serif;">MapMagician</div>
+            <div id="splash-brand-subtitle" style="font-size:13px;color:#888;margin-top:4px;font-family:'Segoe UI',Roboto,Arial,sans-serif;">Development Plan GIS</div>
+            <div style="margin-top:24px;width:32px;height:32px;border:3px solid #e0e0e0;border-top-color:#00796B;border-radius:50%;animation:app-spin 0.8s linear infinite;"></div>
+            <div id="app-loading-status" style="margin-top:14px;font-size:12px;color:#aaa;font-family:'Segoe UI',Roboto,Arial,sans-serif;">Loading maps...</div>
+        </div>
+    </div>
+    <script>
+    (function(){
+        if (location.hostname.endsWith('dpplans.com')) {
+            var t = document.getElementById('splash-brand-title');
+            var s = document.getElementById('splash-brand-subtitle');
+            if (t) t.textContent = 'DPplans.com';
+            if (s) {
+                s.innerHTML = 'Powered by <span style="color:#00796B;font-weight:600;letter-spacing:0.2px;">MapMagician</span>';
+                s.style.fontSize = '12px';
+                s.style.letterSpacing = '0.3px';
+                s.style.textTransform = 'none';
+            }
+        }
+    })();
+    </script>
+    <style>
+    @keyframes app-spin { to { transform: rotate(360deg); } }
+    @keyframes app-icon-pulse { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.08); opacity:0.85; } }
+    .app-icon-animated { animation: app-icon-pulse 2s ease-in-out infinite; }
+    </style>
+    <script>
+    // Fallback: auto-dismiss loading screen after 8s even if init fails.
+    // Hide via display:none rather than remove() so the splash banner image
+    // remains the LCP candidate in Chromium's tracker — removing it from the
+    // DOM causes LCP to advance to the next-largest visible element (a map tile).
+    setTimeout(function() {
+        var ls = document.getElementById('app-loading-screen');
+        if (ls) {
+            ls.style.opacity = '0';
+            setTimeout(function() {
+                ls.style.display = 'none';
+                ls.style.pointerEvents = 'none';
+                if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
+            }, 500);
+        }
+    }, 8000);
+    </script>
+
+    <!-- SEO content: visible to screen readers and crawlers, invisible to sighted users -->
+    <section class="sr-only" aria-label="Supported regions and application description">
+        <h1>Development Plan (DP) Maps – Online GIS Viewer</h1>
+        <p>MapMagician is an interactive GIS viewer for Development Plan and Master Plan maps across 40+ regions in India. Browse draft and final DP maps for Pune, Mumbai, Thane, Solapur, Nashik, Nagpur, Hyderabad HMDA periphery, Bengaluru, Chhatrapati Sambhaji Nagar (Aurangabad), Kolhapur, Satara, Amravati and many more regions on an interactive satellite map with measurement tools. Peripheral village plans available. Currently covers Maharashtra, Telangana and Karnataka — expanding to new states and cities.</p>
+        <h2>Supported Regions</h2>
+        <ul>
+            <li><strong>Pune District</strong> (Updated 16/10/2025): Pune, Pimpri Chinchwad Municipal Corporation, Baramati, Lonavala, Wadgaon Sheri, Hadapsar, Lohegaon, Dhanori, Pashan, Kothrud, Dhankwadi, Dhayari, Narhe, Ambegaon, Kondhave, Mahammadwadi, Fursungi, Saswad, Manjari, Bavdhan, Indapur, Daund.</li>
+            <li><strong>Mumbai Metropolitan</strong>: Mumbai Western Suburbs, Mumbai Eastern Suburbs, Mumbai Internal Island City, Navi Mumbai Municipal Corporation (Airoli, Belapur, Ghansoli, Koparkhairane, Nerul, Sanpada, Vashi).</li>
+            <li><strong>Thane / Dombivali</strong> (Updated): Thane (August 2025 Revision), Dombivali, Kalyan (Atali, Ambivali), Bhiwandi-Nizampur, Ulhasnagar, Asangaon.</li>
+            <li><strong>Solapur District</strong> (Update 31-01-2026): Solapur (Draft Rev 2), Mohol, Pandharpur, Barshi, Mangalwedha, Angar, Madha, Vairag, Shripur, Akkalkot, Sangola, Tembhurni, Kurduwadi, Malshiras, Velapur, Akluj, Modnimb, Mandrup, Karmala.</li>
+            <li><strong>Nashik</strong>: Nashik, Trimbak.</li>
+            <li><strong>Nagpur Metropolitan Region.</strong></li>
+            <li><strong>Chhatrapati Sambhaji Nagar (Aurangabad)</strong> (updated): Aurangabad, Paithan.</li>
+            <li><strong>Kolhapur</strong>: Kolhapur City, Jaysingpur, Murgud, Gadhinglaj, Ichalkaranji Regional Plan.</li>
+            <li><strong>Satara Region</strong>: Satara Municipal Council (Draft), Karad, Malakapur, Shirwal, Khandala, Mhaswad, Mahabaleshwar, Phaltan, Wai, Rahimatpur, Panchgani.</li>
+            <li><strong>Ahilyanagar / Ahmednagar (Part)</strong>: Ahmednagar City, Ahmednagar IT Park, Shirdi, Sangamner.</li>
+            <li><strong>Sangli / Miraj Region</strong>: Sangli, Miraj, Kupwad, Jath, Ashta, Islampur, Tasgaon, Vita.</li>
+            <li><strong>Dharashiv (Osmanabad) Region</strong>: Osmanabad, Tuljapur, Umarga, Murum, Lohara, Bhoom.</li>
+            <li><strong>Latur Region</strong>: Latur, Udgir, Ausa, Ahmadpur, Nilanga.</li>
+            <li><strong>Jalna Region</strong>: Jalna, Ambad, Bhokardan, Ghansangvi, Mantha, Partur.</li>
+            <li><strong>Parbhani Region</strong>: Parbhani, Jintur, Pathari.</li>
+            <li><strong>Amravati</strong> (Updated): Amravati, Anjangaon Surji.</li>
+            <li><strong>Akola</strong>: Akola, Akot.</li>
+            <li><strong>Nanded Waghala Municipal Corporation.</strong></li>
+            <li><strong>Dhule, Nandurbar, Jalgaon, Buldhana, Bhandara, Washim, Hingoli, Chandrapur Regions.</strong></li>
+            <li><strong>Panvel / Kharghar Municipal Corporation</strong>: Panvel, Kharghar.</li>
+            <li><strong>Mira-Bhayandar, Palghar / Vasai-Virar</strong>: Palghar, Vasai-Virar, Nala Sopara, Dahanu.</li>
+            <li><strong>PMRDA (Draft)</strong>: Alandi, Bhor (Khed), Chakan, Hinjewadi, Kedgaon, LoniKalbhor, Khadakwasla, Pirangut, Ranjangaon, Saswad, Rajgurunagar, Shikrapur, Shirur, Shivapur, Talegaon, UruliKanchan, Wagholi, Yavat, Kadus, Kale, Kikavi, Nhavara, Pabal, Paud, Rahu, Jejuri, Sangrun, Ranjangaon MIDC, Talegaon MIDC.</li>
+            <li><strong>NAINA Region</strong>: Belavali, Bhilawale, Bhingar, Bhingarwadi, Borle, Gaochan, Kalote Mokashi, Kalote Rayati, Kandroli, Khalapur, Kon, Mahad, Mankival, Nadode, Nangurle, Navandhe, Nimbode, Nigdoli, Pali Budruk, Palasdari, Poyange, Sangade, Sondewadi, Talawali, Tighar, Vanave, Varne, Vinegaon, Wavarle and more notification-area villages.</li>
+            <li><strong>MSRDC Corridors</strong>: Pune–Mumbai Expressway corridor, Karjat corridor, Mahabaleshwar corridor.</li>
+            <li><strong>Hyderabad HMDA Periphery (Draft)</strong>: Bibinagar, Bommalaramaram, Buvanagiri, Chevella, Choutuppal, Faruqnagar, Ghatkesar, Hatnura, Hayathnagar, Ibrahimpatnam Manchal, Jinnawaram, Kandukur, Kisara, Kothuru, Maheshwaram, Medchal Qutubullapur, Moinabad Rajendranagar, Mulug, Narsapur, Patancheruvu, Pochampalli, Sangareddy, Shahbad, Shahmirpet, Shamshabad, Shankarpalli Ramchandrapuram, Shivampet, Tupran, Wargal, Yacharam.</li>
+            <li><strong>Bengaluru (Draft)</strong>: Bengaluru City.</li>
+        </ul>
+        <h2>What You Can Do</h2>
+        <p>Overlay official draft and final Development Plans on satellite imagery, measure distance and area, search by place or coordinates, view village-boundary outlines, and export map views. All regions are updated with the latest draft and notification maps released by state and city planning authorities including Town Planning departments, PMRDA, NAINA, MSRDC, HMDA, BBMP and more. Coverage expanding across Indian states.</p>
+    </section>
+    <div id="map" data-clarity-mask="true"></div>
+
+    <!-- Expanded sidebar panel -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <div class="sidebar-panel" id="sidebar-panel">
+        <div class="sidebar-header">
+            <button class="sidebar-back" id="sidebar-back">&larr;</button>
+            <span class="sidebar-title" id="sidebar-title">Locations</span>
+        </div>
+        <input type="text" class="sidebar-search" id="sidebar-search" placeholder="Search locations...">
+        <div class="sidebar-list" id="sidebar-list"></div>
+    </div>
+
+    <!-- Offline banner -->
+    <div class="offline-banner" id="offline-banner">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M22.99 9C19.15 5.16 13.8 3.76 8.84 4.78l2.52 2.52c3.47-.17 6.99 1.05 9.63 3.7l2-2zm-4 4a9.793 9.793 0 00-4.49-2.56l3.53 3.53.96-.97zM2 3.05L5.07 6.1C3.6 6.82 2.22 7.78 1 9l2 2c1.02-1.02 2.17-1.85 3.41-2.5l2.52 2.52C7.69 11.63 6.53 12.41 5 14l2 2 3.01-3.01 8.44 8.44 1.41-1.41L3.41 1.64 2 3.05zM9 18l3 3 3-3a4.237 4.237 0 00-6 0z"/></svg>
+        You are offline. Some features may not be available.
+    </div>
+    <script>
+    (function() {
+        var banner = document.getElementById('offline-banner');
+        function updateOnlineStatus() {
+            if (navigator.onLine) { banner.classList.remove('show'); } else { banner.classList.add('show'); }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+    })();
+    </script>
+
+    <!-- Center crosshair -->
+    <div class="crosshair"></div>
+
+    <!-- Top search row -->
+    <div class="top-search-row">
+        <input id="search-input" type="search" placeholder="Search Place..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <select id="map-type" aria-label="Map type">
+            <option value="hybrid">Hybrid</option>
+            <option value="satellite">Satellite</option>
+            <option value="roadmap">Roadmap</option>
+            <option value="terrain">Terrain</option>
+        </select>
+        <button class="coord-btn-search" id="coord-btn-search" title="Go to coordinates" aria-label="Go to coordinates">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2v3M12 19v3M2 12h3M19 12h3M12 7a5 5 0 100 10 5 5 0 000-10zm0 3a2 2 0 110 4 2 2 0 010-4z" stroke="#00796B" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <button class="profile-btn" id="profile-btn" title="Sign in">
+            <svg id="profile-btn-svg" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#1976D2"/></svg>
+            <span id="profile-btn-icon">Sign In</span>
+        </button>
+    </div>
+
+    <!-- Custom search results (Firebase locations) -->
+    <div class="search-results" id="search-results"></div>
+
+    <!-- Horizontal toolbar pills -->
+    <div class="toolbar-scroll">
+        <button class="pill-btn" id="btn-addon-maps" style="display:none;background:#2E7D32;color:#fff;font-weight:600;">0 Add-On Maps</button>
+        <button class="pill-btn" id="btn-old-maps" style="display:none">Load Old Maps</button>
+        <button class="pill-btn" id="btn-legend">Legend</button>
+        <button class="pill-btn" id="btn-measure-area">Measure Area<span class="measure-clear-x" id="clear-area-x">✕</span></button>
+        <button class="pill-btn" id="btn-measure-length">Measure Length<span class="measure-clear-x" id="clear-length-x">✕</span></button>
+        <button class="pill-btn" id="btn-compass">Compass</button>
+    </div>
+
+    <!-- Measurement toolbar (shown during measure mode) -->
+    <div class="measure-toolbar" id="measure-toolbar">
+        <span id="measure-status" style="font-size:11px;color:#555;white-space:nowrap;">Tap to place points</span>
+        <select id="measure-unit-length" class="measure-unit-select">
+            <option value="m">Meters</option>
+            <option value="ft">Feet</option>
+            <option value="km">Km</option>
+        </select>
+        <select id="measure-unit-area" class="measure-unit-select" style="display:none;">
+            <option value="sqm">Sq m</option>
+            <option value="hectare">Hectare</option>
+            <option value="acre">Acre</option>
+        </select>
+        <div style="flex:1;"></div>
+        <button class="measure-btn" id="measure-undo">Undo</button>
+        <button class="measure-btn measure-btn-done" id="measure-done" disabled>Done</button>
+        <button class="measure-btn measure-btn-cancel" id="measure-cancel">Cancel</button>
+    </div>
+    <div class="measure-info" id="measure-info"></div>
+
+    <!-- Compass overlay (mobile only) — dial + level meter using DeviceOrientation -->
+    <div id="compass-overlay" data-dismiss="compass-close">
+        <button id="compass-close" aria-label="Close compass">&times;</button>
+        <div class="compass-title">COMPASS</div>
+        <div class="compass-ring-wrap">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <!-- Fixed outer bezel -->
+                <circle cx="100" cy="100" r="99" fill="#050A10"/>
+                <circle cx="100" cy="100" r="96" fill="#0E1820"/>
+                <circle cx="100" cy="100" r="96" fill="none" stroke="#1C2A36" stroke-width="1"/>
+                <!-- Fixed yellow heading indicator at top (shows where phone is pointing) -->
+                <polygon points="100,3 93,18 107,18" fill="#FFC400"/>
+                <circle cx="100" cy="21" r="1.6" fill="#FFC400"/>
+
+                <!-- ROTATING DIAL -->
+                <g id="compass-dial">
+                    <circle cx="100" cy="100" r="92" fill="#0A131C"/>
+                    <circle cx="100" cy="100" r="76" fill="none" stroke="#18242F" stroke-width="0.8"/>
+
+                    <!-- Tick marks (72 at 5° intervals, generated at startup) -->
+                    <g id="compass-ticks"></g>
+
+                    <!-- Cardinal letters — N in red, serif -->
+                    <text x="100" y="42" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="16" font-weight="700" fill="#FF5252">N</text>
+                    <text x="158" y="106" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="16" font-weight="700" fill="#E4ECF2">E</text>
+                    <text x="100" y="166" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="16" font-weight="700" fill="#E4ECF2">S</text>
+                    <text x="42" y="106" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="16" font-weight="700" fill="#E4ECF2">W</text>
+                    <!-- Intercardinal labels -->
+                    <text x="141" y="62" text-anchor="middle" font-family="Georgia, serif" font-size="9" fill="#8A9BAA">NE</text>
+                    <text x="141" y="152" text-anchor="middle" font-family="Georgia, serif" font-size="9" fill="#8A9BAA">SE</text>
+                    <text x="59" y="152" text-anchor="middle" font-family="Georgia, serif" font-size="9" fill="#8A9BAA">SW</text>
+                    <text x="59" y="62" text-anchor="middle" font-family="Georgia, serif" font-size="9" fill="#8A9BAA">NW</text>
+
+                    <!-- North-south rose needle (red/grey triangles meeting at center) -->
+                    <polygon points="100,48 92,100 100,94 108,100" fill="#FF5252" stroke="#B71C1C" stroke-width="0.4"/>
+                    <polygon points="100,152 92,100 100,106 108,100" fill="#455A64" stroke="#263238" stroke-width="0.4"/>
+                </g>
+
+                <!-- FIXED CENTER LEVEL METER (does not rotate with dial) -->
+                <circle cx="100" cy="100" r="17" fill="#03070C"/>
+                <circle cx="100" cy="100" r="17" fill="none" stroke="#FFC400" stroke-width="0.7" opacity="0.75"/>
+                <line x1="86" y1="100" x2="114" y2="100" stroke="#FFC400" stroke-width="0.5" opacity="0.55"/>
+                <line x1="100" y1="86" x2="100" y2="114" stroke="#FFC400" stroke-width="0.5" opacity="0.55"/>
+                <circle id="level-ball" cx="100" cy="100" r="4" fill="#29B6F6" stroke="#81D4FA" stroke-width="0.6"/>
+            </svg>
+        </div>
+        <div class="compass-heading-text"><span id="compass-card">N</span> <span id="compass-deg">0°</span></div>
+        <div class="compass-subtitle">heading</div>
+        <div id="compass-perm-banner">
+            <p>Tap below to let the page read your phone's orientation sensor.</p>
+            <button id="compass-perm-btn">Enable device sensors</button>
+        </div>
+        <div id="compass-no-sensor">Device orientation is not available on this device.</div>
+    </div>
+
+    <!-- Right-side floating action buttons -->
+    <div class="fab-stack">
+        <!-- Settings button -->
+        <button class="fab" id="btn-settings" title="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+        </button>
+        <!-- Layers button -->
+        <button class="fab" id="btn-layers" title="Layers">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
+                <polygon points="12,2 22,8.5 12,15 2,8.5"/>
+                <polyline points="2,12.5 12,19 22,12.5"/>
+                <polyline points="2,16.5 12,23 22,16.5"/>
+            </svg>
+        </button>
+        <!-- GPS button -->
+        <button class="fab" id="btn-gps" title="My Location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
+                <circle cx="12" cy="12" r="4"/>
+                <line x1="12" y1="2" x2="12" y2="6"/>
+                <line x1="12" y1="18" x2="12" y2="22"/>
+                <line x1="2" y1="12" x2="6" y2="12"/>
+                <line x1="18" y1="12" x2="22" y2="12"/>
+            </svg>
+        </button>
+        <!-- Fullscreen button -->
+        <button class="fab" id="btn-fullscreen" title="Fullscreen">
+            <svg id="fullscreen-icon" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
+                <polyline points="15,3 21,3 21,9"/>
+                <polyline points="9,21 3,21 3,15"/>
+                <polyline points="21,15 21,21 15,21"/>
+                <polyline points="3,9 3,3 9,3"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Layer panel overlay -->
+    <div class="layer-overlay" id="layer-overlay"></div>
+
+    <!-- Slide-in layer panel -->
+    <div class="layer-panel" id="layer-panel">
+        <div class="layer-panel-header">
+            <h3>Map Layers</h3>
+            <button class="layer-panel-close" id="layer-panel-close">&times;</button>
+        </div>
+
+        <div class="layer-section">
+            <div class="layer-section-title">Overlay Layers</div>
+            <label class="layer-toggle">
+                <input type="checkbox" id="dp-layer" checked>
+                <span class="toggle-track"></span>
+                <span class="layer-toggle-label">Development Plan</span>
+            </label>
+            <label class="layer-toggle">
+                <input type="checkbox" id="village-layer" checked>
+                <span class="toggle-track"></span>
+                <span class="layer-toggle-label">Village Plans</span>
+            </label>
+            <label class="layer-toggle" id="village-boundary-toggle" style="display:none">
+                <input type="checkbox" id="village-boundary-layer">
+                <span class="toggle-track"></span>
+                <span class="layer-toggle-label">Village Boundaries</span>
+            </label>
+        </div>
+
+        <div class="layer-section">
+            <div class="layer-section-title">Opacity</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <input type="range" id="opacity-slider" min="0" max="100" value="50"
+                       aria-label="Layer opacity"
+                       style="flex:1;height:4px;-webkit-appearance:none;appearance:none;background:#ccc;border-radius:2px;outline:none;">
+                <span id="opacity-value" style="font-size:13px;color:#212121;min-width:36px;">50%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legend panel — right drawer on desktop, bottom sheet on mobile.
+         Deliberately has NO dimmer, unlike the layer/settings drawers: a legend is a
+         reference you read WHILE working the map, and the Android sheet it is ported
+         from has no scrim either. A dimmer would also swallow map gestures and so
+         break the "legend follows the map centre" behaviour. Dismissal is the X, the
+         pill, Esc, Back, or a swipe down on mobile. -->
+    <div class="legend-panel" id="legend-panel" data-dismiss="legend-panel-close">
+        <div class="legend-grabber" id="legend-grabber" aria-hidden="true"></div>
+        <div class="legend-panel-header">
+            <h3>Legend<span class="legend-region-name" id="legend-region-name"></span></h3>
+            <button class="layer-panel-close" id="legend-panel-close" aria-label="Close legend">&times;</button>
+        </div>
+        <div class="legend-body" id="legend-body">
+            <!-- Populated by renderLegend(); img src is set on first open so the
+                 artwork never costs anything to users who don't tap Legend. -->
+        </div>
+    </div>
+
+    <!-- Bottom navigation bar -->
+    <!-- Settings panel overlay -->
+    <div class="layer-overlay" id="settings-overlay"></div>
+
+    <!-- Slide-in settings panel -->
+    <div class="layer-panel" id="settings-panel">
+        <div class="layer-panel-header">
+            <h3>Settings <span id="settings-version" style="font-size:11px;color:#9aa0a6;font-weight:400;letter-spacing:.3px;"></span></h3>
+            <button class="layer-panel-close" id="settings-panel-close">&times;</button>
+        </div>
+        <div class="layer-section">
+            <div class="layer-section-title">Cache</div>
+            <button id="settings-clear-cache" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                Clear Cache &amp; Reload
+            </button>
+            <p style="margin:8px 0 0;font-size:12px;color:#757575;line-height:1.4;">Clears all cached data including map tiles, saved regions, and service worker. The page will reload.</p>
+        </div>
+        <div class="layer-section">
+            <div class="layer-section-title">Support</div>
+            <button id="settings-contact-support" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                Contact Support
+            </button>
+            <button id="settings-share-btn" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;margin-top:8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                Share with friends
+            </button>
+            <button id="settings-install-btn" style="display:none;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;margin-top:8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+                Install app
+            </button>
+        </div>
+        <div class="layer-section" id="settings-purchases-section" style="display:none;">
+            <div class="layer-section-title">My Purchases</div>
+            <div id="settings-sub-purchases" style="margin-bottom:8px;"></div>
+            <div id="settings-dp-purchases" style="margin-bottom:8px;"></div>
+            <div id="settings-android-purchases" style="margin-bottom:8px;"></div>
+            <div id="settings-village-purchases"></div>
+            <p id="settings-no-purchases" style="margin:0;font-size:13px;color:#999;display:none;">No active purchases</p>
+            <div id="settings-purchase-history" style="margin-top:12px;"></div>
+        </div>
+        <div class="layer-section">
+            <div class="layer-section-title">Get the App</div>
+            <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;text-decoration:none;font-size:14px;color:#333;font-family:inherit;text-align:left;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#1B5E20" style="flex-shrink:0;"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
+                Android &mdash; Google Play
+            </a>
+            <a href="https://apps.microsoft.com/detail/9PNZDK3DQPL0?hl=en-us&gl=IN&ocid=pdpshare" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;text-decoration:none;font-size:14px;color:#333;font-family:inherit;text-align:left;margin-top:8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#0078D4" style="flex-shrink:0;"><path d="M1 1h10v10H1zm12 0h10v10H13zM1 13h10v10H1zm12 0h10v10H13z"/></svg>
+                Windows &mdash; Microsoft Store
+            </a>
+        </div>
+        <div class="layer-section">
+            <div class="layer-section-title">About</div>
+            <p id="about-brand-name" style="margin:0;font-size:15px;font-weight:600;color:#1a1a1a;letter-spacing:-0.2px;line-height:1.3;">MapMagician</p>
+            <p id="about-brand-product" style="margin:2px 0 0;font-size:13px;color:#555;line-height:1.4;">Development Plan GIS</p>
+            <p id="about-brand-tagline" style="display:none;margin:8px 0 0;font-size:12px;color:#888;letter-spacing:0.2px;">Powered by <span style="color:#00796B;font-weight:600;">MapMagician</span></p>
+            <p id="about-brand-url" style="margin:8px 0 0;font-size:12px;color:#999;letter-spacing:0.1px;">www.mapmagician.in</p>
+        </div>
+        <div class="layer-section" id="settings-account-section">
+            <div class="layer-section-title">Account</div>
+            <div id="settings-signed-out" style="display:none;">
+                <button id="settings-signin-btn" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;">
+                    <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#34A853" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#FBBC05" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                    Sign in with Google
+                </button>
+            </div>
+            <div id="settings-signed-in" style="display:none;">
+                <p id="settings-user-email" style="margin:0 0 8px;font-size:13px;color:#333;font-weight:500;word-break:break-all;"></p>
+                <button id="settings-signout-btn" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#c62828;font-family:inherit;text-align:left;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#c62828" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                    Sign out
+                </button>
+            </div>
+        </div>
+        <div class="layer-section" id="settings-dp-regions-section-bottom">
+            <div class="layer-section-title">Browse Development Plan regions</div>
+            <p style="margin:0 0 8px;font-size:12px;color:#777;line-height:1.4;">Each link opens that region's dedicated DP map page on DPPlans:</p>
+            <a href="https://dpplans.com/pune-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Pune Development Plan</a>
+            <a href="https://dpplans.com/mumbai-western-suburbs-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Mumbai (Western Suburbs) DP</a>
+            <a href="https://dpplans.com/mumbai-eastern-suburbs-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Mumbai (Eastern Suburbs) DP</a>
+            <a href="https://dpplans.com/mumbai-internal-island-city-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Mumbai (Island City) DP</a>
+            <a href="https://dpplans.com/thane-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Thane Development Plan</a>
+            <a href="https://dpplans.com/nashik-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Nashik Development Plan</a>
+            <a href="https://dpplans.com/nagpur-metropolitan-region-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Nagpur Metropolitan Region DP</a>
+            <a href="https://dpplans.com/pmrda-development-plan/" target="_blank" rel="noopener" class="dp-region-link">PMRDA Development Plan</a>
+            <a href="https://dpplans.com/navi-mumbai-municipal-corporation-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Navi Mumbai Municipal Corp DP</a>
+            <a href="https://dpplans.com/kolhapur-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Kolhapur Development Plan</a>
+            <a href="https://dpplans.com/aurangabad-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Chh. Sambhaji Nagar (Aurangabad)</a>
+            <a href="https://dpplans.com/solapur-dp-plan/" target="_blank" rel="noopener" class="dp-region-link">Solapur Development Plan</a>
+            <a href="https://dpplans.com/home/" target="_blank" rel="noopener" class="dp-region-link dp-region-link-all">Browse all DP regions &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Grace-period renew banner: floats centred above #bottom-bar as a pill, shown
+         only when a subscription is in the 3-day grace window after an Autopay charge
+         failure. Width is capped via max-width:92vw so it stays compact on mobile. -->
+    <div id="grace-renew-banner" style="display:none;position:absolute;left:50%;transform:translateX(-50%);background:#FFF3E0;border:1px solid #FFB74D;border-radius:8px;padding:8px 10px 8px 14px;align-items:center;gap:8px;z-index:999;font-family:'Segoe UI',Roboto,Arial,sans-serif;font-size:13px;color:#5D4037;box-sizing:border-box;max-width:92vw;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+        <span style="line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">&#9888;&#65039; <strong id="grace-renew-banner-region">Subscription</strong> renewal failed</span>
+        <button id="grace-renew-banner-btn" type="button" style="padding:5px 12px;font-size:12px;font-weight:600;border:none;background:#EF6C00;color:#fff;border-radius:4px;cursor:pointer;flex-shrink:0;">Renew</button>
+        <button id="grace-renew-banner-dismiss" type="button" aria-label="Dismiss" style="background:none;border:none;color:#5D4037;font-size:18px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0;">&times;</button>
+    </div>
+
+    <!-- Unified bottom bar -->
+    <div class="bottom-bar" id="bottom-bar">
+        <div class="bottom-bar-left">
+            <input type="range" class="opacity-strip-slider" id="info-opacity-slider" min="0" max="100" value="50" aria-label="Layer opacity">
+            <span class="opacity-strip-label" id="opacity-strip-label">50%</span>
+        </div>
+        <div class="bottom-bar-center">
+            <button class="home-btn" id="btn-home" title="Back to home page" aria-label="Home">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="#008577"/></svg>
+            </button>
+            <button class="nav-regions-btn" id="btn-access-regions">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" fill="#fff"/></svg>
+                Browse Regions
+            </button>
+            <button class="bottombar-install-btn" id="bottombar-install-btn" style="display:none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Install app
+            </button>
+        </div>
+        <div class="bottom-bar-right">
+            <span class="coord-chip" id="center-coord">--</span>
+            <div class="dock-divider"></div>
+            <span id="zoom-level">Z=13</span>
+            <span class="region-status" id="region-status" style="display:none"></span>
+            <span class="region-status" id="region-plan-status" style="display:none"></span>
+        </div>
+    </div>
+    <span id="status-indicator" style="display:none">Ready</span>
+
+    <!-- Floating action button (sign-in or unlock region) -->
+    <button id="floating-signin-btn" style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:2500;display:flex;align-items:center;gap:6px;padding:10px 20px;background:#fff;color:#333;border:1px solid #dadce0;border-radius:24px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.15);transition:background 0.15s;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        <span id="floating-btn-icon"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#34A853" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#FBBC05" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></span>
+        <span id="floating-btn-text">Sign in with Google</span>
+    </button>
+
+    <!-- Go to Coordinates dialog -->
+    <div class="coord-dialog-overlay" id="coord-dialog-overlay" data-dismiss="coord-cancel">
+        <div class="coord-dialog">
+            <h3>Go to Coordinates</h3>
+            <p class="coord-dialog-sub">Enter coordinates to search:</p>
+            <div class="coord-tabs">
+                <button class="coord-tab active" data-coord-tab="decimal" type="button">Decimal</button>
+                <button class="coord-tab" data-coord-tab="dms" type="button">DMS</button>
+                <button class="coord-tab" data-coord-tab="utm" type="button">UTM</button>
+            </div>
+            <div class="coord-panel" id="coord-panel-decimal">
+                <input class="coord-input" id="coord-dec-lat" type="text" placeholder="Latitude" inputmode="decimal" autocomplete="off">
+                <input class="coord-input" id="coord-dec-lng" type="text" placeholder="Longitude" inputmode="decimal" autocomplete="off">
+                <div class="coord-hint">Example: 18.5204, 73.8567</div>
+            </div>
+            <div class="coord-panel" id="coord-panel-dms" style="display:none">
+                <div class="coord-label">Latitude</div>
+                <div class="coord-dms-row">
+                    <input class="coord-input coord-input-tiny" id="coord-dms-lat-deg" type="text" placeholder="Deg" inputmode="decimal" autocomplete="off">
+                    <input class="coord-input coord-input-tiny" id="coord-dms-lat-min" type="text" placeholder="Min" inputmode="decimal" autocomplete="off">
+                    <input class="coord-input coord-input-tiny" id="coord-dms-lat-sec" type="text" placeholder="Sec" inputmode="decimal" autocomplete="off">
+                    <div class="coord-dir-toggle" data-dir-group="lat">
+                        <button type="button" class="coord-dir-btn active" data-dir="N">N</button>
+                        <button type="button" class="coord-dir-btn" data-dir="S">S</button>
+                    </div>
+                </div>
+                <div class="coord-label">Longitude</div>
+                <div class="coord-dms-row">
+                    <input class="coord-input coord-input-tiny" id="coord-dms-lng-deg" type="text" placeholder="Deg" inputmode="decimal" autocomplete="off">
+                    <input class="coord-input coord-input-tiny" id="coord-dms-lng-min" type="text" placeholder="Min" inputmode="decimal" autocomplete="off">
+                    <input class="coord-input coord-input-tiny" id="coord-dms-lng-sec" type="text" placeholder="Sec" inputmode="decimal" autocomplete="off">
+                    <div class="coord-dir-toggle" data-dir-group="lng">
+                        <button type="button" class="coord-dir-btn active" data-dir="E">E</button>
+                        <button type="button" class="coord-dir-btn" data-dir="W">W</button>
+                    </div>
+                </div>
+                <div class="coord-hint">Example: 18° 31' 13.44" N, 73° 51' 24.12" E</div>
+            </div>
+            <div class="coord-panel" id="coord-panel-utm" style="display:none">
+                <div class="coord-row">
+                    <input class="coord-input coord-input-small" id="coord-utm-zone" type="text" placeholder="Zone (1-60)" inputmode="numeric" autocomplete="off">
+                    <select class="coord-input coord-input-small" id="coord-utm-hemi">
+                        <option value="N">N (Northern)</option>
+                        <option value="S">S (Southern)</option>
+                    </select>
+                </div>
+                <input class="coord-input" id="coord-utm-easting" type="text" placeholder="Easting (m)" inputmode="decimal" autocomplete="off">
+                <input class="coord-input" id="coord-utm-northing" type="text" placeholder="Northing (m)" inputmode="decimal" autocomplete="off">
+                <div class="coord-hint">Example: Zone 43 N, 297000, 2048000</div>
+            </div>
+            <div class="coord-error" id="coord-error"></div>
+            <div class="coord-dialog-actions">
+                <button class="coord-dialog-btn" id="coord-cancel" type="button">CANCEL</button>
+                <button class="coord-dialog-btn" id="coord-go" type="button">GO</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sign-in required dialog -->
+    <div class="auth-dialog-overlay" id="auth-dialog-overlay" data-dismiss="auth-dialog-cancel">
+        <div class="auth-dialog">
+            <div style="width:48px;height:48px;margin:0 auto 20px;background:#f0f4ff;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#1a73e8"/></svg>
+            </div>
+            <h3>Sign in required</h3>
+            <p id="auth-dialog-desc">Sign in with your Google account to complete the purchase.</p>
+            <div id="auth-dialog-weblabel" style="display:none;background:#fff8e1;padding:10px 12px;border-radius:8px;border-left:3px solid #f9a825;margin:-12px 0 20px;font-size:12.5px;line-height:1.45;color:#5d4037;text-align:left;">&#9888;&#65039; <strong>Web access only.</strong> Does <strong>NOT</strong> activate access on Android. Website and Android are separate platforms and require separate purchases.</div>
+            <p style="margin:-16px 0 24px;font-size:12px;color:#80868b;line-height:1.5;">We only use your Google account for secure sign-in and purchase sync. We do not send promotional messages, access your emails, or share your data.</p>
+            <button class="auth-dialog-btn" id="auth-dialog-signin">
+                <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59A14.5 14.5 0 019.5 24c0-1.59.28-3.14.76-4.59l-7.98-6.19A23.99 23.99 0 000 24c0 3.77.87 7.35 2.56 10.78l7.97-6.19z"/><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                Continue with Google
+            </button>
+            <button class="auth-dialog-cancel" id="auth-dialog-cancel">Not now</button>
+        </div>
+    </div>
+
+    <!-- Sign-out confirmation dialog -->
+    <div class="auth-dialog-overlay" id="signout-dialog-overlay" data-dismiss="signout-dialog-cancel">
+        <div class="auth-dialog">
+            <h3>Sign Out</h3>
+            <p id="signout-dialog-email" style="font-weight:600;color:#333;margin-bottom:16px;word-break:break-all;"></p>
+            <p style="margin-bottom:20px;font-size:13px;">You will lose access to purchased regions until you sign in again.</p>
+            <button class="auth-dialog-btn" id="signout-dialog-confirm" style="background:#f44336;">Sign Out</button>
+            <button class="auth-dialog-cancel" id="signout-dialog-cancel">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Clear measurements confirmation dialog -->
+    <div class="auth-dialog-overlay" id="clear-measure-dialog-overlay" data-dismiss="clear-measure-cancel">
+        <div class="auth-dialog">
+            <h3>Clear Measurements</h3>
+            <p id="clear-measure-dialog-text">Clear all area measurements?</p>
+            <button class="auth-dialog-btn" id="clear-measure-confirm" style="background:#f44336;color:#fff;border:none;">Clear</button>
+            <button class="auth-dialog-cancel" id="clear-measure-cancel">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Support form dialog -->
+    <div class="auth-dialog-overlay" id="support-dialog-overlay" data-dismiss="support-cancel-btn" style="z-index:4000;">
+        <div class="auth-dialog" style="max-width:400px;text-align:left;">
+            <!-- Step 1: choose problem type -->
+            <div id="support-choice-section" style="display:none;">
+                <h3 style="text-align:center;margin-bottom:8px;">How can we help?</h3>
+                <p style="font-size:13px;color:#5f6368;text-align:center;margin:0 0 20px 0;">Pick the type of problem so we can route it correctly.</p>
+                <button class="auth-dialog-btn" id="support-choice-billing" style="width:100%;justify-content:flex-start;text-align:left;margin-bottom:12px;">
+                    <span style="display:block;">
+                        <span style="display:block;font-weight:600;color:#202124;">Billing Problem</span>
+                        <span style="display:block;font-size:12px;color:#5f6368;">I paid for a region but it's not working</span>
+                    </span>
+                </button>
+                <button class="auth-dialog-btn" id="support-choice-other" style="width:100%;justify-content:flex-start;text-align:left;margin-bottom:0;">
+                    <span style="display:block;">
+                        <span style="display:block;font-weight:600;color:#202124;">Other Problem</span>
+                        <span style="display:block;font-size:12px;color:#5f6368;">Something else — bug, feedback, general help</span>
+                    </span>
+                </button>
+                <button class="auth-dialog-cancel" id="support-choice-cancel">Cancel</button>
+            </div>
+            <!-- Step 2 (Billing): pick the region you paid for -->
+            <div id="support-billing-section" style="display:none;">
+                <h3 style="text-align:center;margin-bottom:8px;">Which region did you pay for?</h3>
+                <p style="font-size:13px;color:#5f6368;text-align:center;margin:0 0 14px 0;">Search and select the region your pass should unlock.</p>
+                <input type="text" id="support-region-search" placeholder="Search region…" autocomplete="off" style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#333;margin-bottom:10px;box-sizing:border-box;">
+                <div id="support-region-list" style="max-height:230px;overflow-y:auto;border:1px solid #eee;border-radius:8px;margin-bottom:14px;"></div>
+                <button class="auth-dialog-btn" id="support-billing-next" style="width:100%;justify-content:center;margin-bottom:0;" disabled>Next</button>
+                <button class="auth-dialog-cancel" id="support-billing-back">Back</button>
+            </div>
+            <!-- Step 3 (Billing): confused-region guard -->
+            <div id="support-confusion-section" style="display:none;">
+                <h3 style="text-align:center;margin-bottom:12px;color:#e65100;">Are these the same region?</h3>
+                <div style="background:#fff8e1;padding:12px;border-radius:8px;border-left:3px solid #f9a825;margin:0 0 16px 0;font-size:13px;line-height:1.5;color:#5d4037;">
+                    <span id="support-confusion-text">&nbsp;</span>
+                </div>
+                <button class="auth-dialog-btn" id="support-confusion-confirm" style="width:100%;justify-content:center;margin-bottom:0;">Yes, contact support</button>
+                <button class="auth-dialog-cancel" id="support-confusion-back">No, take me back</button>
+            </div>
+            <div id="support-form-section">
+                <h3 style="text-align:center;margin-bottom:16px;">Contact Support</h3>
+                <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">To</label>
+                <input type="text" value="support@mapmagician.in" readonly style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#333;background:#f5f5f5;margin-bottom:12px;box-sizing:border-box;">
+                <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Your Email</label>
+                <input type="text" id="support-email" readonly style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#333;background:#f5f5f5;margin-bottom:12px;box-sizing:border-box;">
+                <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Region</label>
+                <input type="text" id="support-region" readonly style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#333;background:#f5f5f5;margin-bottom:12px;box-sizing:border-box;">
+                <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Your Message</label>
+                <textarea id="support-message" rows="4" placeholder="Describe your issue..." style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;resize:vertical;margin-bottom:16px;box-sizing:border-box;font-family:inherit;"></textarea>
+                <div style="background:#fff8e1;padding:10px 12px;border-radius:8px;border-left:3px solid #f9a825;margin:0 0 14px 0;font-size:12.5px;line-height:1.45;color:#5d4037;">
+                    <strong>Note:</strong> Android &amp; Web are <strong>separate platforms</strong> &mdash; a subscription bought on the Android app does <strong>not</strong> work on web (and vice versa).
+                </div>
+                <button class="auth-dialog-btn" id="support-send-btn" style="width:100%;justify-content:center;margin-bottom:0;">Send Message</button>
+                <button class="auth-dialog-cancel" id="support-cancel-btn">Cancel</button>
+            </div>
+            <div id="support-success-section" style="display:none;">
+                <h3 style="text-align:center;margin-bottom:16px;color:#2E7D32;">Message Sent</h3>
+                <p style="font-size:14px;line-height:1.5;color:#333;margin:0 0 12px 0;">Thank you for contacting MapMagician. We have received your request and typically reply within <strong>24 hours</strong>.</p>
+                <p style="font-size:14px;line-height:1.5;color:#333;margin:0 0 12px 0;">Our reply will be sent to your registered login email:</p>
+                <div style="background:#e8f5e9;padding:10px 12px;border-radius:8px;border-left:3px solid #2E7D32;margin:0 0 12px 0;font-size:13px;color:#1b5e20;word-break:break-all;">
+                    <strong id="support-success-email">&nbsp;</strong>
+                </div>
+                <div style="background:#fff8e1;padding:12px;border-radius:8px;border-left:3px solid #f9a825;margin:12px 0;font-size:13px;line-height:1.5;color:#5d4037;">
+                    <strong>Please also check your Junk / Spam folder</strong> if you do not see our reply in your inbox within 24 hours.
+                </div>
+                <button type="button" class="auth-dialog-btn" id="support-success-close-btn" style="width:100%;justify-content:center;margin-bottom:0;">Close</button>
+            </div>
+            <div style="margin-top:14px;padding-top:12px;border-top:1px solid #eee;text-align:center;font-size:11px;color:#888;letter-spacing:0.3px;">
+                Powered by <span style="color:#00796B;font-weight:600;">MapMagician</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- First-visit disclaimer dialog (blocks app until accepted; skipped in embed mode) -->
+    <div class="disclaimer-overlay" id="disclaimer-overlay">
+        <div class="disclaimer-box">
+            <div class="disclaimer-title">IMPORTANT DISCLAIMER</div>
+            <div class="disclaimer-body">
+                <p>This is a privately developed GIS visualization and mapping application.</p>
+                <p><strong>This app is NOT affiliated with, endorsed by, or connected to any government agency or authority.</strong> It does NOT represent a government entity and does NOT provide official government data, legal records, or authoritative planning information.</p>
+                <p>Maps and layers shown in this app are independently processed into map tiles and visualized for reference and spatial understanding purposes only. Any use of publicly available planning documents is solely for general reference and does not imply accuracy, completeness, or official validity.</p>
+                <div class="disclaimer-section-title">LIMITATIONS OF USE</div>
+                <p>The information displayed in this app:</p>
+                <ol class="disclaimer-list">
+                    <li>Is for reference and visualization only</li>
+                    <li>Is NOT suitable for legal, regulatory, or official purposes</li>
+                    <li>May not reflect the latest notifications, amendments, or approvals</li>
+                    <li>Should not be used for property transactions or statutory compliance</li>
+                </ol>
+                <p class="disclaimer-italic">Users must independently verify all information with official notifications, planning authorities, and qualified professionals before making any decisions. For legally valid and authoritative information, always consult the respective government department or official publications.</p>
+            </div>
+            <div class="disclaimer-actions">
+                <button class="disclaimer-btn disclaimer-btn-disagree" id="disclaimer-disagree">Disagree</button>
+                <button class="disclaimer-btn disclaimer-btn-agree" id="disclaimer-agree">I Agree</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Install info dialog -->
+    <div class="auth-dialog-overlay" id="install-info-overlay" data-dismiss="install-info-cancel" style="z-index:4000;">
+        <div class="auth-dialog" style="max-width:420px;text-align:left;">
+            <div style="width:56px;height:56px;margin:0 auto 16px;background:#E0F2F1;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="#00695C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3 style="text-align:center;margin-bottom:4px;">Install MapMagician</h3>
+            <p style="font-size:13px;color:#888;text-align:center;margin-bottom:16px;">Available on multiple platforms</p>
+            <a href="ms-windows-store://pdp/?productid=9PNZDK3DQPL0" id="install-opt-ms" style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid #B3D7F2;border-radius:12px;background:#F8FBFF;text-decoration:none;color:#333;margin-bottom:10px;transition:background 0.15s;">
+                <div style="width:40px;height:40px;border-radius:10px;background:#0078D4;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M1 1h10v10H1zm12 0h10v10H13zM1 13h10v10H1zm12 0h10v10H13z"/></svg>
+                </div>
+                <div style="min-width:0;">
+                    <div style="font-weight:700;font-size:14px;color:#0078D4;">Microsoft Store</div>
+                    <div style="font-size:12px;color:#666;margin-top:1px;">Native Windows desktop app</div>
+                </div>
+            </a>
+            <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid #C8E6C9;border-radius:12px;background:#F8FFF8;text-decoration:none;color:#333;margin-bottom:10px;transition:background 0.15s;">
+                <div style="width:40px;height:40px;border-radius:10px;background:#1B5E20;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
+                </div>
+                <div style="min-width:0;">
+                    <div style="font-weight:700;font-size:14px;color:#1B5E20;">Google Play</div>
+                    <div style="font-size:12px;color:#666;margin-top:1px;">Android app</div>
+                </div>
+            </a>
+            <button id="install-opt-pwa" style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid #B2DFDB;border-radius:12px;background:#F0FDFB;color:#333;margin-bottom:10px;width:100%;cursor:pointer;font-family:inherit;text-align:left;font-size:inherit;transition:background 0.15s;">
+                <div style="width:40px;height:40px;border-radius:10px;background:#00695C;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <div style="min-width:0;">
+                    <div style="font-weight:700;font-size:14px;color:#00695C;">Install as Web App</div>
+                    <div id="install-pwa-sub" style="font-size:12px;color:#666;margin-top:1px;">Add to home screen / Start menu</div>
+                </div>
+            </button>
+            <button class="auth-dialog-cancel" id="install-info-cancel">Not now</button>
+        </div>
+    </div>
+
+    <!-- Zoom restriction / purchase dialog -->
+    <div class="zoom-dialog-overlay" id="zoom-restrict-overlay" data-dismiss="zoom-restrict-cancel">
+        <div class="zoom-dialog" style="max-width:720px;padding:0;">
+            <!-- Header -->
+            <div class="pd-header">
+                <div class="pd-kicker">Choose Your Plan</div>
+                <h3 id="zoom-restrict-title" class="pd-title">Web Unlock Region</h3>
+                <div id="zoom-restrict-region" style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;display:none;"></div>
+                <button class="pd-close" id="zoom-restrict-close" type="button" aria-label="Close">&times;</button>
+            </div>
+            <!-- Body: side-by-side plan cards -->
+            <div class="pd-body" style="padding:16px 16px 4px;">
+                <div id="zoom-restrict-info" style="background:#fff8e1;padding:12px 14px;border-radius:8px;border-left:3px solid #f9a825;margin:0 0 14px 0;font-size:13px;line-height:1.5;color:#5d4037;">
+                    <span id="zoom-restrict-desc">Access high-resolution development plan maps directly in your browser.</span>
+                    <span id="zoom-restrict-weblabel" style="display:block;margin-top:8px;">&#9888;&#65039; <strong>Web access only.</strong> Does <strong>NOT</strong> activate access on Android. Website and Android are separate platforms and require separate purchases.</span>
+                </div>
+                <!-- Plan cards with navigation -->
+                <div class="pd-carousel-wrap" id="pd-plan-tabs">
+                    <button class="pd-carousel-arrow pd-arrow-left" id="pd-arrow-left" onclick="document.getElementById('pd-cards-scroll').scrollBy({left:-260,behavior:'smooth'})">&#8249;</button>
+                    <div id="pd-cards-scroll" class="pd-cards-row">
+                        <!-- Subscription card -->
+                        <div class="pd-plan-card pd-plan-card-sub">
+                            <div class="pd-card-badge" style="background:#4CAF50;">POPULAR</div>
+                            <div class="pd-card-name" id="pd-sub-card-name" style="color:#2E7D32;">Weekly<br>Subscription</div>
+                            <div class="pd-card-price"><span id="zoom-sub-price-amount" style="font-size:32px;font-weight:800;color:#1A1A1A;">&#8377;89</span><span id="pd-sub-period-label" style="font-size:13px;color:#888;margin-left:4px;">/ week</span></div>
+                            <div class="pd-card-subtitle">Auto-renews &middot; Cancel anytime</div>
+                            <div class="pd-card-divider"></div>
+                            <div class="pd-card-benefits">
+                                <div class="pd-card-benefit" id="pd-sub-benefit-cost">&#10003; Lower weekly cost</div>
+                                <div class="pd-card-benefit">&#10003; Continuous access to maps</div>
+                                <div class="pd-card-benefit">&#10003; Works in any web browser</div>
+                                <div class="pd-card-benefit">&#10003; Best for regular users</div>
+                            </div>
+                            <button class="pd-card-cta" id="zoom-restrict-sub-action" style="background:#4CAF50;">Subscribe Now</button>
+                        </div>
+                        <!-- 7-Day Pass card -->
+                        <div class="pd-plan-card pd-plan-card-onetime">
+                            <div class="pd-card-name" style="color:#1565C0;">Prepaid<br>7-Day Access</div>
+                            <div class="pd-card-price"><span id="zoom-price-amount" style="font-size:32px;font-weight:800;color:#1A1A1A;">&#8377;199</span><span style="font-size:13px;color:#888;margin-left:4px;">one-time</span></div>
+                            <div class="pd-card-subtitle">No auto-renewal &middot; Login &amp; use in any browser</div>
+                            <div class="pd-card-divider"></div>
+                            <div class="pd-card-benefits">
+                                <div class="pd-card-benefit">&#10003; Non-recurring payment</div>
+                                <div class="pd-card-benefit">&#10003; 7-day full access</div>
+                                <div class="pd-card-benefit">&#10003; Works in any web browser</div>
+                                <div class="pd-card-benefit">&#10003; Best for occasional use</div>
+                            </div>
+                            <button class="pd-card-cta" id="zoom-restrict-action" style="background:#2196F3;">Get 7-Day Access</button>
+                        </div>
+                    </div>
+                    <button class="pd-carousel-arrow pd-arrow-right" id="pd-arrow-right" onclick="document.getElementById('pd-cards-scroll').scrollBy({left:260,behavior:'smooth'})">&#8250;</button>
+                    <!-- Dot indicators -->
+                    <div class="pd-dots">
+                        <span class="pd-dot pd-dot-active" id="pd-dot-0"></span>
+                        <span class="pd-dot" id="pd-dot-1"></span>
+                    </div>
+                </div>
+                <!-- Hidden price containers for JS price loading (not displayed) -->
+                <div id="zoom-restrict-price" style="display:none;"></div>
+                <div id="zoom-restrict-sub-price" style="display:none;"></div>
+            </div>
+            <!-- Pinned dismiss: sits between body and footer so scroll can't hide it -->
+            <button class="pd-cancel" id="zoom-restrict-cancel">Not now</button>
+            <!-- Footer: mobile hint + support -->
+            <div class="pd-footer">
+                <div class="pd-app-hints-row" id="pd-app-hints-scroll">
+                    <div class="pd-mobile-hint">
+                        <picture><source srcset="AssetsGIS/image-1.webp" type="image/webp"><img class="pd-app-icon" src="AssetsGIS/image-1.png" alt="MapMagician app icon" width="36" height="36" loading="lazy" decoding="async"></picture>
+                        <div class="pd-mobile-hint-text">
+                            <strong>Prefer mobile?</strong>Get the Android app for on-the-go access.
+                        </div>
+                        <a class="pd-play-btn" href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#1B5E20"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
+                            Google Play
+                        </a>
+                    </div>
+                    <div class="pd-mobile-hint">
+                        <picture><source srcset="AssetsGIS/image-1.webp" type="image/webp"><img class="pd-app-icon" src="AssetsGIS/image-1.png" alt="MapMagician app icon" width="36" height="36" loading="lazy" decoding="async"></picture>
+                        <div class="pd-mobile-hint-text">
+                            <strong>Want desktop app?</strong>Get MapMagician from the Microsoft Store.
+                        </div>
+                        <a class="pd-play-btn pd-ms-btn" href="https://apps.microsoft.com/detail/9PNZDK3DQPL0?hl=en-us&gl=IN&ocid=pdpshare" target="_blank" rel="noopener">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#0078D4"><path d="M1 1h10v10H1zm12 0h10v10H13zM1 13h10v10H1zm12 0h10v10H13z"/></svg>
+                            Microsoft Store
+                        </a>
+                    </div>
+                </div>
+                <div class="pd-app-hint-dots" id="pd-app-hint-dots">
+                    <span class="pd-app-hint-dot pd-app-hint-dot-active" data-idx="0"></span>
+                    <span class="pd-app-hint-dot" data-idx="1"></span>
+                </div>
+                <button class="pd-support" id="zoom-restrict-support">Need help? Contact Support</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Region-mismatch clearance dialog: owns one region of a confused pair, zooming into the other -->
+    <div class="zoom-dialog-overlay" id="region-mismatch-overlay" data-dismiss="region-mismatch-cancel">
+        <div class="zoom-dialog" style="max-width:400px;text-align:left;padding:0;overflow:hidden;border-radius:16px;">
+            <div class="pd-header">
+                <div class="pd-header-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z" fill="#fff"/></svg>
+                </div>
+                <div class="pd-kicker">Different Region</div>
+                <h3 id="region-mismatch-title" class="pd-title">This is a separate region</h3>
+            </div>
+            <div class="pd-body" style="padding:18px 20px 16px;">
+                <p class="pd-desc" id="region-mismatch-desc" style="margin-bottom:16px;">Good news &mdash; your pass is active! You're just entering a different region now.</p>
+                <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;background:#E8F5E9;border:1px solid #C8E6C9;border-radius:10px;padding:11px 12px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#2E7D32" style="flex-shrink:0;margin-top:1px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    <div style="font-size:13.5px;color:#1B5E20;line-height:1.4;">Your <strong id="region-mismatch-owned">Pune</strong> pass is active and working. But you have transitioned to the <strong class="region-mismatch-accessed">PMRDA</strong> region.</div>
+                </div>
+                <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;background:#FFF8E1;border:1px solid #FFE082;border-radius:10px;padding:11px 12px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#F57F17" style="flex-shrink:0;margin-top:1px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                    <div style="font-size:13.5px;color:#7A5800;line-height:1.4;">Requires unlock: <strong class="region-mismatch-accessed">PMRDA</strong> &mdash; these 2 are different regions with their own subscriptions.</div>
+                </div>
+                <button class="pd-cta" id="region-mismatch-unlock">Unlock this region</button>
+                <button class="pd-cancel" id="region-mismatch-cancel">Back to map</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Base plan required dialog -->
+    <div class="zoom-dialog-overlay" id="baseplan-required-overlay" data-dismiss="baseplan-cancel-btn">
+        <div class="zoom-dialog" style="max-width:400px;text-align:left;padding:0;overflow:hidden;border-radius:16px;">
+            <div class="pd-header">
+                <div class="pd-header-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1 15l-4-4 1.41-1.41L11 14.17l6.59-6.59L19 9l-8 8z" fill="#fff"/></svg>
+                </div>
+                <div class="pd-kicker">Development Plan</div>
+                <h3 id="baseplan-title" class="pd-title">Base Plan Required</h3>
+            </div>
+            <div class="pd-body">
+                <p id="baseplan-desc" class="pd-desc" style="margin-bottom:20px;"></p>
+                <div class="pd-features" style="margin-bottom:20px;">
+                    <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Village plan add-on over the Development Plan requires the base plan to be purchased</div>
+                    <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Get access to all development plan maps in the region</div>
+                    <div class="pd-feat"><svg width="18" height="18" viewBox="0 0 24 24" fill="#00796B"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Then purchase individual village add-on plans</div>
+                </div>
+                <button class="pd-cta" id="baseplan-subscribe-btn">Subscribe to Region</button>
+                <button class="pd-cancel" id="baseplan-cancel-btn">Not now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Village purchase dialog -->
+    <div class="zoom-dialog-overlay" id="village-purchase-overlay" data-dismiss="village-purchase-cancel">
+        <div class="zoom-dialog" style="max-width:400px;text-align:left;padding:0;overflow:hidden;border-radius:16px;">
+            <div style="background:linear-gradient(135deg,#1565C0,#0D47A1);padding:24px 20px 20px;text-align:center;color:#fff;">
+                <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;opacity:0.7;margin-bottom:6px;">Village Plan</div>
+                <h3 id="village-purchase-title" style="margin:0;font-size:20px;font-weight:700;color:#fff;">Village Name</h3>
+                <div style="display:inline-block;margin-top:10px;padding:4px 12px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.4);border-radius:14px;font-size:10px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:#fff;">Web Map Unlock</div>
+            </div>
+            <div style="padding:20px;">
+                <div style="background:#fff8e1;padding:12px 14px;border-radius:8px;border-left:3px solid #f9a825;margin:0 0 16px 0;font-size:13px;line-height:1.5;color:#5d4037;text-align:left;">
+                    <span id="village-purchase-desc"></span>
+                    <span style="display:block;margin-top:8px;">&#9888;&#65039; <strong>Web access only.</strong> Does <strong>NOT</strong> activate access on Android. Website and Android are separate platforms and require separate purchases.</span>
+                </div>
+                <div id="village-purchase-price" style="background:#FAFAFA;border:1px solid #E0E0E0;border-radius:12px;padding:16px;text-align:center;margin-bottom:16px;">
+                    <span style="font-size:36px;font-weight:800;color:#212121;" id="village-price-amount">&#8377;--</span>
+                    <div style="font-size:13px;color:#888;margin-top:4px;">for 7 Days Access</div>
+                </div>
+                <button class="zoom-dialog-btn zoom-btn-access" id="village-purchase-action" style="width:100%;padding:14px;font-size:15px;border-radius:12px;margin-bottom:8px;background:#1565C0;color:#fff;border:none;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(21,101,192,0.3);">Purchase Village Plan</button>
+                <button id="village-purchase-cancel" style="width:100%;padding:10px;border:none;background:none;color:#aaa;font-size:13px;cursor:pointer;font-weight:500;">Not now</button>
+            </div>
+            <!-- Footer: Android / Windows app hints (one-at-a-time, auto-cycles like DP dialog) -->
+            <div class="pd-footer">
+                <div class="pd-app-hints-row" id="village-app-hints-scroll">
+                    <div class="pd-mobile-hint">
+                        <picture><source srcset="AssetsGIS/image-1.webp" type="image/webp"><img class="pd-app-icon" src="AssetsGIS/image-1.png" alt="MapMagician app icon" width="36" height="36" loading="lazy" decoding="async"></picture>
+                        <div class="pd-mobile-hint-text">
+                            <strong>Prefer mobile?</strong>Get the Android app for on-the-go access.
+                        </div>
+                        <a class="pd-play-btn" href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#1B5E20"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
+                            Google Play
+                        </a>
+                    </div>
+                    <div class="pd-mobile-hint">
+                        <picture><source srcset="AssetsGIS/image-1.webp" type="image/webp"><img class="pd-app-icon" src="AssetsGIS/image-1.png" alt="MapMagician app icon" width="36" height="36" loading="lazy" decoding="async"></picture>
+                        <div class="pd-mobile-hint-text">
+                            <strong>Want desktop app?</strong>Get MapMagician from the Microsoft Store.
+                        </div>
+                        <a class="pd-play-btn pd-ms-btn" href="https://apps.microsoft.com/detail/9PNZDK3DQPL0?hl=en-us&gl=IN&ocid=pdpshare" target="_blank" rel="noopener">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#0078D4"><path d="M1 1h10v10H1zm12 0h10v10H13zM1 13h10v10H1zm12 0h10v10H13z"/></svg>
+                            Microsoft Store
+                        </a>
+                    </div>
+                </div>
+                <div class="pd-app-hint-dots" id="village-app-hint-dots">
+                    <span class="pd-app-hint-dot pd-app-hint-dot-active" data-idx="0"></span>
+                    <span class="pd-app-hint-dot" data-idx="1"></span>
+                </div>
+                <button class="pd-support" id="village-support-btn">Need help? Contact Support</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel subscription confirmation dialog -->
+    <div class="zoom-dialog-overlay" id="cancel-sub-overlay">
+        <div class="zoom-dialog" style="max-width:400px;padding:0;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#c62828,#b71c1c);padding:20px 20px 16px;text-align:center;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style="margin-bottom:8px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm4-4H8v-2h8v2z" fill="#fff"/></svg>
+                <h3 style="margin:0;font-size:18px;font-weight:700;color:#fff;">Cancel Subscription</h3>
+                <div id="cancel-sub-region" style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:4px;"></div>
+            </div>
+            <div style="padding:20px;">
+                <p style="margin:0 0 16px;font-size:13px;color:#555;line-height:1.7;text-align:center;">Are you sure you want to cancel your weekly subscription?</p>
+                <div style="background:#FFF3E0;border:1px solid #FFE0B2;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+                    <div style="font-size:12px;font-weight:600;color:#E65100;margin-bottom:8px;">What happens when you cancel:</div>
+                    <div style="font-size:12px;color:#555;line-height:1.7;">
+                        <div style="margin-bottom:4px;">&#8226; <span id="cancel-sub-access-line">Your access continues until the current period ends</span></div>
+                        <div style="margin-bottom:4px;">&#8226; No more charges will be made to your account</div>
+                        <div style="margin-bottom:4px;">&#8226; UPI autopay mandate is cancelled immediately</div>
+                        <div style="margin-bottom:4px;">&#8226; May take up to 48 hours to reflect in your UPI app</div>
+                        <div>&#8226; You can re-subscribe or buy a 7-Day Pass anytime</div>
+                    </div>
+                </div>
+                <button id="cancel-sub-confirm" style="width:100%;padding:14px;font-size:14px;font-weight:600;border:none;border-radius:10px;background:#c62828;color:#fff;cursor:pointer;margin-bottom:8px;box-shadow:0 2px 8px rgba(198,40,40,0.3);">Cancel Subscription</button>
+                <button id="cancel-sub-keep" style="width:100%;padding:12px;border:none;background:none;color:#00796B;font-size:13px;font-weight:600;cursor:pointer;">Keep My Subscription</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add-On Maps panel -->
+    <div class="zoom-dialog-overlay" id="addon-panel-overlay" data-dismiss="addon-panel-close" style="z-index:1100;align-items:flex-start;padding-top:60px;">
+        <div class="zoom-dialog" style="max-width:420px;text-align:left;padding:0;overflow:hidden;border-radius:16px;max-height:80vh;display:flex;flex-direction:column;">
+            <div style="background:linear-gradient(135deg,#2E7D32,#1B5E20);padding:18px 20px 14px;color:#fff;flex-shrink:0;">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <h3 id="addon-panel-title" style="margin:0;font-size:18px;font-weight:700;color:#fff;">Add-On Maps</h3>
+                    <button id="addon-panel-close" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:0 4px;line-height:1;">&times;</button>
+                </div>
+                <input id="addon-panel-search" type="search" placeholder="Search villages..." autocomplete="off" style="width:100%;margin-top:12px;padding:8px 12px;border:none;border-radius:8px;font-size:13px;background:rgba(255,255,255,0.25);color:#fff;outline:none;box-sizing:border-box;" />
+            </div>
+            <div id="addon-panel-list" style="overflow-y:auto;flex:1;padding:8px 0;"></div>
+        </div>
+    </div>
+
+    <!-- Payment loading overlay (matches app loading screen) -->
+    <div class="payment-loading-overlay" id="payment-loading-overlay">
+        <div class="app-icon-animated" style="margin-bottom:18px;">
+            <svg width="72" height="72" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="m30,62v-8h24v-20h8v28z" fill="#f0d0b4"/>
+                <path d="m46,26h8v8,20h-24,-8v-8h24z" fill="#ffeaa7"/>
+                <path d="m37.89,18h8.11v8,20h-24,-8v-9.03c1.88,0.67 3.9,1.03 6,1.03 6.24,0 11.74,-3.18 14.96,-8 1.92,-2.86 3.04,-6.3 3.04,-10 0,-0.68 -0.04,-1.34 -0.11,-2z" fill="#e6e9ed"/>
+                <path d="M20,20m-18,0a18,18 0,1 1,36 0a18,18 0,1 1,-36 0" fill="#69d6f4"/>
+                <path fill="#000" d="m55,33v-8h-8v-8h-8.261c-1.445,-9.053 -9.286,-16 -18.739,-16 -10.477,0 -19,8.523 -19,19 0,8.003 4.981,14.852 12,17.647v9.353h8v8h8v8h34v-30zM3.051,21h7.993c0.127,2.996 0.789,5.682 1.708,8h-7.148c-1.472,-2.347 -2.382,-5.073 -2.553,-8zM20,3.401c0.902,0.935 2.579,2.868 4.073,5.599h-8.146c1.494,-2.731 3.171,-4.664 4.073,-5.599zM25.054,11c1.002,2.283 1.758,4.977 1.901,8h-13.91c0.143,-3.023 0.9,-5.717 1.901,-8zM36.949,19h-7.993c-0.127,-2.996 -0.789,-5.682 -1.708,-8h7.148c1.472,2.347 2.382,5.073 2.553,8zM11.043,19h-7.992c0.172,-2.927 1.081,-5.653 2.554,-8h7.148c-0.92,2.318 -1.583,5.004 -1.71,8zM13.045,21h13.911c-0.143,3.023 -0.9,5.717 -1.901,8h-10.109c-1.001,-2.283 -1.758,-4.977 -1.901,-8zM24.073,31c-1.494,2.731 -3.171,4.664 -4.073,5.599 -0.902,-0.935 -2.579,-2.869 -4.073,-5.599zM26.362,31h6.576c-2.6,3.053 -6.256,5.164 -10.4,5.789 1.132,-1.322 2.579,-3.276 3.824,-5.789zM34.396,29h-7.148c0.919,-2.318 1.582,-5.004 1.708,-8h7.993c-0.171,2.927 -1.081,5.653 -2.553,8zM32.938,9h-6.576c-1.245,-2.513 -2.692,-4.467 -3.824,-5.789 4.144,0.624 7.801,2.736 10.4,5.789zM17.461,3.211c-1.131,1.322 -2.578,3.276 -3.823,5.789h-6.576c2.599,-3.053 6.256,-5.165 10.399,-5.789zM7.062,31h6.576c1.245,2.513 2.692,4.467 3.823,5.789 -4.143,-0.625 -7.8,-2.736 -10.399,-5.789zM15,38.31c1.596,0.437 3.267,0.69 5,0.69 10.477,0 19,-8.523 19,-19 0,-0.338 -0.033,-0.667 -0.051,-1h6.051v26h-30zM23,47h24v-20h6v26h-30zM61,61h-30v-6h24v-20h6z"/>
+                <path fill="#000" d="m15,15h2v2h-2zm4,0h2v2h-2zm4,0h2v2h-2zm-8,8h2v2h-2zm4,0h2v2h-2zm4,0h2v2h-2zm-6,18h2v2h-2zm4,0h2v2h-2zm4,0h2v2h-2zm14,-12h2v2h-2zm0,4h2v2h-2zm0,4h2v2h-2zm-16,16h2v2h-2zm4,0h2v2h-2zm4,0h2v2h-2z"/>
+            </svg>
+        </div>
+        <div class="payment-spinner"></div>
+        <div class="payment-loading-text" id="payment-loading-text">Preparing your payment...</div>
+        <div class="payment-loading-sub" id="payment-loading-sub">7-Day Pass</div>
+    </div>
+
+    <!-- Unlock toast notification -->
+    <div class="unlock-toast" id="unlock-toast">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="#fff"/></svg>
+        <span id="unlock-toast-text">Region unlocked</span>
+    </div>
+
+    <!-- Zoom-limit info toast (shown when zoom exceeds overlay's maxZoom at current location) -->
+    <div class="zoom-info-toast" id="zoom-info-toast">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L1 21h22L12 2zm0 4l7.5 13h-15L12 6zm-1 5v4h2v-4h-2zm0 5v2h2v-2h-2z" fill="#fff"/></svg>
+        <span id="zoom-info-toast-text"></span>
+    </div>
+
+    <!-- Fullscreen region browser -->
+    <div class="region-browser" id="region-browser">
+        <div class="region-browser-header">
+            <button class="region-browser-back" id="region-browser-back">&larr;</button>
+            <span class="region-browser-title" id="region-browser-title">All Regions</span>
+            <button class="region-browser-back" id="region-browser-close" style="font-size:24px;">&times;</button>
+        </div>
+        <input type="search" class="region-browser-search" id="region-browser-search" placeholder="Search regions..." autocomplete="off">
+        <div class="region-browser-body">
+            <div class="region-grid" id="region-grid"></div>
+            <div id="sidebar-actions-wrap" style="text-align:center;padding:16px 0 8px;display:none;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;">
+                <div id="sidebar-install-wrap" style="display:none;">
+                    <button class="sidebar-install-btn" id="sidebar-install-btn">
+                        <span class="sidebar-install-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <span class="sidebar-install-text">
+                            <span class="sidebar-install-title">Install app</span>
+                            <span class="sidebar-install-sub">add to home screen</span>
+                        </span>
+                    </button>
+                </div>
+                <button class="sidebar-install-btn" id="sidebar-share-btn">
+                    <span class="sidebar-install-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="2"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" stroke-width="2"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" stroke-width="2"/></svg>
+                    </span>
+                    <span class="sidebar-install-text">
+                        <span class="sidebar-install-title">Share</span>
+                        <span class="sidebar-install-sub">send to friends</span>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Magnifier loupe for vertex dragging -->
+    <div class="magnifier" id="magnifier">
+        <div class="magnifier-map" id="magnifier-map"></div>
+        <div class="magnifier-crosshair-h"></div>
+        <div class="magnifier-crosshair-v"></div>
+        <div class="magnifier-dot"></div>
+    </div>
+
+    <!-- Session expired dialog -->
+    <div class="auth-dialog-overlay" id="session-expired-overlay">
+        <div class="auth-dialog">
+            <div style="width:48px;height:48px;margin:0 auto 20px;background:#FFF3E0;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#E65100"/></svg>
+            </div>
+            <h3>Session Expired</h3>
+            <p>This account is now active on another device. You've been signed out.</p>
+            <button class="auth-dialog-btn" id="session-expired-ok" style="width:100%;justify-content:center;">OK</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs — v12 compat. Namespaced API (firebase.auth(), firebase.database(),
+         firebase.functions()) is preserved by the -compat builds, so existing call sites
+         work unchanged.
+
+         NOTE: PageSpeed's "Unload event listeners are deprecated" warning is emitted by
+         Firebase's own long-poll iframe served from firebaseio.com (/.lp?dframe=t...),
+         not by code we control. Upgrading 8.10.1 → 12.13.0 did NOT remove it; the listener
+         lives in the iframe HTML that the Realtime DB connection bootstraps. We can't fix
+         this until upstream Firebase removes it. Loading the SDKs lazily is not a workaround
+         here — auth + getCloudFrontCookies are in the LCP critical path for tile delivery,
+         so deferring them would worsen LCP. Leave as-is. -->
+    <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-functions-compat.js"></script>
+    <!-- Microsoft Clarity — heat maps + session replay. Defer to after window.load
+         + 2s idle so the analytics script doesn't compete with map init for the
+         main thread. PageSpeed flagged ~57ms of Clarity work during initial render. -->
+    <script type="text/javascript">
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                (function(c,l,a,r,i,t,y){
+                    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+                })(window, document, "clarity", "script", "w9zgyteauk");
+            }, 2000);
+        });
+    </script>
+    <!-- Razorpay checkout — loaded on demand from the buy-pass flow (see "if (typeof Razorpay === 'undefined')" below). -->
+    <!-- JSZip — only used by the web worker on tile-zip imports, not at startup. defer it. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+    
+    <!-- Firebase initialization must come after the Firebase scripts have loaded -->
+    <script>
+        // requestIdleCallback wrapper used to push non-critical setup off the
+        // main-thread critical path. Falls back to a 1ms setTimeout where the
+        // browser doesn't support rIC (Safari < 16.4).
+        var onIdle = window.requestIdleCallback || function(cb) { return setTimeout(cb, 1); };
+
+        // --- Disclaimer (shown on first map interaction, skipped in embed mode) ---
+        // _showDisclaimer is referenced from initMap inside maps1-app.js, which
+        // is itself deferred — so wiring up the cancel/agree click handlers in
+        // an idle callback can never miss a real user interaction.
+        onIdle(function() {
+            var overlay = document.getElementById('disclaimer-overlay');
+            if (!overlay) return;
+            var isEmbed = new URLSearchParams(window.location.search).get('embed') === '1';
+            if (isEmbed) { overlay.style.display = 'none'; return; }
+            // Hide initially — show on first map interaction
+            overlay.style.display = 'none';
+            var disclaimerShown = false;
+            function showDisclaimer() {
+                if (disclaimerShown) return;
+                disclaimerShown = true;
+                overlay.style.display = '';
+            }
+            // Trigger on first pan or zoom
+            window._showDisclaimer = showDisclaimer;
+            document.getElementById('disclaimer-agree').addEventListener('click', function() {
+                overlay.style.display = 'none';
+            });
+            document.getElementById('disclaimer-disagree').addEventListener('click', function() {
+                window.location.href = 'https://www.mapmagician.in';
+            });
+        });
+
+        // --- Back-button dismiss for dialogs ---
+        // Watches any overlay with [data-dismiss="..."] pointing to its cancel button.
+        // Back press clicks that button so existing cancel logic runs.
+        // Idle-deferred: the MutationObserver only needs to be in place by the time
+        // the user actually opens a dialog, which is at least a frame after first paint.
+        onIdle(function() {
+            var stack = [];
+            var closingFromPopstate = false;
+            var suppressNextPopstate = false;
+
+            var observer = new MutationObserver(function(mutations) {
+                var opened = 0, closed = 0;
+                for (var i = 0; i < mutations.length; i++) {
+                    var m = mutations[i];
+                    if (m.attributeName !== 'class') continue;
+                    var el = m.target;
+                    var isOpen = el.classList.contains('open');
+                    var inStack = stack.indexOf(el) >= 0;
+                    if (isOpen && !inStack) {
+                        stack.push(el);
+                        opened++;
+                    } else if (!isOpen && inStack) {
+                        stack.splice(stack.indexOf(el), 1);
+                        closed++;
+                    }
+                }
+                // Reconcile the browser history with the *net* change for this batch,
+                // never both push and pop in one tick. A dialog swap — one closing while
+                // another opens in the same tick, e.g. the paywall handing off to the
+                // support dialog (and back again on Cancel) — nets to zero, so we leave
+                // history untouched and keep one backing entry for whatever dialog is now
+                // on top. Previously the close fired an async history.back() that raced the
+                // open's synchronous pushState(), corrupting the stack so a later Cancel/X
+                // behaved like a browser Back press.
+                var net = opened - closed;
+                if (net > 0) {
+                    // New dialog(s) on top with nothing closing — push a backing entry each.
+                    for (var k = 0; k < net; k++) history.pushState({ mmDialog: 'mm' }, '');
+                } else if (net < 0 && !closingFromPopstate) {
+                    // Net close (tap cancel/X or programmatic). Pop the entries we pushed on
+                    // open so the history stack stays clean — otherwise every dialog leaves a
+                    // phantom entry and users need multiple back presses to exit.
+                    // suppressNextPopstate tells the popstate handler below to ignore the
+                    // event this traversal will trigger.
+                    suppressNextPopstate = true;
+                    history.go(net);
+                }
+                closingFromPopstate = false;
+            });
+
+            document.querySelectorAll('[data-dismiss]').forEach(function(el) {
+                observer.observe(el, { attributes: true, attributeFilter: ['class'] });
+            });
+
+            window.addEventListener('popstate', function() {
+                if (suppressNextPopstate) {
+                    suppressNextPopstate = false;
+                    return;
+                }
+                if (stack.length === 0) return;
+                closingFromPopstate = true;
+                var top = stack[stack.length - 1];
+                var dismissId = top.getAttribute('data-dismiss');
+                var btn = dismissId ? document.getElementById(dismissId) : null;
+                if (btn) {
+                    btn.click();
+                } else {
+                    top.classList.remove('open');
+                }
+            });
+        });
+
+        // --- PWA Install prompt ---
+        // beforeinstallprompt stays eager — browsers fire it on their own engagement
+        // schedule and missing it means we can never trigger the install prompt later.
+        // Everything below it is button wiring that can't be tapped before first paint,
+        // so it's safe to push to idle.
+        let deferredInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            var pwaBtn = document.getElementById('install-opt-pwa');
+            if (pwaBtn) pwaBtn.style.display = 'flex';
+        });
+
+        onIdle(function() {
+            const installBtn = document.getElementById('sidebar-install-btn');
+            const installWrap = document.getElementById('sidebar-install-wrap');
+            const bottombarInstallBtn = document.getElementById('bottombar-install-btn');
+            const installInfoOverlay = document.getElementById('install-info-overlay');
+
+            function showInstallButtons() {
+            installWrap.style.display = 'contents';
+            bottombarInstallBtn.style.display = 'inline-flex';
+            var sib = document.getElementById('settings-install-btn');
+            if (sib) sib.style.display = 'flex';
+            }
+            function hideInstallButtons() {
+            installWrap.style.display = 'none';
+            bottombarInstallBtn.style.display = 'none';
+            var sib = document.getElementById('settings-install-btn');
+            if (sib) sib.style.display = 'none';
+            }
+            function markInstalled() {
+            installBtn.classList.add('installed');
+            installBtn.querySelector('.sidebar-install-title').textContent = 'App installed';
+            installBtn.querySelector('.sidebar-install-sub').textContent = '';
+            bottombarInstallBtn.classList.add('installed');
+            bottombarInstallBtn.textContent = '';
+            var checkSvg = document.createElement('span');
+            checkSvg.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+            bottombarInstallBtn.appendChild(checkSvg.firstChild);
+            bottombarInstallBtn.appendChild(document.createTextNode(' Installed'));
+            deferredInstallPrompt = null;
+            }
+
+            // Always show install buttons — dialog has all platform options
+            showInstallButtons();
+
+
+            function openInstallInfo() {
+            installInfoOverlay.classList.add('open');
+            }
+            installBtn.addEventListener('click', openInstallInfo);
+            bottombarInstallBtn.addEventListener('click', openInstallInfo);
+
+            // PWA web install option
+            document.getElementById('install-opt-pwa').addEventListener('click', async function() {
+            if (deferredInstallPrompt) {
+                installInfoOverlay.classList.remove('open');
+                deferredInstallPrompt.prompt();
+                var choice = await deferredInstallPrompt.userChoice;
+                if (choice.outcome === 'accepted') markInstalled();
+            } else {
+                // No prompt available — show manual instructions
+                var sub = document.getElementById('install-pwa-sub');
+                if (sub) sub.textContent = 'Use browser menu \u2192 "Install MapMagician" or "Add to Home screen"';
+            }
+            });
+            document.getElementById('install-info-cancel').addEventListener('click', function() {
+            installInfoOverlay.classList.remove('open');
+            });
+            installInfoOverlay.addEventListener('click', function(e) {
+            if (e.target === installInfoOverlay) installInfoOverlay.classList.remove('open');
+            });
+
+            window.addEventListener('appinstalled', function() { markInstalled(); });
+
+            // Hide install buttons if already running as installed PWA
+            if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            hideInstallButtons();
+            }
+
+            // Share button
+            document.getElementById('sidebar-share-btn').addEventListener('click', function() {
+            var shareData = {
+                title: 'Development Plan GIS - MapMagician',
+                text: 'View development plan maps overlaid on satellite imagery. Browse DP maps for Maharashtra, Bengaluru, Hyderabad and more.',
+                url: 'https://maps.mapmagician.in'
+            };
+            if (navigator.share) {
+                navigator.share(shareData).catch(function() {});
+            } else {
+                // Fallback: copy link to clipboard
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(shareData.url).then(function() {
+                        alert('Link copied to clipboard!');
+                    });
+                }
+            }
+            });
+        });
+
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js').catch(function(err) { console.warn('SW register failed:', err); });
+            });
+        }
+
+        // Domain-based runtime switch — keeps mapmagician.in behavior identical
+        // while routing dpplans.com to its own tile host & cookie scope.
+        const ON_DPPLANS = location.hostname.endsWith('dpplans.com');
+        const TILE_HOST = ON_DPPLANS ? 'tiles.dpplans.com' : 'tiles.mapmagician.in';
+        const COOKIE_DOMAIN = ON_DPPLANS ? '.dpplans.com' : '.mapmagician.in';
+
+        // DpPlan.com co-branding: rebrand the in-app About section so the
+        // hosted product leads and MapMagician appears as the parent brand.
+        if (ON_DPPLANS) {
+            document.addEventListener('DOMContentLoaded', function() {
+                var n = document.getElementById('about-brand-name');
+                var u = document.getElementById('about-brand-url');
+                var t = document.getElementById('about-brand-tagline');
+                if (n) n.textContent = 'DPplan.com';
+                if (u) u.textContent = 'www.dpplans.com';
+                if (t) t.style.display = '';
+            });
+        }
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUjHKQ3g2yz2o4ax61QS7dq5z0FV8k5Ss",
+            authDomain: "sodium-hour-256110.firebaseapp.com",
+            databaseURL: "https://sodium-hour-256110.firebaseio.com",
+            projectId: "sodium-hour-256110",
+            storageBucket: "sodium-hour-256110.appspot.com",
+            messagingSenderId: "427608700943",
+            appId: "1:427608700943:web:4b79666808054be5654b7a"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // ===== Analytics module (GA4 via gtag.js + Microsoft Clarity) =====
+        // Central wrapper so call sites stay one-liners and a missing ID or blocked SDK never breaks the page.
+        window.mmAnalytics = (function() {
+            function safe(fn) { try { fn(); } catch (e) { /* analytics must never throw */ } }
+
+            function detectDevice() {
+                var ua = navigator.userAgent || '';
+                var isTablet = /iPad|Android(?!.*Mobile)|Tablet/i.test(ua);
+                var isMobile = /Mobile|iPhone|iPod|Android.*Mobile|BlackBerry|Opera Mini/i.test(ua);
+                if (isTablet) return 'tablet';
+                if (isMobile) return 'mobile';
+                return 'desktop';
+            }
+            function detectBrowser() {
+                var ua = navigator.userAgent || '';
+                if (/Edg\//.test(ua)) return 'Edge';
+                if (/OPR\//.test(ua)) return 'Opera';
+                if (/Chrome\//.test(ua)) return 'Chrome';
+                if (/Firefox\//.test(ua)) return 'Firefox';
+                if (/Safari\//.test(ua)) return 'Safari';
+                return 'Other';
+            }
+            function detectOS() {
+                var ua = navigator.userAgent || '';
+                if (/Windows NT/.test(ua)) return 'Windows';
+                if (/Android/.test(ua)) return 'Android';
+                if (/iPhone|iPad|iPod/.test(ua)) return 'iOS';
+                if (/Mac OS X/.test(ua)) return 'macOS';
+                if (/Linux/.test(ua)) return 'Linux';
+                return 'Other';
+            }
+
+            var deviceCategory = detectDevice();
+            var browser = detectBrowser();
+            var os = detectOS();
+            var screenSize = (window.screen && window.screen.width && window.screen.height)
+                ? window.screen.width + 'x' + window.screen.height : '';
+            var timezone = '';
+            try { timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+            var connectionType = (navigator.connection && navigator.connection.effectiveType) || '';
+            var language = navigator.language || '';
+
+            // Parse UTM + traffic source from landing URL (persist via sessionStorage so they survive in-page nav)
+            function captureAcquisition() {
+                try {
+                    var params = new URLSearchParams(window.location.search);
+                    var utmKeys = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'];
+                    var utm = {};
+                    utmKeys.forEach(function(k){ var v = params.get(k); if (v) utm[k] = v.slice(0,100); });
+                    var ref = document.referrer || '';
+                    var trafficSource = 'direct';
+                    if (ref) {
+                        try {
+                            var host = new URL(ref).hostname;
+                            if (/google\./.test(host)) trafficSource = 'google';
+                            else if (/bing\./.test(host)) trafficSource = 'bing';
+                            else if (/facebook\.|instagram\.|t\.co|twitter\.|x\.com|linkedin\.|youtube\./.test(host)) trafficSource = 'social';
+                            else if (host !== location.hostname) trafficSource = 'referral';
+                        } catch (e) {}
+                    }
+                    return { utm: utm, trafficSource: trafficSource, landingPage: location.pathname };
+                } catch (e) { return { utm: {}, trafficSource: 'unknown', landingPage: location.pathname }; }
+            }
+            var acquisition = captureAcquisition();
+
+            // Baseline user properties — set before auth so even anonymous visitors have device/env context
+            safe(function() {
+                gtag('set', 'user_properties', {
+                    device_category: deviceCategory,
+                    browser: browser,
+                    os: os,
+                    screen_size: screenSize,
+                    timezone: timezone,
+                    connection_type: connectionType,
+                    language: language,
+                    traffic_source: acquisition.trafficSource
+                });
+            });
+
+            function event(name, params) {
+                safe(function() { gtag('event', name, params || {}); });
+            }
+            function setUserId(id) {
+                safe(function() { gtag('set', { user_id: id }); });
+                safe(function() { if (window.clarity) window.clarity('identify', id); });
+            }
+            function setUserProperties(props) {
+                safe(function() { gtag('set', 'user_properties', props || {}); });
+            }
+            function clarityTag(key, value) {
+                safe(function() { if (window.clarity) window.clarity('set', key, value); });
+            }
+
+            // Page-level retention bookkeeping stored in localStorage
+            function updateRetentionProps() {
+                try {
+                    var now = Date.now();
+                    var first = parseInt(localStorage.getItem('mm_first_seen_ts') || '0', 10);
+                    if (!first) { first = now; localStorage.setItem('mm_first_seen_ts', String(first)); }
+                    var last = parseInt(localStorage.getItem('mm_last_seen_ts') || '0', 10);
+                    var daysSince = last ? Math.floor((now - last) / 86400000) : 0;
+                    var total = parseInt(localStorage.getItem('mm_total_sessions') || '0', 10) + 1;
+                    localStorage.setItem('mm_total_sessions', String(total));
+                    localStorage.setItem('mm_last_seen_ts', String(now));
+                    setUserProperties({
+                        days_since_last_visit: daysSince,
+                        total_sessions: total,
+                        first_seen_days_ago: Math.floor((now - first) / 86400000)
+                    });
+                } catch (e) {}
+            }
+            updateRetentionProps();
+
+            // Global error capture — small payloads, throttled to prevent flood
+            var errorCount = 0;
+            window.addEventListener('error', function(e) {
+                if (errorCount++ > 20) return;
+                event('js_error', {
+                    message: String(e.message || '').slice(0, 200),
+                    source: String(e.filename || '').slice(0, 200),
+                    lineno: e.lineno || 0
+                });
+            });
+            window.addEventListener('unhandledrejection', function(e) {
+                if (errorCount++ > 20) return;
+                var reason = (e && e.reason) ? String(e.reason.message || e.reason) : '';
+                event('unhandled_rejection', { reason: reason.slice(0, 200) });
+            });
+
+            return {
+                event: event,
+                setUserId: setUserId,
+                setUserProperties: setUserProperties,
+                clarityTag: clarityTag,
+                deviceCategory: deviceCategory,
+                browser: browser,
+                os: os,
+                acquisition: acquisition
+            };
+        })();
+
+        // Fire initial page_view / session_start context immediately
+        mmAnalytics.event('app_open', {
+            device_category: mmAnalytics.deviceCategory,
+            browser: mmAnalytics.browser,
+            embed: new URLSearchParams(window.location.search).get('embed') === '1' ? 1 : 0
+        });
+    </script>
+    
+    <!-- Flatbush: static spatial index (UMD, exposes window.Flatbush). Used to skip
+         linear scans of layer entries / sub-sheets during pan & in the tile-visibility
+         worker. defer keeps it ordered before maps1-app.js. -->
+    <script src="AssetsGIS/flatbush.js" defer></script>
+
+    <!-- Main app logic — extracted to external file so the browser parses but does not
+         block on it during initial document parse. defer ensures it executes in document
+         order after the inline Firebase init above and before DOMContentLoaded. -->
+    <script src="maps1-app.js?v=030" defer></script>
+
+    <!-- Custom right-click menu for the map (replaces native context menu) -->
+    <div class="map-ctx-menu" id="map-ctx-menu">
+        <div class="map-ctx-menu-coord" id="map-ctx-menu-coord"></div>
+        <div class="map-ctx-menu-item" id="map-ctx-menu-copy">Copy coordinates</div>
+        <div class="map-ctx-menu-item" id="map-ctx-menu-share">Share this location</div>
+    </div>
+
+    <!-- Load Google Maps API. defer (no async) so the browser preserves document order:
+         maps1-app.js executes first and defines initMap, THEN this script downloads, runs,
+         and invokes initMap via the ?callback= query param. With async + defer, async wins
+         and this script could fire before initMap is on window — race condition. -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBBfEcHoR1yHBlnOvWKYLkr3C3ob6nb5hw&libraries=places&callback=initMap&loading=async" defer></script>
+</body>
+</html>
