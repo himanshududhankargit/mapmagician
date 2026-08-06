@@ -10,7 +10,8 @@
         // monotonic across both files. Both at 015 -> max(015,015)+1 = this staging push is 016
         // (single-session: per-browser localStorage id, no false "active on another device" kicks). Next -> 017.
         // 034 = staging push of the Download Map port (live=033, staging=031 -> max+1).
-        var APP_VERSION = '034';
+        // 035 = follow-up staging push (dlmap z-index/toast polish) — +1 on EVERY push.
+        var APP_VERSION = '035';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
