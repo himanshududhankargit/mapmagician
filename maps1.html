@@ -1436,11 +1436,6 @@
             </button>
             <p style="margin:8px 0 0;font-size:12px;color:#757575;line-height:1.4;">Clears all cached data including map tiles, saved regions, and service worker. The page will reload.</p>
         </div>
-        <div class="layer-section" id="settings-downloads-section">
-            <div class="layer-section-title">Downloads</div>
-            <div id="dlmap-history-list"></div>
-            <p id="dlmap-history-empty" style="margin:0;font-size:13px;color:#999;line-height:1.4;">No downloaded maps yet. Downloaded maps can be regenerated here until their plan expires.</p>
-        </div>
         <div class="layer-section">
             <div class="layer-section-title">Support</div>
             <button id="settings-contact-support" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;">
@@ -1464,6 +1459,14 @@
             <div id="settings-village-purchases"></div>
             <p id="settings-no-purchases" style="margin:0;font-size:13px;color:#999;display:none;">No active purchases</p>
             <div id="settings-purchase-history" style="margin-top:12px;"></div>
+            <!-- Downloaded maps: regeneration list for paid Download Map exports. Lives
+                 inside My Purchases deliberately — records are plan-tied and only usable
+                 while that plan is active (expired plans get no entitled cookies anyway). -->
+            <div id="dlmap-history-box" style="margin-top:14px;">
+                <div style="font-size:13px;font-weight:600;color:#333;margin-bottom:2px;">Downloaded maps</div>
+                <div id="dlmap-history-list"></div>
+                <p id="dlmap-history-empty" style="margin:4px 0 0;font-size:12px;color:#999;line-height:1.4;">Maps you download appear here and can be re-generated free while their plan is active.</p>
+            </div>
         </div>
         <div class="layer-section">
             <div class="layer-section-title">Get the App</div>
@@ -2563,7 +2566,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=038" defer></script>
+    <script src="maps1-app.js?v=039" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">

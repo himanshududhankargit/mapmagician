@@ -15,7 +15,8 @@
         // 037 = dlmap satellite basemap (Esri World Imagery, CORS-open, attribution drawn).
         // 038 = dlmap two-phase (cheap low-res preview, full tiles only after pay) +
         //       Settings→Downloads regeneration history (expires with the pass).
-        var APP_VERSION = '038';
+        // 039 = downloads history moved under My Purchases; plan-tied records only, last 10.
+        var APP_VERSION = '039';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -10644,11 +10645,15 @@
             return list.filter(function(r) { return r && r.geo && (!r.expiry || r.expiry > now); });
         }
         function _dlmapHistoryWrite(list) {
-            try { localStorage.setItem(DLMAP_HISTORY_KEY, JSON.stringify(list.slice(0, 20))); } catch (e) {}
+            try { localStorage.setItem(DLMAP_HISTORY_KEY, JSON.stringify(list.slice(0, 10))); } catch (e) {}
         }
         function _dlmapHistoryAdd(s) {
+            // Only plan-tied downloads are saved: no resolvable active purchase for the
+            // district means no record — a regen without entitlement could never fetch
+            // premium tiles anyway (the edge issues no cookies for an expired plan).
+            if (!s.districtPid || !hasPurchase(s.districtPid)) return;
             var expiry = Date.now() + 7 * 864e5;              // fallback: one 7-day pass
-            var entry = s.districtPid ? findPurchaseEntry(s.districtPid) : null;
+            var entry = findPurchaseEntry(s.districtPid);
             if (entry && entry.expiry) {
                 var e = typeof entry.expiry === 'number' ? entry.expiry : Date.parse(entry.expiry);
                 if (isFinite(e) && e > Date.now()) expiry = e;
@@ -10670,7 +10675,7 @@
             // active is hidden (and Regenerate re-checks) — no free re-downloads
             // after expiry. The edge 403s premium tiles regardless, so a tampered
             // localStorage only ever yields a white map.
-            var usable = list.filter(function(r) { return !r.pid || hasPurchase(r.pid); });
+            var usable = list.filter(function(r) { return r.pid && hasPurchase(r.pid); });
             box.innerHTML = '';
             empty.style.display = usable.length ? 'none' : '';
             usable.forEach(function(rec, i) {
@@ -10705,7 +10710,7 @@
         // and entitlements are today's, so an expired pass shows white above z14.
         async function _dlmapRegenerate(rec) {
             if (_dlmapSession && _dlmapSession.running) return;
-            if (rec.pid && !hasPurchase(rec.pid)) {           // pass lapsed since the list rendered
+            if (!rec.pid || !hasPurchase(rec.pid)) {          // pass lapsed since the list rendered
                 _dlmapToast('Your pass for this region has expired — re-download is no longer available');
                 _dlmapRenderHistory();
                 return;
