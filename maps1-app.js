@@ -16,7 +16,9 @@
         // 038 = dlmap two-phase (cheap low-res preview, full tiles only after pay) +
         //       Settings→Downloads regeneration history (expires with the pass).
         // 039 = downloads history moved under My Purchases; plan-tied records only, last 10.
-        var APP_VERSION = '039';
+        // 040 = REAL BILLING (createDownloadOrder/confirmDownloadPayment, price from
+        //       appConfig/pricing/download_map, default ₹59) + expandable history w/ expiry.
+        var APP_VERSION = '040';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7094,6 +7096,7 @@
                 return wrap;
             }
 
+            window.makeExpandableGroup = makeExpandableGroup;   // reused by the Downloaded Maps list
             window.renderSettingsPurchases = renderSettingsPurchases;
             function renderSettingsPurchases() {
                 var section = document.getElementById('settings-purchases-section');
@@ -7588,11 +7591,9 @@
                 var s = _dlmapSession;
                 if (!s || s.running) return;
                 if (s.phase === 'preview') {
-                    // Payment gate sits HERE — before any full-quality tile is fetched,
-                    // so an unpaid preview only ever costs the low-res tile set.
-                    var gate = canDownloadMap();  // TEST MODE: always allowed (see canDownloadMap)
-                    if (!gate.allowed) { _dlmapToast(gate.reason || 'Purchase required'); return; }
-                    _dlmapFinalizeDownload();
+                    // Payment sits HERE — before any full-quality tile is fetched, so an
+                    // unpaid preview only ever costs the low-res tile set.
+                    _dlmapStartPayment();
                     return;
                 }
                 if (!s.blob) return;              // 'final': re-save the already-rendered file
@@ -7606,6 +7607,22 @@
             });
             _dlmapRenderHistory();
             document.getElementById('btn-settings').addEventListener('click', _dlmapRenderHistory);
+            // Get/delete buttons live inside re-rendered innerHTML — delegate on the container.
+            document.getElementById('dlmap-history-list').addEventListener('click', function(e) {
+                var t = e.target;
+                if (!t || !t.getAttribute) return;
+                var regenTs = t.getAttribute('data-dlmap-regen');
+                var delTs = t.getAttribute('data-dlmap-del');
+                if (delTs) {
+                    _dlmapHistoryWrite(_dlmapHistoryList().filter(function(r) { return String(r.ts) !== delTs; }));
+                    _dlmapRenderHistory();
+                    return;
+                }
+                if (regenTs) {
+                    var rec = _dlmapHistoryList().filter(function(r) { return String(r.ts) === regenTs; })[0];
+                    if (rec) _dlmapRegenerate(rec);
+                }
+            });
             document.getElementById('dlmap-share-btn').addEventListener('click', function() {
                 var s = _dlmapSession;
                 if (!s || !s.blob) return;
@@ -10194,13 +10211,100 @@
         var _dlmapSession = null;                // one download at a time
         var _dlmapTemplateCache = {};            // name -> Promise<HTMLImageElement>
 
-        // ---- DOWNLOAD GATE — TEST MODE, NO CHARGE ----------------------------------
-        // This staging build never charges: "Pay & Download" goes straight to the file.
-        // When payment gating ships, THIS is the one function to change — run the charge
-        // flow (or credit check) and resolve { allowed:false, reason } on failure.
-        // No entitlement is checked client-side by design: CloudFront 403s unowned
-        // z>14 tiles at the edge anyway, which surfaces as "N tiles unavailable".
-        function canDownloadMap() { return { allowed: true, price: 0 }; }
+        // ---- DOWNLOAD BILLING -------------------------------------------------------
+        // A consumable charge per download (like Android's "screenshot" product), NOT a
+        // region entitlement. Price lives in appConfig/pricing/download_map (set from
+        // the admin panel); absent = ₹59 server-side, 0 = free. The server creates and
+        // verifies the order (createDownloadOrder / confirmDownloadPayment) — the client
+        // never decides the amount. Regeneration of an already-paid download is free.
+        function _dlmapPrice() {
+            var p = cachedPricing.get('download_map');
+            return (typeof p === 'number') ? p : 59;
+        }
+        async function _dlmapStartPayment() {
+            var s = _dlmapSession;
+            if (!s || s.phase !== 'preview' || s.running) return;
+            var user = firebase.auth().currentUser;
+            if (!user || user.isAnonymous || !user.email) {
+                _dlmapToast('Sign in to download this map');
+                document.getElementById('auth-dialog-overlay').classList.add('open');
+                return;
+            }
+            try {
+                var createDownloadOrder = functions.httpsCallable('createDownloadOrder');
+                var resp = (await createDownloadOrder({ districtPid: s.districtPid || '' })).data || {};
+                if (resp.free) { _dlmapFinalizeDownload(); return; }   // admin set price 0
+                if (typeof Razorpay === 'undefined') {
+                    await new Promise(function(resolve, reject) {
+                        var sc = document.createElement('script');
+                        sc.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                        sc.onload = resolve;
+                        sc.onerror = function() { reject(new Error('checkout blocked')); };
+                        document.head.appendChild(sc);
+                    });
+                }
+                try {
+                    mmAnalytics.event('begin_checkout', {
+                        currency: resp.currency || 'INR', value: (resp.amount || 0) / 100,
+                        items: [{ item_id: 'download_map', item_name: s.districtName || 'Map download', item_category: 'download_map' }]
+                    });
+                } catch (e) {}
+                var rzp = new Razorpay({
+                    key: 'rzp_live_SXr1BKnoysSo9r',
+                    amount: resp.amount,
+                    currency: resp.currency,
+                    order_id: resp.orderId,
+                    name: 'Map Magician',
+                    description: 'Map download' + (s.districtName ? ' — ' + s.districtName : ''),
+                    prefill: { email: user.email },
+                    handler: function(response) {
+                        (async function() {
+                            // Two confirm attempts; then deliver regardless. The payment IS
+                            // taken at this point — a flaky confirm call must not withhold
+                            // the file. An unrecorded delivery is caught by the money-at-risk
+                            // reconciler (it checks GISWebDownloadPurchases), never lost.
+                            var confirmDownloadPayment = functions.httpsCallable('confirmDownloadPayment');
+                            for (var attempt = 0; attempt < 2; attempt++) {
+                                try {
+                                    await confirmDownloadPayment({
+                                        razorpay_payment_id: response.razorpay_payment_id,
+                                        razorpay_order_id: response.razorpay_order_id,
+                                        razorpay_signature: response.razorpay_signature
+                                    });
+                                    break;
+                                } catch (e) {
+                                    console.error('confirmDownloadPayment attempt ' + (attempt + 1) + ' failed:', e);
+                                    if (attempt === 0) await new Promise(function(r) { setTimeout(r, 2000); });
+                                }
+                            }
+                            try {
+                                mmAnalytics.event('purchase', {
+                                    transaction_id: response.razorpay_payment_id,
+                                    value: (resp.amount || 0) / 100, currency: resp.currency || 'INR',
+                                    items: [{ item_id: 'download_map', item_category: 'download_map' }]
+                                });
+                            } catch (e) {}
+                            _dlmapFinalizeDownload();
+                        })();
+                    },
+                    modal: { ondismiss: function() { _dlmapToast('Payment cancelled'); } }
+                });
+                try {
+                    rzp.on('payment.failed', function(r) {
+                        var err = (r && r.error) || {};
+                        mmAnalytics.event('payment_failed', {
+                            item_id: 'download_map', item_category: 'download_map',
+                            code: String(err.code || '').slice(0, 60),
+                            reason: String(err.reason || err.description || '').slice(0, 120)
+                        });
+                    });
+                } catch (e) {}
+                rzp.open();
+            } catch (e) {
+                console.error('Download payment error:', e);
+                _dlmapToast('Could not start payment — try again');
+            }
+        }
 
         function _dlmapToast(text) {
             // showShareToast is closure-scoped inside the ctx-menu wiring; own copy here.
@@ -10544,8 +10648,11 @@
                 ? 'Preview quality — the downloaded file is rendered in full resolution.'
                 : 'Full resolution.';
             document.getElementById('dlmap-caption').value = s.caption || DLMAP_DEFAULT_CAPTION;
+            var price = _dlmapPrice();
+            document.getElementById('dlmap-price').textContent =
+                s.phase !== 'preview' ? 'Paid' : (price >= 1 ? '₹' + price + ' per download' : 'FREE');
             document.getElementById('dlmap-pay-btn').textContent =
-                s.phase === 'preview' ? 'Pay & Download' : 'Download';
+                s.phase === 'preview' ? (price >= 1 ? 'Pay ₹' + price + ' & Download' : 'Download') : 'Download';
             _dlmapRenderPreview();
             document.getElementById('dlmap-preview-overlay').classList.add('open');
         }
@@ -10665,6 +10772,11 @@
             _dlmapHistoryWrite(list);
             _dlmapRenderHistory();
         }
+        function _dlmapEscape(t) {
+            return String(t == null ? '' : t).replace(/[&<>"']/g, function(c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
         function _dlmapRenderHistory() {
             var box = document.getElementById('dlmap-history-list');
             var empty = document.getElementById('dlmap-history-empty');
@@ -10678,32 +10790,24 @@
             var usable = list.filter(function(r) { return r.pid && hasPurchase(r.pid); });
             box.innerHTML = '';
             empty.style.display = usable.length ? 'none' : '';
-            usable.forEach(function(rec, i) {
-                var row = document.createElement('div');
-                row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f0f0;';
-                var label = document.createElement('div');
-                label.style.cssText = 'flex:1;font-size:12px;color:#333;line-height:1.4;';
-                var dt = new Date(rec.ts);
-                label.textContent = (rec.district || rec.caption || 'Map') + ' — '
-                    + dt.toLocaleDateString() + ' '
-                    + dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                var btn = document.createElement('button');
-                btn.textContent = 'Regenerate';
-                btn.style.cssText = 'padding:6px 10px;border:1px solid #2E7D32;border-radius:6px;background:#fff;color:#2E7D32;font-size:12px;cursor:pointer;font-family:inherit;';
-                btn.addEventListener('click', function() { _dlmapRegenerate(rec); });
-                var del = document.createElement('button');
-                del.textContent = '✕';
-                del.style.cssText = 'padding:6px 8px;border:none;background:none;color:#999;font-size:13px;cursor:pointer;';
-                del.addEventListener('click', function() {
-                    var l = _dlmapHistoryList().filter(function(r) { return r.ts !== rec.ts; });
-                    _dlmapHistoryWrite(l);
-                    _dlmapRenderHistory();
-                });
-                row.appendChild(label);
-                row.appendChild(btn);
-                row.appendChild(del);
-                box.appendChild(row);
+            if (!usable.length) return;
+            // Same expandable-group chrome as the purchase lists above it.
+            var items = usable.map(function(rec) {
+                var dt = new Date(rec.ts), ex = new Date(rec.expiry);
+                return { html:
+                    '<div style="flex:1;min-width:0;">' +
+                        '<div style="font-weight:600;color:#333;">' + _dlmapEscape(rec.district || rec.caption || 'Map') + '</div>' +
+                        '<div style="font-size:11px;color:#757575;">' + dt.toLocaleDateString() + ' • ' + _dlmapEscape(rec.caption || '') + '</div>' +
+                        '<div style="font-size:11px;color:#2E7D32;">Free re-download till ' + ex.toLocaleDateString() + '</div>' +
+                    '</div>' +
+                    '<div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">' +
+                        '<button data-dlmap-regen="' + rec.ts + '" style="padding:6px 10px;border:1px solid #2E7D32;border-radius:6px;background:#fff;color:#2E7D32;font-size:12px;cursor:pointer;font-family:inherit;">Get</button>' +
+                        '<button data-dlmap-del="' + rec.ts + '" style="padding:6px 8px;border:none;background:none;color:#999;font-size:13px;cursor:pointer;">&#10005;</button>' +
+                    '</div>' };
             });
+            if (typeof window.makeExpandableGroup === 'function') {
+                box.appendChild(window.makeExpandableGroup('Downloaded Maps', '#00838F', items.length, items));
+            }
         }
         // Re-render a paid download from its stored parameters. No charge and no new
         // history record — the user already paid for these coordinates. Layer toggles
