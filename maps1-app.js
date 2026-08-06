@@ -12,7 +12,8 @@
         // 034 = staging push of the Download Map port (live=033, staging=031 -> max+1).
         // 035 = follow-up staging push (dlmap z-index/toast polish) — +1 on EVERY push.
         // 036 = dlmap paywall fix: downloads skip unpurchased villages (mirror on-screen filter).
-        var APP_VERSION = '036';
+        // 037 = dlmap satellite basemap (Esri World Imagery, CORS-open, attribution drawn).
+        var APP_VERSION = '037';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -10170,6 +10171,15 @@
         var DLMAP_MAX_TILE_FETCHES = 700;
         var DLMAP_MAX_CANVAS_PX = 4096 * 4096;   // iOS Safari canvas-area ceiling
         var DLMAP_FETCH_CONCURRENCY = 6;
+        // Free satellite basemap under the plan tiles (Google's map cannot be exported —
+        // no CORS, no web snapshot API, and scraping it breaks ToS). Esri World Imagery
+        // is CORS-open (ACAO:*) and tile-addressable, so it stitches at FULL resolution.
+        // NOTE Esri's path order is z/y/x. Attribution is drawn into the output — required.
+        // Set to null to disable the basemap (plan tiles on plain white again).
+        var DLMAP_BASEMAP_URL = function(z, x, y) {
+            return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/' + z + '/' + y + '/' + x;
+        };
+        var DLMAP_BASEMAP_ATTRIB = 'Imagery © Esri, Maxar, Earthstar Geographics';
         var _dlmapSession = null;                // one download at a time
         var _dlmapTemplateCache = {};            // name -> Promise<HTMLImageElement>
 
@@ -10323,6 +10333,23 @@
             return jobs;
         }
 
+        // Every tile of the capture rect (no polygon filter — the basemap fills the whole
+        // frame). isBase => drawn first at full alpha, fetched WITHOUT credentials (ACAO:*
+        // forbids credentialed requests, and third parties must never see our cookies),
+        // never IDB-cached, and failures don't count as "unavailable".
+        function _dlmapBasemapJobs(rect) {
+            if (!DLMAP_BASEMAP_URL) return [];
+            var jobs = [];
+            for (var ty = rect.ty0; ty <= rect.ty1; ty++) {
+                for (var tx = rect.tx0; tx <= rect.tx1; tx++) {
+                    jobs.push({ url: DLMAP_BASEMAP_URL(rect.z, tx, ty),
+                                z: rect.z, x: tx, y: ty, sizePx: 256,
+                                zIndex: -1e9, order: -1, bmp: null, isBase: true });
+                }
+            }
+            return jobs;
+        }
+
         // Fetch every job, 6 at a time. Reuses the IDB tile cache (read + write) but
         // NEVER healStaleTokenFor — a bulk run must not burn the 3-per-session heal
         // budget. 403 / network error => tile stays white, counted. 404 => off-sheet,
@@ -10334,17 +10361,21 @@
                     var job = jobs[next++];
                     try {
                         var blob = null;
-                        var cached = await getTileFromDB(job.url);
+                        var cached = job.isBase ? null : await getTileFromDB(job.url);
                         if (cached && cached.blob) {
                             blob = cached.blob;
                         } else {
-                            var resp = await fetch(job.url, { credentials: 'include', signal: signal });
+                            var resp = await fetch(job.url,
+                                job.isBase ? { signal: signal }
+                                           : { credentials: 'include', signal: signal });
                             if (resp.status === 200) {
                                 blob = await resp.blob();
-                                putTileInDB({ url: job.url, blob: blob, size: blob.size,
-                                              folder: _tileFolderFromUrl(job.url), zoom: job.z,
-                                              cachedAt: Date.now() });
-                            } else if (resp.status === 403) {
+                                if (!job.isBase) {
+                                    putTileInDB({ url: job.url, blob: blob, size: blob.size,
+                                                  folder: _tileFolderFromUrl(job.url), zoom: job.z,
+                                                  cachedAt: Date.now() });
+                                }
+                            } else if (resp.status === 403 && !job.isBase) {
                                 missing++;
                             }
                             // 404: no tile at these coords — expected off-sheet, skip silently.
@@ -10352,7 +10383,7 @@
                         if (blob) job.bmp = await createImageBitmap(blob);
                     } catch (e) {
                         if (signal.aborted) return;
-                        missing++;
+                        if (!job.isBase) missing++;
                     }
                     done++;
                     onProgress(done, jobs.length);
@@ -10376,10 +10407,13 @@
             ctx.fillRect(0, 0, cw, ch);
             rect.ox = rect.tx0 * 256; rect.oy = rect.ty0 * 256;
             jobs.sort(function(a, b) { return a.zIndex !== b.zIndex ? a.zIndex - b.zIndex : a.order - b.order; });
-            ctx.globalAlpha = currentOpacity;   // mirror the opacity slider; use 1 here if prints look washed out
+            rect.baseDrawn = 0;
             for (var i = 0; i < jobs.length; i++) {
                 var j = jobs[i];
                 if (!j.bmp) continue;
+                // basemap at full strength; plan tiles mirror the opacity slider
+                ctx.globalAlpha = j.isBase ? 1 : currentOpacity;
+                if (j.isBase) rect.baseDrawn++;
                 // x*sizePx and ox are integers -> whole-pixel placement, no 1px seams
                 ctx.drawImage(j.bmp, j.x * j.sizePx - rect.ox, j.y * j.sizePx - rect.oy, j.sizePx, j.sizePx);
             }
@@ -10416,6 +10450,17 @@
                     ctx.font = 'bold ' + size + 'px sans-serif';
                 }
                 ctx.fillText(caption, 2972, 2362.67);                    // kt: x=3022-50, y=2290+52+62/3
+            }
+            if (rect.baseDrawn) {
+                // Required imagery attribution, bottom-right inside the map window.
+                ctx.font = '22px sans-serif';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'alphabetic';
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+                ctx.strokeText(DLMAP_BASEMAP_ATTRIB, DLMAP_MAP_RIGHT - 14, DLMAP_MAP_BOTTOM - 14);
+                ctx.fillStyle = '#333333';
+                ctx.fillText(DLMAP_BASEMAP_ATTRIB, DLMAP_MAP_RIGHT - 14, DLMAP_MAP_BOTTOM - 14);
             }
             return c;
         }
@@ -10457,18 +10502,20 @@
             }
             var cz = Math.round(map.getZoom());
             var gz = Math.min(cz + 1, MAX_ZOOM_FOR_DP);                   // fetch one zoom deeper, capped
-            var rect, jobs, canvasPx;
+            var rect, jobs, baseJobs, canvasPx;
             for (;;) {
                 rect = _dlmapComputeCaptureRect(gz, cz);
                 canvasPx = (rect.tx1 - rect.tx0 + 1) * 256 * (rect.ty1 - rect.ty0 + 1) * 256;
                 jobs = _dlmapEnumerateJobs(rect, _dlmapCollectSources(cz, rect.llBounds));
-                if ((jobs.length <= DLMAP_MAX_TILE_FETCHES && canvasPx <= DLMAP_MAX_CANVAS_PX) || gz <= cz) break;
+                baseJobs = jobs.length ? _dlmapBasemapJobs(rect) : [];
+                if ((jobs.length + baseJobs.length <= DLMAP_MAX_TILE_FETCHES && canvasPx <= DLMAP_MAX_CANVAS_PX) || gz <= cz) break;
                 gz--;                                                     // too big — drop a zoom and retry
             }
             if (jobs.length === 0) { _dlmapToast('No plan layers here — move over a development plan'); return; }
-            if (jobs.length > DLMAP_MAX_TILE_FETCHES || canvasPx > DLMAP_MAX_CANVAS_PX) {
+            if (jobs.length + baseJobs.length > DLMAP_MAX_TILE_FETCHES || canvasPx > DLMAP_MAX_CANVAS_PX) {
                 _dlmapToast('Area too large to download here'); return;
             }
+            jobs = baseJobs.concat(jobs);                                 // base first; stitch re-sorts by zIndex anyway
 
             var ctrl = new AbortController();
             _dlmapSession = { running: true, abortCtrl: ctrl };
