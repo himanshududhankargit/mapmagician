@@ -18,7 +18,9 @@
         // 039 = downloads history moved under My Purchases; plan-tied records only, last 10.
         // 040 = REAL BILLING (createDownloadOrder/confirmDownloadPayment, price from
         //       appConfig/pricing/download_map, default ₹59) + expandable history w/ expiry.
-        var APP_VERSION = '040';
+        // 041 = download credits (shared Android downloadCredits node, server-consumed)
+        //       + saved-maps note in the dialog.
+        var APP_VERSION = '041';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -10221,6 +10223,23 @@
             var p = cachedPricing.get('download_map');
             return (typeof p === 'number') ? p : 59;
         }
+        // Admin-granted free-download credits — SAME node the Android app uses
+        // (downloadCredits/{emailKey}); readable by the owning user, decrement-only
+        // by rules. Display is client-read; consumption is server-side in
+        // createDownloadOrder, so this can only ever under-promise.
+        async function _dlmapFetchCredits() {
+            try {
+                var user = firebase.auth().currentUser;
+                if (!user || user.isAnonymous || !user.email) return null;
+                var snap = await firebase.database()
+                    .ref('downloadCredits/' + user.email.replace(/\./g, ',')).once('value');
+                var c = snap.val();
+                if (!c) return null;
+                var bal = Number(c.balance || 0);
+                var usable = bal > 0 && (c.permanent === true || Number(c.expiry || 0) > Date.now());
+                return { balance: bal, usable: usable };
+            } catch (e) { return null; }
+        }
         async function _dlmapStartPayment() {
             var s = _dlmapSession;
             if (!s || s.phase !== 'preview' || s.running) return;
@@ -10233,6 +10252,11 @@
             try {
                 var createDownloadOrder = functions.httpsCallable('createDownloadOrder');
                 var resp = (await createDownloadOrder({ districtPid: s.districtPid || '' })).data || {};
+                if (resp.viaCredit) {
+                    _dlmapToast('1 credit used — ' + (resp.creditsLeft || 0) + ' left');
+                    _dlmapFinalizeDownload();
+                    return;
+                }
                 if (resp.free) { _dlmapFinalizeDownload(); return; }   // admin set price 0
                 if (typeof Razorpay === 'undefined') {
                     await new Promise(function(resolve, reject) {
@@ -10649,10 +10673,15 @@
                 : 'Full resolution.';
             document.getElementById('dlmap-caption').value = s.caption || DLMAP_DEFAULT_CAPTION;
             var price = _dlmapPrice();
+            var credit = s.credits && s.credits.usable;
             document.getElementById('dlmap-price').textContent =
-                s.phase !== 'preview' ? 'Paid' : (price >= 1 ? '₹' + price + ' per download' : 'FREE');
+                s.phase !== 'preview' ? 'Paid'
+                : credit ? '1 credit (' + s.credits.balance + ' available)'
+                : (price >= 1 ? '₹' + price + ' per download' : 'FREE');
             document.getElementById('dlmap-pay-btn').textContent =
-                s.phase === 'preview' ? (price >= 1 ? 'Pay ₹' + price + ' & Download' : 'Download') : 'Download';
+                s.phase !== 'preview' ? 'Download'
+                : credit ? 'Use 1 credit & Download'
+                : (price >= 1 ? 'Pay ₹' + price + ' & Download' : 'Download');
             _dlmapRenderPreview();
             document.getElementById('dlmap-preview-overlay').classList.add('open');
         }
@@ -10695,6 +10724,7 @@
             try {
                 var tmplName = _dlmapPickTemplateName();
                 var d = findDistrictAtCenterCached();
+                var creditsPromise = _dlmapFetchCredits();
                 var res = await _dlmapRender(geo, pz, ctrl, 'Preparing preview');
                 if (!res) { _dlmapSession = null; return; }               // aborted
                 if (res.empty) { _dlmapToast('No plan layers here — move over a development plan'); _dlmapSession = null; return; }
@@ -10703,7 +10733,8 @@
                                   stitch: res.stitch, rect: res.rect, tmpl: tmpl, tmplName: tmplName,
                                   districtName: (d && d.districtName) || '',
                                   districtPid: (d && d.productPurchaseID) || '',
-                                  missing: res.missing };
+                                  missing: res.missing,
+                                  credits: await creditsPromise };
                 _dlmapShowDialog();
                 try { mmAnalytics.event('download_map_preview', { zoom: cz }); } catch (e) {}
             } catch (e) {
