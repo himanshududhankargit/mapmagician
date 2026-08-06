@@ -11,7 +11,8 @@
         // (single-session: per-browser localStorage id, no false "active on another device" kicks). Next -> 017.
         // 034 = staging push of the Download Map port (live=033, staging=031 -> max+1).
         // 035 = follow-up staging push (dlmap z-index/toast polish) — +1 on EVERY push.
-        var APP_VERSION = '035';
+        // 036 = dlmap paywall fix: downloads skip unpurchased villages (mirror on-screen filter).
+        var APP_VERSION = '036';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -10261,10 +10262,11 @@
                 out.push({ link: link, polygon: polygon, holes: holes || [], bbox: bbox,
                            zMax: zMax, zIndex: zIndex || 0, order: order++ });
             }
-            function addAll(data, defMin, defMax) {
+            function addAll(data, defMin, defMax, recordFilter) {
                 for (var i = 0; i < data.length; i++) {
                     var d = data[i];
                     if (!d) continue;
+                    if (recordFilter && !recordFilter(d)) continue;
                     if (d.isMerged && d.subSheets) {
                         for (var s = 0; s < d.subSheets.length; s++) {
                             var sub = d.subSheets[s];
@@ -10283,7 +10285,13 @@
             if (isDPLayerVisible && isShowingOldMaps && oldDPDataLoaded && cz >= zl.oldDP[0] && cz <= zl.oldDP[1])
                 addAll(oldDPLayerData, MIN_ZOOM_FOR_OLD_DP, MAX_ZOOM_FOR_OLD_DP);
             if (isVillageLayerVisible && villageDataLoaded && cz >= zl.village[0] && cz <= zl.village[1])
-                addAll(villageLayerData, MIN_ZOOM_FOR_VILLAGEMAP, MAX_ZOOM_FOR_VILLAGEMAP);
+                // Same rule as the on-screen village path (tileWorker.onmessage): a village
+                // record renders ONLY when purchased. This is load-bearing for the paywall —
+                // /VillagePlans/ tiles are NOT gated at the CloudFront edge, so unlike DP
+                // districts (which 403 to white), unpurchased village tiles would download
+                // fine and leak into the export.
+                addAll(villageLayerData, MIN_ZOOM_FOR_VILLAGEMAP, MAX_ZOOM_FOR_VILLAGEMAP,
+                       function(d) { return d.villageName && hasVillagePurchase(d.villageName); });
             return out;
         }
 
