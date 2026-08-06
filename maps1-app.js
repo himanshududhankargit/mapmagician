@@ -10182,6 +10182,7 @@
         function _dlmapToast(text) {
             // showShareToast is closure-scoped inside the ctx-menu wiring; own copy here.
             var toast = document.getElementById('unlock-toast');
+            toast.style.background = '';        // clear any inline color a GPS toast left behind
             document.getElementById('unlock-toast-text').textContent = text;
             toast.classList.add('show');
             setTimeout(function() { toast.classList.remove('show'); }, 2600);
