@@ -1404,6 +1404,7 @@
             <h3 style="margin-bottom:8px;">Download Map</h3>
             <div style="max-height:52vh;overflow:auto;"><img id="dlmap-preview-img" alt="Map preview"></div>
             <div id="dlmap-missing-note" style="display:none;font-size:12px;color:#c62828;margin-top:6px;"></div>
+            <div id="dlmap-quality-note" style="font-size:12px;color:#757575;margin-top:6px;"></div>
             <div class="dlmap-caption-row">
                 <label for="dlmap-caption" style="font-size:13px;color:#555;">Caption</label>
                 <input id="dlmap-caption" type="text" value="Part Development Plan" maxlength="80">
@@ -1434,6 +1435,11 @@
                 Clear Cache &amp; Reload
             </button>
             <p style="margin:8px 0 0;font-size:12px;color:#757575;line-height:1.4;">Clears all cached data including map tiles, saved regions, and service worker. The page will reload.</p>
+        </div>
+        <div class="layer-section" id="settings-downloads-section">
+            <div class="layer-section-title">Downloads</div>
+            <div id="dlmap-history-list"></div>
+            <p id="dlmap-history-empty" style="margin:0;font-size:13px;color:#999;line-height:1.4;">No downloaded maps yet. Downloaded maps can be regenerated here until their plan expires.</p>
         </div>
         <div class="layer-section">
             <div class="layer-section-title">Support</div>
@@ -2557,7 +2563,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=037" defer></script>
+    <script src="maps1-app.js?v=038" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">

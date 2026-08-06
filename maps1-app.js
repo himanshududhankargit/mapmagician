@@ -13,7 +13,9 @@
         // 035 = follow-up staging push (dlmap z-index/toast polish) — +1 on EVERY push.
         // 036 = dlmap paywall fix: downloads skip unpurchased villages (mirror on-screen filter).
         // 037 = dlmap satellite basemap (Esri World Imagery, CORS-open, attribution drawn).
-        var APP_VERSION = '037';
+        // 038 = dlmap two-phase (cheap low-res preview, full tiles only after pay) +
+        //       Settings→Downloads regeneration history (expires with the pass).
+        var APP_VERSION = '038';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7583,9 +7585,16 @@
             document.getElementById('dlmap-cancel-btn').addEventListener('click', _dlmapCloseDialog);
             document.getElementById('dlmap-pay-btn').addEventListener('click', function() {
                 var s = _dlmapSession;
-                if (!s || !s.blob) return;
-                var gate = canDownloadMap();      // TEST MODE: always allowed (see canDownloadMap)
-                if (!gate.allowed) { _dlmapToast(gate.reason || 'Purchase required'); return; }
+                if (!s || s.running) return;
+                if (s.phase === 'preview') {
+                    // Payment gate sits HERE — before any full-quality tile is fetched,
+                    // so an unpaid preview only ever costs the low-res tile set.
+                    var gate = canDownloadMap();  // TEST MODE: always allowed (see canDownloadMap)
+                    if (!gate.allowed) { _dlmapToast(gate.reason || 'Purchase required'); return; }
+                    _dlmapFinalizeDownload();
+                    return;
+                }
+                if (!s.blob) return;              // 'final': re-save the already-rendered file
                 var a = document.createElement('a');
                 a.href = s.previewUrl;
                 a.download = _dlmapFileName();
@@ -7593,8 +7602,9 @@
                 a.click();
                 a.remove();
                 _dlmapToast('Saved to Downloads');
-                try { mmAnalytics.event('download_map_saved', { missing: s.missing || 0 }); } catch (e) {}
             });
+            _dlmapRenderHistory();
+            document.getElementById('btn-settings').addEventListener('click', _dlmapRenderHistory);
             document.getElementById('dlmap-share-btn').addEventListener('click', function() {
                 var s = _dlmapSession;
                 if (!s || !s.blob) return;
@@ -10213,13 +10223,13 @@
             return { lat: latRad * 180 / Math.PI, lng: x / scale * 360 - 180 };
         }
 
-        // Capture rect at fetch zoom gz. Whole-pixel origin so tile placement stays integer.
-        function _dlmapComputeCaptureRect(gz, cz) {
-            var hCss = document.getElementById('map').clientHeight;
+        // Capture rect at fetch zoom gz, parametrized on the viewing geometry so a saved
+        // download can be regenerated later with identical framing regardless of the
+        // current map position or screen. Whole-pixel origin keeps tile placement integer.
+        function _dlmapComputeCaptureRectFrom(gz, cz, hCss, lat, lng) {
             var capH = Math.round(hCss * Math.pow(2, gz - cz));
             var capW = Math.round(capH * DLMAP_ASPECT);
-            var c = map.getCenter();
-            var cp = _dlmapLatLngToWorldPx(c.lat(), c.lng(), gz);
+            var cp = _dlmapLatLngToWorldPx(lat, lng, gz);
             var left = Math.round(cp.x - capW / 2), top = Math.round(cp.y - capH / 2);
             var r = { z: gz, left: left, top: top, w: capW, h: capH,
                       tx0: Math.floor(left / 256), ty0: Math.floor(top / 256),
@@ -10270,7 +10280,7 @@
                 if (cz < zMin || cz > zMax) return;                     // not visible on screen
                 if (bbox && !_dlmapBoxesOverlap(bbox, rectLL)) return;  // record-level fast reject
                 out.push({ link: link, polygon: polygon, holes: holes || [], bbox: bbox,
-                           zMax: zMax, zIndex: zIndex || 0, order: order++ });
+                           zMin: zMin, zMax: zMax, zIndex: zIndex || 0, order: order++ });
             }
             function addAll(data, defMin, defMax, recordFilter) {
                 for (var i = 0; i < data.length; i++) {
@@ -10312,8 +10322,13 @@
             var jobs = [];
             for (var si = 0; si < sources.length; si++) {
                 var s = sources[si];
-                var fz = Math.min(rect.z, s.zMax);       // per-sheet zoom clamp
-                var sizePx = 256 << (rect.z - fz);       // dest size in rect.z world px
+                // Per-sheet clamp into [zMin, zMax]: a sheet's tiles only exist in its own
+                // zoom range. Above rect.z (low-res preview below the sheet's minimum) the
+                // 256px tile is drawn scaled DOWN; below rect.z it is scaled UP as before.
+                var fz = Math.min(rect.z, s.zMax);
+                if (typeof s.zMin === 'number' && fz < s.zMin) fz = Math.min(s.zMin, s.zMax);
+                var sizePx = fz <= rect.z ? (256 << (rect.z - fz))
+                                          : Math.max(1, 256 >> (fz - rect.z));
                 var prefix = _dlmapUrlPrefix(s.link);
                 var tx0 = Math.floor(rect.left / sizePx), tx1 = Math.floor((rect.left + rect.w - 1) / sizePx);
                 var ty0 = Math.floor(rect.top / sizePx),  ty1 = Math.floor((rect.top + rect.h - 1) / sizePx);
@@ -10493,6 +10508,47 @@
             }
         }
 
+        // Shared render pipeline: enumerate + fetch + stitch the capture area of `geo` at
+        // `fetchZoom`, driving the progress overlay. Returns {rect, stitch, missing},
+        // {empty:true} when no plan sheets are in the area, or null when aborted.
+        async function _dlmapRender(geo, fetchZoom, ctrl, label) {
+            var rect = _dlmapComputeCaptureRectFrom(fetchZoom, geo.cz, geo.hCss, geo.lat, geo.lng);
+            var jobs = _dlmapEnumerateJobs(rect, _dlmapCollectSources(geo.cz, rect.llBounds));
+            if (jobs.length === 0) return { empty: true };
+            jobs = _dlmapBasemapJobs(rect).concat(jobs);
+            var overlay = document.getElementById('dlmap-progress-overlay');
+            var txt = document.getElementById('dlmap-progress-text');
+            txt.textContent = label + ' 0 / ' + jobs.length;
+            overlay.classList.add('open');
+            try {
+                var missing = await _dlmapFetchAll(jobs, ctrl.signal, function(d, t) {
+                    txt.textContent = label + ' ' + d + ' / ' + t;
+                });
+                if (ctrl.signal.aborted) return null;
+                txt.textContent = 'Rendering…';
+                return { rect: rect, stitch: _dlmapStitch(rect, jobs), missing: missing };
+            } finally {
+                overlay.classList.remove('open');
+                _dlmapCleanupJobs(jobs);                                  // bitmaps only live until the stitch
+            }
+        }
+
+        function _dlmapShowDialog() {
+            var s = _dlmapSession;
+            if (!s) return;
+            var note = document.getElementById('dlmap-missing-note');
+            note.style.display = s.missing ? '' : 'none';
+            if (s.missing) note.textContent = s.missing + ' tile(s) unavailable — shown as white areas';
+            document.getElementById('dlmap-quality-note').textContent = s.phase === 'preview'
+                ? 'Preview quality — the downloaded file is rendered in full resolution.'
+                : 'Full resolution.';
+            document.getElementById('dlmap-caption').value = s.caption || DLMAP_DEFAULT_CAPTION;
+            document.getElementById('dlmap-pay-btn').textContent =
+                s.phase === 'preview' ? 'Pay & Download' : 'Download';
+            _dlmapRenderPreview();
+            document.getElementById('dlmap-preview-overlay').classList.add('open');
+        }
+
         async function startDownloadMapFlow() {
             if (_dlmapSession && _dlmapSession.running) return;           // re-entry guard
             if (!map) return;
@@ -10501,10 +10557,16 @@
                 if (!(await fetchCloudFrontCookies())) { _dlmapToast('Tile server not ready — try again'); return; }
             }
             var cz = Math.round(map.getZoom());
-            var gz = Math.min(cz + 1, MAX_ZOOM_FOR_DP);                   // fetch one zoom deeper, capped
+            var c = map.getCenter();
+            var geo = { cz: cz, hCss: document.getElementById('map').clientHeight,
+                        lat: c.lat(), lng: c.lng() };
+
+            // Pick the FINAL fetch zoom up front (this loop only enumerates, fetches
+            // nothing) so the preview promises exactly what the paid render delivers.
+            var gz = Math.min(cz + 1, MAX_ZOOM_FOR_DP);                   // one zoom deeper, capped
             var rect, jobs, baseJobs, canvasPx;
             for (;;) {
-                rect = _dlmapComputeCaptureRect(gz, cz);
+                rect = _dlmapComputeCaptureRectFrom(gz, cz, geo.hCss, geo.lat, geo.lng);
                 canvasPx = (rect.tx1 - rect.tx0 + 1) * 256 * (rect.ty1 - rect.ty0 + 1) * 256;
                 jobs = _dlmapEnumerateJobs(rect, _dlmapCollectSources(cz, rect.llBounds));
                 baseJobs = jobs.length ? _dlmapBasemapJobs(rect) : [];
@@ -10515,37 +10577,161 @@
             if (jobs.length + baseJobs.length > DLMAP_MAX_TILE_FETCHES || canvasPx > DLMAP_MAX_CANVAS_PX) {
                 _dlmapToast('Area too large to download here'); return;
             }
-            jobs = baseJobs.concat(jobs);                                 // base first; stitch re-sorts by zIndex anyway
 
+            // PREVIEW at one zoom BELOW the screen: ~1/16th the tiles (and CDN egress)
+            // of the final render. Full-quality tiles are fetched only after payment —
+            // see _dlmapFinalizeDownload.
+            var pz = Math.max(cz - 1, MIN_ZOOM_FOR_DP);
             var ctrl = new AbortController();
-            _dlmapSession = { running: true, abortCtrl: ctrl };
-            var overlay = document.getElementById('dlmap-progress-overlay');
-            var txt = document.getElementById('dlmap-progress-text');
-            txt.textContent = 'Fetching tiles 0 / ' + jobs.length;
-            overlay.classList.add('open');
+            _dlmapSession = { running: true, abortCtrl: ctrl, phase: 'preview' };
             try {
-                var missing = await _dlmapFetchAll(jobs, ctrl.signal, function(d, t) {
-                    txt.textContent = 'Fetching tiles ' + d + ' / ' + t;
-                });
-                if (ctrl.signal.aborted) return;
-                txt.textContent = 'Rendering…';
-                var stitch = _dlmapStitch(rect, jobs);
-                var tmpl = await _dlmapLoadTemplate(_dlmapPickTemplateName());
-                _dlmapSession = { running: false, stitch: stitch, rect: rect, tmpl: tmpl, missing: missing };
-                var note = document.getElementById('dlmap-missing-note');
-                note.style.display = missing ? '' : 'none';
-                if (missing) note.textContent = missing + ' tile(s) unavailable — shown as white areas';
-                document.getElementById('dlmap-caption').value = DLMAP_DEFAULT_CAPTION;
-                _dlmapRenderPreview();
-                document.getElementById('dlmap-preview-overlay').classList.add('open');
-                try { mmAnalytics.event('download_map_preview', { tiles: jobs.length, missing: missing, zoom: cz }); } catch (e) {}
+                var tmplName = _dlmapPickTemplateName();
+                var d = findDistrictAtCenterCached();
+                var res = await _dlmapRender(geo, pz, ctrl, 'Preparing preview');
+                if (!res) { _dlmapSession = null; return; }               // aborted
+                if (res.empty) { _dlmapToast('No plan layers here — move over a development plan'); _dlmapSession = null; return; }
+                var tmpl = await _dlmapLoadTemplate(tmplName);
+                _dlmapSession = { running: false, phase: 'preview', geo: geo, gz: gz,
+                                  stitch: res.stitch, rect: res.rect, tmpl: tmpl, tmplName: tmplName,
+                                  districtName: (d && d.districtName) || '',
+                                  districtPid: (d && d.productPurchaseID) || '',
+                                  missing: res.missing };
+                _dlmapShowDialog();
+                try { mmAnalytics.event('download_map_preview', { zoom: cz }); } catch (e) {}
             } catch (e) {
                 if (!ctrl.signal.aborted) _dlmapToast('Could not create map — try again');
                 _dlmapSession = null;
-            } finally {
-                overlay.classList.remove('open');
-                _dlmapCleanupJobs(jobs);                                  // bitmaps only live until the stitch
-                if (ctrl.signal.aborted) _dlmapSession = null;
+            }
+        }
+
+        // Runs AFTER payment clears (test mode: instantly). This is where the real CDN
+        // egress is spent: full-quality tiles are fetched, the final image is rendered,
+        // the file download fires, and the parameters are saved for regeneration.
+        async function _dlmapFinalizeDownload() {
+            var s = _dlmapSession;
+            if (!s || s.phase !== 'preview' || s.running) return;
+            s.caption = document.getElementById('dlmap-caption').value.trim() || DLMAP_DEFAULT_CAPTION;
+            document.getElementById('dlmap-preview-overlay').classList.remove('open');
+            var ctrl = new AbortController();
+            s.running = true;
+            s.abortCtrl = ctrl;
+            try {
+                var res = await _dlmapRender(s.geo, s.gz, ctrl, 'Fetching full-quality tiles');
+                if (!res || res.empty) { _dlmapSession = null; return; }
+                s.running = false;
+                s.phase = 'final';
+                s.stitch = res.stitch;
+                s.rect = res.rect;
+                s.missing = res.missing;
+                s.pendingDownload = true;         // the toBlob callback fires the download
+                _dlmapShowDialog();
+            } catch (e) {
+                if (!ctrl.signal.aborted) _dlmapToast('Could not create map — try again');
+                _dlmapSession = null;
+            }
+        }
+
+        // ---- Download history: the paid parameters, not the pixels ------------------
+        // Failsafe: a paid download is re-renderable from its stored coordinates until
+        // the pass expires (Settings → Downloads → Regenerate). localStorage, this
+        // browser only — the image itself is never stored, only how to rebuild it.
+        var DLMAP_HISTORY_KEY = 'mm_dlmap_history';
+        function _dlmapHistoryList() {
+            var list = [];
+            try { list = JSON.parse(localStorage.getItem(DLMAP_HISTORY_KEY) || '[]'); } catch (e) {}
+            if (!Array.isArray(list)) list = [];
+            var now = Date.now();
+            return list.filter(function(r) { return r && r.geo && (!r.expiry || r.expiry > now); });
+        }
+        function _dlmapHistoryWrite(list) {
+            try { localStorage.setItem(DLMAP_HISTORY_KEY, JSON.stringify(list.slice(0, 20))); } catch (e) {}
+        }
+        function _dlmapHistoryAdd(s) {
+            var expiry = Date.now() + 7 * 864e5;              // fallback: one 7-day pass
+            var entry = s.districtPid ? findPurchaseEntry(s.districtPid) : null;
+            if (entry && entry.expiry) {
+                var e = typeof entry.expiry === 'number' ? entry.expiry : Date.parse(entry.expiry);
+                if (isFinite(e) && e > Date.now()) expiry = e;
+            }
+            var list = _dlmapHistoryList();
+            list.unshift({ ts: Date.now(), geo: s.geo, gz: s.gz, caption: s.caption,
+                           tmpl: s.tmplName, district: s.districtName || '',
+                           pid: s.districtPid || '', expiry: expiry });
+            _dlmapHistoryWrite(list);
+            _dlmapRenderHistory();
+        }
+        function _dlmapRenderHistory() {
+            var box = document.getElementById('dlmap-history-list');
+            var empty = document.getElementById('dlmap-history-empty');
+            if (!box || !empty) return;
+            var list = _dlmapHistoryList();
+            _dlmapHistoryWrite(list);                         // persist expiry pruning
+            // Re-download expires WITH the plan: a record whose pass is no longer
+            // active is hidden (and Regenerate re-checks) — no free re-downloads
+            // after expiry. The edge 403s premium tiles regardless, so a tampered
+            // localStorage only ever yields a white map.
+            var usable = list.filter(function(r) { return !r.pid || hasPurchase(r.pid); });
+            box.innerHTML = '';
+            empty.style.display = usable.length ? 'none' : '';
+            usable.forEach(function(rec, i) {
+                var row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f0f0;';
+                var label = document.createElement('div');
+                label.style.cssText = 'flex:1;font-size:12px;color:#333;line-height:1.4;';
+                var dt = new Date(rec.ts);
+                label.textContent = (rec.district || rec.caption || 'Map') + ' — '
+                    + dt.toLocaleDateString() + ' '
+                    + dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                var btn = document.createElement('button');
+                btn.textContent = 'Regenerate';
+                btn.style.cssText = 'padding:6px 10px;border:1px solid #2E7D32;border-radius:6px;background:#fff;color:#2E7D32;font-size:12px;cursor:pointer;font-family:inherit;';
+                btn.addEventListener('click', function() { _dlmapRegenerate(rec); });
+                var del = document.createElement('button');
+                del.textContent = '✕';
+                del.style.cssText = 'padding:6px 8px;border:none;background:none;color:#999;font-size:13px;cursor:pointer;';
+                del.addEventListener('click', function() {
+                    var l = _dlmapHistoryList().filter(function(r) { return r.ts !== rec.ts; });
+                    _dlmapHistoryWrite(l);
+                    _dlmapRenderHistory();
+                });
+                row.appendChild(label);
+                row.appendChild(btn);
+                row.appendChild(del);
+                box.appendChild(row);
+            });
+        }
+        // Re-render a paid download from its stored parameters. No charge and no new
+        // history record — the user already paid for these coordinates. Layer toggles
+        // and entitlements are today's, so an expired pass shows white above z14.
+        async function _dlmapRegenerate(rec) {
+            if (_dlmapSession && _dlmapSession.running) return;
+            if (rec.pid && !hasPurchase(rec.pid)) {           // pass lapsed since the list rendered
+                _dlmapToast('Your pass for this region has expired — re-download is no longer available');
+                _dlmapRenderHistory();
+                return;
+            }
+            if (!cfCookiesReady) {
+                _dlmapToast('Connecting to tile server…');
+                if (!(await fetchCloudFrontCookies())) { _dlmapToast('Tile server not ready — try again'); return; }
+            }
+            var closeBtn = document.getElementById('settings-panel-close');
+            if (closeBtn) closeBtn.click();
+            var ctrl = new AbortController();
+            _dlmapSession = { running: true, abortCtrl: ctrl, phase: 'regen' };
+            try {
+                var res = await _dlmapRender(rec.geo, rec.gz, ctrl, 'Regenerating map');
+                if (!res) { _dlmapSession = null; return; }
+                if (res.empty) { _dlmapToast('Nothing to render — check layer toggles'); _dlmapSession = null; return; }
+                var tmpl = await _dlmapLoadTemplate(rec.tmpl || 'template.jpg');
+                _dlmapSession = { running: false, phase: 'final', regen: true, geo: rec.geo, gz: rec.gz,
+                                  stitch: res.stitch, rect: res.rect, tmpl: tmpl, tmplName: rec.tmpl,
+                                  districtName: rec.district || '', missing: res.missing,
+                                  caption: rec.caption, pendingDownload: true };
+                _dlmapShowDialog();
+                try { mmAnalytics.event('download_map_regen', {}); } catch (e) {}
+            } catch (e) {
+                if (!ctrl.signal.aborted) _dlmapToast('Could not create map — try again');
+                _dlmapSession = null;
             }
         }
 
@@ -10555,6 +10741,7 @@
             var s = _dlmapSession;
             if (!s || !s.stitch) return;
             var caption = document.getElementById('dlmap-caption').value.trim() || DLMAP_DEFAULT_CAPTION;
+            s.caption = caption;
             s.finalCanvas = _dlmapComposeFinal(s.tmpl, s.stitch, s.rect, caption);
             s.finalCanvas.toBlob(function(blob) {
                 if (!blob || _dlmapSession !== s) return;
@@ -10569,6 +10756,18 @@
                         navigator.canShare({ files: [new File([blob], 'm.jpg', { type: 'image/jpeg' })] }));
                 } catch (e) {}
                 sb.style.display = canShare ? '' : 'none';
+                if (s.pendingDownload) {          // finalize/regenerate: fire the file save now
+                    s.pendingDownload = false;
+                    var a = document.createElement('a');
+                    a.href = s.previewUrl;
+                    a.download = _dlmapFileName();
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    _dlmapToast('Saved to Downloads');
+                    if (!s.regen) _dlmapHistoryAdd(s);
+                    try { mmAnalytics.event('download_map_saved', { missing: s.missing || 0 }); } catch (e) {}
+                }
             }, 'image/jpeg', 1.0);
         }
 
