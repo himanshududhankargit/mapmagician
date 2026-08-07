@@ -28,8 +28,9 @@
         // 048 = unowned-district warning before capture + unlock pill hidden in capture mode.
         // 050 = Download Map dialog redesigned per Claude Design 1b (two-column receipt).
         // 052 = mobile bottom sheet per Claude Design 2a (width-responsive) + Share removed.
-        // 053 = LIVE promotion of the 2a mobile sheet + Share removal.
-        var APP_VERSION = '053';
+        // 054 = wording: "Subscription / Active Plan" (plain "plan" collides with development plan).
+        // 055 = LIVE promotion of the wording change.
+        var APP_VERSION = '055';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -10738,7 +10739,7 @@
             var locked = !!(d && !hasPurchase(d.productPurchaseID));
             chip.classList.toggle('locked', locked);
             chip.textContent = locked
-                ? '🔒 Plan needed for full detail · ' + stars + ' ' + label
+                ? '🔒 Subscription / Active Plan needed for full details · ' + stars + ' ' + label
                 : stars + ' ' + label + ' at this zoom';
         }
 
@@ -10776,9 +10777,9 @@
             var warnDistrict = findDistrictAtCenterCached();
             if (!_dlmapUnownedWarned && warnDistrict && !hasPurchase(warnDistrict.productPurchaseID)) {
                 document.getElementById('dlmap-unowned-text').textContent =
-                    'You don’t have an active plan for ' + warnDistrict.districtName + '. ' +
-                    'Premium plan detail (zoom 15+) needs a plan and will NOT appear in this ' +
-                    'download — only the free base detail will be included.';
+                    'You don’t have an active Subscription / Plan for ' + warnDistrict.districtName + '. ' +
+                    'Premium map detail (zoom 15+) needs an active Subscription / Plan and will NOT ' +
+                    'appear in this download — only the free base detail will be included.';
                 document.getElementById('dlmap-unowned-overlay').classList.add('open');
                 return;   // viewfinder stays up behind the dialog
             }
