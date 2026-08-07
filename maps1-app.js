@@ -35,7 +35,8 @@
         //       + first-run explainer with sample sheet and "Don't show again".
         // 062 = Proceed/Cancel bar moved just below the capture box (outside it).
         // 064 = geodetic scale bar drawn bottom-right of the map window on the sheet.
-        var APP_VERSION = '064';
+        // 066 = "Add scale bar" option in the dialog, checked by default.
+        var APP_VERSION = '066';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7637,6 +7638,9 @@
                 clearTimeout(_dlmapCaptionTimer);
                 _dlmapCaptionTimer = setTimeout(_dlmapRenderPreview, 300);
             });
+            document.getElementById('dlmap-scalebar-opt').addEventListener('change', function() {
+                _dlmapRenderPreview();          // recompose from the kept stitch — cheap
+            });
             document.getElementById('dlmap-cancel-btn').addEventListener('click', _dlmapCloseDialog);
             document.getElementById('dlmap-pay-btn').addEventListener('click', function() {
                 var s = _dlmapSession;
@@ -10692,7 +10696,9 @@
                 ctx.fillStyle = '#333333';
                 ctx.fillText(DLMAP_BASEMAP_ATTRIB, DLMAP_MAP_RIGHT - 14, DLMAP_MAP_BOTTOM - 14);
             }
-            _dlmapDrawScaleBar(ctx, rect, scale);
+            if (document.getElementById('dlmap-scalebar-opt').checked) {
+                _dlmapDrawScaleBar(ctx, rect, scale);
+            }
             return c;
         }
 
@@ -10821,6 +10827,7 @@
                 ? 'Preview quality — the downloaded file is rendered in full resolution.'
                 : 'Full resolution.';
             document.getElementById('dlmap-caption').value = s.caption || DLMAP_DEFAULT_CAPTION;
+            document.getElementById('dlmap-scalebar-opt').checked = true;   // default ON each session
             var price = _dlmapPrice();
             var credit = s.credits && s.credits.usable;
             var priceText =
