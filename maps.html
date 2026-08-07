@@ -492,6 +492,39 @@
             .legend-panel-header { padding: 16px 16px 12px; }
         }
 
+        /* --- Download Map "Capture Area" viewfinder (same UX as the apps) --- */
+        /* z-index above the bottom bar (1000) so the Proceed/Cancel bar is never
+           covered; bar raised clear of the bottom navigation. */
+        #dlmap-viewfinder { position:fixed; inset:0; z-index:1100; pointer-events:none; }
+        #dlmap-viewfinder-box {
+            position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+            width:min(calc(100vw - 48px), calc((100dvh - 200px) * 1.3418));
+            aspect-ratio: 2905 / 2165;
+            border:3px solid #fff; border-radius:4px;
+            box-shadow:0 0 0 200vmax rgba(0,0,0,0.55);
+        }
+        #dlmap-viewfinder-box::before {
+            content:"Capture Area"; position:absolute; top:-30px; left:50%;
+            transform:translateX(-50%); color:#fff; font-size:14px; font-weight:700;
+            text-shadow:0 1px 3px rgba(0,0,0,0.8); white-space:nowrap;
+        }
+        #dlmap-viewfinder-bar {
+            position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+            display:flex; gap:12px; pointer-events:auto;
+        }
+        #dlmap-viewfinder-bar button {
+            padding:12px 26px; border:none; border-radius:24px; font-size:15px;
+            font-weight:700; color:#fff; cursor:pointer; font-family:inherit;
+        }
+
+        /* --- Download Map dialog (Android createFinalBitmap* port) --- */
+        #dlmap-preview-img { width:100%; height:auto; display:block; border:1px solid #E0E0E0;
+                             border-radius:6px; background:#f5f5f5; min-height:120px; }
+        .dlmap-caption-row { display:flex; align-items:center; gap:8px; margin-top:10px; }
+        .dlmap-caption-row input { flex:1; padding:8px 10px; border:1px solid #ccc; border-radius:8px; font-size:13px; }
+        .dlmap-price-row { display:flex; justify-content:space-between; margin-top:10px; font-size:13px; color:#212121; }
+        .dlmap-btn-row { display:flex; gap:8px; margin-top:12px; }
+
         /* Bottom navigation bar (Google Maps style tabs) */
         /* Unified bottom bar */
         .bottom-bar {
@@ -1208,6 +1241,8 @@
 
     <!-- Horizontal toolbar pills -->
     <div class="toolbar-scroll">
+        <!-- Download Map deliberately first (owner request 2026-08-07) -->
+        <button class="pill-btn" id="btn-download-map">Download Map</button>
         <button class="pill-btn" id="btn-addon-maps" style="display:none;background:#2E7D32;color:#fff;font-weight:600;">0 Add-On Maps</button>
         <button class="pill-btn" id="btn-old-maps" style="display:none">Load Old Maps</button>
         <button class="pill-btn" id="btn-legend">Legend</button>
@@ -1387,6 +1422,38 @@
         </div>
     </div>
 
+    <!-- Download Map preview — port of the Android screenshot-download confirmation.
+         The stitched capture is pasted into the print template and previewed here;
+         payment (₹, price from appConfig/pricing/download_map) or a credit is taken
+         before the full-quality render — see _dlmapStartPayment/createDownloadOrder. -->
+    <div class="zoom-dialog-overlay" id="dlmap-preview-overlay" data-dismiss="dlmap-cancel-btn">
+        <div class="zoom-dialog" style="max-width:560px;text-align:left;padding:16px;">
+            <h3 style="margin-bottom:8px;">Download Map</h3>
+            <div style="max-height:52vh;overflow:auto;position:relative;">
+                <img id="dlmap-preview-img" alt="Map preview">
+                <div id="dlmap-img-processing" style="display:none;position:absolute;inset:0;background:rgba(255,255,255,0.78);align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#00695C;text-align:center;padding:12px;">
+                    Processing your map…
+                </div>
+            </div>
+            <div id="dlmap-missing-note" style="display:none;font-size:12px;color:#c62828;margin-top:6px;"></div>
+            <div id="dlmap-quality-note" style="font-size:12px;color:#757575;margin-top:6px;"></div>
+            <div style="font-size:12px;color:#00695C;margin-top:6px;background:#E0F2F1;border-radius:6px;padding:6px 8px;">
+                Your downloaded maps are saved under <b>Settings &rarr; My Purchases &rarr; Downloaded Maps</b> —
+                re-download them free anytime while your plan is active.
+            </div>
+            <div class="dlmap-caption-row">
+                <label for="dlmap-caption" style="font-size:13px;color:#555;">Caption</label>
+                <input id="dlmap-caption" type="text" value="Part Development Plan" maxlength="80">
+            </div>
+            <div class="dlmap-price-row"><span>Price</span><b id="dlmap-price">FREE (test build)</b></div>
+            <div class="dlmap-btn-row">
+                <button class="zoom-dialog-btn" id="dlmap-cancel-btn" style="background:#eee;color:#333;">Cancel</button>
+                <button class="zoom-dialog-btn" id="dlmap-share-btn" style="display:none;background:#1976D2;color:#fff;">Share</button>
+                <button class="zoom-dialog-btn" id="dlmap-pay-btn" style="background:#2E7D32;color:#fff;flex:1;">Pay &amp; Download</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Bottom navigation bar -->
     <!-- Settings panel overlay -->
     <div class="layer-overlay" id="settings-overlay"></div>
@@ -1428,6 +1495,14 @@
             <div id="settings-village-purchases"></div>
             <p id="settings-no-purchases" style="margin:0;font-size:13px;color:#999;display:none;">No active purchases</p>
             <div id="settings-purchase-history" style="margin-top:12px;"></div>
+            <!-- Downloaded maps: regeneration list for paid Download Map exports. Lives
+                 inside My Purchases deliberately — records are plan-tied and only usable
+                 while that plan is active (expired plans get no entitled cookies anyway). -->
+            <div id="dlmap-history-box" style="margin-top:14px;">
+                <div style="font-size:13px;font-weight:600;color:#333;margin-bottom:2px;">Downloaded maps</div>
+                <div id="dlmap-history-list"></div>
+                <p id="dlmap-history-empty" style="margin:4px 0 0;font-size:12px;color:#999;line-height:1.4;">Maps you download appear here and can be re-generated free while their plan is active.</p>
+            </div>
         </div>
         <div class="layer-section">
             <div class="layer-section-title">Get the App</div>
@@ -2015,6 +2090,26 @@
         <div class="payment-loading-sub" id="payment-loading-sub">7-Day Pass</div>
     </div>
 
+    <!-- Download Map "Capture Area" viewfinder: pointer-events:none lets map gestures
+         pass through the dimmer; only the Proceed/Cancel bar is interactive -->
+    <div id="dlmap-viewfinder" style="display:none;">
+        <div id="dlmap-viewfinder-box">
+            <!-- Inside the box, bottom-centred: always visible whatever bars overlay the page -->
+            <div id="dlmap-viewfinder-bar">
+                <button id="dlmap-vf-cancel" style="background:#616161;">Cancel</button>
+                <button id="dlmap-vf-proceed" style="background:#2E7D32;">Proceed</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Download Map progress — blocking while tiles stream in; Cancel aborts the fetch -->
+    <div class="payment-loading-overlay" id="dlmap-progress-overlay">
+        <div class="payment-spinner"></div>
+        <div class="payment-loading-text" id="dlmap-progress-text">Preparing map…</div>
+        <button id="dlmap-progress-cancel" class="zoom-dialog-btn"
+                style="margin-top:18px;background:#eee;color:#333;">Cancel</button>
+    </div>
+
     <!-- Unlock toast notification -->
     <div class="unlock-toast" id="unlock-toast">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="#fff"/></svg>
@@ -2519,7 +2614,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps-app.js?v=033" defer></script>
+    <script src="maps-app.js?v=047" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
