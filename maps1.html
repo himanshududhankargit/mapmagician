@@ -493,7 +493,9 @@
         }
 
         /* --- Download Map "Capture Area" viewfinder (same UX as the apps) --- */
-        #dlmap-viewfinder { position:fixed; inset:0; z-index:900; pointer-events:none; }
+        /* z-index above the bottom bar (1000) so the Proceed/Cancel bar is never
+           covered; bar raised clear of the bottom navigation. */
+        #dlmap-viewfinder { position:fixed; inset:0; z-index:1100; pointer-events:none; }
         #dlmap-viewfinder-box {
             position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
             width:min(calc(100vw - 48px), calc((100dvh - 200px) * 1.3418));
@@ -507,7 +509,8 @@
             text-shadow:0 1px 3px rgba(0,0,0,0.8); white-space:nowrap;
         }
         #dlmap-viewfinder-bar {
-            position:absolute; bottom:36px; left:50%; transform:translateX(-50%);
+            position:absolute; bottom:calc(96px + env(safe-area-inset-bottom, 0px));
+            left:50%; transform:translateX(-50%);
             display:flex; gap:12px; pointer-events:auto;
         }
         #dlmap-viewfinder-bar button {
@@ -2603,7 +2606,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=042" defer></script>
+    <script src="maps1-app.js?v=043" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
