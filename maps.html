@@ -575,6 +575,16 @@
                       cursor:pointer; box-shadow:0 2px 6px rgba(46,125,50,0.28); }
         .dlmapd-cta:hover { background:#1B5E20; }
         .dlmapd-cta svg { width:17px; height:17px; }
+        .dlmapd-cta.busy { opacity:0.85; pointer-events:none; }
+        .dlmapd-dots { display:inline-flex; gap:3px; margin-left:3px; align-items:center; }
+        .dlmapd-dots span { width:5px; height:5px; border-radius:50%; background:#fff;
+                            animation:dlmapDot 1s infinite ease-in-out; }
+        .dlmapd-dots span:nth-child(2) { animation-delay:0.15s; }
+        .dlmapd-dots span:nth-child(3) { animation-delay:0.3s; }
+        @keyframes dlmapDot {
+            0%, 80%, 100% { opacity:0.3; transform:scale(0.8); }
+            40% { opacity:1; transform:scale(1.05); }
+        }
         #dlmap-img-processing { position:absolute; inset:0; background:rgba(255,255,255,0.78);
                                 align-items:center; justify-content:center; font-size:14px; font-weight:700;
                                 color:#00695C; text-align:center; padding:12px; }
@@ -2741,7 +2751,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps-app.js?v=055" defer></script>
+    <script src="maps-app.js?v=057" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">

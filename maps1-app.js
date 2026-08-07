@@ -29,7 +29,8 @@
         // 050 = Download Map dialog redesigned per Claude Design 1b (two-column receipt).
         // 052 = mobile bottom sheet per Claude Design 2a (width-responsive) + Share removed.
         // 054 = wording: "Subscription / Active Plan" (plain "plan" collides with development plan).
-        var APP_VERSION = '054';
+        // 056 = vibrate on Download tap + "Processing" pulsing-dots busy state on the CTA.
+        var APP_VERSION = '056';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7611,9 +7612,12 @@
             document.getElementById('dlmap-pay-btn').addEventListener('click', function() {
                 var s = _dlmapSession;
                 if (!s || s.running) return;
+                try { if (navigator.vibrate) navigator.vibrate(30); } catch (e) {}
                 if (s.phase === 'preview') {
                     // Payment sits HERE — before any full-quality tile is fetched, so an
-                    // unpaid preview only ever costs the low-res tile set.
+                    // unpaid preview only ever costs the low-res tile set. The button
+                    // locks into "Processing…" until the checkout/next stage takes over.
+                    _dlmapSetPayBusy(true);
                     _dlmapStartPayment();
                     return;
                 }
@@ -10253,11 +10257,25 @@
                 return { balance: bal, usable: usable };
             } catch (e) { return null; }
         }
+        // CTA busy state: "Processing" + three pulsing dots, button locked. Cleared by
+        // _dlmapShowDialog's label reset or explicitly on early exits/cancel paths.
+        function _dlmapSetPayBusy(busy) {
+            var btn = document.getElementById('dlmap-pay-btn');
+            if (busy) {
+                btn.classList.add('busy');
+                document.getElementById('dlmap-pay-label').innerHTML =
+                    'Processing <span class="dlmapd-dots"><span></span><span></span><span></span></span>';
+            } else {
+                btn.classList.remove('busy');
+            }
+        }
+
         async function _dlmapStartPayment() {
             var s = _dlmapSession;
             if (!s || s.phase !== 'preview' || s.running) return;
             var user = firebase.auth().currentUser;
             if (!user || user.isAnonymous || !user.email) {
+                _dlmapSetPayBusy(false);
                 _dlmapToast('Sign in to download this map');
                 document.getElementById('auth-dialog-overlay').classList.add('open');
                 return;
@@ -10330,7 +10348,7 @@
                             _dlmapFinalizeDownload();
                         })();
                     },
-                    modal: { ondismiss: function() { _dlmapToast('Payment cancelled'); } }
+                    modal: { ondismiss: function() { _dlmapSetPayBusy(false); _dlmapToast('Payment cancelled'); } }
                 });
                 try {
                     rzp.on('payment.failed', function(r) {
@@ -10345,6 +10363,7 @@
                 rzp.open();
             } catch (e) {
                 console.error('Download payment error:', e);
+                _dlmapSetPayBusy(false);
                 _dlmapToast('Could not start payment — try again');
             }
         }
@@ -10708,7 +10727,9 @@
                 el.textContent = priceText;
             });
             // Label lives in a span — setting textContent on the button itself would
-            // destroy the design-1b download icon beside it.
+            // destroy the design-1b download icon beside it. Also clears any
+            // "Processing…" busy state from a previous click.
+            document.getElementById('dlmap-pay-btn').classList.remove('busy');
             document.getElementById('dlmap-pay-label').textContent =
                 s.phase !== 'preview' ? 'Download'
                 : credit ? 'Use 1 credit & Download'
