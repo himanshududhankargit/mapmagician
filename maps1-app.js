@@ -26,7 +26,8 @@
         // 045 = post-payment processing states (confirm gap + image compose/encode).
         // 046 = Download Map pill moved to first position in the toolbar.
         // 048 = unowned-district warning before capture + unlock pill hidden in capture mode.
-        var APP_VERSION = '048';
+        // 050 = Download Map dialog redesigned per Claude Design 1b (two-column receipt).
+        var APP_VERSION = '050';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -10706,7 +10707,9 @@
                 s.phase !== 'preview' ? 'Paid'
                 : credit ? '1 credit (' + s.credits.balance + ' available)'
                 : (price >= 1 ? '₹' + price + ' per download' : 'FREE');
-            document.getElementById('dlmap-pay-btn').textContent =
+            // Label lives in a span — setting textContent on the button itself would
+            // destroy the design-1b download icon beside it.
+            document.getElementById('dlmap-pay-label').textContent =
                 s.phase !== 'preview' ? 'Download'
                 : credit ? 'Use 1 credit & Download'
                 : (price >= 1 ? 'Pay ₹' + price + ' & Download' : 'Download');

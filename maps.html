@@ -528,13 +528,58 @@
            updater keeps re-showing it, so !important wins over inline style) */
         body.dlmap-capturing #floating-signin-btn { display:none !important; }
 
-        /* --- Download Map dialog (Android createFinalBitmap* port) --- */
-        #dlmap-preview-img { width:100%; height:auto; display:block; border:1px solid #E0E0E0;
-                             border-radius:6px; background:#f5f5f5; min-height:120px; }
-        .dlmap-caption-row { display:flex; align-items:center; gap:8px; margin-top:10px; }
-        .dlmap-caption-row input { flex:1; padding:8px 10px; border:1px solid #ccc; border-radius:8px; font-size:13px; }
-        .dlmap-price-row { display:flex; justify-content:space-between; margin-top:10px; font-size:13px; color:#212121; }
-        .dlmap-btn-row { display:flex; gap:8px; margin-top:12px; }
+        /* --- Download Map dialog — design 1b: two-column, big preview, receipt rail --- */
+        .dlmap-btn-row { display:flex; gap:8px; margin-top:12px; }  /* still used by the unowned-district dialog */
+        .dlmapd-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:18px 22px; border-bottom:1px solid #EEEEEE; }
+        .dlmapd-head h3 { margin:0; font-size:20px; font-weight:700; color:#212121; letter-spacing:-0.2px; }
+        .dlmapd-sub { margin:4px 0 0; font-size:13px; color:#616161; }
+        .dlmapd-chip { display:inline-flex; align-items:center; gap:6px; background:#E0F2F1; color:#00695C;
+                       font-size:12px; font-weight:500; padding:6px 10px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
+        .dlmapd-chip svg { width:14px; height:14px; }
+        .dlmapd-grid { display:grid; grid-template-columns:1fr 292px; align-items:stretch; }
+        .dlmapd-left { padding:18px 16px 18px 22px; }
+        .dlmapd-previewbox { position:relative; border:1px solid #E0E0E0; border-radius:8px; overflow:auto;
+                             background:#f5f5f5; max-height:52vh; }
+        .dlmapd-previewbox img { display:block; width:100%; height:auto; min-height:120px; }
+        .dlmapd-qnote { margin:8px 2px 0; font-size:12px; color:#757575; }
+        .dlmapd-side { background:#FAFAFA; border-left:1px solid #EEEEEE; padding:18px 22px;
+                       display:flex; flex-direction:column; gap:16px; }
+        .dlmapd-label { display:block; font-size:12px; font-weight:500; color:#616161; margin-bottom:5px; }
+        .dlmapd-side input { width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #CFD8DC;
+                             border-radius:8px; font-size:14px; font-family:inherit; color:#212121; background:#fff; outline:none; }
+        .dlmapd-side input:focus { border-color:#00695C; box-shadow:0 0 0 3px rgba(0,105,92,0.12); }
+        .dlmapd-checks { display:flex; flex-direction:column; gap:12px; padding-top:14px; border-top:1px solid #E0E0E0; }
+        .dlmapd-check { display:flex; gap:9px; font-size:12px; color:#455A64; line-height:1.5; }
+        .dlmapd-check b { font-weight:500; color:#212121; }
+        .dlmapd-check svg { width:16px; height:16px; flex-shrink:0; margin-top:2px; }
+        .dlmapd-price { margin-top:auto; padding-top:14px; border-top:1px solid #E0E0E0;
+                        display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+        .dlmapd-price .dlmapd-price-label { font-size:13px; color:#616161; }
+        .dlmapd-price #dlmap-price { font-size:18px; font-weight:700; color:#212121; text-align:right; }
+        .dlmapd-foot { display:flex; align-items:center; gap:10px; padding:14px 22px; border-top:1px solid #EEEEEE; background:#fff; }
+        .dlmapd-ghost { border:none; background:none; font-family:inherit; font-size:14px; font-weight:500;
+                        color:#616161; padding:12px 8px; cursor:pointer; border-radius:8px; }
+        .dlmapd-ghost:hover { background:#F5F5F5; color:#212121; }
+        .dlmapd-outline { display:inline-flex; align-items:center; gap:7px; border:1px solid #CFD8DC; background:#fff;
+                          font-family:inherit; font-size:14px; font-weight:500; color:#37474F; padding:11px 16px;
+                          border-radius:8px; cursor:pointer; }
+        .dlmapd-outline:hover { background:#ECEFF1; }
+        .dlmapd-outline svg { width:16px; height:16px; }
+        .dlmapd-cta { display:inline-flex; align-items:center; gap:8px; border:none; background:#2E7D32; color:#fff;
+                      font-family:inherit; font-size:15px; font-weight:700; padding:13px 22px; border-radius:8px;
+                      cursor:pointer; box-shadow:0 2px 6px rgba(46,125,50,0.28); }
+        .dlmapd-cta:hover { background:#1B5E20; }
+        .dlmapd-cta svg { width:17px; height:17px; }
+        #dlmap-img-processing { position:absolute; inset:0; background:rgba(255,255,255,0.78);
+                                align-items:center; justify-content:center; font-size:14px; font-weight:700;
+                                color:#00695C; text-align:center; padding:12px; }
+        @media (max-width:720px) {
+            .dlmapd-grid { grid-template-columns:1fr; }
+            .dlmapd-side { border-left:none; border-top:1px solid #EEEEEE; }
+            .dlmapd-left { padding:14px 16px; }
+            .dlmapd-head { padding:14px 16px; }
+            .dlmapd-foot { padding:12px 16px; flex-wrap:wrap; }
+        }
 
         /* Bottom navigation bar (Google Maps style tabs) */
         /* Unified bottom bar */
@@ -1437,39 +1482,62 @@
          The stitched capture is pasted into the print template and previewed here;
          payment (₹, price from appConfig/pricing/download_map) or a credit is taken
          before the full-quality render — see _dlmapStartPayment/createDownloadOrder. -->
+    <!-- Download Map dialog — Claude Design 1b: two-column, big preview left,
+         receipt rail right (caption, checklist, price), footer CTA row. All the
+         functional ids are unchanged, so the dlmap JS flow is untouched. -->
     <div class="zoom-dialog-overlay" id="dlmap-preview-overlay" data-dismiss="dlmap-cancel-btn">
-        <div class="zoom-dialog" style="max-width:560px;text-align:left;padding:16px;">
-            <h3 style="margin-bottom:8px;">Download Map</h3>
-            <div style="max-height:52vh;overflow:auto;position:relative;">
-                <img id="dlmap-preview-img" alt="Map preview">
-                <div id="dlmap-img-processing" style="display:none;position:absolute;inset:0;background:rgba(255,255,255,0.78);align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#00695C;text-align:center;padding:12px;">
-                    Processing your map…
+        <div class="zoom-dialog" style="max-width:760px;width:96%;text-align:left;padding:0;border-radius:14px;">
+            <div class="dlmapd-head">
+                <div>
+                    <h3>Download Map</h3>
+                    <p class="dlmapd-sub">Check the sheet, then confirm.</p>
+                </div>
+                <div class="dlmapd-chip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    A4 · full resolution
                 </div>
             </div>
-            <div id="dlmap-missing-note" style="display:none;font-size:12px;color:#c62828;margin-top:6px;"></div>
-            <div id="dlmap-quality-note" style="font-size:12px;color:#757575;margin-top:6px;"></div>
-            <div style="font-size:12px;color:#00695C;margin-top:6px;background:#E0F2F1;border-radius:6px;padding:6px 8px;">
-                Your downloaded maps are saved under <b>Settings &rarr; My Purchases &rarr; Downloaded Maps</b> —
-                re-download them free anytime while your plan is active.
+            <div class="dlmapd-grid">
+                <div class="dlmapd-left">
+                    <div class="dlmapd-previewbox">
+                        <img id="dlmap-preview-img" alt="Preview of the map sheet">
+                        <div id="dlmap-img-processing" style="display:none;">Processing your map…</div>
+                    </div>
+                    <p id="dlmap-quality-note" class="dlmapd-qnote"></p>
+                    <div id="dlmap-missing-note" style="display:none;font-size:12px;color:#c62828;margin-top:6px;"></div>
+                </div>
+                <div class="dlmapd-side">
+                    <div>
+                        <label for="dlmap-caption" class="dlmapd-label">Caption on the sheet</label>
+                        <input id="dlmap-caption" type="text" value="Part Development Plan" maxlength="80">
+                    </div>
+                    <div class="dlmapd-checks">
+                        <div class="dlmapd-check">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#00695C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            <div>Sized for <b>crisp A4 printing</b> — no scaling needed.</div>
+                        </div>
+                        <div class="dlmapd-check">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#00695C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            <div>Re-download <b>free anytime</b> while your plan is active, from Settings &rarr; My Purchases &rarr; Downloaded Maps.</div>
+                        </div>
+                    </div>
+                    <div class="dlmapd-price">
+                        <span class="dlmapd-price-label">Price</span>
+                        <span id="dlmap-price"></span>
+                    </div>
+                </div>
             </div>
-            <div style="font-size:12px;color:#555;margin-top:6px;display:flex;align-items:center;gap:6px;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#00695C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0;">
-                    <polyline points="6 9 6 2 18 2 18 9"/>
-                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-                    <rect x="6" y="14" width="12" height="8"/>
-                    <line x1="9" y1="17" x2="15" y2="17"/>
-                </svg>
-                <span>Print-ready: the downloaded sheet is sized for crisp <b>A4 printing</b>.</span>
-            </div>
-            <div class="dlmap-caption-row">
-                <label for="dlmap-caption" style="font-size:13px;color:#555;">Caption</label>
-                <input id="dlmap-caption" type="text" value="Part Development Plan" maxlength="80">
-            </div>
-            <div class="dlmap-price-row"><span>Price</span><b id="dlmap-price">FREE (test build)</b></div>
-            <div class="dlmap-btn-row">
-                <button class="zoom-dialog-btn" id="dlmap-cancel-btn" style="background:#eee;color:#333;">Cancel</button>
-                <button class="zoom-dialog-btn" id="dlmap-share-btn" style="display:none;background:#1976D2;color:#fff;">Share</button>
-                <button class="zoom-dialog-btn" id="dlmap-pay-btn" style="background:#2E7D32;color:#fff;flex:1;">Pay &amp; Download</button>
+            <div class="dlmapd-foot">
+                <button class="dlmapd-ghost" id="dlmap-cancel-btn">Cancel</button>
+                <div style="flex:1;"></div>
+                <button class="dlmapd-outline" id="dlmap-share-btn" style="display:none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    Share
+                </button>
+                <button class="dlmapd-cta" id="dlmap-pay-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span id="dlmap-pay-label">Download</span>
+                </button>
             </div>
         </div>
     </div>
@@ -2649,7 +2717,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps-app.js?v=049" defer></script>
+    <script src="maps-app.js?v=051" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
