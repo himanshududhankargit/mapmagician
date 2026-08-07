@@ -23,7 +23,8 @@
         // 042 = "Capture Area" viewfinder before download (box capture, zoom+3 sharpness).
         // 043 = viewfinder bar above the bottom nav (z-index + raised position).
         // 044 = Proceed/Cancel anchored INSIDE the capture box (always visible).
-        var APP_VERSION = '044';
+        // 045 = post-payment processing states (confirm gap + image compose/encode).
+        var APP_VERSION = '045';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -10290,6 +10291,12 @@
                     prefill: { email: user.email },
                     handler: function(response) {
                         (async function() {
+                            // Cover the gap between checkout closing and the tile fetch:
+                            // the confirm call below can take a few seconds and used to
+                            // show nothing at all.
+                            document.getElementById('dlmap-progress-text').textContent =
+                                'Payment received — processing your map…';
+                            document.getElementById('dlmap-progress-overlay').classList.add('open');
                             // Two confirm attempts; then deliver regardless. The payment IS
                             // taken at this point — a flaky confirm call must not withhold
                             // the file. An unrecorded delivery is caught by the money-at-risk
@@ -10672,6 +10679,12 @@
         function _dlmapShowDialog() {
             var s = _dlmapSession;
             if (!s) return;
+            // One continuous flow: the progress overlay stays up ("Preparing image…")
+            // until the image is actually ready, then swaps straight to the dialog.
+            // The user never sees a stale preview or an empty dialog.
+            var progress = document.getElementById('dlmap-progress-overlay');
+            document.getElementById('dlmap-progress-text').textContent = 'Preparing image…';
+            progress.classList.add('open');
             var note = document.getElementById('dlmap-missing-note');
             note.style.display = s.missing ? '' : 'none';
             if (s.missing) note.textContent = s.missing + ' tile(s) unavailable — shown as white areas';
@@ -10689,8 +10702,10 @@
                 s.phase !== 'preview' ? 'Download'
                 : credit ? 'Use 1 credit & Download'
                 : (price >= 1 ? 'Pay ₹' + price + ' & Download' : 'Download');
-            _dlmapRenderPreview();
-            document.getElementById('dlmap-preview-overlay').classList.add('open');
+            _dlmapRenderPreview(function() {
+                progress.classList.remove('open');
+                document.getElementById('dlmap-preview-overlay').classList.add('open');
+            });
         }
 
         function startDownloadMapFlow() {
@@ -10901,14 +10916,23 @@
 
         // Re-composite on caption edit — cheap, the stitch canvas is already built.
         // ONE JPEG encode backs the preview <img>, the download anchor, and Share.
-        function _dlmapRenderPreview() {
+        function _dlmapRenderPreview(onReady) {
             var s = _dlmapSession;
             if (!s || !s.stitch) return;
+            // Compose + JPEG-encode of the full sheet takes a moment — mask the image
+            // with a processing note until the fresh blob lands (covers caption edits
+            // while the dialog is already open).
+            var procNote = document.getElementById('dlmap-img-processing');
+            procNote.style.display = 'flex';
             var caption = document.getElementById('dlmap-caption').value.trim() || DLMAP_DEFAULT_CAPTION;
             s.caption = caption;
             s.finalCanvas = _dlmapComposeFinal(s.tmpl, s.stitch, s.rect, caption);
             s.finalCanvas.toBlob(function(blob) {
-                if (!blob || _dlmapSession !== s) return;
+                procNote.style.display = 'none';
+                if (!blob || _dlmapSession !== s) {
+                    document.getElementById('dlmap-progress-overlay').classList.remove('open');
+                    return;
+                }
                 if (s.previewUrl) { try { URL.revokeObjectURL(s.previewUrl); } catch (e) {} }
                 s.blob = blob;
                 s.previewUrl = URL.createObjectURL(blob);
@@ -10932,6 +10956,7 @@
                     if (!s.regen) _dlmapHistoryAdd(s);
                     try { mmAnalytics.event('download_map_saved', { missing: s.missing || 0 }); } catch (e) {}
                 }
+                if (typeof onReady === 'function') onReady();
             }, 'image/jpeg', 1.0);
         }
 
