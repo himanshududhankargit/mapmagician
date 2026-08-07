@@ -576,6 +576,14 @@
         .dlmapd-cta:hover { background:#1B5E20; }
         .dlmapd-cta svg { width:17px; height:17px; }
         .dlmapd-cta.busy { opacity:0.85; pointer-events:none; }
+        .dlmapd-cta.saved { animation:dlmapCtaPop 0.4s ease; }
+        @keyframes dlmapCtaPop { 0% { transform:scale(1); } 45% { transform:scale(1.06); } 100% { transform:scale(1); } }
+        .dlmapd-saved { display:none; align-items:center; gap:7px; margin-top:8px; padding:9px 12px;
+                        background:#EAF7EE; border:1px solid #A9DDB5; border-radius:10px;
+                        color:#1B5E20; font-size:13px; font-weight:600; }
+        .dlmapd-saved svg { width:16px; height:16px; flex:0 0 auto; }
+        .dlmapd-saved.show { display:flex; animation:dlmapSavedIn 0.35s ease; }
+        @keyframes dlmapSavedIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
         .dlmapd-dots { display:inline-flex; gap:3px; margin-left:3px; align-items:center; }
         .dlmapd-dots span { width:5px; height:5px; border-radius:50%; background:#fff;
                             animation:dlmapDot 1s infinite ease-in-out; }
@@ -1539,6 +1547,10 @@
                     </div>
                     <p id="dlmap-quality-note" class="dlmapd-qnote"></p>
                     <div id="dlmap-missing-note" style="display:none;font-size:12px;color:#c62828;margin-top:6px;"></div>
+                    <div id="dlmap-saved-note" class="dlmapd-saved">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Saved — check your device's <b>&nbsp;Downloads&nbsp;</b> folder.
+                    </div>
                 </div>
                 <div class="dlmapd-side">
                     <div>
@@ -2751,7 +2763,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=056" defer></script>
+    <script src="maps1-app.js?v=058" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">

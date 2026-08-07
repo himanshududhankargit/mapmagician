@@ -30,8 +30,9 @@
         // 052 = mobile bottom sheet per Claude Design 2a (width-responsive) + Share removed.
         // 054 = wording: "Subscription / Active Plan" (plain "plan" collides with development plan).
         // 056 = vibrate on Download tap + "Processing" pulsing-dots busy state on the CTA.
-        // 057 = LIVE promotion of the tap feedback.
-        var APP_VERSION = '057';
+        // 058 = saved confirmation: green Downloads-folder banner + CTA "✓ Saved" → "Download again".
+        // 059 = LIVE promotion of the saved confirmation.
+        var APP_VERSION = '059';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7629,7 +7630,8 @@
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
-                _dlmapToast('Saved to Downloads');
+                _dlmapFlashSaved();
+                _dlmapToast('Saved to your Downloads folder');
             });
             _dlmapRenderHistory();
             document.getElementById('btn-settings').addEventListener('click', _dlmapRenderHistory);
@@ -10258,6 +10260,24 @@
                 return { balance: bal, usable: usable };
             } catch (e) { return null; }
         }
+        // The browser saves the file silently, so the dialog must say it happened:
+        // green banner under the preview + CTA pops to "✓ Saved to Downloads", then
+        // relaxes to "Download again". Without this the tap looks like it did nothing.
+        var _dlmapSavedTimer = null;
+        function _dlmapFlashSaved() {
+            document.getElementById('dlmap-saved-note').classList.add('show');
+            var btn = document.getElementById('dlmap-pay-btn');
+            var label = document.getElementById('dlmap-pay-label');
+            btn.classList.remove('saved');
+            void btn.offsetWidth;                 // restart the pop animation on re-saves
+            btn.classList.add('saved');
+            label.textContent = '✓ Saved to Downloads';
+            if (_dlmapSavedTimer) clearTimeout(_dlmapSavedTimer);
+            _dlmapSavedTimer = setTimeout(function() {
+                btn.classList.remove('saved');
+                if (_dlmapSession && _dlmapSession.phase === 'final') label.textContent = 'Download again';
+            }, 2200);
+        }
         // CTA busy state: "Processing" + three pulsing dots, button locked. Cleared by
         // _dlmapShowDialog's label reset or explicitly on early exits/cancel paths.
         function _dlmapSetPayBusy(busy) {
@@ -10729,8 +10749,9 @@
             });
             // Label lives in a span — setting textContent on the button itself would
             // destroy the design-1b download icon beside it. Also clears any
-            // "Processing…" busy state from a previous click.
-            document.getElementById('dlmap-pay-btn').classList.remove('busy');
+            // "Processing…" busy state and last run's saved banner.
+            document.getElementById('dlmap-saved-note').classList.remove('show');
+            document.getElementById('dlmap-pay-btn').classList.remove('busy', 'saved');
             document.getElementById('dlmap-pay-label').textContent =
                 s.phase !== 'preview' ? 'Download'
                 : credit ? 'Use 1 credit & Download'
@@ -11031,7 +11052,8 @@
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
-                    _dlmapToast('Saved to Downloads');
+                    _dlmapFlashSaved();
+                    _dlmapToast('Saved to your Downloads folder');
                     if (!s.regen) _dlmapHistoryAdd(s);
                     try { mmAnalytics.event('download_map_saved', { missing: s.missing || 0 }); } catch (e) {}
                 }
