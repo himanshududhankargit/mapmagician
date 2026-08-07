@@ -508,8 +508,12 @@
             transform:translateX(-50%); color:#fff; font-size:14px; font-weight:700;
             text-shadow:0 1px 3px rgba(0,0,0,0.8); white-space:nowrap;
         }
+        /* Just BELOW the box, outside it, so the buttons never cover the capture
+           area. The box's height budget (100dvh - 200px) guarantees ~100px of
+           screen under the box; z-index 1100 keeps the bar clickable above the
+           bottom nav (1000) if they meet. */
         #dlmap-viewfinder-bar {
-            position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+            position:absolute; top:calc(100% + 12px); left:50%; transform:translateX(-50%);
             display:flex; gap:12px; pointer-events:auto;
         }
         #dlmap-viewfinder-bar button {
@@ -2277,7 +2281,7 @@
     <div id="dlmap-viewfinder" style="display:none;">
         <div id="dlmap-viewfinder-box">
             <div id="dlmap-quality-chip">★★★★ Best quality at this zoom</div>
-            <!-- Inside the box, bottom-centred: always visible whatever bars overlay the page -->
+            <!-- Bottom-centred just OUTSIDE the box, keeping the capture area clear -->
             <div id="dlmap-viewfinder-bar">
                 <button id="dlmap-vf-cancel" style="background:#616161;">Cancel</button>
                 <button id="dlmap-vf-proceed" style="background:#2E7D32;">Proceed</button>
@@ -2811,7 +2815,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=060" defer></script>
+    <script src="maps1-app.js?v=062" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">

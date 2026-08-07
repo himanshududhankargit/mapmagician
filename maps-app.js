@@ -33,8 +33,9 @@
         // 058 = saved confirmation: green Downloads-folder banner + CTA "✓ Saved" → "Download again".
         // 060 = wide-screen dialog fix (.zoom-dialog.dlmapd out-specifies the 400px base cap)
         //       + first-run explainer with sample sheet and "Don't show again".
-        // 061 = LIVE promotion of 060 (a promotion is a push: live takes max(maps,maps1)+1).
-        var APP_VERSION = '061';
+        // 062 = Proceed/Cancel bar moved just below the capture box (outside it).
+        // 063 = LIVE promotion of 062 (a promotion is a push: live takes max(maps,maps1)+1).
+        var APP_VERSION = '063';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

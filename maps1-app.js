@@ -33,7 +33,8 @@
         // 058 = saved confirmation: green Downloads-folder banner + CTA "✓ Saved" → "Download again".
         // 060 = wide-screen dialog fix (.zoom-dialog.dlmapd out-specifies the 400px base cap)
         //       + first-run explainer with sample sheet and "Don't show again".
-        var APP_VERSION = '060';
+        // 062 = Proceed/Cancel bar moved just below the capture box (outside it).
+        var APP_VERSION = '062';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
