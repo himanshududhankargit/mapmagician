@@ -25,7 +25,8 @@
         // 044 = Proceed/Cancel anchored INSIDE the capture box (always visible).
         // 045 = post-payment processing states (confirm gap + image compose/encode).
         // 046 = Download Map pill moved to first position in the toolbar.
-        var APP_VERSION = '046';
+        // 048 = unowned-district warning before capture + unlock pill hidden in capture mode.
+        var APP_VERSION = '048';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7585,8 +7586,14 @@
                 startDownloadMapFlow();
             });
             document.getElementById('dlmap-vf-proceed').addEventListener('click', _dlmapProceedCapture);
-            document.getElementById('dlmap-vf-cancel').addEventListener('click', function() {
-                document.getElementById('dlmap-viewfinder').style.display = 'none';
+            document.getElementById('dlmap-vf-cancel').addEventListener('click', _dlmapCloseViewfinder);
+            document.getElementById('dlmap-unowned-cancel').addEventListener('click', function() {
+                document.getElementById('dlmap-unowned-overlay').classList.remove('open');
+            });
+            document.getElementById('dlmap-unowned-continue').addEventListener('click', function() {
+                document.getElementById('dlmap-unowned-overlay').classList.remove('open');
+                _dlmapUnownedWarned = true;   // one warning per viewfinder session
+                _dlmapProceedCapture();
             });
             document.getElementById('dlmap-progress-cancel').addEventListener('click', function() {
                 if (_dlmapSession && _dlmapSession.abortCtrl) _dlmapSession.abortCtrl.abort();
@@ -10709,19 +10716,72 @@
             });
         }
 
+        var _dlmapUnownedWarned = false;
+        var _dlmapChipListeners = [];
+
+        // Live quality chip (GIS-app star tiers): stars from the zoom the capture will
+        // fetch at, plus a lock state when the district at centre isn't owned (its
+        // premium z15+ tiles would 403). Updates on zoom AND pan while framing.
+        function _dlmapUpdateQualityChip() {
+            var chip = document.getElementById('dlmap-quality-chip');
+            if (!chip || !map) return;
+            var cz = Math.round(map.getZoom());
+            var stars, label;
+            if (cz >= 15)      { stars = '★★★★'; label = 'Best quality'; }
+            else if (cz >= 14) { stars = '★★★☆'; label = 'Good quality'; }
+            else if (cz >= 13) { stars = '★★☆☆'; label = 'OK quality'; }
+            else               { stars = '★☆☆☆'; label = 'Low quality — zoom in'; }
+            var d = findDistrictAtCenterCached();
+            var locked = !!(d && !hasPurchase(d.productPurchaseID));
+            chip.classList.toggle('locked', locked);
+            chip.textContent = locked
+                ? '🔒 Plan needed for full detail · ' + stars + ' ' + label
+                : stars + ' ' + label + ' at this zoom';
+        }
+
+        function _dlmapCloseViewfinder() {
+            document.getElementById('dlmap-viewfinder').style.display = 'none';
+            document.body.classList.remove('dlmap-capturing');
+            _dlmapChipListeners.forEach(function(l) { try { l.remove(); } catch (e) {} });
+            _dlmapChipListeners = [];
+        }
+
         function startDownloadMapFlow() {
             if (_dlmapSession && _dlmapSession.running) return;           // re-entry guard
             if (!map) return;
             // "Capture Area" viewfinder first (same UX as the Android apps): the user
             // frames the region in a template-ratio box, then Proceed captures exactly
             // that box. Map gestures pass through the dimmer (pointer-events:none).
+            // body class hides the floating unlock/sign-in pill for the duration —
+            // a camera-idle updater keeps re-showing it, so CSS !important wins.
+            _dlmapUnownedWarned = false;
+            document.body.classList.add('dlmap-capturing');
             document.getElementById('dlmap-viewfinder').style.display = '';
+            _dlmapUpdateQualityChip();
+            _dlmapChipListeners = [
+                map.addListener('zoom_changed', _dlmapUpdateQualityChip),
+                map.addListener('idle', _dlmapUpdateQualityChip)
+            ];
         }
 
         async function _dlmapProceedCapture() {
+            // GIS-app-style pre-flight warning: an unowned district's premium tiles
+            // (zoom 15+) 403 at the edge, so the paid download would carry only the
+            // free base detail — warn BEFORE any capture or charge. The cheap low-res
+            // preview can't show this (it fetches free-zone zooms), which is exactly
+            // why the warning must come first.
+            var warnDistrict = findDistrictAtCenterCached();
+            if (!_dlmapUnownedWarned && warnDistrict && !hasPurchase(warnDistrict.productPurchaseID)) {
+                document.getElementById('dlmap-unowned-text').textContent =
+                    'You don’t have an active plan for ' + warnDistrict.districtName + '. ' +
+                    'Premium plan detail (zoom 15+) needs a plan and will NOT appear in this ' +
+                    'download — only the free base detail will be included.';
+                document.getElementById('dlmap-unowned-overlay').classList.add('open');
+                return;   // viewfinder stays up behind the dialog
+            }
             var boxEl = document.getElementById('dlmap-viewfinder-box');
             var boxH = boxEl ? boxEl.offsetHeight : 0;
-            document.getElementById('dlmap-viewfinder').style.display = 'none';
+            _dlmapCloseViewfinder();
             if (_dlmapSession && _dlmapSession.running) return;
             if (!map) return;
             if (!cfCookiesReady) {

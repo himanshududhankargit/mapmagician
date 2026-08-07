@@ -516,6 +516,17 @@
             padding:12px 26px; border:none; border-radius:24px; font-size:15px;
             font-weight:700; color:#fff; cursor:pointer; font-family:inherit;
         }
+        /* Live quality chip (GIS-app stars), top-centred inside the box */
+        #dlmap-quality-chip {
+            position:absolute; top:12px; left:50%; transform:translateX(-50%);
+            background:rgba(255,255,255,0.92); color:#212121; font-size:12px;
+            font-weight:700; padding:6px 14px; border-radius:14px; white-space:nowrap;
+            pointer-events:none; box-shadow:0 2px 6px rgba(0,0,0,0.25);
+        }
+        #dlmap-quality-chip.locked { background:#FFF3E0; color:#E65100; }
+        /* Capture mode hides the floating unlock/sign-in pill (a camera-idle
+           updater keeps re-showing it, so !important wins over inline style) */
+        body.dlmap-capturing #floating-signin-btn { display:none !important; }
 
         /* --- Download Map dialog (Android createFinalBitmap* port) --- */
         #dlmap-preview-img { width:100%; height:auto; display:block; border:1px solid #E0E0E0;
@@ -2097,10 +2108,25 @@
          pass through the dimmer; only the Proceed/Cancel bar is interactive -->
     <div id="dlmap-viewfinder" style="display:none;">
         <div id="dlmap-viewfinder-box">
+            <div id="dlmap-quality-chip">★★★★ Best quality at this zoom</div>
             <!-- Inside the box, bottom-centred: always visible whatever bars overlay the page -->
             <div id="dlmap-viewfinder-bar">
                 <button id="dlmap-vf-cancel" style="background:#616161;">Cancel</button>
                 <button id="dlmap-vf-proceed" style="background:#2E7D32;">Proceed</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unowned-district warning before capture: the cheap preview fetches free-zone
+         zooms and cannot reveal that premium tiles (z15+) will 403 for an unowned
+         district — this consent gate runs BEFORE any capture or charge. -->
+    <div class="zoom-dialog-overlay" id="dlmap-unowned-overlay" data-dismiss="dlmap-unowned-cancel">
+        <div class="zoom-dialog" style="max-width:420px;text-align:left;padding:20px;">
+            <h3 style="margin-bottom:8px;">Limited detail without a plan</h3>
+            <p id="dlmap-unowned-text" style="font-size:13px;color:#555;line-height:1.6;margin:0 0 14px;"></p>
+            <div class="dlmap-btn-row">
+                <button class="zoom-dialog-btn" id="dlmap-unowned-cancel" style="background:#eee;color:#333;">Cancel</button>
+                <button class="zoom-dialog-btn" id="dlmap-unowned-continue" style="background:#E65100;color:#fff;flex:1;">Continue anyway</button>
             </div>
         </div>
     </div>
@@ -2617,7 +2643,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=046" defer></script>
+    <script src="maps1-app.js?v=048" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
