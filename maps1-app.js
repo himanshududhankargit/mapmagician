@@ -24,7 +24,8 @@
         // 043 = viewfinder bar above the bottom nav (z-index + raised position).
         // 044 = Proceed/Cancel anchored INSIDE the capture box (always visible).
         // 045 = post-payment processing states (confirm gap + image compose/encode).
-        var APP_VERSION = '045';
+        // 046 = Download Map pill moved to first position in the toolbar.
+        var APP_VERSION = '046';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
