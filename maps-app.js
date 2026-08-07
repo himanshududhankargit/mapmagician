@@ -31,8 +31,10 @@
         // 054 = wording: "Subscription / Active Plan" (plain "plan" collides with development plan).
         // 056 = vibrate on Download tap + "Processing" pulsing-dots busy state on the CTA.
         // 058 = saved confirmation: green Downloads-folder banner + CTA "✓ Saved" → "Download again".
-        // 059 = LIVE promotion of the saved confirmation.
-        var APP_VERSION = '059';
+        // 060 = wide-screen dialog fix (.zoom-dialog.dlmapd out-specifies the 400px base cap)
+        //       + first-run explainer with sample sheet and "Don't show again".
+        // 061 = LIVE promotion of 060 (a promotion is a push: live takes max(maps,maps1)+1).
+        var APP_VERSION = '061';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7587,8 +7589,32 @@
             })();
 
             // --- Download Map (Android plan-download port; logic lives after CanvasMapType) ---
+            // The first tap gets a one-time explainer (sample sheet + what the output is);
+            // "Don't show again" persists it. If localStorage is unavailable the in-page
+            // flag still limits the explainer to once per page load.
+            var DLMAP_INTRO_KEY = 'mm_dlmap_intro_seen';
+            var _dlmapIntroShownThisLoad = false;
             document.getElementById('btn-download-map').addEventListener('click', function() {
                 try { mmAnalytics.event('download_map_open', {}); } catch (e) {}
+                var seen = _dlmapIntroShownThisLoad;
+                try { seen = seen || localStorage.getItem(DLMAP_INTRO_KEY) === '1'; } catch (e) {}
+                if (!seen) {
+                    _dlmapIntroShownThisLoad = true;
+                    var img = document.getElementById('dlmap-intro-sample');
+                    if (!img.src) img.src = img.getAttribute('data-src');   // lazy — first-timers only
+                    document.getElementById('dlmap-intro-overlay').classList.add('open');
+                    return;
+                }
+                startDownloadMapFlow();
+            });
+            document.getElementById('dlmap-intro-cancel').addEventListener('click', function() {
+                document.getElementById('dlmap-intro-overlay').classList.remove('open');
+            });
+            document.getElementById('dlmap-intro-continue').addEventListener('click', function() {
+                if (document.getElementById('dlmap-intro-dontshow').checked) {
+                    try { localStorage.setItem(DLMAP_INTRO_KEY, '1'); } catch (e) {}
+                }
+                document.getElementById('dlmap-intro-overlay').classList.remove('open');
                 startDownloadMapFlow();
             });
             document.getElementById('dlmap-vf-proceed').addEventListener('click', _dlmapProceedCapture);

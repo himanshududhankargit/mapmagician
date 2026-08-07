@@ -531,7 +531,12 @@
         /* --- Download Map dialog — Claude Design 1b (desktop) / 2a bottom sheet (mobile).
                One markup; the 720px query flips between the two. --- */
         .dlmap-btn-row { display:flex; gap:8px; margin-top:12px; }  /* still used by the unowned-district dialog */
-        .dlmapd { max-width:760px; width:96%; text-align:left; padding:0; border-radius:14px; }
+        /* .zoom-dialog.dlmapd (two classes), NOT .dlmapd: the .zoom-dialog base rule
+           lives LATER in this sheet with max-width:400px, so a single-class selector
+           here loses the cascade and the desktop dialog collapses to 400px (the
+           292px rail then crushes the preview column — the "squished on wide
+           screens" bug). Every other dialog dodges this with inline styles. */
+        .zoom-dialog.dlmapd { max-width:760px; width:96%; text-align:left; padding:0; border-radius:14px; }
         .dlmapd-grabber { display:none; }
         .dlmapd-price-m { display:none; }
         .dlmapd-spacer { flex:1; }
@@ -593,13 +598,26 @@
             0%, 80%, 100% { opacity:0.3; transform:scale(0.8); }
             40% { opacity:1; transform:scale(1.05); }
         }
+        /* ---- First-run explainer dialog (sample sheet + benefits) ---- */
+        .zoom-dialog.dlmap-intro { max-width:520px; text-align:left; padding:0;
+                                   max-height:calc(100dvh - 24px); display:flex; flex-direction:column; }
+        .dlmap-intro .dlmapd-head, .dlmap-intro .dlmapd-foot { flex-shrink:0; }
+        .dlmap-intro-body { padding:16px 22px 6px; overflow-y:auto; }
+        .dlmap-intro-body p { margin:0 0 10px; font-size:14px; color:#37474F; line-height:1.55; }
+        .dlmap-intro-sample { display:block; max-width:100%; max-height:40vh; width:auto;
+                              margin:0 auto 5px; border:1px solid #E0E0E0; border-radius:8px; background:#f5f5f5; }
+        p.dlmap-intro-samplecap { text-align:center; font-size:11px; color:#90A4AE; margin:0 0 12px; }
+        .dlmap-intro-body ul { margin:0 0 12px; padding-left:22px; font-size:14px; color:#37474F; line-height:1.75; }
+        .dlmap-intro-dontshow { display:flex; align-items:center; gap:8px; font-size:13px; color:#616161;
+                                margin:14px 0 4px; cursor:pointer; user-select:none; }
+        .dlmap-intro-dontshow input { width:16px; height:16px; accent-color:#2E7D32; margin:0; }
         #dlmap-img-processing { position:absolute; inset:0; background:rgba(255,255,255,0.78);
                                 align-items:center; justify-content:center; font-size:14px; font-weight:700;
                                 color:#00695C; text-align:center; padding:12px; }
         /* ---- 2a: mobile bottom sheet (columns stack, footer sticks) ---- */
         @media (max-width:720px) {
             #dlmap-preview-overlay { align-items:flex-end; padding:0; }
-            .dlmapd { width:100%; max-width:100%; border-radius:18px 18px 0 0;
+            .zoom-dialog.dlmapd { width:100%; max-width:100%; border-radius:18px 18px 0 0;
                       max-height:96dvh; display:flex; flex-direction:column; overflow:hidden; }
             .dlmapd-grabber { display:flex; justify-content:center; padding:10px 0 0; flex-shrink:0; }
             .dlmapd-grabber div { width:36px; height:4px; border-radius:2px; background:#CFD8DC; }
@@ -1584,6 +1602,36 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span id="dlmap-pay-label">Download</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- First-run Download Map explainer — shown once before the capture flow
+         (localStorage mm_dlmap_intro_seen; the "Don't show again" box sets it).
+         The sample sheet is lazy-loaded from data-src so regulars never fetch it. -->
+    <div class="zoom-dialog-overlay" id="dlmap-intro-overlay" data-dismiss="dlmap-intro-cancel">
+        <div class="zoom-dialog dlmap-intro">
+            <div class="dlmapd-head">
+                <div><h3>Generate Print-Ready Development Plan</h3></div>
+            </div>
+            <div class="dlmap-intro-body">
+                <img id="dlmap-intro-sample" class="dlmap-intro-sample" alt="Sample print-ready map sheet" data-src="AssetsGIS/dlmap-sample.jpg">
+                <p class="dlmap-intro-samplecap">Sample sheet</p>
+                <p>A professionally formatted map will be generated for the selected area with:</p>
+                <ul>
+                    <li>High-resolution output</li>
+                    <li>Development Plan overlay</li>
+                    <li>Satellite imagery</li>
+                    <li>Legend and map information</li>
+                    <li>Print-friendly page layout</li>
+                </ul>
+                <p>This provides significantly better quality than a standard screen capture.</p>
+                <label class="dlmap-intro-dontshow"><input type="checkbox" id="dlmap-intro-dontshow"> Don't show this again</label>
+            </div>
+            <div class="dlmapd-foot">
+                <button class="dlmapd-ghost" id="dlmap-intro-cancel">Cancel</button>
+                <div class="dlmapd-spacer"></div>
+                <button class="dlmapd-cta" id="dlmap-intro-continue">Continue</button>
             </div>
         </div>
     </div>
@@ -2763,7 +2811,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=058" defer></script>
+    <script src="maps1-app.js?v=060" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
