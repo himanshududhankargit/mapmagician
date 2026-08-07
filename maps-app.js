@@ -34,8 +34,9 @@
         // 060 = wide-screen dialog fix (.zoom-dialog.dlmapd out-specifies the 400px base cap)
         //       + first-run explainer with sample sheet and "Don't show again".
         // 062 = Proceed/Cancel bar moved just below the capture box (outside it).
-        // 063 = LIVE promotion of 062 (a promotion is a push: live takes max(maps,maps1)+1).
-        var APP_VERSION = '063';
+        // 064 = geodetic scale bar drawn bottom-right of the map window on the sheet.
+        // 065 = LIVE promotion of 064 (a promotion is a push: live takes max(maps,maps1)+1).
+        var APP_VERSION = '065';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -10692,7 +10693,64 @@
                 ctx.fillStyle = '#333333';
                 ctx.fillText(DLMAP_BASEMAP_ATTRIB, DLMAP_MAP_RIGHT - 14, DLMAP_MAP_BOTTOM - 14);
             }
+            _dlmapDrawScaleBar(ctx, rect, scale);
             return c;
+        }
+
+        // Graphic scale bar, bottom-right of the map window (above the imagery
+        // attribution line). A BAR stays truthful however the sheet is scaled or
+        // printed, unlike a 1:N ratio which only holds at exact A4 size. Works for
+        // the low-res preview too: mpp is derived from THAT compose's rect.z and
+        // fit, so the bar lands identically on preview and final.
+        function _dlmapDrawScaleBar(ctx, rect, fit) {
+            var midLat = (rect.llBounds.minLat + rect.llBounds.maxLat) / 2;
+            // metres per FINAL-canvas px = Web-Mercator ground resolution at rect.z / contain-fit
+            var mpp = 156543.03392 * Math.cos(midLat * Math.PI / 180) / Math.pow(2, rect.z) / fit;
+            var steps = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
+            var dist = steps[0];
+            for (var i = 0; i < steps.length; i++) {          // longest round distance ≤ ~520px
+                if (steps[i] / mpp <= 520) dist = steps[i]; else break;
+            }
+            var barW = dist / mpp;
+            if (barW < 120) return;                            // degenerate — skip, never mislead
+            // Surveyor's checkerboard style (owner's reference): two alternating rows,
+            // quarter divisions, values at 0 / half / full, unit word after the bar.
+            var km = dist > 1000;
+            var unit = km ? 'Kilometers' : 'Meters';
+            var lab0 = '0';
+            var labHalf = String(km ? dist / 2000 : dist / 2);
+            var labFull = String(km ? dist / 1000 : dist);
+            ctx.save();
+            ctx.font = 'bold 26px sans-serif';
+            ctx.textBaseline = 'alphabetic';
+            var wHalf = ctx.measureText(labHalf).width;
+            var wFull = ctx.measureText(labFull).width;
+            var wUnit = ctx.measureText(unit).width;
+            // right-anchor the whole assembly (bar + full label overhang + unit word)
+            var x1 = DLMAP_MAP_RIGHT - 24 - wUnit - 14 - Math.ceil(wFull / 2);
+            var x0 = x1 - barW;
+            var rowH = 10, barH = rowH * 2;
+            var y1 = DLMAP_MAP_BOTTOM - 52, y0 = y1 - barH;    // clears the 22px attribution below
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';           // legibility chip behind everything
+            ctx.fillRect(x0 - 24, y0 - 44, (DLMAP_MAP_RIGHT - 12) - (x0 - 24), (y1 + 10) - (y0 - 44));
+            var q = barW / 4;
+            for (var s = 0; s < 4; s++) {
+                for (var r = 0; r < 2; r++) {                  // checkerboard: rows inverted
+                    ctx.fillStyle = (s + r) % 2 === 0 ? '#000000' : '#FFFFFF';
+                    ctx.fillRect(x0 + q * s, y0 + rowH * r, q, rowH);
+                }
+            }
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#000000';
+            ctx.strokeRect(x0, y0, barW, barH);
+            ctx.fillStyle = '#000000';
+            ctx.textAlign = 'center';
+            ctx.fillText(lab0, x0, y0 - 10);
+            ctx.fillText(labHalf, x0 + barW / 2, y0 - 10);
+            ctx.fillText(labFull, x1, y0 - 10);
+            ctx.textAlign = 'left';                            // unit beside the bar, on its centreline
+            ctx.fillText(unit, x1 + Math.ceil(wFull / 2) + 14, y1 - 2);
+            ctx.restore();
         }
 
         function _dlmapPickTemplateName() {
