@@ -22,7 +22,8 @@
         //       + saved-maps note in the dialog.
         // 042 = "Capture Area" viewfinder before download (box capture, zoom+3 sharpness).
         // 043 = viewfinder bar above the bottom nav (z-index + raised position).
-        var APP_VERSION = '043';
+        // 044 = Proceed/Cancel anchored INSIDE the capture box (always visible).
+        var APP_VERSION = '044';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
