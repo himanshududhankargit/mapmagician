@@ -27,7 +27,8 @@
         // 046 = Download Map pill moved to first position in the toolbar.
         // 048 = unowned-district warning before capture + unlock pill hidden in capture mode.
         // 050 = Download Map dialog redesigned per Claude Design 1b (two-column receipt).
-        var APP_VERSION = '050';
+        // 052 = mobile bottom sheet per Claude Design 2a (width-responsive) + Share removed.
+        var APP_VERSION = '052';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7642,12 +7643,6 @@
                     if (rec) _dlmapRegenerate(rec);
                 }
             });
-            document.getElementById('dlmap-share-btn').addEventListener('click', function() {
-                var s = _dlmapSession;
-                if (!s || !s.blob) return;
-                var f = new File([s.blob], _dlmapFileName(), { type: 'image/jpeg' });
-                navigator.share({ files: [f], title: 'MapMagician plan' }).catch(function() {});
-            });
 
             // GPS button — continuous location tracking (3-state: off → following → tracking → off)
             let gpsWatchId = null;
@@ -10703,10 +10698,14 @@
             document.getElementById('dlmap-caption').value = s.caption || DLMAP_DEFAULT_CAPTION;
             var price = _dlmapPrice();
             var credit = s.credits && s.credits.usable;
-            document.getElementById('dlmap-price').textContent =
+            var priceText =
                 s.phase !== 'preview' ? 'Paid'
                 : credit ? '1 credit (' + s.credits.balance + ' available)'
                 : (price >= 1 ? '₹' + price + ' per download' : 'FREE');
+            // Two price spans: the desktop receipt rail and the mobile sticky footer.
+            document.querySelectorAll('.dlmap-price-value').forEach(function(el) {
+                el.textContent = priceText;
+            });
             // Label lives in a span — setting textContent on the button itself would
             // destroy the design-1b download icon beside it.
             document.getElementById('dlmap-pay-label').textContent =
@@ -11001,13 +11000,6 @@
                 s.blob = blob;
                 s.previewUrl = URL.createObjectURL(blob);
                 document.getElementById('dlmap-preview-img').src = s.previewUrl;
-                var sb = document.getElementById('dlmap-share-btn');
-                var canShare = false;
-                try {
-                    canShare = !!(navigator.canShare &&
-                        navigator.canShare({ files: [new File([blob], 'm.jpg', { type: 'image/jpeg' })] }));
-                } catch (e) {}
-                sb.style.display = canShare ? '' : 'none';
                 if (s.pendingDownload) {          // finalize/regenerate: fire the file save now
                     s.pendingDownload = false;
                     var a = document.createElement('a');

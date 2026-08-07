@@ -528,8 +528,13 @@
            updater keeps re-showing it, so !important wins over inline style) */
         body.dlmap-capturing #floating-signin-btn { display:none !important; }
 
-        /* --- Download Map dialog — design 1b: two-column, big preview, receipt rail --- */
+        /* --- Download Map dialog — Claude Design 1b (desktop) / 2a bottom sheet (mobile).
+               One markup; the 720px query flips between the two. --- */
         .dlmap-btn-row { display:flex; gap:8px; margin-top:12px; }  /* still used by the unowned-district dialog */
+        .dlmapd { max-width:760px; width:96%; text-align:left; padding:0; border-radius:14px; }
+        .dlmapd-grabber { display:none; }
+        .dlmapd-price-m { display:none; }
+        .dlmapd-spacer { flex:1; }
         .dlmapd-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:18px 22px; border-bottom:1px solid #EEEEEE; }
         .dlmapd-head h3 { margin:0; font-size:20px; font-weight:700; color:#212121; letter-spacing:-0.2px; }
         .dlmapd-sub { margin:4px 0 0; font-size:13px; color:#616161; }
@@ -573,12 +578,30 @@
         #dlmap-img-processing { position:absolute; inset:0; background:rgba(255,255,255,0.78);
                                 align-items:center; justify-content:center; font-size:14px; font-weight:700;
                                 color:#00695C; text-align:center; padding:12px; }
+        /* ---- 2a: mobile bottom sheet (columns stack, footer sticks) ---- */
         @media (max-width:720px) {
-            .dlmapd-grid { grid-template-columns:1fr; }
-            .dlmapd-side { border-left:none; border-top:1px solid #EEEEEE; }
-            .dlmapd-left { padding:14px 16px; }
-            .dlmapd-head { padding:14px 16px; }
-            .dlmapd-foot { padding:12px 16px; flex-wrap:wrap; }
+            #dlmap-preview-overlay { align-items:flex-end; padding:0; }
+            .dlmapd { width:100%; max-width:100%; border-radius:18px 18px 0 0;
+                      max-height:96dvh; display:flex; flex-direction:column; overflow:hidden; }
+            .dlmapd-grabber { display:flex; justify-content:center; padding:10px 0 0; flex-shrink:0; }
+            .dlmapd-grabber div { width:36px; height:4px; border-radius:2px; background:#CFD8DC; }
+            .dlmapd-head { padding:12px 18px; flex-shrink:0; }
+            .dlmapd-head h3 { font-size:18px; }
+            .dlmapd-sub { font-size:12px; }
+            .dlmapd-grid { grid-template-columns:1fr; flex:1; overflow:auto; align-content:start; }
+            .dlmapd-left { padding:14px 18px 0; }
+            .dlmapd-previewbox { max-height:none; overflow:hidden; }
+            .dlmapd-side { background:none; border-left:none; padding:14px 18px 16px; gap:14px; }
+            .dlmapd-price { display:none; }              /* price moves to the sticky footer */
+            .dlmapd-foot { flex-direction:column; align-items:stretch; gap:10px;
+                           padding:12px 18px calc(18px + env(safe-area-inset-bottom, 0px));
+                           box-shadow:0 -4px 12px rgba(0,0,0,0.05); flex-shrink:0; }
+            .dlmapd-price-m { display:flex; align-items:baseline; justify-content:space-between; order:0; }
+            .dlmapd-price-m .dlmap-price-value { font-size:20px; font-weight:700; color:#212121; }
+            .dlmapd-spacer { display:none; }
+            .dlmapd-cta { order:1; width:100%; justify-content:center; font-size:16px;
+                          padding:15px 20px; border-radius:10px; }
+            .dlmapd-ghost { order:2; width:100%; padding:12px; text-align:center; }
         }
 
         /* Bottom navigation bar (Google Maps style tabs) */
@@ -1486,7 +1509,8 @@
          receipt rail right (caption, checklist, price), footer CTA row. All the
          functional ids are unchanged, so the dlmap JS flow is untouched. -->
     <div class="zoom-dialog-overlay" id="dlmap-preview-overlay" data-dismiss="dlmap-cancel-btn">
-        <div class="zoom-dialog" style="max-width:760px;width:96%;text-align:left;padding:0;border-radius:14px;">
+        <div class="zoom-dialog dlmapd">
+            <div class="dlmapd-grabber" aria-hidden="true"><div></div></div>
             <div class="dlmapd-head">
                 <div>
                     <h3>Download Map</h3>
@@ -1523,17 +1547,17 @@
                     </div>
                     <div class="dlmapd-price">
                         <span class="dlmapd-price-label">Price</span>
-                        <span id="dlmap-price"></span>
+                        <span id="dlmap-price" class="dlmap-price-value"></span>
                     </div>
                 </div>
             </div>
             <div class="dlmapd-foot">
+                <div class="dlmapd-price-m">
+                    <span class="dlmapd-price-label">Price</span>
+                    <span class="dlmap-price-value"></span>
+                </div>
                 <button class="dlmapd-ghost" id="dlmap-cancel-btn">Cancel</button>
-                <div style="flex:1;"></div>
-                <button class="dlmapd-outline" id="dlmap-share-btn" style="display:none;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                    Share
-                </button>
+                <div class="dlmapd-spacer"></div>
                 <button class="dlmapd-cta" id="dlmap-pay-btn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span id="dlmap-pay-label">Download</span>
@@ -2717,7 +2741,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps-app.js?v=051" defer></script>
+    <script src="maps-app.js?v=053" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
