@@ -20,7 +20,8 @@
         //       appConfig/pricing/download_map, default ₹59) + expandable history w/ expiry.
         // 041 = download credits (shared Android downloadCredits node, server-consumed)
         //       + saved-maps note in the dialog.
-        var APP_VERSION = '041';
+        // 042 = "Capture Area" viewfinder before download (box capture, zoom+3 sharpness).
+        var APP_VERSION = '042';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7579,6 +7580,10 @@
                 try { mmAnalytics.event('download_map_open', {}); } catch (e) {}
                 startDownloadMapFlow();
             });
+            document.getElementById('dlmap-vf-proceed').addEventListener('click', _dlmapProceedCapture);
+            document.getElementById('dlmap-vf-cancel').addEventListener('click', function() {
+                document.getElementById('dlmap-viewfinder').style.display = 'none';
+            });
             document.getElementById('dlmap-progress-cancel').addEventListener('click', function() {
                 if (_dlmapSession && _dlmapSession.abortCtrl) _dlmapSession.abortCtrl.abort();
                 document.getElementById('dlmap-progress-overlay').classList.remove('open');
@@ -10686,8 +10691,20 @@
             document.getElementById('dlmap-preview-overlay').classList.add('open');
         }
 
-        async function startDownloadMapFlow() {
+        function startDownloadMapFlow() {
             if (_dlmapSession && _dlmapSession.running) return;           // re-entry guard
+            if (!map) return;
+            // "Capture Area" viewfinder first (same UX as the Android apps): the user
+            // frames the region in a template-ratio box, then Proceed captures exactly
+            // that box. Map gestures pass through the dimmer (pointer-events:none).
+            document.getElementById('dlmap-viewfinder').style.display = '';
+        }
+
+        async function _dlmapProceedCapture() {
+            var boxEl = document.getElementById('dlmap-viewfinder-box');
+            var boxH = boxEl ? boxEl.offsetHeight : 0;
+            document.getElementById('dlmap-viewfinder').style.display = 'none';
+            if (_dlmapSession && _dlmapSession.running) return;
             if (!map) return;
             if (!cfCookiesReady) {
                 _dlmapToast('Connecting to tile server…');
@@ -10695,12 +10712,17 @@
             }
             var cz = Math.round(map.getZoom());
             var c = map.getCenter();
-            var geo = { cz: cz, hCss: document.getElementById('map').clientHeight,
+            // The box is centred over the full-viewport map, so the map centre IS the
+            // box centre; its CSS height drives the capture rect (regen records store
+            // it, so a saved boxed download reproduces identically).
+            var geo = { cz: cz, hCss: boxH > 0 ? boxH : document.getElementById('map').clientHeight,
                         lat: c.lat(), lng: c.lng() };
 
             // Pick the FINAL fetch zoom up front (this loop only enumerates, fetches
             // nothing) so the preview promises exactly what the paid render delivers.
-            var gz = Math.min(cz + 1, MAX_ZOOM_FOR_DP);                   // one zoom deeper, capped
+            // The box is much smaller than the viewport, so dig up to 3 zooms deeper
+            // for print sharpness — the cap loop walks back down when it's too much.
+            var gz = Math.min(cz + 3, MAX_ZOOM_FOR_DP);
             var rect, jobs, baseJobs, canvasPx;
             for (;;) {
                 rect = _dlmapComputeCaptureRectFrom(gz, cz, geo.hCss, geo.lat, geo.lng);
