@@ -18,6 +18,35 @@ export const SITE = {
   ogImage: 'https://dpplans.com/AssetsGIS/mapmagicianlogo-banner.png',
 };
 
+/**
+ * "Download Map" — the print-ready sheet the map app generates (maps-app.js, the
+ * `dlmap` module). Centralized because the same facts are repeated on the hub page,
+ * every region page and every sub-location page, and a wrong price or format there is
+ * a customer-facing lie. Keep in sync with the app:
+ *   - sheet geometry: DLMAP_TEMPLATE_W/H = 3557×2515 (A4 landscape at ~300 dpi)
+ *   - price:          appConfig/pricing/download_map in RTDB (0 = free), read
+ *                     server-side by createDownloadOrder — the number below is only
+ *                     marketing copy, so re-check RTDB before editing it
+ *   - format:         JPEG. NOT a PDF — say so plainly, the search demand is all
+ *                     "pdf download" and a bait-and-switch costs more than the click.
+ */
+export const DOWNLOAD = {
+  priceInr: 59,
+  widthPx: 3557,
+  heightPx: 2515,
+  format: 'JPEG',
+  paperNote: 'A4 landscape at roughly 300 dpi',
+  /** Route of the hub page that explains the feature end to end. */
+  hubPath: '/download-development-plan-map/',
+  get hubUrl() {
+    return SITE.origin + this.hubPath;
+  },
+  /** 1980×1400 crop of a real generated sheet, shipped in AssetsGIS/. */
+  sampleImage: '/AssetsGIS/dlmap-sample.jpg',
+  sampleWidth: 1980,
+  sampleHeight: 1400,
+};
+
 export type RegionCentroid = { lat: number; lng: number; minZoom: number | null; maxZoom: number | null };
 
 export type RegionFocal = { lat: number; lng: number; source: string; zoom: number };

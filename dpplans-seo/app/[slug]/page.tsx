@@ -6,11 +6,12 @@ import { allRegions, regionBySlug } from '@/lib/regions';
 import { regionContentBySlug } from '@/data/region-content';
 import { municipalCorporation } from '@/data/municipal-corporations';
 import { isCuratedSubLocation } from '@/data/sublocation-content';
-import { SITE, type RegionFaq } from '@/lib/site';
+import { DOWNLOAD, SITE, type RegionFaq } from '@/lib/site';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Faq } from '@/components/Faq';
 import { JsonLd } from '@/components/JsonLd';
 import { MapEmbed } from '@/components/MapEmbed';
+import { DownloadSheet, downloadFaqs } from '@/components/DownloadSheet';
 
 type Props = { params: { slug: string } };
 
@@ -22,8 +23,12 @@ export function generateMetadata({ params }: Props): Metadata {
   const region = regionBySlug(params.slug);
   if (!region) return {};
   const content = regionContentBySlug(params.slug);
-  const title = content?.pageTitle ?? `${region.shortName} Development Plan — view DP map online`;
-  const description = content?.description ?? `View the ${region.displayName} Development Plan online. Interactive DP overlay over satellite imagery, ${region.villages.length || 'all'} sub-locations indexed${region.state ? `, covering ${region.state}` : ''}.`;
+  // "download" is in the default title because Google autocomplete for this niche is
+  // dominated by download intent ("<city> development plan map pdf download"), and these
+  // region pages are what already rank for the city term. Curated regions with their own
+  // pageTitle keep it — those were written against specific GSC queries.
+  const title = content?.pageTitle ?? `${region.shortName} Development Plan Map — view online & download`;
+  const description = content?.description ?? `View the ${region.displayName} Development Plan online and download any part of it as a print-ready A4 map sheet. Interactive DP overlay over satellite imagery, ${region.villages.length || 'all'} sub-locations indexed${region.state ? `, covering ${region.state}` : ''}.`;
   const url = `${SITE.origin}/${region.slug}/`;
   const og = region.iconUrl
     ? [{ url: region.iconUrl, width: 1200, height: 630, alt: `${region.shortName} DP Plan` }]
@@ -45,6 +50,8 @@ export function generateMetadata({ params }: Props): Metadata {
       `${region.shortName} DP plan`,
       `${region.shortName} Development Plan`,
       `${region.shortName} DP map online`,
+      `${region.shortName} development plan map pdf download`,
+      `${region.shortName} DP plan download`,
       `${region.shortName} zoning map`,
       `${region.state} DP map`,
       'GIS map India',
@@ -67,7 +74,15 @@ export default function RegionPage({ params }: Props) {
         a: `Yes — this page covers the sanctioned Development Plan (DP) for the ${corp.name}${corp.abbr ? ` (${corp.abbr})` : ''} area${region.state ? `, ${region.state}` : ''}. The DP overlay shows land-use zones, reservations and road / road-widening lines across the municipal corporation limits — pan or search any survey number, locality or landmark to read its designated zone before relying on it.`,
       }]
     : [];
-  const faqs: RegionFaq[] = [...corpFaq, ...(regionContent?.faqs ?? []), ...region.faqs];
+  // Download questions go last in the accordion (the "where do I view this" intent still
+  // leads) but they are inside the same FAQPage JSON-LD, which is what earns the
+  // "can I download the <city> DP map" rich result.
+  const faqs: RegionFaq[] = [
+    ...corpFaq,
+    ...(regionContent?.faqs ?? []),
+    ...region.faqs,
+    ...downloadFaqs(region.shortName, `the ${region.displayName} Development Plan`),
+  ];
   // Curated (indexable) sub-locations — surfaced prominently and the ONLY ones we
   // internally link, so Google's crawl budget concentrates on pages worth indexing
   // instead of being spread across the thin noindex long tail.
@@ -154,7 +169,7 @@ export default function RegionPage({ params }: Props) {
               )}
             </div>
             <div>
-              <h1>{regionContent?.pageTitle ?? `${region.shortName} Development Plan — view DP map online`}</h1>
+              <h1>{regionContent?.pageTitle ?? `${region.shortName} Development Plan Map — view online & download`}</h1>
               <p className="summary">
                 Interactive Development Plan viewer for <strong>{region.displayName}</strong>
                 {region.state ? `, ${region.state}` : ''}. The DP overlay aligns with satellite imagery so you
@@ -239,6 +254,12 @@ export default function RegionPage({ params }: Props) {
             </section>
           )}
 
+          <DownloadSheet
+            placeName={region.shortName}
+            planName={`the ${region.displayName} Development Plan`}
+            mapUrl={region.fullMapUrl}
+          />
+
           {curatedVillages.length > 0 && (
             <section className="card sublocations notable-areas">
               <h2>Notable areas in {region.shortName}</h2>
@@ -321,6 +342,17 @@ export default function RegionPage({ params }: Props) {
             <a className="btn btn-white btn-block" href={region.fullMapUrl} target="_blank" rel="noopener">
               Launch interactive map →
             </a>
+          </div>
+
+          <div className="side-card">
+            <h3>Download a printable sheet</h3>
+            <p className="aux">
+              Pick any area on the {region.shortName} map and download it as a print-ready A4 sheet —
+              DP overlay on satellite imagery, with a scale bar and north arrow. ₹{DOWNLOAD.priceInr} per sheet.
+            </p>
+            <Link className="btn btn-white btn-block" href={DOWNLOAD.hubPath}>
+              How map downloads work →
+            </Link>
           </div>
 
           <div className="side-card">

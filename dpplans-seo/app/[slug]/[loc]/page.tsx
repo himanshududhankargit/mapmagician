@@ -8,6 +8,7 @@ import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Faq } from '@/components/Faq';
 import { JsonLd } from '@/components/JsonLd';
 import { MapEmbed } from '@/components/MapEmbed';
+import { DownloadSheet, downloadFaqs } from '@/components/DownloadSheet';
 
 type Props = { params: { slug: string; loc: string } };
 
@@ -25,7 +26,7 @@ export function generateMetadata({ params }: Props): Metadata {
   const title = seo?.pageTitle
     ?? `${vname} Development Plan map — ${region.shortName} district${region.state ? ', ' + region.state : ''}`;
   const description = seo?.description
-    ?? `View the ${vname} section of the ${region.displayName} Development Plan online. Interactive DP overlay over satellite imagery, centred at ${village.lat.toFixed(4)}°N, ${village.lng.toFixed(4)}°E.`;
+    ?? `View the ${vname} section of the ${region.displayName} Development Plan online, or download it as a print-ready map sheet. Interactive DP overlay over satellite imagery, centred at ${village.lat.toFixed(4)}°N, ${village.lng.toFixed(4)}°E.`;
   const url = `${SITE.origin}/${region.slug}/${village.slug}/`;
   return {
     title,
@@ -52,6 +53,10 @@ export function generateMetadata({ params }: Props): Metadata {
       `${vname} DP plan`,
       `${vname} development plan`,
       `${vname} ${region.shortName}`,
+      // Locality-level download intent is a real autocomplete pattern here —
+      // "wagholi dp plan pdf free download", "lohegaon dp plan pdf free download".
+      `${vname} dp plan pdf download`,
+      `${vname} dp plan download`,
       `${vname} zoning map`,
       `${region.shortName} DP map`,
       `${region.state} development plan`,
@@ -103,6 +108,9 @@ export default function SubLocationPage({ params }: Props) {
       q: `Is access to ${vname} on the map free?`,
       a: `Browsing the ${vname} area is free up to zoom level 14. High-detail tile layers (zoom 15 and beyond) unlock with a 7-day access pass for the ${region.shortName} region.`,
     },
+    // "<locality> dp plan pdf free download" is one of the strongest autocomplete
+    // patterns in this niche, so the download answer belongs on the locality page too.
+    ...downloadFaqs(vname, `the ${region.displayName} Development Plan`),
   ];
 
   const graph: object[] = [
@@ -224,6 +232,13 @@ export default function SubLocationPage({ params }: Props) {
               (zoom 15 and beyond) unlock with a 7-day access pass for the {region.shortName} region.
             </p>
           </section>
+
+          <DownloadSheet
+            placeName={vname}
+            planName={`the ${region.displayName} Development Plan`}
+            mapUrl={mapUrl}
+            variant="compact"
+          />
 
           {sisters.length > 0 && (
             <section className="card sublocations">

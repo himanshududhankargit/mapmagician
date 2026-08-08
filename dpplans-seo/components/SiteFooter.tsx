@@ -14,6 +14,8 @@ export function SiteFooter() {
           {' · '}
           <a href={SITE.fullMap}>Interactive map</a>
           {' · '}
+          <Link href="/download-development-plan-map/">Download DP maps</Link>
+          {' · '}
           <a href="https://www.linkedin.com/company/mapmagician" target="_blank" rel="noopener">
             LinkedIn
           </a>

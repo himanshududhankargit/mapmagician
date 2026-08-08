@@ -40,6 +40,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: 'weekly' as const,
     priority: 0.8,
   };
+  const downloadHub = {
+    url: SITE.origin + '/download-development-plan-map/',
+    lastModified,
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  };
   const regionPages = allRegions().map(r => ({
     url: `${SITE.origin}/${r.slug}/`,
     lastModified,
@@ -57,5 +63,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     }));
-  return [home, regionsBrowser, msrdcHub, pcmcHub, kdmcHub, ...regionPages, ...subLocationPages];
+  return [home, regionsBrowser, downloadHub, msrdcHub, pcmcHub, kdmcHub, ...regionPages, ...subLocationPages];
 }

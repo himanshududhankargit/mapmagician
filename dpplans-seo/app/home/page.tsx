@@ -91,6 +91,21 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Download intent is the single biggest query pattern in this niche
+          ("<city> development plan map pdf download"), so the hub gets a homepage
+          block and a link from every region page rather than living only in the footer. */}
+      <section className="section">
+        <div className="container text-block">
+          <h2>Download a Development Plan map</h2>
+          <p>
+            Beyond viewing a plan online, you can download the part of it you need as a print-ready sheet —
+            the DP overlay on satellite imagery for the exact area you frame, in an A4 layout with a scale bar,
+            a north arrow and your own caption. It works on every region indexed here. See{' '}
+            <Link href="/download-development-plan-map/">how DP map downloads work</Link>.
+          </p>
+        </div>
+      </section>
+
       <section className="section">
         <div className="container text-block">
           <h2>Featured collection: MSRDC corridors</h2>
