@@ -77,7 +77,8 @@ export function DownloadSheet({ placeName, planName, mapUrl, variant = 'full' }:
       </ol>
 
       <p className="dl-price">
-        <strong>₹{DOWNLOAD.priceInr} per sheet.</strong> Re-download the same sheet free for as long as
+        Downloading a sheet is a <strong>paid one-off</strong> — you see the price and a preview of the
+        sheet before you confirm anything, and you can re-download that same sheet free for as long as
         your region pass is active. Plan detail above zoom&nbsp;14 needs an active pass for {placeName} —
         without one, the sheet still generates, but at the free zoom level of detail.
       </p>
@@ -105,15 +106,18 @@ export function downloadFaqs(placeName: string, planName: string): RegionFaq[] {
   return [
     {
       q: `Can I download the ${placeName} Development Plan map?`,
-      a: `Yes. Open ${placeName} on the ${SITE.name} map, tap Download Map, drag the capture box over the area you want, and confirm — the app renders that area as a print-ready sheet (${DOWNLOAD.widthPx}×${DOWNLOAD.heightPx} pixels, ${DOWNLOAD.paperNote}) with the DP overlay on satellite imagery, a scale bar, a north arrow and your own caption. It costs ₹${DOWNLOAD.priceInr} per sheet, and you can re-download it free while your region pass is active.`,
+      a: `Yes. Open ${placeName} on the ${SITE.name} map, tap Download Map, drag the capture box over the area you want, and confirm — the app renders that area as a print-ready sheet (${DOWNLOAD.widthPx}×${DOWNLOAD.heightPx} pixels, ${DOWNLOAD.paperNote}) with the DP overlay on satellite imagery, a scale bar, a north arrow and your own caption. It is a paid one-off: you see the price and a preview of the sheet before you confirm, and you can re-download that sheet free while your region pass is active.`,
     },
     {
       q: `Is the ${placeName} DP plan available as a PDF download?`,
       a: `The sheet you download from ${SITE.name} is a high-resolution ${DOWNLOAD.format} image rather than a PDF — it prints on A4 without scaling and can be dropped straight into a report or a PDF you assemble yourself. It is also not the planning authority's sanctioned-plan PDF: it is a map sheet generated for the exact area you select, which is usually what people want when they search for a "${placeName} DP plan PDF download", because the official documents are city-wide files where a single plot is hard to find. For a certified extract or DP remark, apply to the planning authority.`,
     },
+    // Deliberately NOT "how much does it cost" — we do not print the price (see the
+    // note on DOWNLOAD in lib/site.ts). This asks the question behind it instead:
+    // what do I need before the sheet is worth downloading.
     {
-      q: `How much does it cost to download a ${placeName} map sheet?`,
-      a: `₹${DOWNLOAD.priceInr} per sheet. Viewing ${planName} online stays free up to zoom level 14. High-detail DP tiles (zoom 15 and beyond) need a 7-day access pass for the region, and that same pass lets you re-download any sheet you have already generated at no extra cost for as long as it is active.`,
+      q: `Do I need a region pass to download the ${placeName} map?`,
+      a: `Viewing ${planName} online stays free up to zoom level 14, and a sheet will still generate without a pass — but only at that free level of detail, which suits a locality overview rather than plot-level work. A 7-day access pass for the region unlocks the high-detail DP tiles (zoom 15 and beyond), so the sheet renders at full detail, and while the pass is active you can re-download any sheet you have already generated at no extra cost.`,
     },
   ];
 }

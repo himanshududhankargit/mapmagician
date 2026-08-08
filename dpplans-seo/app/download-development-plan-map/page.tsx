@@ -106,7 +106,7 @@ const STEPS = [
   },
   {
     name: 'Confirm and save',
-    text: `Confirm the ₹${DOWNLOAD.priceInr} payment and the full-resolution sheet renders and saves to your Downloads folder, ready to print on A4 or attach to a report.`,
+    text: 'Confirm the payment — the price is shown on the dialog, next to the preview — and the full-resolution sheet renders and saves to your Downloads folder, ready to print on A4 or attach to a report.',
   },
 ];
 
@@ -119,9 +119,12 @@ const FAQS: RegionFaq[] = [
     q: 'Is the downloaded DP map a PDF?',
     a: `No — it is a high-resolution ${DOWNLOAD.format} image. It is sized so it prints on A4 without scaling, and it drops straight into a Word document, a valuation report or a PDF you assemble yourself. If you specifically need the planning authority's sanctioned-plan PDF, that has to come from the authority; those files are city-wide documents in which a single plot is hard to locate, which is usually why people end up looking for a map of just their area instead.`,
   },
+  // No price figure anywhere on these pages — it is set in RTDB and changeable from the
+  // admin panel, so a number in a static export would eventually quote a price we do not
+  // charge. See the note on DOWNLOAD in lib/site.ts.
   {
-    q: 'What does it cost to download a map sheet?',
-    a: `₹${DOWNLOAD.priceInr} per sheet. Viewing any Development Plan on ${SITE.name} is free up to zoom level 14. The high-detail DP layers (zoom 15 and beyond) need a 7-day access pass for that region, and while a pass is active you can re-download any sheet you have already generated at no extra cost.`,
+    q: 'Is downloading a map sheet free?',
+    a: `Viewing any Development Plan on ${SITE.name} is free up to zoom level 14. Downloading a sheet is a paid one-off — the price is shown on the download dialog, alongside a preview of the sheet, before you confirm anything. Separately, the high-detail DP layers (zoom 15 and beyond) need a 7-day access pass for that region, and while a pass is active you can re-download any sheet you have already generated at no extra cost.`,
   },
   {
     q: 'Can I download the DP map without buying a region pass?',
@@ -154,7 +157,8 @@ const graph: object[] = [
     description:
       'Download the part of an Indian Development Plan you need as a print-ready A4 map sheet with the DP overlay on satellite imagery.',
     totalTime: 'PT2M',
-    estimatedCost: { '@type': 'MonetaryAmount', currency: 'INR', value: String(DOWNLOAD.priceInr) },
+    // No estimatedCost — structured data outlives an edit to the price in RTDB, and a
+    // wrong MonetaryAmount is worse than none.
     image: SITE.origin + DOWNLOAD.sampleImage,
     step: STEPS.map((s, i) => ({
       '@type': 'HowToStep',
@@ -240,8 +244,9 @@ export default function DownloadHubPage() {
               <li><strong>Full-resolution map tiles</strong>, not a screenshot — this is the difference people notice</li>
             </ul>
             <p className="dl-price">
-              <strong>₹{DOWNLOAD.priceInr} per sheet.</strong> Free to re-download the same sheet while your region
-              pass is active. Works in the browser on desktop and mobile, and in the Android app.
+              <strong>A preview first, then a one-off payment.</strong> The sheet is previewed and the price shown
+              before you confirm anything, and re-downloading that same sheet is free while your region pass is
+              active. Works in the browser on desktop and mobile, and in the Android app.
             </p>
             <p className="dl-note">
               The file is a high-resolution <strong>{DOWNLOAD.format} image</strong>, not a PDF, and it is not the

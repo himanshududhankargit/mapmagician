@@ -24,14 +24,17 @@ export const SITE = {
  * every region page and every sub-location page, and a wrong price or format there is
  * a customer-facing lie. Keep in sync with the app:
  *   - sheet geometry: DLMAP_TEMPLATE_W/H = 3557×2515 (A4 landscape at ~300 dpi)
- *   - price:          appConfig/pricing/download_map in RTDB (0 = free), read
- *                     server-side by createDownloadOrder — the number below is only
- *                     marketing copy, so re-check RTDB before editing it
  *   - format:         JPEG. NOT a PDF — say so plainly, the search demand is all
  *                     "pdf download" and a bait-and-switch costs more than the click.
+ *
+ * 🛑 NEVER print the price on these pages (owner instruction, 2026-08-08). It lives in
+ * `appConfig/pricing/download_map` in RTDB, is read server-side by createDownloadOrder,
+ * and can be changed from the Android admin panel at any time — a number baked into
+ * ~2,600 statically-exported pages would go stale silently and quote customers a price
+ * we no longer charge. Say "the price is shown before you confirm" instead; the app
+ * shows it on the dialog, next to a preview, before any payment is taken.
  */
 export const DOWNLOAD = {
-  priceInr: 59,
   widthPx: 3557,
   heightPx: 2515,
   format: 'JPEG',

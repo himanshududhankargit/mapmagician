@@ -348,7 +348,7 @@ export default function RegionPage({ params }: Props) {
             <h3>Download a printable sheet</h3>
             <p className="aux">
               Pick any area on the {region.shortName} map and download it as a print-ready A4 sheet —
-              DP overlay on satellite imagery, with a scale bar and north arrow. ₹{DOWNLOAD.priceInr} per sheet.
+              DP overlay on satellite imagery, with a scale bar and north arrow.
             </p>
             <Link className="btn btn-white btn-block" href={DOWNLOAD.hubPath}>
               How map downloads work →
