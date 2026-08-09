@@ -1367,6 +1367,8 @@
     <div class="toolbar-scroll">
         <!-- Download Map deliberately first (owner request 2026-08-07) -->
         <button class="pill-btn" id="btn-download-map">Download Map</button>
+        <!-- Annotate: the feature JS (maps1-annotations.js) lazy-loads on first tap -->
+        <button class="pill-btn" id="btn-annotate">Annotate</button>
         <button class="pill-btn" id="btn-addon-maps" style="display:none;background:#2E7D32;color:#fff;font-weight:600;">0 Add-On Maps</button>
         <button class="pill-btn" id="btn-old-maps" style="display:none">Load Old Maps</button>
         <button class="pill-btn" id="btn-legend">Legend</button>
@@ -2821,7 +2823,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=069" defer></script>
+    <script src="maps1-app.js?v=071" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">

@@ -39,7 +39,11 @@
         // 069 = "Don't show this again" on the download explainer actually decides: the dialog
         //       reappears on every tap unless the box is ticked (it was suppressed after one
         //       showing per page load regardless, which made the checkbox do nothing).
-        var APP_VERSION = '069';
+        // 071 = Annotate feature (Android annotations/ package port): text / markers /
+        //       areas / roads in a LAZY-LOADED maps1-annotations.js (fetched on first
+        //       Annotate tap — zero start-time cost), with capture-viewfinder
+        //       ground-overlay stand-ins and annotation drawing on the export stitch.
+        var APP_VERSION = '071';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7633,6 +7637,34 @@
             });
             document.getElementById('dlmap-vf-proceed').addEventListener('click', _dlmapProceedCapture);
             document.getElementById('dlmap-vf-cancel').addEventListener('click', _dlmapCloseViewfinder);
+            // Annotate — the whole feature lives in maps1-annotations.js, fetched on
+            // the FIRST tap only (lazy: start time is untouched). ?v= rides the app
+            // version so a deploy invalidates it in lockstep with this file.
+            var _annLoading = null;
+            function loadAnnotations() {
+                if (window.mmAnnotations) return Promise.resolve(window.mmAnnotations);
+                if (_annLoading) return _annLoading;
+                _annLoading = new Promise(function (resolve, reject) {
+                    var sc = document.createElement('script');
+                    sc.src = 'maps1-annotations.js?v=' + APP_VERSION;
+                    sc.onload = function () {
+                        if (window.mmAnnotations) resolve(window.mmAnnotations);
+                        else { _annLoading = null; reject(new Error('annotations init failed')); }
+                    };
+                    sc.onerror = function () { _annLoading = null; reject(new Error('annotations load failed')); };
+                    document.head.appendChild(sc);
+                });
+                return _annLoading;
+            }
+            var _annBtn = document.getElementById('btn-annotate');
+            if (_annBtn) _annBtn.addEventListener('click', function () {
+                try { mmAnalytics.event('annotate_open', {}); } catch (e) {}
+                loadAnnotations().then(function (m) { m.openSheet(); })
+                    .catch(function (e) {
+                        console.error('annotate load failed:', e);
+                        _dlmapToast('Could not load the annotate tools — check your connection');
+                    });
+            });
             document.getElementById('dlmap-unowned-cancel').addEventListener('click', function() {
                 document.getElementById('dlmap-unowned-overlay').classList.remove('open');
             });
@@ -10859,7 +10891,15 @@
                 });
                 if (ctrl.signal.aborted) return null;
                 txt.textContent = 'Rendering…';
-                return { rect: rect, stitch: _dlmapStitch(rect, jobs), missing: missing };
+                var stitched = _dlmapStitch(rect, jobs);
+                // User annotations are map objects, not tiles — without this pass the
+                // download loses them (same reason Android's TileStitchExporter has
+                // drawAnnotations). Failure must not cost the customer their sheet.
+                if (window.mmAnnotations) {
+                    try { window.mmAnnotations.drawOnStitch(stitched, rect, geo); }
+                    catch (e) { console.error('annotation draw failed:', e); }
+                }
+                return { rect: rect, stitch: stitched, missing: missing };
             } finally {
                 overlay.classList.remove('open');
                 _dlmapCleanupJobs(jobs);                                  // bitmaps only live until the stitch
@@ -10936,6 +10976,9 @@
             document.body.classList.remove('dlmap-capturing');
             _dlmapChipListeners.forEach(function(l) { try { l.remove(); } catch (e) {} });
             _dlmapChipListeners = [];
+            // Restore live annotations (drops the to-scale stand-ins) — must run
+            // before any capture starts, and on plain Cancel.
+            if (window.mmAnnotations) { try { window.mmAnnotations.endCapturePreview(); } catch (e) {} }
         }
 
         function startDownloadMapFlow() {
@@ -10954,6 +10997,15 @@
                 map.addListener('zoom_changed', _dlmapUpdateQualityChip),
                 map.addListener('idle', _dlmapUpdateQualityChip)
             ];
+            // Annotations: screen-space stamps (pins, road names) hand over to
+            // ground-pinned stand-ins sized for the sheet, rebuilt as the camera
+            // settles — so the box previews exactly what the download will carry.
+            if (window.mmAnnotations) {
+                try { window.mmAnnotations.beginCapturePreview(); } catch (e) {}
+                _dlmapChipListeners.push(map.addListener('idle', function() {
+                    try { window.mmAnnotations.refreshCapturePreview(); } catch (e) {}
+                }));
+            }
         }
 
         async function _dlmapProceedCapture() {
