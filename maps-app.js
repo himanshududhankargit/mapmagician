@@ -40,7 +40,10 @@
         // 068 = download records name their region (districtName sent with the order) and
         //       report delivered/failed back to the server (logDownloadOutcome), so the
         //       admin panel can see who downloaded what and which downloads never landed.
-        var APP_VERSION = '068';
+        // 070 = LIVE promotion of 069: "Don't show this again" on the download explainer
+        //       actually decides — the dialog reappears on every tap unless the box is ticked
+        //       (it was suppressed after one showing per page load regardless).
+        var APP_VERSION = '070';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7602,19 +7605,20 @@
             })();
 
             // --- Download Map (Android plan-download port; logic lives after CanvasMapType) ---
-            // The first tap gets a one-time explainer (sample sheet + what the output is);
-            // "Don't show again" persists it. If localStorage is unavailable the in-page
-            // flag still limits the explainer to once per page load.
+            // Every tap gets the explainer (sample sheet + what the output is) until the user
+            // ticks "Don't show again" — only that tick suppresses it. The in-page flag mirrors
+            // the stored one so the choice still holds for the session if localStorage throws;
+            // it must NOT be set merely because the dialog was shown, or the checkbox becomes
+            // a no-op and the explainer appears exactly once per load either way.
             var DLMAP_INTRO_KEY = 'mm_dlmap_intro_seen';
-            var _dlmapIntroShownThisLoad = false;
+            var _dlmapIntroDismissed = false;
             document.getElementById('btn-download-map').addEventListener('click', function() {
                 try { mmAnalytics.event('download_map_open', {}); } catch (e) {}
-                var seen = _dlmapIntroShownThisLoad;
+                var seen = _dlmapIntroDismissed;
                 try { seen = seen || localStorage.getItem(DLMAP_INTRO_KEY) === '1'; } catch (e) {}
                 if (!seen) {
-                    _dlmapIntroShownThisLoad = true;
                     var img = document.getElementById('dlmap-intro-sample');
-                    if (!img.src) img.src = img.getAttribute('data-src');   // lazy — first-timers only
+                    if (!img.src) img.src = img.getAttribute('data-src');   // lazy — first open only
                     document.getElementById('dlmap-intro-overlay').classList.add('open');
                     return;
                 }
@@ -7625,6 +7629,7 @@
             });
             document.getElementById('dlmap-intro-continue').addEventListener('click', function() {
                 if (document.getElementById('dlmap-intro-dontshow').checked) {
+                    _dlmapIntroDismissed = true;
                     try { localStorage.setItem(DLMAP_INTRO_KEY, '1'); } catch (e) {}
                 }
                 document.getElementById('dlmap-intro-overlay').classList.remove('open');
