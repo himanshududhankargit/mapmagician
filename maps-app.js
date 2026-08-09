@@ -164,7 +164,29 @@
         //       (startPinCarry), with the map frozen for its duration. A hold that
         //       has travelled >12px is still a pan; the disc lives on in the options
         //       sheet. Verified on a device via maps1 before promotion.
-        var APP_VERSION = '112';
+        // 113 = three annotation fixes. (1) Finishing a marked region now ASKS FOR
+        //       ITS NAME, the way a finished road and a dropped marker already do;
+        //       blank is still allowed. (2) "Move label" was DEAD: the placement
+        //       surface is guarded by busyToolLabel(), and the region editor holding
+        //       the map made its own hand-off look like a second tool grabbing it
+        //       ("You are still editing a region"). A hand-off now bypasses that
+        //       guard, and an empty caption offers a name instead of refusing.
+        //       (3) Annotations are CLIPPED to the map image on the exported sheet --
+        //       a corner or marker outside the captured rectangle used to paint over
+        //       the printed margin and title block.
+        // 114 = the caption placement handles wear real SVG icons (rotate / drag /
+        //       resize) instead of the font glyphs ↻ ⤢ ✜, which the phone drew from
+        //       whichever fallback font it had, at that font's baseline -- off-centre
+        //       in the circle, one of them an emoji. They were also 2px off the
+        //       corner they mark: the 2px ring sat OUTSIDE the 34px box, so a 38px
+        //       circle was centred as if it were 34. HANDLE_PX now feeds both the
+        //       CSS and the maths, and the move disc darkened to #E64A19 (white on
+        //       #FF5722 was ~3:1).
+        // 115 = those handles 20% smaller -- 38px circle to 30px, 20px icon to 16px.
+        //       Only HANDLE_PX and the svg rule move; positionHandles reads the
+        //       constant, so the circles stay centred on their corners by itself.
+        // 116 = 113-115 promoted to live, verified on a device via maps1 first.
+        var APP_VERSION = '116';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

@@ -34,6 +34,10 @@
     var MAX_BORDER = 20, MAX_ROAD_WIDTH = 20;
     var MAX_STAMP_SUPERSAMPLE = 8;      // TileStitchExporter.MAX_STAMP_SUPERSAMPLE
     var EARTH_R = 6371009;              // android-maps-utils SphericalUtil radius
+    var HANDLE_PX = 30;                 // placement handle, ring included — ONE source
+                                        // of truth: the CSS and positionHandles both
+                                        // read it, so the circle can never drift off
+                                        // the corner it is supposed to mark.
 
     var LS_ITEMS = 'mm_annotations_items';
     var LS_DRAFT = 'mm_annotations_draft';
@@ -1017,15 +1021,22 @@
             return Math.min(w, hgt);
         },
 
+        // What a region's caption actually says — its name, its area, or both.
+        // Empty means there is no caption on the map: nothing to draw, and
+        // nothing for "Move label" to move. One definition, so the editor and
+        // the renderer can never disagree about whether a caption exists.
+        areaCaptionText: function (a) {
+            var t = '';
+            if (a.showLabel) t = (a.label || '').trim();
+            if (a.showArea && a.points.length >= 3) t += (t ? '\n' : '') + fmtArea(areaSqm(a));
+            return t;
+        },
+
         // {bmp, position, widthMeters, bearing, render} for an area's caption — the
         // same white-on-halo lettering as free text, clamped to the shape it names.
         shapeLabel: function (a) {
             if (a.kind !== 'area') return null;
-            var caption = '';
-            if (a.showLabel) caption = (a.label || '').trim();
-            if (a.showArea && a.points.length >= 3) {
-                caption += (caption ? '\n' : '') + fmtArea(areaSqm(a));
-            }
+            var caption = this.areaCaptionText(a);
             if (!caption || a.points.length < 3) return null;
             var bmp = textBitmap(caption, a.labelScale, true);
             var centre = captionAnchor(a);
@@ -1415,10 +1426,19 @@
             '.ann-place .ann-ptext,.ann-place .ann-handle,.ann-place .ann-bar{pointer-events:auto;}',
             '.ann-place .ann-ptext{position:absolute;transform-origin:center;cursor:grab;touch-action:none;}',
             '.ann-place .ann-ptext img{display:block;-webkit-user-drag:none;user-select:none;pointer-events:none;}',
-            '.ann-handle{position:absolute;width:34px;height:34px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;touch-action:none;cursor:pointer;z-index:5;user-select:none;}',
+            // box-sizing matters: the 2px ring used to sit OUTSIDE the 34px box, so
+            // the rendered circle was 38px while positionHandles centred a 34px one.
+            '.ann-handle{position:absolute;box-sizing:border-box;width:' + HANDLE_PX + 'px;height:' + HANDLE_PX + 'px;' +
+                'border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.45);' +
+                'display:flex;align-items:center;justify-content:center;color:#fff;' +
+                'touch-action:none;cursor:pointer;z-index:5;user-select:none;}',
+            // display:block kills the inline-baseline gap that shifted the icon down;
+            // the icons ink themselves from `color` above
+            '.ann-handle svg{display:block;width:16px;height:16px;}',
             '.ann-handle.rot{background:#2E7D32;}',
             '.ann-handle.rsz{background:#1565C0;}',
-            '.ann-handle.mov{background:#FF5722;}',
+            // deeper than #FF5722: white on that orange is ~3:1, below AA for an icon
+            '.ann-handle.mov{background:#E64A19;}',
             // layers panel rows
             '.ann-lrow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-radius:10px;font-size:14px;color:#222;background:#fff;}',
             '.ann-lrow{will-change:transform;}',
@@ -1488,6 +1508,56 @@
         var s = el('span', 'ann-histico' + (undo ? ' mir' : ''));
         s.innerHTML = HIST_ARROW_SVG;
         return s;
+    }
+
+    // Placement-handle icons. These were the font glyphs ↻ / ⤢ / ✜, which is why
+    // they sat off-centre in the circle on a phone: a glyph the device has no real
+    // font for is drawn by whichever fallback wins, at that font's baseline and
+    // optical size, and one of them arrived as an emoji entirely. Real vector art
+    // renders identically everywhere, and `currentColor` keeps a single white ink
+    // against the three saturated discs.
+    var HANDLE_ICONS = {
+        // rotate-ccw — stroked, so it needs stroke:currentColor and no fill
+        rotate: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">' +
+            '<path d="M12.5 20.5C17.1944 20.5 21 16.6944 21 12C21 7.30558 17.1944 3.5 12.5 3.5C7.80558 3.5 4 ' +
+            '7.30558 4 12C4 13.5433 4.41128 14.9905 5.13022 16.238M1.5 15L5.13022 16.238M6.82531 12.3832L5.47107 ' +
+            '16.3542L5.13022 16.238" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" ' +
+            'stroke-linejoin="round"/></svg>',
+        // four-way drag arrow — filled
+        drag: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" ' +
+            'd="M16.1924 5.65683C16.5829 5.2663 16.5829 4.63314 16.1924 4.24261L13.364 1.41419C12.5829 0.633139 ' +
+            '11.3166 0.633137 10.5355 1.41419L7.70711 4.24261C7.31658 4.63314 7.31658 5.2663 7.70711 5.65683C8.09763 ' +
+            '6.04735 8.73079 6.04735 9.12132 5.65683L11 3.77812V11.0503H3.72784L5.60655 9.17157C5.99707 8.78104 ' +
+            '5.99707 8.14788 5.60655 7.75735C5.21602 7.36683 4.58286 7.36683 4.19234 7.75735L1.36391 10.5858C0.582863 ' +
+            '11.3668 0.582859 12.6332 1.36391 13.4142L4.19234 16.2426C4.58286 16.6332 5.21603 16.6332 5.60655 ' +
+            '16.2426C5.99707 15.8521 5.99707 15.219 5.60655 14.8284L3.8284 13.0503H11V20.2219L9.12132 ' +
+            '18.3432C8.73079 17.9526 8.09763 17.9526 7.7071 18.3432C7.31658 18.7337 7.31658 19.3669 7.7071 ' +
+            '19.7574L10.5355 22.5858C11.3166 23.3669 12.5829 23.3669 13.364 22.5858L16.1924 19.7574C16.5829 ' +
+            '19.3669 16.5829 18.7337 16.1924 18.3432C15.8019 17.9526 15.1687 17.9526 14.7782 18.3432L13 ' +
+            '20.1213V13.0503H20.071L18.2929 14.8284C17.9024 15.219 17.9024 15.8521 18.2929 16.2426C18.6834 ' +
+            '16.6332 19.3166 16.6332 19.7071 16.2426L22.5355 13.4142C23.3166 12.6332 23.3166 11.3668 22.5355 ' +
+            '10.5858L19.7071 7.75735C19.3166 7.36683 18.6834 7.36683 18.2929 7.75735C17.9024 8.14788 17.9024 ' +
+            '8.78104 18.2929 9.17157L20.1716 11.0503H13V3.87867L14.7782 5.65683C15.1687 6.04735 15.8019 6.04735 ' +
+            '16.1924 5.65683Z"/></svg>',
+        // resize-out-frame — three filled paths, its own 17-unit viewBox
+        resize: '<svg viewBox="0 -0.5 17 17" aria-hidden="true" focusable="false"><g fill="currentColor">' +
+            '<path d="M8.994,12.967 C8.994,14.101 8.074,15.021 6.939,15.021 L3.03,15.021 C1.896,15.021 0.976,14.101 ' +
+            '0.976,12.967 L0.976,9.057 C0.976,7.924 1.896,7.004 3.03,7.004 L6.939,7.004 C8.074,7.004 8.994,7.924 ' +
+            '8.994,9.057 L8.994,12.967 L8.994,12.967 Z"/>' +
+            '<path d="M14.201,2.944 L15.372,5 C15.676,5 15.923,4.754 15.923,4.452 L15.942,0.648 C15.942,0.344 ' +
+            '15.695,0.099 15.39,0.099 L11.625,0.082 C11.318,0.082 11.072,0.326 11.072,0.63 L13.086,1.836 L9.27,5.63 ' +
+            'C9.115,5.782 9.039,5.982 9.039,6.181 C9.039,6.383 9.115,6.581 9.27,6.734 C9.579,7.04 10.079,7.04 ' +
+            '10.387,6.734 L14.201,2.944 L14.201,2.944 Z"/>' +
+            '<path d="M15.04,7.021 L15.04,13.605 C15.04,14.4 14.397,15.046 13.604,15.046 L2.375,15.046 C1.584,15.046 ' +
+            '0.939,14.4 0.939,13.605 L0.939,2.396 C0.939,1.602 1.584,0.956 2.375,0.956 L8.979,0.956 L8.979,0.026 ' +
+            'L2.056,0.026 C0.927,0.026 0.007,0.947 0.007,2.079 L0.007,13.911 C0.007,15.042 0.927,15.964 2.056,15.964 ' +
+            'L13.937,15.964 C15.068,15.964 15.988,15.042 15.988,13.911 L15.988,7.021 L15.04,7.021 L15.04,7.021 Z"/>' +
+            '</g></svg>',
+    };
+    function mkPlaceHandle(cls, icon) {
+        var d = el('div', 'ann-handle ' + cls);
+        d.innerHTML = HANDLE_ICONS[icon];
+        return d;
     }
     // Buttons carry the glyph as a child element, not as text.
     function histBtn(cls, undo, title, onClick) {
@@ -2108,12 +2178,21 @@
     // Drag anywhere on it; pinch (two pointers) or mouse-wheel or the blue handle
     // to size; the green handle swings it; the orange disc drags it 1:1.
     var placementOpen = false;
+    // Set only by startTextPlacementRaw, for the length of one synchronous call.
+    var placementHandoff = false;
     function startTextPlacement(text, centered, existing) {
         if (placementOpen) return;
         // The surface floats over the live map and steals the gestures, so it is
         // a tool like any other — this is the path that let text coexist with a
         // half-drawn region, since it never went through enterMode.
-        var busy = busyToolLabel();
+        //
+        // 🛑 Except when an editor is HANDING the map over rather than competing
+        // for it: the region editor's "Move label" hides its own panel and waits
+        // for this surface to close. It is still `activeMode`, so the busy guard
+        // refused it with "You are still editing a region" — and since that is
+        // the ONLY way to reach the caption mover, the button was dead from the
+        // day the guard landed. A hand-off is not a second tool.
+        var busy = placementHandoff ? null : busyToolLabel();
         if (busy) { refuseWhileBusy(busy); return; }
         placementOpen = true;
         var md = mapDiv();
@@ -2162,22 +2241,23 @@
         function centreX() { return mrect.width / 2 + offsetX; }
         function centreY() { return mrect.height / 2 + offsetY; }
 
-        var rotHandle = el('div', 'ann-handle rot', '↻');
-        var rszHandle = el('div', 'ann-handle rsz', '⤢');
-        var movHandle = el('div', 'ann-handle mov', '✜');
+        var rotHandle = mkPlaceHandle('rot', 'rotate');
+        var rszHandle = mkPlaceHandle('rsz', 'resize');
+        var movHandle = mkPlaceHandle('mov', 'drag');
         root.appendChild(rotHandle); root.appendChild(rszHandle); root.appendChild(movHandle);
         function positionHandles() {
             var vis = scale / renderedScale;
             var hw = (holder._w || 0) * vis / 2, hh = (holder._h || 0) * vis / 2;
             var r = rad(rotation), cos = Math.cos(r), sin = Math.sin(r);
             var cx = centreX(), cy = centreY();
+            var half = HANDLE_PX / 2;      // left/top are the circle's edge, not its centre
             // rotate handle: bottom-right corner; resize: top-right; move: bottom-left
-            rotHandle.style.left = (cx + hw * cos - hh * sin - 17) + 'px';
-            rotHandle.style.top = (cy + hw * sin + hh * cos - 17) + 'px';
-            rszHandle.style.left = (cx + hw * cos + hh * sin - 17) + 'px';
-            rszHandle.style.top = (cy + hw * sin - hh * cos - 17) + 'px';
-            movHandle.style.left = (cx - hw * cos - hh * sin - 17) + 'px';
-            movHandle.style.top = (cy - hw * sin + hh * cos - 17) + 'px';
+            rotHandle.style.left = (cx + hw * cos - hh * sin - half) + 'px';
+            rotHandle.style.top = (cy + hw * sin + hh * cos - half) + 'px';
+            rszHandle.style.left = (cx + hw * cos + hh * sin - half) + 'px';
+            rszHandle.style.top = (cy + hw * sin - hh * cos - half) + 'px';
+            movHandle.style.left = (cx - hw * cos - hh * sin - half) + 'px';
+            movHandle.style.top = (cy - hw * sin + hh * cos - half) + 'px';
         }
 
         // gestures — pointer events only: one path for touch and mouse
@@ -2276,7 +2356,9 @@
         // The class position is FIXED above the bottom controls — the bar used to
         // sit 26px from the map's bottom edge, underneath the slider/Browse row.
         var bar = el('div', 'ann-bar');
-        bar.appendChild(el('span', 'ann-readout', 'Drag · pinch or ⤢ to size'));
+        // Named by colour, not by a glyph — the ⤢ that used to stand here is the
+        // same character the handle wore, and it rendered as a box on the phone.
+        bar.appendChild(el('span', 'ann-readout', 'Drag · pinch or blue handle to size'));
         var cancelB = el('button', 'ann-pill', 'Cancel');
         cancelB.style.background = '#616161';
         var doneB = el('button', 'ann-pill', 'Done');
@@ -2618,10 +2700,33 @@
                     exitMode();
                 });
         });
-        moveLabelB.addEventListener('click', function () {
-            if (area.points.length < 3) return;
+        function moveLabelNow() {
             panel.style.display = 'none';
             startCaptionPlacement(area, function () { panel.style.display = ''; });
+        }
+        function nameIt(name) {
+            area.label = name;
+            area.showLabel = true;          // a name nobody can see is not an answer
+            layer.refreshCaption(area.id);
+            refreshPanel(); commit();
+        }
+        moveLabelB.addEventListener('click', function () {
+            if (area.points.length < 3) return;
+            // An empty caption has nothing to move. Hand over the missing piece
+            // rather than refusing: switch a hidden name back on, or ask for one
+            // here — a toast that only says no is a dead end.
+            if (!layer.areaCaptionText(area)) {
+                if ((area.label || '').trim()) nameIt(area.label);
+                else {
+                    promptName('Name this region', '', function (name) {
+                        if (!name) { toast('Name it, or tick Show area — a caption needs something on it'); return; }
+                        nameIt(name);
+                        moveLabelNow();
+                    });
+                    return;
+                }
+            }
+            moveLabelNow();
         });
         doneB.addEventListener('click', function () {
             if (drawing) {
@@ -2633,6 +2738,14 @@
                 map.setOptions({ draggableCursor: null });
                 layer.update(area);
                 refreshPanel();
+                // Named on finishing, the way a finished road and a dropped marker
+                // already are. Blank is fine — it stays "Region" and the area alone
+                // captions it — but being asked once beats hunting for the ✏️.
+                if (!(area.label || '').trim()) {
+                    promptName('Name this region (optional)', '', function (name) {
+                        if (name) nameIt(name);
+                    });
+                }
                 return;
             }
             exitMode();
@@ -2688,9 +2801,7 @@
     // Move / resize / rotate an area's caption — the text placement surface worn
     // by the caption (labelScale / labelRotation / labelPosition / labelZoom).
     function startCaptionPlacement(area, onClosed) {
-        var caption = '';
-        if (area.showLabel) caption = (area.label || '').trim();
-        if (area.showArea && area.points.length >= 3) caption += (caption ? '\n' : '') + fmtArea(areaSqm(area));
+        var caption = layer.areaCaptionText(area);
         if (!caption) { toast('Turn on the name or the area first'); if (onClosed) onClosed(); return; }
         // A lightweight reuse of the placement surface via a text stand-in object.
         var stand = {
@@ -2726,7 +2837,12 @@
             if (a === stand) committed = true;    // the surface already wrote into `stand`
             else origUpd.call(layer, a);
         };
-        startTextPlacement(stand.text, stand.centered, stand);
+        // The caller is an editor standing aside, not a rival tool — see the guard
+        // in startTextPlacement. Cleared in `finally` so a throw cannot leave the
+        // whole app one tool-refusal short of safe.
+        placementHandoff = true;
+        try { startTextPlacement(stand.text, stand.centered, stand); }
+        finally { placementHandoff = false; }
         var t = setInterval(function () {         // restore the layer API once it closes
             if (!placementOpen) {
                 clearInterval(t);
@@ -3569,6 +3685,15 @@
             };
         }
         ctx.save();
+        // Clip to the map image itself. Annotation geometry is unbounded — a
+        // region corner, a road end or a marker can sit outside the captured
+        // rectangle — and the compose contain-fits that rectangle into the
+        // template, so anything beyond it painted straight over the printed
+        // margin, the title block and the scale bar. The client-side dispatch
+        // has no say here: this canvas is the whole sheet, not the map window.
+        ctx.beginPath();
+        ctx.rect(fit.dx, fit.dy, rect.w * fit.scale, rect.h * fit.scale);
+        ctx.clip();
         // Drawn geometry first, then every bitmap over it — a caption is never
         // buried under the wash of a region drawn after it.
         layer.captureShapes().sort(function (a, b) { return a.order - b.order; }).forEach(function (s) {
