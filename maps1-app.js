@@ -72,7 +72,10 @@
         // 080 = previous annotations are OFFERED on first use ("Load your previous
         //       annotations?" — declining keeps them loadable from the panel), and
         //       double-clicking an annotation no longer stacks its options sheet.
-        var APP_VERSION = '080';
+        // 081 = floating ↶↷ undo/redo bar bottom-left whenever there is history to
+        //       act on (not only inside the dock) + road names sit on an opaque
+        //       road-coloured pill so the dashed centre line can't strike through.
+        var APP_VERSION = '081';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

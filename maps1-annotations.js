@@ -300,24 +300,32 @@
         return cachePut(key, { canvas: k.c, w: w, h: h });
     }
 
-    // Small white lettering with a soft shadow — sized to sit INSIDE the road band.
-    function roadLabelBitmap(text, scale) {
+    // The road's name on an OPAQUE pill in the road's own surface colour: it sits
+    // on the band and covers the dashed centre line beneath it, so the dashes can
+    // never strike through the lettering (owner report, 2026-08-09).
+    function roadLabelBitmap(text, scale, colorInt) {
         var s = scale || 1;
-        var key = 'r|' + s + '|' + text;
+        var color = typeof colorInt === 'number' ? colorInt : DEFAULT_ROAD;
+        var key = 'r|' + s + '|' + color + '|' + text;
         if (bmpCache.has(key)) return bmpCache.get(key);
-        var size = 11.5 * s, pad = 4 * s;
+        var size = 11.5 * s, padH = 6 * s, padV = 2.5 * s;
         var fm = fontMetrics(size);
         _measureCtx.font = 'bold ' + size + 'px sans-serif';
-        var w = Math.max(1, _measureCtx.measureText(text).width + pad * 2);
-        var h = Math.max(1, fm.lineH + pad * 2);
+        var w = Math.max(1, _measureCtx.measureText(text).width + padH * 2);
+        var h = Math.max(1, fm.lineH + padV * 2);
         var k = mkCanvas(w, h), ctx = k.ctx;
+        var r = h / 2;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(0.5 * s, 0.5 * s, w - s, h - s, r);
+        else ctx.rect(0.5 * s, 0.5 * s, w - s, h - s);
+        ctx.fillStyle = cssColor(color);
+        ctx.fill();
+        ctx.lineWidth = 1 * s;
+        ctx.strokeStyle = cssColor(roadBorderColor(color));
+        ctx.stroke();
         ctx.font = 'bold ' + size + 'px sans-serif';
-        ctx.shadowColor = '#000';
-        ctx.shadowBlur = 1.2 * s;
-        ctx.shadowOffsetX = 0.4 * s;
-        ctx.shadowOffsetY = 0.4 * s;
         ctx.fillStyle = '#fff';
-        ctx.fillText(text, pad, pad + fm.asc);
+        ctx.fillText(text, padH, padV + fm.asc);
         return cachePut(key, { canvas: k.c, w: w, h: h });
     }
 
@@ -1003,7 +1011,7 @@
             var a = h.a, self = this;
             var caption = this.roadCaptionText(a);
             if (!caption) return;
-            var bmp = roadLabelBitmap(caption, 1);
+            var bmp = roadLabelBitmap(caption, 1, a.color);
             this.roadCaptionSpots(a).forEach(function (spot) {
                 h.captionStamps.push(new ScreenStamp({
                     lat: spot.position.lat, lng: spot.position.lng, bmp: bmp,
@@ -1052,7 +1060,7 @@
                     h.captionStamps.forEach(function (s) { s.setShown(false); });
                     return;
                 }
-                var bmp = roadLabelBitmap(caption, 1);
+                var bmp = roadLabelBitmap(caption, 1, a.color);
                 var spots = this.roadCaptionSpots(a);
                 // Joint count may have changed — rebuild when the spot list did.
                 if (spots.length !== h.captionStamps.length) {
@@ -1101,14 +1109,14 @@
                 } else if (a.kind === 'road') {
                     var caption = self.roadCaptionText(a);
                     if (!caption) return;
-                    var rb = roadLabelBitmap(caption, 1);
+                    var rb = roadLabelBitmap(caption, 1, a.color);
                     self.roadCaptionSpots(a).forEach(function (spot) {
                         if (spot.lengthMeters / mpp(spot.position.lat, cz) <= rb.w) return;
                         out.push({
                             lat: spot.position.lat, lng: spot.position.lng, bmp: rb, widthPx: rb.w,
                             anchorU: 0.5, anchorV: 0.5, rotation: spot.bearing,
                             groundPinned: false, order: a.order,
-                            render: function (s) { return roadLabelBitmap(caption, s); }
+                            render: function (s) { return roadLabelBitmap(caption, s, a.color); }
                         });
                     });
                 } else if (a.kind === 'area') {
@@ -1197,7 +1205,7 @@
                 } else if (a.kind === 'road') {
                     var caption = self.roadCaptionText(a);
                     if (!caption) return;
-                    var rb = roadLabelBitmap(caption, 1);
+                    var rb = roadLabelBitmap(caption, 1, a.color);
                     self.roadCaptionSpots(a).forEach(function (spot) {
                         if (spot.lengthMeters / mpp(spot.position.lat, zoom) <= rb.w) return;
                         self.standIns.push(new GroundStamp({
@@ -1339,7 +1347,11 @@
             '.ann-dock.open{transform:scale(1);opacity:1;}',
             '.ann-dock-head{display:flex;align-items:center;padding:10px 6px 2px 16px;user-select:none;}',
             '.ann-dock-head h3{font-size:15px;margin:0;flex:1;color:#1a1a1a;}',
-            '.ann-dock-body{overflow-y:auto;padding:0 12px 12px;}'
+            '.ann-dock-body{overflow-y:auto;padding:0 12px 12px;}',
+            // floating undo/redo, bottom-left, shown only when actionable
+            '.ann-histbar{position:fixed;left:10px;bottom:calc(104px + env(safe-area-inset-bottom));z-index:1090;display:none;flex-direction:column;gap:8px;}',
+            '.ann-histbtn{width:42px;height:42px;border-radius:50%;border:none;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);font-size:20px;color:#333;cursor:pointer;user-select:none;}',
+            '.ann-histbtn:active{background:#f0f0f0;}'
         ].join('\n');
         document.head.appendChild(st);
     }
@@ -2648,9 +2660,32 @@
         histApply(hist[histIndex]);
     }
     var histUndoB = null, histRedoB = null;   // the dock's buttons, when it is open
+    // The always-available pair: a floating ↶↷ bar bottom-left of the map that
+    // appears the moment there is anything to undo or redo, whatever tool the
+    // user is in — not only inside the dock.
+    var histBar = null, histBarU = null, histBarR = null;
+    function ensureHistBar() {
+        if (histBar) return;
+        histBar = el('div', 'ann-histbar');
+        histBarU = el('button', 'ann-histbtn', '↶');
+        histBarU.title = 'Undo annotation change (Ctrl+Z)';
+        histBarU.addEventListener('click', annUndo);
+        histBarR = el('button', 'ann-histbtn', '↷');
+        histBarR.title = 'Redo (Ctrl+Y)';
+        histBarR.addEventListener('click', annRedo);
+        histBar.appendChild(histBarU);
+        histBar.appendChild(histBarR);
+        document.body.appendChild(histBar);
+    }
     function histButtonsSync() {
-        if (histUndoB) histUndoB.style.opacity = histIndex > 0 ? 1 : 0.35;
-        if (histRedoB) histRedoB.style.opacity = histIndex < hist.length - 1 ? 1 : 0.35;
+        var canU = histIndex > 0, canR = histIndex < hist.length - 1;
+        if (histUndoB) histUndoB.style.opacity = canU ? 1 : 0.35;
+        if (histRedoB) histRedoB.style.opacity = canR ? 1 : 0.35;
+        if (histBar) {
+            histBar.style.display = (canU || canR) && !layer.suspended ? 'flex' : 'none';
+            histBarU.style.opacity = canU ? 1 : 0.35;
+            histBarR.style.opacity = canR ? 1 : 0.35;
+        }
     }
 
     // ----- "load your previous annotations?" — saved work near this map is
@@ -3028,6 +3063,7 @@
         if (!initDone || captureActive) return;
         captureActive = true;
         layer.beginCapturePreview(computeScreenScale());
+        histButtonsSync();               // the ↶↷ bar steps aside for the viewfinder
     }
     function refreshCapturePreview() {
         if (!initDone || !captureActive) return;
@@ -3037,6 +3073,7 @@
         if (!initDone || !captureActive) return;
         captureActive = false;
         layer.endCapturePreview();
+        histButtonsSync();
     }
 
     // Draw the user's annotations onto the stitched export canvas, in world pixels
@@ -3110,6 +3147,7 @@
         injectCss();
         defineOverlayClasses();
         ensureProjHelper();
+        ensureHistBar();
         map.addListener('idle', function () {
             var c = map.getCenter();
             layer.restoreIfNeeded(map.getZoom(), { lat: c.lat(), lng: c.lng() });
