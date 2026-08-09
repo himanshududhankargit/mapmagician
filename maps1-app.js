@@ -182,7 +182,10 @@
         //       circle was centred as if it were 34. HANDLE_PX now feeds both the
         //       CSS and the maths, and the move disc darkened to #E64A19 (white on
         //       #FF5722 was ~3:1).
-        var APP_VERSION = '114';
+        // 115 = those handles 20% smaller -- 38px circle to 30px, 20px icon to 16px.
+        //       Only HANDLE_PX and the svg rule move; positionHandles reads the
+        //       constant, so the circles stay centred on their corners by itself.
+        var APP_VERSION = '115';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

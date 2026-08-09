@@ -34,7 +34,7 @@
     var MAX_BORDER = 20, MAX_ROAD_WIDTH = 20;
     var MAX_STAMP_SUPERSAMPLE = 8;      // TileStitchExporter.MAX_STAMP_SUPERSAMPLE
     var EARTH_R = 6371009;              // android-maps-utils SphericalUtil radius
-    var HANDLE_PX = 38;                 // placement handle, ring included — ONE source
+    var HANDLE_PX = 30;                 // placement handle, ring included — ONE source
                                         // of truth: the CSS and positionHandles both
                                         // read it, so the circle can never drift off
                                         // the corner it is supposed to mark.
@@ -1434,7 +1434,7 @@
                 'touch-action:none;cursor:pointer;z-index:5;user-select:none;}',
             // display:block kills the inline-baseline gap that shifted the icon down;
             // the icons ink themselves from `color` above
-            '.ann-handle svg{display:block;width:20px;height:20px;}',
+            '.ann-handle svg{display:block;width:16px;height:16px;}',
             '.ann-handle.rot{background:#2E7D32;}',
             '.ann-handle.rsz{background:#1565C0;}',
             // deeper than #FF5722: white on that orange is ~3:1, below AA for an icon
