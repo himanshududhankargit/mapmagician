@@ -1457,21 +1457,63 @@
     // The host's measure mode also listens for map clicks — a drawing started on
     // top of it would double-handle every tap, so it is stopped first.
     var activeMode = null;
+    var activeModeLabel = null;
     function stopHostMeasure() {
         try {
             if (typeof measureMode !== 'undefined' && measureMode &&
                 typeof stopMeasureMode === 'function') stopMeasureMode(false);
         } catch (e) {}
     }
-    function enterMode(close) {
+    function enterMode(close, label) {
         if (activeMode) activeMode();
         stopHostMeasure();
         activeMode = close;
+        activeModeLabel = label || 'this tool';
     }
     function exitMode() {
         var m = activeMode;
         activeMode = null;
+        activeModeLabel = null;
         if (m) m();
+    }
+
+    /**
+     * What is currently holding the map, in words — null when nothing is.
+     *
+     * Every tool here takes over the map's clicks, so two of them at once means
+     * one tap doing two things: a child of the owner's managed to have the road,
+     * the region and the text surface all live simultaneously (2026-08-09).
+     * Starting a tool used to silently tear down the previous one, which is just
+     * as wrong — half-drawn survey work would vanish. So a second tool is now
+     * REFUSED and the user is told what to finish.
+     */
+    function busyToolLabel() {
+        if (placementOpen) return 'placing text on the map';
+        if (activeMode) return activeModeLabel;
+        try {
+            if (typeof measureMode !== 'undefined' && measureMode) {
+                return measureMode === 'area' ? 'measuring an area' : 'measuring a length';
+            }
+        } catch (e) {}
+        return null;
+    }
+    function refuseWhileBusy(busy) {
+        confirmDialogOK('Finish what you started',
+            'You are still ' + busy + '. Finish it (or cancel it) with the buttons on the ' +
+            'map, then pick the next tool — two tools cannot share the map at once.');
+    }
+    // A one-button notice; confirmDialog is the destructive two-button one.
+    function confirmDialogOK(title, message) {
+        var scrim = mkScrim(true);
+        var d = el('div', 'ann-dialog');
+        d.appendChild(el('h3', null, title));
+        var p = el('p', null, message);
+        p.style.cssText = 'font-size:13px;color:#555;margin:0;line-height:1.5;';
+        d.appendChild(p);
+        var row = el('div', 'ann-btnrow');
+        row.appendChild(btn('OK', 'ann-primary', function () { closeScrim(scrim); }));
+        d.appendChild(row);
+        scrim.appendChild(d);
     }
 
     // ---------------------------------------------------------------- dialogs
@@ -1783,6 +1825,8 @@
         // surface, or the capture viewfinder) — and idempotent: a double click
         // on an annotation must not stack the options sheet twice.
         if (layer.suspended || activeMode || placementOpen || openScrims.length) return;
+        // (activeMode/placementOpen above already keep the options sheet shut while
+        //  another tool owns the map — the same interlock, from the map side.)
         var scrim = mkScrim(false);
         var d = el('div', 'ann-sheet');
         addCloseX(d, scrim);
@@ -1858,6 +1902,11 @@
     var placementOpen = false;
     function startTextPlacement(text, centered, existing) {
         if (placementOpen) return;
+        // The surface floats over the live map and steals the gestures, so it is
+        // a tool like any other — this is the path that let text coexist with a
+        // half-drawn region, since it never went through enterMode.
+        var busy = busyToolLabel();
+        if (busy) { refuseWhileBusy(busy); return; }
         placementOpen = true;
         var md = mapDiv();
         var mrect = md.getBoundingClientRect();
@@ -2424,7 +2473,7 @@
             } else if (area.points.length) {
                 draftSave('area', area.points);   // unfinished ring survives (Draft)
             }
-        });
+        }, drawing ? 'marking a region' : 'editing a region');
     }
 
     // Move / resize / rotate an area's caption — the text placement surface worn
@@ -2605,7 +2654,7 @@
             editor.teardown();
             if (panel.parentNode) panel.parentNode.removeChild(panel);
             layer.update(road);
-        });
+        }, 'editing a road');
     }
 
     // ------------------------------------------------------- road drawing (bar)
@@ -2726,11 +2775,13 @@
             vertexMarkers.forEach(function (m) { m.setMap(null); });
             polylines.forEach(function (p) { p.setMap(null); });
             if (bar.parentNode) bar.parentNode.removeChild(bar);
-        });
+        }, 'drawing a road');
     }
 
     // ------------------------------------------------------------- marker flow
     function startAddMarker() {
+        var busy = busyToolLabel();
+        if (busy) { refuseWhileBusy(busy); return; }
         if (layer.isFull()) { toast('That is as many notes as one map can hold'); return; }
         stopHostMeasure();
         pickMarkerDialog(null, function (typeId, label, dropLatLng) {
@@ -2754,6 +2805,8 @@
     }
 
     function startAddText() {
+        var busy = busyToolLabel();
+        if (busy) { refuseWhileBusy(busy); return; }
         if (layer.isFull()) { toast('That is as many notes as one map can hold'); return; }
         stopHostMeasure();
         composeTextDialog(null, function (text, centered) {
@@ -3174,6 +3227,13 @@
         d.appendChild(el('h3', null, 'Annotate this map'));
         d.appendChild(el('p', 'ann-sub', 'Everything you add is saved and printed with the map'));
         var last = lsGet(LS_LAST_TOOL);
+        var busyNow = busyToolLabel();
+        if (busyNow) {
+            var warn = el('div', 'ann-draft');
+            warn.textContent = 'You are still ' + busyNow +
+                ' — finish or cancel it on the map before starting another tool.';
+            d.appendChild(warn);
+        }
         function tool(id, icon, label, hint, run) {
             var r = el('div', 'ann-row');
             r.appendChild(el('span', 'ann-ic', icon));
@@ -3184,7 +3244,13 @@
             box.appendChild(h);
             r.appendChild(box);
             if (last === id) r.appendChild(el('span', 'ann-badge', 'LAST USED'));
+            if (busyNow) r.style.opacity = '0.45';
             r.addEventListener('click', function () {
+                // Two tools cannot share the map's clicks. Refuse rather than
+                // silently tearing the running one down — that would throw away
+                // half-tapped survey work.
+                var busy = busyToolLabel();
+                if (busy) { closeScrim(scrim); refuseWhileBusy(busy); return; }
                 lsSet(LS_LAST_TOOL, id);
                 closeScrim(scrim);       // the tool takes over the screen
                 run();

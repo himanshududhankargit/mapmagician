@@ -116,7 +116,11 @@
         //       the marker and hideVertexHandle 'restores' another dot, neither
         //       knowing about a pin's own artwork. The annotations module now
         //       remembers the real icon and puts it back after both.
-        var APP_VERSION = '099';
+        // 101/102 = only ONE annotate tool may own the map: starting a second is
+        //       refused with a "finish what you started" notice instead of silently
+        //       tearing the first down (a child of the owner's had the road, the
+        //       region AND the text surface live at once).
+        var APP_VERSION = '101';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
