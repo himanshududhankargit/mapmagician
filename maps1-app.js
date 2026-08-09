@@ -51,7 +51,10 @@
         // 074 = version renumber only: 072 was stamped while a parallel promotion
         //       took live to 073, so staging re-stamps at max(073,072)+1 to keep the
         //       counter monotonic. No behaviour change vs 072.
-        var APP_VERSION = '074';
+        // 075 = region editor Fill/Border tabs actually switch (the port never
+        //       attached their click listeners — clicking Border only text-selected
+        //       it) + user-select:none on the panel controls.
+        var APP_VERSION = '075';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

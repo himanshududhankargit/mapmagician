@@ -1279,8 +1279,9 @@
             '.ann-iconbtn{border:0;background:none;font-size:18px;cursor:pointer;padding:5px;line-height:1;color:#555;}',
             '.ann-panel .ann-checks{display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;align-items:center;}',
             '.ann-panel .ann-checks label{display:flex;gap:6px;align-items:center;font-size:13px;cursor:pointer;}',
-            '.ann-tabs{display:flex;gap:18px;margin-top:10px;font-size:13px;font-weight:600;color:#888;}',
+            '.ann-tabs{display:flex;gap:18px;margin-top:10px;font-size:13px;font-weight:600;color:#888;user-select:none;}',
             '.ann-tabs span{cursor:pointer;padding-bottom:3px;}',
+            '.ann-panel .ann-prow,.ann-panel .ann-checks,.ann-swatches,.ann-bar{user-select:none;}',
             '.ann-tabs span.sel{color:#2E7D32;border-bottom:2px solid #2E7D32;}',
             '.ann-sliderrow{display:flex;align-items:center;gap:10px;margin-top:8px;}',
             '.ann-sliderrow input[type=range]{flex:1;}',
@@ -2005,6 +2006,8 @@
         var tabs = el('div', 'ann-tabs');
         var tabFill = el('span', 'sel', 'Fill');
         var tabBorder = el('span', null, 'Border');
+        tabFill.addEventListener('click', function () { selectTarget('fill'); });
+        tabBorder.addEventListener('click', function () { selectTarget('border'); });
         tabs.appendChild(tabFill); tabs.appendChild(tabBorder);
         panel.appendChild(tabs);
         var srow = el('div', 'ann-sliderrow');
