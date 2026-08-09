@@ -43,7 +43,7 @@
         // 070 = LIVE promotion of 069: "Don't show this again" on the download explainer
         //       actually decides — the dialog reappears on every tap unless the box is ticked
         //       (it was suppressed after one showing per page load regardless).
-        var APP_VERSION = '073';
+        var APP_VERSION = '088';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -10349,21 +10349,55 @@
         // customer already paid for. Reported at most once per session (`outcomeCtx`
         // is only set on a session that was charged/credited, so a free Regenerate
         // never logs anything).
-        function _dlmapReportOutcome(s, status, reason) {
+        function _dlmapReportOutcome(s, status, reason, unloading) {
             if (!s || !s.outcomeCtx || s.outcomeReported) return;
             s.outcomeReported = true;
             var ctx = s.outcomeCtx;
+            var payload = {
+                status: status,
+                reason: String(reason || '').slice(0, 200),
+                paymentId: ctx.paymentId || '',
+                viaCredit: !!ctx.viaCredit,
+                districtPid: ctx.districtPid || '',
+                districtName: ctx.districtName || ''
+            };
+            // The page is going away: the SDK's XHR would be killed mid-flight, so post
+            // to the same callable endpoint with keepalive, which the browser is
+            // required to let finish after unload. The token has to be the one cached
+            // at payment time — getIdToken() is async and will not resolve during
+            // unload. Server-side, a late 'failed' can never overwrite a 'delivered'.
+            if (unloading && ctx.idToken) {
+                try {
+                    fetch('https://asia-south1-sodium-hour-256110.cloudfunctions.net/logDownloadOutcome', {
+                        method: 'POST', keepalive: true, mode: 'cors',
+                        headers: { 'Content-Type': 'application/json',
+                                   'Authorization': 'Bearer ' + ctx.idToken },
+                        body: JSON.stringify({ data: payload })
+                    }).catch(function() {});
+                } catch (e) {}
+                return;
+            }
             try {
-                functions.httpsCallable('logDownloadOutcome')({
-                    status: status,
-                    reason: String(reason || '').slice(0, 200),
-                    paymentId: ctx.paymentId || '',
-                    viaCredit: !!ctx.viaCredit,
-                    districtPid: ctx.districtPid || '',
-                    districtName: ctx.districtName || ''
-                }).catch(function(e) { console.error('logDownloadOutcome failed:', e); });
+                functions.httpsCallable('logDownloadOutcome')(payload)
+                    .catch(function(e) { console.error('logDownloadOutcome failed:', e); });
             } catch (e) { console.error('logDownloadOutcome failed:', e); }
         }
+
+        // The money is taken BEFORE the full-quality render, so closing the tab in
+        // between leaves a charge with no evidence either way — invisible until the
+        // nightly reconciler, and even then only as "we don't know". Reporting it as
+        // it happens turns that into a known failure with a reason.
+        //
+        // pagehide ONLY, deliberately: visibilitychange also fires when a phone user
+        // merely switches apps, and a render that goes on to succeed must not be
+        // recorded as a failure. This shrinks the silent set rather than eliminating
+        // it — an OS-killed background tab still reports nothing, which is what the
+        // hourly server-side watch is for.
+        window.addEventListener('pagehide', function() {
+            var s = _dlmapSession;
+            if (!s || !s.outcomeCtx || s.outcomeReported) return;
+            _dlmapReportOutcome(s, 'failed', 'tab closed before the map was saved', true);
+        });
 
         async function _dlmapStartPayment() {
             var s = _dlmapSession;
@@ -10377,6 +10411,12 @@
             }
             try {
                 var createDownloadOrder = functions.httpsCallable('createDownloadOrder');
+                // Grab the ID token NOW, while we can await it. The pagehide reporter
+                // runs during unload where getIdToken() will never resolve, and a
+                // token minted here is good for an hour against a render that takes
+                // seconds. Failure is non-fatal: it only costs the unload report.
+                var idToken = '';
+                try { idToken = await user.getIdToken(); } catch (e) {}
                 // districtName rides along so every server-side record (ledger, delivery
                 // receipt, outcome event) carries a region a human can read, instead of
                 // just the raw productPurchaseID.
@@ -10384,10 +10424,12 @@
                     districtPid: s.districtPid || '',
                     districtName: s.districtName || ''
                 })).data || {};
-                var region = { districtPid: s.districtPid || '', districtName: s.districtName || '' };
+                var region = { districtPid: s.districtPid || '', districtName: s.districtName || '',
+                               idToken: idToken };
                 if (resp.viaCredit) {
                     _dlmapToast('1 credit used — ' + (resp.creditsLeft || 0) + ' left');
-                    s.outcomeCtx = { viaCredit: true, districtPid: region.districtPid, districtName: region.districtName };
+                    s.outcomeCtx = { viaCredit: true, districtPid: region.districtPid,
+                                     districtName: region.districtName, idToken: idToken };
                     _dlmapFinalizeDownload();
                     return;
                 }
@@ -10454,7 +10496,8 @@
                             } catch (e) {}
                             s.outcomeCtx = {
                                 paymentId: response.razorpay_payment_id,
-                                districtPid: region.districtPid, districtName: region.districtName
+                                districtPid: region.districtPid, districtName: region.districtName,
+                                idToken: idToken
                             };
                             _dlmapFinalizeDownload();
                         })();
