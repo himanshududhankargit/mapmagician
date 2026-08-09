@@ -1017,15 +1017,22 @@
             return Math.min(w, hgt);
         },
 
+        // What a region's caption actually says — its name, its area, or both.
+        // Empty means there is no caption on the map: nothing to draw, and
+        // nothing for "Move label" to move. One definition, so the editor and
+        // the renderer can never disagree about whether a caption exists.
+        areaCaptionText: function (a) {
+            var t = '';
+            if (a.showLabel) t = (a.label || '').trim();
+            if (a.showArea && a.points.length >= 3) t += (t ? '\n' : '') + fmtArea(areaSqm(a));
+            return t;
+        },
+
         // {bmp, position, widthMeters, bearing, render} for an area's caption — the
         // same white-on-halo lettering as free text, clamped to the shape it names.
         shapeLabel: function (a) {
             if (a.kind !== 'area') return null;
-            var caption = '';
-            if (a.showLabel) caption = (a.label || '').trim();
-            if (a.showArea && a.points.length >= 3) {
-                caption += (caption ? '\n' : '') + fmtArea(areaSqm(a));
-            }
+            var caption = this.areaCaptionText(a);
             if (!caption || a.points.length < 3) return null;
             var bmp = textBitmap(caption, a.labelScale, true);
             var centre = captionAnchor(a);
@@ -2108,12 +2115,21 @@
     // Drag anywhere on it; pinch (two pointers) or mouse-wheel or the blue handle
     // to size; the green handle swings it; the orange disc drags it 1:1.
     var placementOpen = false;
+    // Set only by startTextPlacementRaw, for the length of one synchronous call.
+    var placementHandoff = false;
     function startTextPlacement(text, centered, existing) {
         if (placementOpen) return;
         // The surface floats over the live map and steals the gestures, so it is
         // a tool like any other — this is the path that let text coexist with a
         // half-drawn region, since it never went through enterMode.
-        var busy = busyToolLabel();
+        //
+        // 🛑 Except when an editor is HANDING the map over rather than competing
+        // for it: the region editor's "Move label" hides its own panel and waits
+        // for this surface to close. It is still `activeMode`, so the busy guard
+        // refused it with "You are still editing a region" — and since that is
+        // the ONLY way to reach the caption mover, the button was dead from the
+        // day the guard landed. A hand-off is not a second tool.
+        var busy = placementHandoff ? null : busyToolLabel();
         if (busy) { refuseWhileBusy(busy); return; }
         placementOpen = true;
         var md = mapDiv();
@@ -2618,10 +2634,33 @@
                     exitMode();
                 });
         });
-        moveLabelB.addEventListener('click', function () {
-            if (area.points.length < 3) return;
+        function moveLabelNow() {
             panel.style.display = 'none';
             startCaptionPlacement(area, function () { panel.style.display = ''; });
+        }
+        function nameIt(name) {
+            area.label = name;
+            area.showLabel = true;          // a name nobody can see is not an answer
+            layer.refreshCaption(area.id);
+            refreshPanel(); commit();
+        }
+        moveLabelB.addEventListener('click', function () {
+            if (area.points.length < 3) return;
+            // An empty caption has nothing to move. Hand over the missing piece
+            // rather than refusing: switch a hidden name back on, or ask for one
+            // here — a toast that only says no is a dead end.
+            if (!layer.areaCaptionText(area)) {
+                if ((area.label || '').trim()) nameIt(area.label);
+                else {
+                    promptName('Name this region', '', function (name) {
+                        if (!name) { toast('Name it, or tick Show area — a caption needs something on it'); return; }
+                        nameIt(name);
+                        moveLabelNow();
+                    });
+                    return;
+                }
+            }
+            moveLabelNow();
         });
         doneB.addEventListener('click', function () {
             if (drawing) {
@@ -2633,6 +2672,14 @@
                 map.setOptions({ draggableCursor: null });
                 layer.update(area);
                 refreshPanel();
+                // Named on finishing, the way a finished road and a dropped marker
+                // already are. Blank is fine — it stays "Region" and the area alone
+                // captions it — but being asked once beats hunting for the ✏️.
+                if (!(area.label || '').trim()) {
+                    promptName('Name this region (optional)', '', function (name) {
+                        if (name) nameIt(name);
+                    });
+                }
                 return;
             }
             exitMode();
@@ -2688,9 +2735,7 @@
     // Move / resize / rotate an area's caption — the text placement surface worn
     // by the caption (labelScale / labelRotation / labelPosition / labelZoom).
     function startCaptionPlacement(area, onClosed) {
-        var caption = '';
-        if (area.showLabel) caption = (area.label || '').trim();
-        if (area.showArea && area.points.length >= 3) caption += (caption ? '\n' : '') + fmtArea(areaSqm(area));
+        var caption = layer.areaCaptionText(area);
         if (!caption) { toast('Turn on the name or the area first'); if (onClosed) onClosed(); return; }
         // A lightweight reuse of the placement surface via a text stand-in object.
         var stand = {
@@ -2726,7 +2771,12 @@
             if (a === stand) committed = true;    // the surface already wrote into `stand`
             else origUpd.call(layer, a);
         };
-        startTextPlacement(stand.text, stand.centered, stand);
+        // The caller is an editor standing aside, not a rival tool — see the guard
+        // in startTextPlacement. Cleared in `finally` so a throw cannot leave the
+        // whole app one tool-refusal short of safe.
+        placementHandoff = true;
+        try { startTextPlacement(stand.text, stand.centered, stand); }
+        finally { placementHandoff = false; }
         var t = setInterval(function () {         // restore the layer API once it closes
             if (!placementOpen) {
                 clearInterval(t);
@@ -3569,6 +3619,15 @@
             };
         }
         ctx.save();
+        // Clip to the map image itself. Annotation geometry is unbounded — a
+        // region corner, a road end or a marker can sit outside the captured
+        // rectangle — and the compose contain-fits that rectangle into the
+        // template, so anything beyond it painted straight over the printed
+        // margin, the title block and the scale bar. The client-side dispatch
+        // has no say here: this canvas is the whole sheet, not the map window.
+        ctx.beginPath();
+        ctx.rect(fit.dx, fit.dy, rect.w * fit.scale, rect.h * fit.scale);
+        ctx.clip();
         // Drawn geometry first, then every bitmap over it — a caption is never
         // buried under the wash of a region drawn after it.
         layer.captureShapes().sort(function (a, b) { return a.order - b.order; }).forEach(function (s) {

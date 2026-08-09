@@ -156,7 +156,25 @@
         //       disc stays as the precise alternative and the handle now travels with
         //       the pin during a native drag. Ordinary touch dragging is still off,
         //       so a swipe across a pin still pans the map.
-        var APP_VERSION = '111';
+        // 111/112 = a long press now HANDS THE PIN TO THE FINGER instead of raising
+        //       the disc. 110's fix could not work: Google's marker dragging only
+        //       latches at touchstart, so a marker made draggable 450ms into a press
+        //       ignores the finger already on it -- you had to lift and press again.
+        //       The carry is driven from raw pointer events in maps-annotations.js
+        //       (startPinCarry), with the map frozen for its duration. A hold that
+        //       has travelled >12px is still a pan; the disc lives on in the options
+        //       sheet. Verified on a device via maps1 before promotion.
+        // 113 = three annotation fixes. (1) Finishing a marked region now ASKS FOR
+        //       ITS NAME, the way a finished road and a dropped marker already do;
+        //       blank is still allowed. (2) "Move label" was DEAD: the placement
+        //       surface is guarded by busyToolLabel(), and the region editor holding
+        //       the map made its own hand-off look like a second tool grabbing it
+        //       ("You are still editing a region"). A hand-off now bypasses that
+        //       guard, and an empty caption offers a name instead of refusing.
+        //       (3) Annotations are CLIPPED to the map image on the exported sheet --
+        //       a corner or marker outside the captured rectangle used to paint over
+        //       the printed margin and title block.
+        var APP_VERSION = '113';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
