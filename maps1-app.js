@@ -54,7 +54,10 @@
         // 075 = region editor Fill/Border tabs actually switch (the port never
         //       attached their click listeners — clicking Border only text-selected
         //       it) + user-select:none on the panel controls.
-        var APP_VERSION = '075';
+        // 076 = marker picker's inline Add works: the cell's drag handler captured
+        //       the pointer on ANY press inside the cell, retargeting the click to
+        //       the cell — presses starting on the Add button are now exempt.
+        var APP_VERSION = '076';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

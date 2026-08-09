@@ -1476,11 +1476,20 @@
                 var em = el('div', 'em', t[3] || '🔤');
                 cell.appendChild(em);
                 cell.appendChild(el('div', 'nm', t[1]));
-                cell.addEventListener('click', function () { selectCell(cell, t[0]); });
+                cell.addEventListener('click', function (e) {
+                    // A click that the inline Add handled stops here (see below).
+                    if (e.target && e.target.classList && e.target.classList.contains('ann-cellsave')) return;
+                    selectCell(cell, t[0]);
+                });
                 // Drag the icon out of the dialog and drop it on the map. Pointer
                 // capture keeps the stream on the cell, so the drop coordinates are
                 // trustworthy wherever the finger/mouse ends up.
                 cell.addEventListener('pointerdown', function (e) {
+                    // NOT when the press starts on the inline Add button: capturing
+                    // the pointer here retargets the eventual click to the CELL, so
+                    // the button's own handler would never fire (the "Add does
+                    // nothing" bug) — and a press on Add must never start a drag.
+                    if (e.target && e.target.classList && e.target.classList.contains('ann-cellsave')) return;
                     var startX = e.clientX, startY = e.clientY;
                     var dragging = false, ghost = null;
                     cell.setPointerCapture(e.pointerId);
