@@ -1272,7 +1272,10 @@
             '.ann-check{display:flex;align-items:center;gap:8px;font-size:14px;color:#333;margin:10px 0 0;cursor:pointer;}',
             '.ann-preview{margin:12px 0 0;background:repeating-conic-gradient(#e8e8e8 0 25%,#f7f7f7 0 50%) 0 0/16px 16px;border-radius:8px;padding:10px;display:flex;justify-content:center;align-items:center;min-height:46px;overflow:hidden;}',
             '.ann-preview img{max-width:100%;max-height:90px;}',
-            '.ann-btnrow{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;}',
+            // Sticky like the ×: the marker grid scrolls, and ‹ Back / Add must be
+            // reachable without scrolling to the end. Negative bottom swallows the
+            // dialog's own padding so the row hugs the visible edge.
+            '.ann-btnrow{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;position:sticky;bottom:-18px;margin-bottom:-18px;background:#fff;padding:10px 0 14px;box-shadow:0 -8px 12px -10px rgba(0,0,0,.3);z-index:4;}',
             '.ann-btn{border:0;border-radius:20px;padding:9px 20px;font-size:14px;font-weight:600;cursor:pointer;color:#fff;background:#9E9E9E;}',
             '.ann-btn.ann-primary{background:#2E7D32;}',
             '.ann-btn.ann-danger{background:#E53935;}',
@@ -2612,7 +2615,11 @@
 
     // ------------------------------------------------------------ layers panel
     var layersPanelRefresh = null;
-    function refreshOpenPanels() { if (layersPanelRefresh) layersPanelRefresh(); }
+    var sheetCountRefresh = null;   // the annotate sheet's "N on this map" line
+    function refreshOpenPanels() {
+        if (layersPanelRefresh) layersPanelRefresh();
+        if (sheetCountRefresh) sheetCountRefresh();
+    }
 
     // ----- undo / redo: whole-model snapshots (the serialized store payload),
     // pushed on every committed change. Cheap — a few KB of JSON per step.
@@ -3023,6 +3030,10 @@
         mine.appendChild(mbox);
         mine.addEventListener('click', function () { closeScrim(scrim); openLayersPanel(); });
         d.appendChild(mine);
+        // Live count: loading previous annotations (or any change) while the sheet
+        // is open must update the line — it used to stay at its opening value.
+        sheetCountRefresh = function () { mh.textContent = layer.handles.size + ' on this map'; };
+        scrim._onClose = function () { sheetCountRefresh = null; };
         d.appendChild(el('div', 'ann-footnote',
             'Saved in this browser and scoped to this map — notes come back whenever you are near them.'));
         scrim.appendChild(d);

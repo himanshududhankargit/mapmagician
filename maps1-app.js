@@ -78,7 +78,11 @@
         // 082 = viewfinder +/- zoom buttons: tap = 0.15 fractional nudge, hold =
         //       smooth glide (wheel/pinch only step whole zooms — too coarse to
         //       frame a capture precisely).
-        var APP_VERSION = '082';
+        // 083 = the annotate sheet's "N on this map" line is live (loading the
+        //       previous annotations while the sheet was open kept showing 0) +
+        //       the dialogs' bottom button row (‹ Back / Add) is sticky like the ×,
+        //       so it stays visible however far the marker grid is scrolled.
+        var APP_VERSION = '083';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
