@@ -116,7 +116,7 @@
         //       the marker and hideVertexHandle 'restores' another dot, neither
         //       knowing about a pin's own artwork. The annotations module now
         //       remembers the real icon and puts it back after both.
-        var APP_VERSION = '095';
+        var APP_VERSION = '097';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

@@ -3182,7 +3182,7 @@
         d.appendChild(el('div', 'ann-section', 'ADD TO THE PLAN'));
         tool('marker', '📍', 'Marker', 'Pin a place with a named icon', startAddMarker);
         tool('text', '🔤', 'Text', 'Write on the plan — it scales with the map', startAddText);
-        tool('area', '⭕', 'Area', 'Outline a plot or site boundary', function () {
+        tool('area', '⭕', 'Mark region', 'Outline a plot or site boundary', function () {
             var draft = draftLoad();
             if (draft && draft.kind === 'area') { offerDraft(draft); return; }
             openRegionEditor(mkNewArea(), true);
