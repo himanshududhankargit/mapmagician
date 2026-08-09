@@ -48,7 +48,10 @@
         //       the tapped icon, × close everywhere) + download region-label
         //       fallback (_dlmapRegionFromSources: paid downloads name their region
         //       even when findDistrictAtCenter answers null).
-        var APP_VERSION = '072';
+        // 074 = version renumber only: 072 was stamped while a parallel promotion
+        //       took live to 073, so staging re-stamps at max(073,072)+1 to keep the
+        //       counter monotonic. No behaviour change vs 072.
+        var APP_VERSION = '074';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
