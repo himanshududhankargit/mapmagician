@@ -1654,6 +1654,9 @@
         input.type = 'text';
         input.placeholder = 'Name it — plot number, road name…';
         input.value = current.label || '';
+        input.addEventListener('keydown', function (e) {   // Enter = Save here too
+            if (e.key === 'Enter') { e.preventDefault(); saveBtn.click(); }
+        });
         d.appendChild(input);
         var chk = el('label', 'ann-check');
         var cb = document.createElement('input');
@@ -1681,10 +1684,11 @@
         d.appendChild(sw);
         var row = el('div', 'ann-btnrow');
         row.appendChild(btn('Cancel', null, function () { closeScrim(scrim); }));
-        row.appendChild(btn('Save', 'ann-primary', function () {
+        var saveBtn = btn('OK', 'ann-primary', function () {
             closeScrim(scrim);
             onResult(input.value.trim(), chosen, cb.checked);
-        }));
+        });
+        row.appendChild(saveBtn);
         d.appendChild(row);
         scrim.appendChild(d);
     }
@@ -2381,15 +2385,21 @@
         input.value = current || '';
         input.placeholder = 'Name it';
         d.appendChild(input);
-        var row = el('div', 'ann-btnrow');
-        row.appendChild(btn('Cancel', null, function () { closeScrim(scrim); }));
-        row.appendChild(btn('Save', 'ann-primary', function () {
+        function save() {
             closeScrim(scrim);
             onSave(input.value.trim());
-        }));
+        }
+        // Enter commits — the owner typed a name and fumbled to save it; the
+        // keyboard's own confirm must work, not just the button.
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); save(); }
+        });
+        var row = el('div', 'ann-btnrow');
+        row.appendChild(btn('Cancel', null, function () { closeScrim(scrim); }));
+        row.appendChild(btn('OK', 'ann-primary', save));
         d.appendChild(row);
         scrim.appendChild(d);
-        setTimeout(function () { input.focus(); }, 50);
+        setTimeout(function () { input.focus(); input.select(); }, 50);
     }
 
     // -------------------------------------------------------------- road editor

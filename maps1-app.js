@@ -104,7 +104,10 @@
         // 090 = road-drawing red dots get the full vertex treatment (drag to move,
         //       tap for the orange move disc + × delete — Android parity); the
         //       region/road EDITORS already had it via showVertexHandle.
-        var APP_VERSION = '090';
+        // 091 = rename dialogs commit reliably: OK button (was Save), Enter key
+        //       saves, existing text pre-selected — the owner typed a name and
+        //       fumbled to save it.
+        var APP_VERSION = '091';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
