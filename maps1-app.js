@@ -174,7 +174,15 @@
         //       (3) Annotations are CLIPPED to the map image on the exported sheet --
         //       a corner or marker outside the captured rectangle used to paint over
         //       the printed margin and title block.
-        var APP_VERSION = '113';
+        // 114 = the caption placement handles wear real SVG icons (rotate / drag /
+        //       resize) instead of the font glyphs ↻ ⤢ ✜, which the phone drew from
+        //       whichever fallback font it had, at that font's baseline -- off-centre
+        //       in the circle, one of them an emoji. They were also 2px off the
+        //       corner they mark: the 2px ring sat OUTSIDE the 34px box, so a 38px
+        //       circle was centred as if it were 34. HANDLE_PX now feeds both the
+        //       CSS and the maths, and the move disc darkened to #E64A19 (white on
+        //       #FF5722 was ~3:1).
+        var APP_VERSION = '114';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
