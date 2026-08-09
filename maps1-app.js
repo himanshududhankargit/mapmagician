@@ -63,7 +63,10 @@
         //       moved the row); ‹ Back from Marker/Text dialogs to the annotate
         //       sheet; global undo/redo (50 snapshots, dock buttons + Ctrl+Z/Y);
         //       drag-an-icon hides the dialog mid-drag, touch lifts via press-hold.
-        var APP_VERSION = '077';
+        // 078 = markers are named AFTER they land on the map (picker has no name
+        //       field for new pins; edit keeps it) + the dialogs' × is sticky so
+        //       it survives scrolling the 40-type grid.
+        var APP_VERSION = '078';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

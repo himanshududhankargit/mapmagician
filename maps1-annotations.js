@@ -1229,7 +1229,9 @@
             '.ann-scrim{background:transparent;pointer-events:none;align-items:center;justify-content:flex-start;}',
             '.ann-scrim .ann-sheet,.ann-scrim .ann-dialog{pointer-events:auto;margin-left:16px;border-radius:16px;max-height:82vh;border:1px solid #e0e0e0;box-shadow:0 10px 40px rgba(0,0,0,.35);}',
             '}',
-            '.ann-x{position:absolute;top:6px;right:8px;border:0;background:none;font-size:22px;color:#999;cursor:pointer;padding:6px 8px;line-height:1;z-index:2;}',
+            // Sticky, not absolute: the marker grid scrolls, and the close must
+            // stay reachable however far down the user is.
+            '.ann-x{position:sticky;top:0;float:right;border:0;background:rgba(255,255,255,.92);border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.18);font-size:22px;color:#888;cursor:pointer;padding:2px 10px;line-height:1.4;z-index:6;margin:0 -8px 0 10px;}',
             '.ann-x:hover{color:#333;}',
             '.ann-sheet h3{font-size:17px;margin:2px 0 2px;color:#1a1a1a;}',
             '.ann-sheet .ann-sub{font-size:12px;color:#777;margin:0 0 10px;}',
@@ -1369,7 +1371,9 @@
             closeScrim(scrim);
             if (onClose) onClose();
         });
-        container.appendChild(x);
+        // First child: position:sticky only pins it through the scroll when it
+        // sits at the top of the scroll content.
+        container.insertBefore(x, container.firstChild);
     }
     function confirmDialog(title, message, actionLabel, onConfirm) {
         var scrim = mkScrim(true);
@@ -1465,16 +1469,21 @@
         d.appendChild(el('h3', null, existing ? 'Edit marker' : 'Add marker'));
         d.appendChild(el('p', 'ann-sub', existing
             ? 'Drag an icon onto the map to move the marker there (press & hold first on touch) — or tap one and press Save.'
-            : 'Drag an icon onto the map to place it (press & hold first on touch) — or tap one and press Add.'));
-        var input = document.createElement('input');
-        input.type = 'text';
-        input.placeholder = 'Name this place (optional)';
-        input.value = existing ? existing.label : '';
-        d.appendChild(input);
+            : 'Drag an icon onto the map to place it (press & hold first on touch) — or tap one and press Add. You name it once it lands.'));
+        // The name is asked AFTER the marker lands on the map (owner request) —
+        // only the edit flow keeps the field, since renaming is what it is for.
+        var input = null;
+        if (existing) {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = 'Name this place (optional)';
+            input.value = existing.label;
+            d.appendChild(input);
+        }
         var selectedId = existing ? existing.typeId : DEFAULT_TYPE_ID;
         function commit(dropLatLng) {
             closeScrim(scrim);
-            onResult(selectedId, input.value.trim(), dropLatLng || null);
+            onResult(selectedId, input ? input.value.trim() : '', dropLatLng || null);
         }
         var grid = el('div', 'ann-grid');
         var cells = [];
@@ -2551,9 +2560,15 @@
                 var m = map.getCenter();
                 return { lat: m.lat(), lng: m.lng() };
             })();
-            layer.add({
+            var pin = {
                 id: newId(), kind: 'pin', visible: true, order: 0,
                 lat: c.lat, lng: c.lng, typeId: typeId, label: label
+            };
+            layer.add(pin);
+            // Named on the ground, not in the picker: the marker is already visible
+            // where it landed, so the user knows what they are naming.
+            promptName('Name this place (optional)', '', function (name) {
+                if (name) { pin.label = name; layer.update(pin); }
             });
             toast(dropLatLng ? 'Marker placed — drag it to fine-tune'
                              : 'Marker placed at the centre — drag it to fine-tune');
