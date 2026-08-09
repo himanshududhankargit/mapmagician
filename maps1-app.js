@@ -101,7 +101,10 @@
         //       real mouse — browsers reporting an empty pointerType were treated
         //       as mouse and dragged instantly on touch; hold raised to 450ms.
         //       (088 was claimed by a parallel live-pair change.)
-        var APP_VERSION = '089';
+        // 090 = road-drawing red dots get the full vertex treatment (drag to move,
+        //       tap for the orange move disc + × delete — Android parity); the
+        //       region/road EDITORS already had it via showVertexHandle.
+        var APP_VERSION = '090';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

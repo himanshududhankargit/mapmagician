@@ -2532,9 +2532,38 @@
         function addPoint(p, persist) {
             points.push(p);
             var m = new google.maps.Marker({
-                position: p, map: map, zIndex: 200002,
-                icon: { path: google.maps.SymbolPath.CIRCLE, scale: 6, fillColor: '#F44336',
+                position: p, map: map, zIndex: 200002, draggable: true, clickable: true,
+                icon: { path: google.maps.SymbolPath.CIRCLE, scale: 7, fillColor: '#F44336',
                         fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 }
+            });
+            m._idx = points.length - 1;
+            // Same affordance as everywhere else vertices appear (Android parity):
+            // drag the dot directly, or tap it for the orange move disc + × delete.
+            m.addListener('drag', function () {
+                var ll = m.getPosition();
+                points[m._idx] = { lat: ll.lat(), lng: ll.lng() };
+                redraw();
+            });
+            m.addListener('dragend', function () { draftSave('road', points); });
+            m.addListener('click', function () {
+                if (typeof showVertexHandle !== 'function') return;
+                showVertexHandle(m, {
+                    isSaved: false,
+                    onMove: function (latLng) {
+                        points[m._idx] = { lat: latLng.lat(), lng: latLng.lng() };
+                        redraw();
+                    },
+                    onMoveEnd: function () { draftSave('road', points); },
+                    onDelete: function () {
+                        points.splice(m._idx, 1);
+                        var rm = vertexMarkers.splice(m._idx, 1)[0];
+                        if (rm) rm.setMap(null);
+                        vertexMarkers.forEach(function (vm, i) { vm._idx = i; });
+                        if (typeof hideVertexHandle === 'function') hideVertexHandle();
+                        redraw();
+                        draftSave('road', points);
+                    }
+                });
             });
             vertexMarkers.push(m);
             redraw();
@@ -2552,6 +2581,7 @@
         cancelB.addEventListener('click', function () { exitMode(); });   // draft stays on disk
         undoB.addEventListener('click', function () {
             if (!points.length) return;
+            if (typeof hideVertexHandle === 'function') hideVertexHandle();
             points.pop();
             var m = vertexMarkers.pop();
             if (m) m.setMap(null);
@@ -2578,6 +2608,7 @@
 
         enterMode(function close() {
             if (clickL) google.maps.event.removeListener(clickL);
+            if (typeof hideVertexHandle === 'function') hideVertexHandle();
             map.setOptions({ draggableCursor: null, disableDoubleClickZoom: false });
             vertexMarkers.forEach(function (m) { m.setMap(null); });
             polylines.forEach(function (p) { p.setMap(null); });
