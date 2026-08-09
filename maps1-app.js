@@ -36,7 +36,10 @@
         // 062 = Proceed/Cancel bar moved just below the capture box (outside it).
         // 064 = geodetic scale bar drawn bottom-right of the map window on the sheet.
         // 066 = "Add scale bar" option in the dialog, checked by default.
-        var APP_VERSION = '066';
+        // 069 = "Don't show this again" on the download explainer actually decides: the dialog
+        //       reappears on every tap unless the box is ticked (it was suppressed after one
+        //       showing per page load regardless, which made the checkbox do nothing).
+        var APP_VERSION = '069';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7397,6 +7400,13 @@
                         case 'refund': eventLabel = 'Refunded'; badgeColor = '#c62828'; badgeBg = '#FFEBEE'; break;
                         default: eventLabel = h.event || 'Unknown'; badgeColor = '#666'; badgeBg = '#F5F5F5';
                     }
+                    // A Map Download is a one-off file, NOT a region pass. Now that the
+                    // record carries the readable district name, "Purchased · Pune" would
+                    // read exactly like a 7-day pass — so label the badge for what it is.
+                    if (h.plan === 'download_map' || h.plan === 'download_credit' || h.plan === 'download_free') {
+                        eventLabel = (h.plan === 'download_credit') ? 'Download (credit)' : 'Map download';
+                        badgeColor = '#0277BD'; badgeBg = '#E1F5FE';
+                    }
                     var name = h.regionName || h.productId || '';
                     var amountStr = h.amount ? ' — ₹' + h.amount : '';
                     histItems.push({
@@ -7591,19 +7601,20 @@
             })();
 
             // --- Download Map (Android plan-download port; logic lives after CanvasMapType) ---
-            // The first tap gets a one-time explainer (sample sheet + what the output is);
-            // "Don't show again" persists it. If localStorage is unavailable the in-page
-            // flag still limits the explainer to once per page load.
+            // Every tap gets the explainer (sample sheet + what the output is) until the user
+            // ticks "Don't show again" — only that tick suppresses it. The in-page flag mirrors
+            // the stored one so the choice still holds for the session if localStorage throws;
+            // it must NOT be set merely because the dialog was shown, or the checkbox becomes
+            // a no-op and the explainer appears exactly once per load either way.
             var DLMAP_INTRO_KEY = 'mm_dlmap_intro_seen';
-            var _dlmapIntroShownThisLoad = false;
+            var _dlmapIntroDismissed = false;
             document.getElementById('btn-download-map').addEventListener('click', function() {
                 try { mmAnalytics.event('download_map_open', {}); } catch (e) {}
-                var seen = _dlmapIntroShownThisLoad;
+                var seen = _dlmapIntroDismissed;
                 try { seen = seen || localStorage.getItem(DLMAP_INTRO_KEY) === '1'; } catch (e) {}
                 if (!seen) {
-                    _dlmapIntroShownThisLoad = true;
                     var img = document.getElementById('dlmap-intro-sample');
-                    if (!img.src) img.src = img.getAttribute('data-src');   // lazy — first-timers only
+                    if (!img.src) img.src = img.getAttribute('data-src');   // lazy — first open only
                     document.getElementById('dlmap-intro-overlay').classList.add('open');
                     return;
                 }
@@ -7614,6 +7625,7 @@
             });
             document.getElementById('dlmap-intro-continue').addEventListener('click', function() {
                 if (document.getElementById('dlmap-intro-dontshow').checked) {
+                    _dlmapIntroDismissed = true;
                     try { localStorage.setItem(DLMAP_INTRO_KEY, '1'); } catch (e) {}
                 }
                 document.getElementById('dlmap-intro-overlay').classList.remove('open');
@@ -10322,6 +10334,33 @@
             }
         }
 
+        // ---- Download outcome reporting --------------------------------------------
+        // The money is taken BEFORE the full-quality render, so "paid" and "got the
+        // file" are two separate facts and the server only ever knew the first. This
+        // reports the second (logDownloadOutcome) so the admin panel can answer "did
+        // this ₹59 download actually reach the customer, and for which region?" and
+        // the money-at-risk reconciler can flag the ones that didn't.
+        //
+        // Fire-and-forget by design: reporting must never block or fail the file the
+        // customer already paid for. Reported at most once per session (`outcomeCtx`
+        // is only set on a session that was charged/credited, so a free Regenerate
+        // never logs anything).
+        function _dlmapReportOutcome(s, status, reason) {
+            if (!s || !s.outcomeCtx || s.outcomeReported) return;
+            s.outcomeReported = true;
+            var ctx = s.outcomeCtx;
+            try {
+                functions.httpsCallable('logDownloadOutcome')({
+                    status: status,
+                    reason: String(reason || '').slice(0, 200),
+                    paymentId: ctx.paymentId || '',
+                    viaCredit: !!ctx.viaCredit,
+                    districtPid: ctx.districtPid || '',
+                    districtName: ctx.districtName || ''
+                }).catch(function(e) { console.error('logDownloadOutcome failed:', e); });
+            } catch (e) { console.error('logDownloadOutcome failed:', e); }
+        }
+
         async function _dlmapStartPayment() {
             var s = _dlmapSession;
             if (!s || s.phase !== 'preview' || s.running) return;
@@ -10334,13 +10373,25 @@
             }
             try {
                 var createDownloadOrder = functions.httpsCallable('createDownloadOrder');
-                var resp = (await createDownloadOrder({ districtPid: s.districtPid || '' })).data || {};
+                // districtName rides along so every server-side record (ledger, delivery
+                // receipt, outcome event) carries a region a human can read, instead of
+                // just the raw productPurchaseID.
+                var resp = (await createDownloadOrder({
+                    districtPid: s.districtPid || '',
+                    districtName: s.districtName || ''
+                })).data || {};
+                var region = { districtPid: s.districtPid || '', districtName: s.districtName || '' };
                 if (resp.viaCredit) {
                     _dlmapToast('1 credit used — ' + (resp.creditsLeft || 0) + ' left');
+                    s.outcomeCtx = { viaCredit: true, districtPid: region.districtPid, districtName: region.districtName };
                     _dlmapFinalizeDownload();
                     return;
                 }
-                if (resp.free) { _dlmapFinalizeDownload(); return; }   // admin set price 0
+                if (resp.free) {                                        // admin set price 0
+                    s.outcomeCtx = region;
+                    _dlmapFinalizeDownload();
+                    return;
+                }
                 if (typeof Razorpay === 'undefined') {
                     await new Promise(function(resolve, reject) {
                         var sc = document.createElement('script');
@@ -10397,6 +10448,10 @@
                                     items: [{ item_id: 'download_map', item_category: 'download_map' }]
                                 });
                             } catch (e) {}
+                            s.outcomeCtx = {
+                                paymentId: response.razorpay_payment_id,
+                                districtPid: region.districtPid, districtName: region.districtName
+                            };
                             _dlmapFinalizeDownload();
                         })();
                     },
@@ -10993,7 +11048,11 @@
             s.abortCtrl = ctrl;
             try {
                 var res = await _dlmapRender(s.geo, s.gz, ctrl, 'Fetching full-quality tiles');
-                if (!res || res.empty) { _dlmapSession = null; return; }
+                if (!res || res.empty) {
+                    _dlmapReportOutcome(s, 'failed', res ? 'no tiles rendered' : 'render returned nothing');
+                    _dlmapSession = null;
+                    return;
+                }
                 s.running = false;
                 s.phase = 'final';
                 s.stitch = res.stitch;
@@ -11003,6 +11062,8 @@
                 _dlmapShowDialog();
             } catch (e) {
                 if (!ctrl.signal.aborted) _dlmapToast('Could not create map — try again');
+                // An abort is the user cancelling, not a delivery failure.
+                if (!ctrl.signal.aborted) _dlmapReportOutcome(s, 'failed', (e && e.message) || 'render error');
                 _dlmapSession = null;
             }
         }
@@ -11128,6 +11189,10 @@
             s.finalCanvas.toBlob(function(blob) {
                 procNote.style.display = 'none';
                 if (!blob || _dlmapSession !== s) {
+                    // No blob = the JPEG encode failed (typically memory on a very large
+                    // sheet) and the customer gets nothing despite having paid. A session
+                    // swap just means they moved on — not a delivery failure.
+                    if (!blob && s.pendingDownload) _dlmapReportOutcome(s, 'failed', 'image encode failed');
                     document.getElementById('dlmap-progress-overlay').classList.remove('open');
                     return;
                 }
@@ -11146,6 +11211,9 @@
                     _dlmapFlashSaved();
                     _dlmapToast('Saved to your Downloads folder');
                     if (!s.regen) _dlmapHistoryAdd(s);
+                    // The file is now on the customer's disk — this is the only point in
+                    // the flow where "delivered" is actually true.
+                    _dlmapReportOutcome(s, 'delivered', '');
                     try { mmAnalytics.event('download_map_saved', { missing: s.missing || 0 }); } catch (e) {}
                 }
                 if (typeof onReady === 'function') onReady();
