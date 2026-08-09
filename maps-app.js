@@ -111,7 +111,12 @@
         //       pans the map, and a 450ms LONG PRESS raises the orange move disc
         //       (+ × delete) to reposition it. Mouse keeps direct dragging; the
         //       options menu gains "Move this marker" on touch.
-        var APP_VERSION = '093';
+        // 095/096 = a long press (or Move) on a marker left it drawn as the
+        //       measure-vertex orange dot: the host's showVertexHandle restyles
+        //       the marker and hideVertexHandle 'restores' another dot, neither
+        //       knowing about a pin's own artwork. The annotations module now
+        //       remembers the real icon and puts it back after both.
+        var APP_VERSION = '096';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

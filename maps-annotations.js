@@ -1731,6 +1731,13 @@
     // thing everywhere — and the disc keeps the fingertip off the pin itself.
     function showPinMoveHandle(h, a) {
         if (typeof showVertexHandle !== 'function' || !h.marker) return;
+        // The host handle is built for measure vertices: it restyles the marker
+        // into an orange dot on show, and hideVertexHandle "restores" it to
+        // another dot — neither knows about a pin's own artwork. Remember the
+        // real icon, undo the restyle immediately, and put it back after any
+        // hide (see wrapHideVertexHandle) so a pin never turns into a vertex.
+        pinIconRestore = { marker: h.marker, icon: h.marker.getIcon() };
+        wrapHideVertexHandle();
         showVertexHandle(h.marker, {
             isSaved: false,
             onMove: function (latLng) {
@@ -1738,11 +1745,37 @@
             },
             onMoveEnd: function () { layer.persist(); },
             onDelete: function () {
+                pinIconRestore = null;               // the pin is going away
                 if (typeof hideVertexHandle === 'function') hideVertexHandle();
                 layer.remove(a.id);
             }
         });
+        restorePinIcon();                            // undo the show-time restyle
         toast('Drag the orange disc to move · × deletes');
+    }
+
+    // Put a pin's own artwork back after the host handle has restyled it.
+    var pinIconRestore = null;
+    function restorePinIcon() {
+        var r = pinIconRestore;
+        if (!r || !r.marker) return;
+        try { if (r.marker.getMap()) r.marker.setIcon(r.icon); } catch (e) {}
+    }
+    // The host hides the handle from several places of its own (a map click, a
+    // new handle, measure teardown), each ending in that dot restyle. Wrapping
+    // the global once is the only way to catch them all; the original still runs
+    // first, so the measure tools are unaffected.
+    var hideWrapped = false;
+    function wrapHideVertexHandle() {
+        if (hideWrapped || typeof window.hideVertexHandle !== 'function') return;
+        hideWrapped = true;
+        var orig = window.hideVertexHandle;
+        window.hideVertexHandle = function () {
+            var r = orig.apply(this, arguments);
+            restorePinIcon();
+            pinIconRestore = null;
+            return r;
+        };
     }
 
     function openOptions(a) {
