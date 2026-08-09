@@ -15,6 +15,11 @@ import { DOWNLOAD, SITE, type RegionFaq } from '@/lib/site';
  * government's sanctioned-plan PDF. Both are stated in plain words here and in the
  * FAQ below. Matching the keyword by implying otherwise would buy a click and lose the
  * customer — and the same fairness the /overlayr/ QGIS section is written with.
+ *
+ * Same rule governs the word "free" in the Annotate step and its FAQ. Annotating really
+ * is free and account-less (no purchase gate on `btn-annotate` in maps-app.js), and it is
+ * the only free thing we can offer the large "…pdf free download" tail — so it must never
+ * appear without the paid step named alongside it.
  */
 
 type Props = {
@@ -62,6 +67,10 @@ export function DownloadSheet({ placeName, planName, mapUrl, variant = 'full' }:
         <li>The {placeName} DP overlay — zones, reservations and road lines — over satellite imagery</li>
         <li>A geodetic scale bar, so distances stay readable at whatever size you print</li>
         <li>North arrow, sheet border and a caption you type yourself (default: "Part Development Plan")</li>
+        <li>
+          <strong>Your own markings</strong> — a plot outline with its area, a road you have traced,
+          pins and typed notes — drawn onto the sheet at full resolution, not pasted on afterwards
+        </li>
         <li>Full-resolution tiles, not a screenshot — text and plot boundaries stay sharp when printed</li>
       </ul>
 
@@ -70,6 +79,11 @@ export function DownloadSheet({ placeName, planName, mapUrl, variant = 'full' }:
         <li>
           <a href={mapUrl} target="_blank" rel="noopener">Open {placeName} on the full map</a> and zoom to the
           area you need.
+        </li>
+        <li>
+          <strong>Mark up the plan — free.</strong> Tap <strong>Annotate</strong> to outline a plot and
+          show its area, trace and name a road, drop a pin, or type a note. No account, no payment, and
+          your markings stay put on that device. Anything you mark is drawn onto the sheet in the next step.
         </li>
         <li>Tap <strong>Download Map</strong> and drag the map until the capture box covers your area.</li>
         <li>Hit <strong>Proceed</strong>, check the preview, type a caption, then confirm.</li>
@@ -118,6 +132,16 @@ export function downloadFaqs(placeName: string, planName: string): RegionFaq[] {
     {
       q: `Do I need a region pass to download the ${placeName} map?`,
       a: `Viewing ${planName} online stays free up to zoom level 14, and a sheet will still generate without a pass — but only at that free level of detail, which suits a locality overview rather than plot-level work. A 7-day access pass for the region unlocks the high-detail DP tiles (zoom 15 and beyond), so the sheet renders at full detail, and while the pass is active you can re-download any sheet you have already generated at no extra cost.`,
+    },
+    // The one genuinely free thing we can offer the "…pdf free download" tail, which is a
+    // real and steady slice of the demand ("dp plan pune pdf free download", "dp plan 2034
+    // pdf free download"). It answers with "free" honestly — but names the paid step in the
+    // same breath, for the same reason we say JPEG-not-PDF above the fold. Note the keyword
+    // is "mark my plot", not "annotate": autocomplete has volume for marking land/property
+    // boundaries and none at all for annotating a plan.
+    {
+      q: `Can I mark my plot on the ${placeName} Development Plan map for free?`,
+      a: `Yes — marking up the map costs nothing and needs no account. Open ${placeName} on the ${SITE.name} map and tap Annotate: outline a plot and show its area on the plan, trace a road and label it with its length, drop pins, or type notes anywhere. Your markings stay on that device between visits. Viewing ${planName} is free up to zoom level 14; a region pass unlocks the plot-level detail above that, and downloading a print-ready sheet is a paid one-off — but the marking itself is free either way, and anything you mark is drawn onto the sheet at full resolution if you do download one.`,
     },
   ];
 }
