@@ -97,7 +97,11 @@
         // 087 = smooth layer restacking: the dragged row follows the pointer with a
         //       lifted look, displaced rows FLIP-slide into their new slots, and the
         //       drop settles with a short ease instead of an instant rebuild.
-        var APP_VERSION = '087';
+        // 089 = picker icons lift ONLY via press-and-hold unless the pointer is a
+        //       real mouse — browsers reporting an empty pointerType were treated
+        //       as mouse and dragged instantly on touch; hold raised to 450ms.
+        //       (088 was claimed by a parallel live-pair change.)
+        var APP_VERSION = '089';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

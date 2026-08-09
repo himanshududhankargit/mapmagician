@@ -1556,13 +1556,15 @@
                     // the button's own handler would never fire (the "Add does
                     // nothing" bug) — and a press on Add must never start a drag.
                     if (e.target && e.target.classList && e.target.classList.contains('ann-cellsave')) return;
-                    var isTouch = e.pointerType === 'touch';
+                    // ONLY a real mouse drags immediately on movement. Touch, pen
+                    // and unknown pointer types (some Android browsers report an
+                    // empty pointerType, which used to arm instantly — the "icons
+                    // move without long press" bug) must press-and-HOLD to lift
+                    // the icon: an immediate drag is how the grid scrolls.
+                    var isMouse = e.pointerType === 'mouse';
                     var startX = e.clientX, startY = e.clientY;
                     var dragging = false, ghost = null, holdT = null;
-                    // Mouse drags immediately on movement. Touch must press-and-HOLD
-                    // to lift the icon — an immediate vertical drag is how the grid
-                    // scrolls, and the browser would steal it (pointercancel).
-                    var armed = !isTouch;
+                    var armed = isMouse;
                     cell.setPointerCapture(e.pointerId);
                     function beginDrag(x, y) {
                         if (dragging) return;
@@ -1578,10 +1580,10 @@
                         scrim.classList.add('ann-dragging');
                         try { if (navigator.vibrate) navigator.vibrate(20); } catch (er) {}
                     }
-                    if (isTouch) holdT = setTimeout(function () {
+                    if (!isMouse) holdT = setTimeout(function () {
                         armed = true;
                         beginDrag(startX, startY);      // lifts under the still finger
-                    }, 350);
+                    }, 450);
                     function mv(ev) {
                         if (!dragging) {
                             var moved = Math.hypot(ev.clientX - startX, ev.clientY - startY) > 8;
