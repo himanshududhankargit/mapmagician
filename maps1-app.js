@@ -57,7 +57,13 @@
         // 076 = marker picker's inline Add works: the cell's drag handler captured
         //       the pointer on ANY press inside the cell, retargeting the click to
         //       the cell — presses starting on the Add button are now exempt.
-        var APP_VERSION = '076';
+        // 077 = My-annotations fab above the Layers fab expanding into a non-modal
+        //       dock (Android layers-sheet counterpart); restack drag fixed
+        //       (document-level listeners — setPointerCapture died when insertBefore
+        //       moved the row); ‹ Back from Marker/Text dialogs to the annotate
+        //       sheet; global undo/redo (50 snapshots, dock buttons + Ctrl+Z/Y);
+        //       drag-an-icon hides the dialog mid-drag, touch lifts via press-hold.
+        var APP_VERSION = '077';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7674,6 +7680,17 @@
             if (_annBtn) _annBtn.addEventListener('click', function () {
                 try { mmAnalytics.event('annotate_open', {}); } catch (e) {}
                 loadAnnotations().then(function (m) { m.openSheet(); })
+                    .catch(function (e) {
+                        console.error('annotate load failed:', e);
+                        _dlmapToast('Could not load the annotate tools — check your connection');
+                    });
+            });
+            // My-annotations fab (above the Layers fab): expands the annotation
+            // layers dock, same lazy module.
+            var _annLayersBtn = document.getElementById('btn-my-annotations');
+            if (_annLayersBtn) _annLayersBtn.addEventListener('click', function () {
+                try { mmAnalytics.event('annotate_layers_open', {}); } catch (e) {}
+                loadAnnotations().then(function (m) { m.toggleLayersDock(); })
                     .catch(function (e) {
                         console.error('annotate load failed:', e);
                         _dlmapToast('Could not load the annotate tools — check your connection');

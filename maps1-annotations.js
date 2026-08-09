@@ -454,7 +454,9 @@
             }
             return o;
         });
-        lsSet(LS_ITEMS, JSON.stringify(arr));
+        var payload = JSON.stringify(arr);
+        lsSet(LS_ITEMS, payload);
+        return payload;
     }
     // A drawing the user walked away from — kept, offered back, never auto-deleted.
     function draftSave(kind, points) {
@@ -716,6 +718,7 @@
             });
             this.renumber();
             this.applyZoom(zoom);
+            histPush(lsGet(LS_ITEMS) || '[]');   // undo's floor: the state as restored
         },
 
         add: function (a) {
@@ -774,7 +777,9 @@
             this.applyOrder();
         },
         persist: function () {
-            storeSave(this.annotations().sort(function (a, b) { return a.order - b.order; }).concat(this.dormant));
+            var payload = storeSave(
+                this.annotations().sort(function (a, b) { return a.order - b.order; }).concat(this.dormant));
+            histPush(payload);
             refreshOpenPanels();
         },
 
@@ -1263,6 +1268,11 @@
             '.ann-cellsave{margin-top:4px;border:0;border-radius:12px;background:#2E7D32;color:#fff;font-size:11px;font-weight:700;padding:4px 14px;cursor:pointer;}',
             // the icon flying under the pointer while dragging one onto the map
             '.ann-ghost{position:fixed;z-index:3000;font-size:30px;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 2px 5px rgba(0,0,0,.45));}',
+            // while an icon is being dragged the whole dialog gets out of the way,
+            // so the map is visible under the finger (essential on mobile, where
+            // the sheet covers the screen)
+            '.ann-scrim.ann-dragging{background:transparent !important;}',
+            '.ann-scrim.ann-dragging .ann-dialog{visibility:hidden;}',
             // options menu
             '.ann-opt{display:flex;align-items:center;gap:16px;padding:13px 8px;border-radius:10px;cursor:pointer;font-size:15px;color:#222;}',
             '.ann-opt:hover,.ann-opt:active{background:#f4f4f4;}',
@@ -1307,7 +1317,13 @@
             '.ann-lrow .nm .m{font-size:11px;color:#888;}',
             '.ann-lrow.hidden .nm .t{opacity:.45;}',
             '.ann-lrow button{border:0;background:none;font-size:16px;cursor:pointer;padding:5px;color:#666;}',
-            '.ann-draft{background:#FFF8E1;border-radius:10px;padding:10px 12px;margin:6px 0;display:flex;align-items:center;gap:10px;font-size:13px;color:#5D4037;}'
+            '.ann-draft{background:#FFF8E1;border-radius:10px;padding:10px 12px;margin:6px 0;display:flex;align-items:center;gap:10px;font-size:13px;color:#5D4037;}',
+            // "My annotations" dock — grows out of the #btn-my-annotations fab
+            '.ann-dock{position:fixed;z-index:1190;background:#fff;border-radius:14px;border:1px solid #e0e0e0;box-shadow:0 8px 32px rgba(0,0,0,.35);width:min(340px,calc(100vw - 84px));display:flex;flex-direction:column;overflow:hidden;transform:scale(.12);opacity:0;transition:transform .18s ease-out,opacity .15s ease-out;}',
+            '.ann-dock.open{transform:scale(1);opacity:1;}',
+            '.ann-dock-head{display:flex;align-items:center;padding:10px 6px 2px 16px;user-select:none;}',
+            '.ann-dock-head h3{font-size:15px;margin:0;flex:1;color:#1a1a1a;}',
+            '.ann-dock-body{overflow-y:auto;padding:0 12px 12px;}'
         ].join('\n');
         document.head.appendChild(st);
     }
@@ -1343,12 +1359,16 @@
         return b;
     }
     // On desktop the backdrop is click-through (the map stays usable), so every
-    // sheet/dialog carries its own ×.
-    function addCloseX(container, scrim) {
+    // sheet/dialog carries its own ×. onClose (optional) runs after closing —
+    // the back-stack hook for dialogs opened from the annotate sheet.
+    function addCloseX(container, scrim, onClose) {
         var x = el('button', 'ann-x', '×');
         x.type = 'button';
         x.setAttribute('aria-label', 'Close');
-        x.addEventListener('click', function () { closeScrim(scrim); });
+        x.addEventListener('click', function () {
+            closeScrim(scrim);
+            if (onClose) onClose();
+        });
         container.appendChild(x);
     }
     function confirmDialog(title, message, actionLabel, onConfirm) {
@@ -1389,10 +1409,12 @@
 
     // ---------------------------------------------------------------- dialogs
     // Compose the words; size/angle/place are chosen on the map itself.
-    function composeTextDialog(existing, onResult) {
+    // onBack (optional): where Cancel/× returns to — the annotate sheet, when
+    // the dialog was opened from it.
+    function composeTextDialog(existing, onResult, onBack) {
         var scrim = mkScrim(true);
         var d = el('div', 'ann-dialog');
-        addCloseX(d, scrim);
+        addCloseX(d, scrim, onBack);
         d.appendChild(el('h3', null, existing ? 'Edit text' : 'Write on the map'));
         var ta = document.createElement('textarea');
         ta.placeholder = 'Your text — a plot number, a note…';
@@ -1416,7 +1438,10 @@
         cb.addEventListener('change', redraw);
         redraw();
         var row = el('div', 'ann-btnrow');
-        row.appendChild(btn('Cancel', null, function () { closeScrim(scrim); }));
+        row.appendChild(btn(onBack ? '‹ Back' : 'Cancel', null, function () {
+            closeScrim(scrim);
+            if (onBack) onBack();
+        }));
         row.appendChild(btn(existing ? 'Save' : 'Next', 'ann-primary', function () {
             var text = ta.value.trim();
             if (!text) return;
@@ -1432,14 +1457,15 @@
     // Two ways out: tap an icon and press the Add that appears right under it
     // (no scrolling to a bottom button), or DRAG an icon straight onto the map to
     // place it exactly there. onResult(typeId, label, dropLatLng|null).
-    function pickMarkerDialog(existing, onResult) {
+    // onBack: where Cancel/× returns to — the annotate sheet, when opened from it.
+    function pickMarkerDialog(existing, onResult, onBack) {
         var scrim = mkScrim(true);
         var d = el('div', 'ann-dialog');
-        addCloseX(d, scrim);
+        addCloseX(d, scrim, onBack);
         d.appendChild(el('h3', null, existing ? 'Edit marker' : 'Add marker'));
         d.appendChild(el('p', 'ann-sub', existing
-            ? 'Drag an icon onto the map to move the marker there — or tap one and press Save.'
-            : 'Drag an icon onto the map to place it — or tap one and press Add.'));
+            ? 'Drag an icon onto the map to move the marker there (press & hold first on touch) — or tap one and press Save.'
+            : 'Drag an icon onto the map to place it (press & hold first on touch) — or tap one and press Add.'));
         var input = document.createElement('input');
         input.type = 'text';
         input.placeholder = 'Name this place (optional)';
@@ -1490,46 +1516,76 @@
                     // the button's own handler would never fire (the "Add does
                     // nothing" bug) — and a press on Add must never start a drag.
                     if (e.target && e.target.classList && e.target.classList.contains('ann-cellsave')) return;
+                    var isTouch = e.pointerType === 'touch';
                     var startX = e.clientX, startY = e.clientY;
-                    var dragging = false, ghost = null;
+                    var dragging = false, ghost = null, holdT = null;
+                    // Mouse drags immediately on movement. Touch must press-and-HOLD
+                    // to lift the icon — an immediate vertical drag is how the grid
+                    // scrolls, and the browser would steal it (pointercancel).
+                    var armed = !isTouch;
                     cell.setPointerCapture(e.pointerId);
+                    function beginDrag(x, y) {
+                        if (dragging) return;
+                        dragging = true;
+                        selectedId = t[0];
+                        ghost = el('div', 'ann-ghost', t[3] || '🔤');
+                        ghost.style.left = x + 'px';
+                        ghost.style.top = y + 'px';
+                        document.body.appendChild(ghost);
+                        // The dialog steps aside so the map is visible under the
+                        // finger — the whole point of dragging, and on mobile the
+                        // sheet would otherwise cover the drop target completely.
+                        scrim.classList.add('ann-dragging');
+                        try { if (navigator.vibrate) navigator.vibrate(20); } catch (er) {}
+                    }
+                    if (isTouch) holdT = setTimeout(function () {
+                        armed = true;
+                        beginDrag(startX, startY);      // lifts under the still finger
+                    }, 350);
                     function mv(ev) {
-                        if (!dragging && Math.hypot(ev.clientX - startX, ev.clientY - startY) > 8) {
-                            dragging = true;
-                            selectedId = t[0];
-                            ghost = el('div', 'ann-ghost', t[3] || '🔤');
-                            document.body.appendChild(ghost);
+                        if (!dragging) {
+                            var moved = Math.hypot(ev.clientX - startX, ev.clientY - startY) > 8;
+                            if (!armed) {
+                                if (moved) cancel();     // it's a scroll — let the browser have it
+                                return;
+                            }
+                            if (moved) beginDrag(ev.clientX, ev.clientY);
                         }
                         if (ghost) {
                             ghost.style.left = ev.clientX + 'px';
                             ghost.style.top = ev.clientY + 'px';
                         }
                     }
-                    function up(ev) {
+                    // Non-passive: while a drag is live, scrolling must not take
+                    // over the gesture (touch-action can't change mid-gesture).
+                    function tmBlock(ev) { if (dragging) ev.preventDefault(); }
+                    function unhook() {
+                        clearTimeout(holdT);
                         cell.removeEventListener('pointermove', mv);
                         cell.removeEventListener('pointerup', up);
                         cell.removeEventListener('pointercancel', cancel);
+                        cell.removeEventListener('touchmove', tmBlock);
                         if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
-                        if (!dragging) return;             // plain tap: the click handler selects
-                        var dr = d.getBoundingClientRect();
-                        var overDialog = ev.clientX >= dr.left && ev.clientX <= dr.right &&
-                                         ev.clientY >= dr.top && ev.clientY <= dr.bottom;
+                        scrim.classList.remove('ann-dragging');
+                    }
+                    function up(ev) {
+                        var wasDragging = dragging;
+                        unhook();
+                        if (!wasDragging) return;          // plain tap: the click handler selects
+                        // The dialog is hidden during the drag, so anywhere on the
+                        // map places the marker; releasing off the map cancels.
                         var mr = mapDiv().getBoundingClientRect();
                         var overMap = ev.clientX >= mr.left && ev.clientX <= mr.right &&
                                       ev.clientY >= mr.top && ev.clientY <= mr.bottom;
-                        if (overDialog || !overMap) return; // dropped back on the dialog: cancel
+                        if (!overMap) return;
                         var ll = containerPxToLatLng(ev.clientX - mr.left, ev.clientY - mr.top);
                         commit({ lat: ll.lat(), lng: ll.lng() });
                     }
-                    function cancel() {
-                        cell.removeEventListener('pointermove', mv);
-                        cell.removeEventListener('pointerup', up);
-                        cell.removeEventListener('pointercancel', cancel);
-                        if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
-                    }
+                    function cancel() { unhook(); }
                     cell.addEventListener('pointermove', mv);
                     cell.addEventListener('pointerup', up);
                     cell.addEventListener('pointercancel', cancel);
+                    cell.addEventListener('touchmove', tmBlock, { passive: false });
                 });
                 cells.push(cell);
                 grid.appendChild(cell);
@@ -1538,7 +1594,10 @@
         });
         d.appendChild(grid);
         var row = el('div', 'ann-btnrow');
-        row.appendChild(btn('Cancel', null, function () { closeScrim(scrim); }));
+        row.appendChild(btn(onBack ? '‹ Back' : 'Cancel', null, function () {
+            closeScrim(scrim);
+            if (onBack) onBack();
+        }));
         d.appendChild(row);
         scrim.appendChild(d);
     }
@@ -2498,7 +2557,7 @@
             });
             toast(dropLatLng ? 'Marker placed — drag it to fine-tune'
                              : 'Marker placed at the centre — drag it to fine-tune');
-        });
+        }, function () { openSheet(); });   // ‹ Back returns to the annotate sheet
     }
 
     function startAddText() {
@@ -2506,19 +2565,135 @@
         stopHostMeasure();
         composeTextDialog(null, function (text, centered) {
             startTextPlacement(text, centered, null);
-        });
+        }, function () { openSheet(); });   // ‹ Back returns to the annotate sheet
     }
 
     // ------------------------------------------------------------ layers panel
     var layersPanelRefresh = null;
     function refreshOpenPanels() { if (layersPanelRefresh) layersPanelRefresh(); }
-    function openLayersPanel() {
-        var scrim = mkScrim(false);
-        var d = el('div', 'ann-sheet');
-        addCloseX(d, scrim);
+
+    // ----- undo / redo: whole-model snapshots (the serialized store payload),
+    // pushed on every committed change. Cheap — a few KB of JSON per step.
+    var HIST_MAX = 50;
+    var hist = [], histIndex = -1, histSuppress = false;
+    function histPush(payload) {
+        if (histSuppress) return;
+        if (histIndex >= 0 && hist[histIndex] === payload) return;   // no-op change
+        hist = hist.slice(0, histIndex + 1);
+        hist.push(payload);
+        if (hist.length > HIST_MAX) hist.shift();
+        histIndex = hist.length - 1;
+        histButtonsSync();
+    }
+    function histApply(payload) {
+        // Replace the store wholesale, then rebuild the layer exactly the way a
+        // fresh restore does — geographic scoping included.
+        histSuppress = true;
+        try {
+            lsSet(LS_ITEMS, payload);
+            layer.handles.forEach(function (h) { layer.detach(h); });
+            layer.handles.clear();
+            layer.dormant = [];
+            layer.restored = false;
+            var c = map.getCenter();
+            layer.restoreIfNeeded(map.getZoom(), { lat: c.lat(), lng: c.lng() });
+        } finally {
+            histSuppress = false;
+        }
+        refreshOpenPanels();
+        histButtonsSync();
+    }
+    function annUndo() {
+        // The editors keep their own point-level undo while they are open; the
+        // global history only moves between committed states.
+        if (activeMode || placementOpen) { toast('Finish the current edit first'); return; }
+        if (histIndex <= 0) return;
+        histIndex--;
+        histApply(hist[histIndex]);
+    }
+    function annRedo() {
+        if (activeMode || placementOpen) { toast('Finish the current edit first'); return; }
+        if (histIndex >= hist.length - 1) return;
+        histIndex++;
+        histApply(hist[histIndex]);
+    }
+    var histUndoB = null, histRedoB = null;   // the dock's buttons, when it is open
+    function histButtonsSync() {
+        if (histUndoB) histUndoB.style.opacity = histIndex > 0 ? 1 : 0.35;
+        if (histRedoB) histRedoB.style.opacity = histIndex < hist.length - 1 ? 1 : 0.35;
+    }
+
+    // ----- "My annotations" dock: a floating panel that EXPANDS out of the
+    // #btn-my-annotations fab (sitting above the map-layers fab) and shrinks back
+    // into it — the web's version of the Android layers bottom sheet. Non-modal:
+    // the map stays live beside it.
+    var dockEl = null, dockClosing = null;
+    function toggleLayersDock() {
+        if (!ensureInit()) { toast('Map still loading — try again in a moment'); return; }
+        if (dockEl) collapseLayersDock(); else expandLayersDock();
+    }
+    function expandLayersDock() {
+        if (dockEl) return;
+        var fab = document.getElementById('btn-my-annotations') || document.getElementById('btn-layers');
+        var r = fab ? fab.getBoundingClientRect()
+                    : { left: window.innerWidth - 8, top: 120, height: 48 };
+        var d = el('div', 'ann-dock');
+        var head = el('div', 'ann-dock-head');
         var title = el('h3', null, 'On this plan');
+        histUndoB = el('button', 'ann-iconbtn', '↶');
+        histUndoB.title = 'Undo';
+        histUndoB.addEventListener('click', annUndo);
+        histRedoB = el('button', 'ann-iconbtn', '↷');
+        histRedoB.title = 'Redo';
+        histRedoB.addEventListener('click', annRedo);
+        var collapseB = el('button', 'ann-iconbtn', '×');
+        collapseB.style.fontSize = '22px';
+        collapseB.addEventListener('click', collapseLayersDock);
+        head.appendChild(title);
+        head.appendChild(histUndoB); head.appendChild(histRedoB);
+        head.appendChild(collapseB);
+        histButtonsSync();
+        d.appendChild(head);
+        var body = el('div', 'ann-dock-body');
+        d.appendChild(body);
+        // To the LEFT of the fab column, top-aligned with the button, clamped so
+        // the whole panel stays on screen; the transform origin sits level with
+        // the button so it visibly grows out of it and shrinks back into it.
+        var maxH = Math.min(Math.round(window.innerHeight * 0.55), 480);
+        var top = Math.max(12, Math.min(r.top, window.innerHeight - maxH - 12));
+        d.style.right = (window.innerWidth - r.left + 10) + 'px';
+        d.style.top = top + 'px';
+        d.style.maxHeight = maxH + 'px';
+        d.style.transformOrigin = '100% ' + Math.max(16, r.top - top + r.height / 2) + 'px';
+        document.body.appendChild(d);
+        var refresh = buildLayersUI(body, collapseLayersDock);
+        layersPanelRefresh = refresh;
+        refresh();
+        dockEl = d;
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () { d.classList.add('open'); });
+        });
+    }
+    function collapseLayersDock() {
+        var d = dockEl;
+        if (!d) return;
+        dockEl = null;
+        layersPanelRefresh = null;
+        histUndoB = null; histRedoB = null;
+        d.classList.remove('open');            // shrink back into the button
+        clearTimeout(dockClosing);
+        dockClosing = setTimeout(function () {
+            if (d.parentNode) d.parentNode.removeChild(d);
+        }, 220);
+    }
+    // The annotate sheet's "My annotations" row keeps working through this name.
+    function openLayersPanel() { expandLayersDock(); }
+
+    // The panel body. closeHost() hides the hosting surface before an action
+    // (focus, edit, resume) takes over the map.
+    function buildLayersUI(d, closeHost) {
         var sub = el('p', 'ann-sub');
-        d.appendChild(title); d.appendChild(sub);
+        d.appendChild(sub);
         var draftHost = el('div');
         d.appendChild(draftHost);
         var listHost = el('div');
@@ -2528,7 +2703,7 @@
             confirmDialog('Remove everything on this map?',
                 'All ' + layer.handles.size + ' labels, markers, areas and roads you placed here will be deleted.',
                 'Delete all',
-                function () { layer.clearAll(); closeScrim(scrim); });
+                function () { layer.clearAll(); closeHost(); });
         });
         clearRow.appendChild(clearB);
         d.appendChild(clearRow);
@@ -2564,7 +2739,7 @@
                 var row = el('div', 'ann-draft');
                 row.appendChild(el('span', null, 'Unfinished ' + noun + ' · ' + draft.points.length + ' points saved'));
                 var res = btn('Resume', 'ann-primary', function () {
-                    closeScrim(scrim);
+                    closeHost();
                     if (draft.kind === 'road') startRoadDrawing(draft.points);
                     else openRegionEditor(mkNewArea(), true, draft.points);
                 });
@@ -2599,7 +2774,7 @@
                 edit.title = 'Edit';
                 edit.addEventListener('click', function (e) {
                     e.stopPropagation();
-                    closeScrim(scrim);
+                    closeHost();
                     openOptions(a);
                 });
                 var del = el('button', null, '🗑️');
@@ -2612,45 +2787,47 @@
                 row.appendChild(drag); row.appendChild(ic); row.appendChild(nm);
                 row.appendChild(eye); row.appendChild(edit); row.appendChild(del);
                 row.addEventListener('click', function () {
-                    closeScrim(scrim);
+                    closeHost();
                     var an = anchorOf(a);
                     map.panTo(an);
                     if (map.getZoom() < 14) map.setZoom(a.kind === 'text' ? Math.round(a.placementZoom) : 16);
                 });
-                // drag-to-restack: pointer events, works with touch and mouse alike
+                // Drag-to-restack, touch and mouse alike. Listeners live on the
+                // DOCUMENT, deliberately NOT via setPointerCapture on the handle:
+                // moving the row with insertBefore re-inserts the captured element,
+                // which releases the capture and killed the drag after the first
+                // swap — the "restacking not working" bug.
                 drag.addEventListener('pointerdown', function (e) {
                     e.preventDefault(); e.stopPropagation();
-                    drag.setPointerCapture(e.pointerId);
                     row.classList.add('dragging');
                     function mv(ev) {
-                        var rows = Array.from(listHost.children);
-                        var over = rows.find(function (r) {
-                            var b = r.getBoundingClientRect();
-                            return ev.clientY >= b.top && ev.clientY <= b.bottom;
-                        });
+                        ev.preventDefault();
+                        var rows = Array.prototype.slice.call(listHost.children);
+                        var over = null;
+                        for (var i = 0; i < rows.length; i++) {
+                            var b = rows[i].getBoundingClientRect();
+                            if (ev.clientY >= b.top && ev.clientY <= b.bottom) { over = rows[i]; break; }
+                        }
                         if (over && over !== row) {
-                            var b = over.getBoundingClientRect();
-                            listHost.insertBefore(row, ev.clientY < b.top + b.height / 2 ? over : over.nextSibling);
+                            var ob = over.getBoundingClientRect();
+                            listHost.insertBefore(row, ev.clientY < ob.top + ob.height / 2 ? over : over.nextSibling);
                         }
                     }
                     function up() {
-                        drag.removeEventListener('pointermove', mv);
-                        drag.removeEventListener('pointerup', up);
-                        drag.removeEventListener('pointercancel', up);
+                        document.removeEventListener('pointermove', mv);
+                        document.removeEventListener('pointerup', up);
+                        document.removeEventListener('pointercancel', up);
                         row.classList.remove('dragging');
-                        layer.applyStackOrder(Array.from(listHost.children).map(function (r) { return r._id; }));
+                        layer.applyStackOrder(Array.prototype.map.call(listHost.children, function (r) { return r._id; }));
                     }
-                    drag.addEventListener('pointermove', mv);
-                    drag.addEventListener('pointerup', up);
-                    drag.addEventListener('pointercancel', up);
+                    document.addEventListener('pointermove', mv, { passive: false });
+                    document.addEventListener('pointerup', up);
+                    document.addEventListener('pointercancel', up);
                 });
                 listHost.appendChild(row);
             });
         }
-        layersPanelRefresh = refresh;
-        scrim._onClose = function () { layersPanelRefresh = null; };
-        refresh();
-        scrim.appendChild(d);
+        return refresh;
     }
 
     function mkNewArea() {
@@ -2856,9 +3033,23 @@
         return true;
     }
 
+    // Desktop keyboards: Ctrl/Cmd+Z and Ctrl+Y / Ctrl+Shift+Z — never while the
+    // user is typing in a field.
+    document.addEventListener('keydown', function (e) {
+        if (!initDone || !(e.ctrlKey || e.metaKey)) return;
+        var t = e.target && e.target.tagName;
+        if (t === 'INPUT' || t === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
+        var k = (e.key || '').toLowerCase();
+        if (k === 'z' && !e.shiftKey) { e.preventDefault(); annUndo(); }
+        else if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); annRedo(); }
+    });
+
     window.mmAnnotations = {
         openSheet: openSheet,
         openLayersPanel: openLayersPanel,
+        toggleLayersDock: toggleLayersDock,
+        undo: annUndo,
+        redo: annRedo,
         beginCapturePreview: beginCapturePreview,
         refreshCapturePreview: refreshCapturePreview,
         endCapturePreview: endCapturePreview,
