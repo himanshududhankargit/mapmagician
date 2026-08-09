@@ -107,7 +107,11 @@
         // 091 = rename dialogs commit reliably: OK button (was Save), Enter key
         //       saves, existing text pre-selected — the owner typed a name and
         //       fumbled to save it.
-        var APP_VERSION = '091';
+        // 092 = placed markers no longer drag on touch: a swipe starting on a pin
+        //       pans the map, and a 450ms LONG PRESS raises the orange move disc
+        //       (+ × delete) to reposition it. Mouse keeps direct dragging; the
+        //       options menu gains "Move this marker" on touch.
+        var APP_VERSION = '092';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

@@ -109,6 +109,12 @@
     var _idCounter = 0;
     function newId() { return 'a' + Date.now() + '_' + (_idCounter++); }
 
+    // Touch/pen primary input. Drives the "hold to move, don't drag by accident"
+    // rules — a swipe starting on a pin must pan the map.
+    function isCoarsePointer() {
+        return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    }
+
     function toast(msg) {
         if (typeof _dlmapToast === 'function') { _dlmapToast(msg); return; }
         console.log('[annotations]', msg);
@@ -837,10 +843,36 @@
                         scaledSize: new google.maps.Size(pb.w, pb.h),
                         anchor: new google.maps.Point(pb.w / 2, pinAnchorV(type, pb) * pb.h)
                     },
-                    draggable: true, clickable: true, visible: false,
+                    // Touch: NOT draggable — a swipe that starts on a pin must pan
+                    // the map, not carry the pin off. A long press raises the move
+                    // disc instead (below), which is also the precise way to place
+                    // it. Mouse keeps direct dragging.
+                    draggable: !isCoarsePointer(),
+                    clickable: true, visible: false,
                     zIndex: 100000 + a.order, title: displayName(a)
                 });
-                h.marker.addListener('click', function () { openOptions(a); });
+                var pressTimer = null, longPressed = false;
+                function cancelPress() {
+                    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+                }
+                h.marker.addListener('mousedown', function () {
+                    if (!isCoarsePointer()) return;
+                    longPressed = false;
+                    cancelPress();
+                    pressTimer = setTimeout(function () {
+                        pressTimer = null;
+                        longPressed = true;
+                        try { if (navigator.vibrate) navigator.vibrate(20); } catch (e) {}
+                        showPinMoveHandle(h, a);
+                    }, 450);
+                });
+                h.marker.addListener('mouseup', cancelPress);
+                h.marker.addListener('mouseout', cancelPress);
+                h.marker.addListener('click', function () {
+                    cancelPress();
+                    if (longPressed) { longPressed = false; return; }   // the hold owned it
+                    openOptions(a);
+                });
                 h.marker.addListener('drag', function () {
                     var p = h.marker.getPosition();
                     a.lat = p.lat(); a.lng = p.lng();
@@ -1694,6 +1726,25 @@
     }
 
     // What can be done to the annotation the user tapped (annotationOptions).
+    // The orange move disc + red × over a pin, raised by a long press on touch.
+    // Same handle the vertices use, so "hold, then drag the disc" means the same
+    // thing everywhere — and the disc keeps the fingertip off the pin itself.
+    function showPinMoveHandle(h, a) {
+        if (typeof showVertexHandle !== 'function' || !h.marker) return;
+        showVertexHandle(h.marker, {
+            isSaved: false,
+            onMove: function (latLng) {
+                a.lat = latLng.lat(); a.lng = latLng.lng();
+            },
+            onMoveEnd: function () { layer.persist(); },
+            onDelete: function () {
+                if (typeof hideVertexHandle === 'function') hideVertexHandle();
+                layer.remove(a.id);
+            }
+        });
+        toast('Drag the orange disc to move · × deletes');
+    }
+
     function openOptions(a) {
         // Ignored while another tool owns the screen (an editor, the placement
         // surface, or the capture viewfinder) — and idempotent: a double click
@@ -1718,6 +1769,13 @@
             composeTextDialog(a, function (text, centered) {
                 startTextPlacement(text, centered, a);
             });
+        });
+        // Touch has no direct drag on a pin (a swipe pans the map), so the
+        // menu carries the move affordance too — long press is a shortcut,
+        // not the only way in.
+        if (a.kind === 'pin' && isCoarsePointer()) opt('🧭', 'Move this marker', false, function () {
+            var h = layer.handles.get(a.id);
+            if (h) showPinMoveHandle(h, a);
         });
         if (a.kind === 'pin') opt('✏️', 'Edit label & type', false, function () {
             pickMarkerDialog(a, function (typeId, label, dropLatLng) {
