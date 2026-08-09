@@ -94,7 +94,10 @@
         // 086 = the text-placement Done/Cancel bar (and the road drawing bar) sits
         //       ABOVE the bottom controls row on every screen — it was pinned 26px
         //       from the map's bottom edge, underneath the slider/Browse row.
-        var APP_VERSION = '086';
+        // 087 = smooth layer restacking: the dragged row follows the pointer with a
+        //       lifted look, displaced rows FLIP-slide into their new slots, and the
+        //       drop settles with a short ease instead of an instant rebuild.
+        var APP_VERSION = '087';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

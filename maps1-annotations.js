@@ -1337,7 +1337,8 @@
             '.ann-handle.mov{background:#FF5722;}',
             // layers panel rows
             '.ann-lrow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-radius:10px;font-size:14px;color:#222;background:#fff;}',
-            '.ann-lrow.dragging{opacity:.6;background:#f0f4f0;}',
+            '.ann-lrow{will-change:transform;}',
+            '.ann-lrow.dragging{opacity:.92;background:#f0f4f0;box-shadow:0 5px 16px rgba(0,0,0,.28);position:relative;z-index:3;border-radius:10px;}',
             '.ann-lrow .drag{cursor:grab;color:#aaa;font-size:17px;padding:4px 6px;touch-action:none;}',
             '.ann-lrow .ic{width:26px;text-align:center;font-size:17px;}',
             '.ann-lrow .nm{flex:1;min-width:0;}',
@@ -2928,29 +2929,72 @@
                 // DOCUMENT, deliberately NOT via setPointerCapture on the handle:
                 // moving the row with insertBefore re-inserts the captured element,
                 // which releases the capture and killed the drag after the first
-                // swap — the "restacking not working" bug.
+                // swap. The dragged row FOLLOWS the pointer via transform, and a
+                // displaced sibling FLIP-slides into its new slot — no teleporting.
                 drag.addEventListener('pointerdown', function (e) {
                     e.preventDefault(); e.stopPropagation();
                     row.classList.add('dragging');
+                    row.style.transition = 'none';
+                    var startY = e.clientY;
+                    function place(clientY) {
+                        row.style.transform = 'translateY(' + (clientY - startY) + 'px)';
+                    }
+                    function flip(sib) {
+                        // Slide the displaced sibling from where it WAS to where it IS.
+                        var before = sib.getBoundingClientRect().top;
+                        return function settle() {
+                            var d = before - sib.getBoundingClientRect().top;
+                            if (!d) return;
+                            sib.style.transition = 'none';
+                            sib.style.transform = 'translateY(' + d + 'px)';
+                            requestAnimationFrame(function () {
+                                sib.style.transition = 'transform .16s ease';
+                                sib.style.transform = '';
+                            });
+                        };
+                    }
                     function mv(ev) {
                         ev.preventDefault();
-                        var rows = Array.prototype.slice.call(listHost.children);
-                        var over = null;
-                        for (var i = 0; i < rows.length; i++) {
-                            var b = rows[i].getBoundingClientRect();
-                            if (ev.clientY >= b.top && ev.clientY <= b.bottom) { over = rows[i]; break; }
+                        // Swap when the pointer crosses a neighbour's midline; the
+                        // dragged row's layout slot moves by the neighbour's height,
+                        // so startY shifts by the same amount to keep the row glued
+                        // to the pointer.
+                        for (;;) {
+                            var next = row.nextElementSibling, prev = row.previousElementSibling;
+                            var nb = next && next.getBoundingClientRect();
+                            var pb = prev && prev.getBoundingClientRect();
+                            if (nb && ev.clientY > nb.top + nb.height / 2) {
+                                var settleN = flip(next);
+                                listHost.insertBefore(next, row);
+                                settleN();
+                                startY += nb.height;
+                            } else if (pb && ev.clientY < pb.top + pb.height / 2) {
+                                var settleP = flip(prev);
+                                listHost.insertBefore(row, prev);
+                                settleP();
+                                startY -= pb.height;
+                            } else break;
                         }
-                        if (over && over !== row) {
-                            var ob = over.getBoundingClientRect();
-                            listHost.insertBefore(row, ev.clientY < ob.top + ob.height / 2 ? over : over.nextSibling);
-                        }
+                        place(ev.clientY);
                     }
                     function up() {
                         document.removeEventListener('pointermove', mv);
                         document.removeEventListener('pointerup', up);
                         document.removeEventListener('pointercancel', up);
-                        row.classList.remove('dragging');
+                        // Settle the dragged row into its slot, then commit. The
+                        // panel refresh is suppressed for this commit — the list is
+                        // already in the final order, and a rebuild would cut the
+                        // settle animation short.
+                        row.style.transition = 'transform .16s ease';
+                        row.style.transform = '';
+                        setTimeout(function () {
+                            row.classList.remove('dragging');
+                            row.style.transition = '';
+                        }, 180);
+                        var keep = layersPanelRefresh;
+                        layersPanelRefresh = null;
                         layer.applyStackOrder(Array.prototype.map.call(listHost.children, function (r) { return r._id; }));
+                        layersPanelRefresh = keep;
                     }
                     document.addEventListener('pointermove', mv, { passive: false });
                     document.addEventListener('pointerup', up);
