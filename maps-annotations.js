@@ -1798,7 +1798,9 @@
         // needed putting back. That is why the pin turned into an orange dot AND
         // stayed one: both the show-time and every later hide-time restore were
         // silently no-ops.
-        pinIconRestore = null;
+        // Whatever is parked right now belongs to the PREVIOUSLY handled pin, and
+        // is deliberately left alone: that internal hide is precisely what gives
+        // its artwork back when you long-press one marker straight after another.
         showVertexHandle(h.marker, {
             isSaved: false,
             onMove: function (latLng) {

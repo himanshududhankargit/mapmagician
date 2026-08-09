@@ -120,7 +120,7 @@
         //       refused with a "finish what you started" notice instead of silently
         //       tearing the first down (a child of the owner's had the road, the
         //       region AND the text surface live at once).
-        // 103/104 = three mobile fixes. (a) The 095/096 pin-icon restore never ran:
+        // 105/106 = three mobile fixes (103/104 shipped one of them half-right). (a) The 095/096 pin-icon restore never ran:
         //       showVertexHandle's first act is to call hideVertexHandle, so the
         //       wrapper consumed the pending restore before the host had even
         //       restyled the pin — it is now registered AFTER the call returns, so
@@ -130,7 +130,10 @@
         //       the lift (it buzzed, then nothing) — the grid cells are
         //       user-select:none now. (c) The redundant "Name & colour" row is gone
         //       from the annotation menu; both editors already own those settings.
-        var APP_VERSION = '104';
+        //       105/106 also stops the new restore from discarding the PREVIOUS
+        //       pin's pending one — long-pressing two markers in a row left the
+        //       first stranded as an orange dot.
+        var APP_VERSION = '106';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
