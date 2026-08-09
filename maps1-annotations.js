@@ -1215,9 +1215,17 @@
             '.ann-stamp.ann-tappable{pointer-events:auto;cursor:pointer;}',
             // scrim + bottom sheet
             '.ann-scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1200;display:flex;align-items:flex-end;justify-content:center;}',
-            '.ann-sheet{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:440px;max-height:72vh;overflow-y:auto;padding:14px 18px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -4px 24px rgba(0,0,0,.25);animation:ann-up .18s ease-out;}',
+            '.ann-sheet{position:relative;background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:440px;max-height:72vh;overflow-y:auto;padding:14px 18px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -4px 24px rgba(0,0,0,.25);animation:ann-up .18s ease-out;}',
             '@keyframes ann-up{from{transform:translateY(40px);opacity:.4}to{transform:translateY(0);opacity:1}}',
-            '@media(min-width:700px){.ann-scrim{align-items:center}.ann-sheet{border-radius:16px;max-height:80vh}}',
+            // Desktop: dialogs dock on the LEFT with no dimmer and a click-through
+            // backdrop, so the map stays visible AND usable beside them — you can
+            // pan it, and drag an icon out of the dialog straight onto it.
+            '@media(min-width:700px){',
+            '.ann-scrim{background:transparent;pointer-events:none;align-items:center;justify-content:flex-start;}',
+            '.ann-scrim .ann-sheet,.ann-scrim .ann-dialog{pointer-events:auto;margin-left:16px;border-radius:16px;max-height:82vh;border:1px solid #e0e0e0;box-shadow:0 10px 40px rgba(0,0,0,.35);}',
+            '}',
+            '.ann-x{position:absolute;top:6px;right:8px;border:0;background:none;font-size:22px;color:#999;cursor:pointer;padding:6px 8px;line-height:1;z-index:2;}',
+            '.ann-x:hover{color:#333;}',
             '.ann-sheet h3{font-size:17px;margin:2px 0 2px;color:#1a1a1a;}',
             '.ann-sheet .ann-sub{font-size:12px;color:#777;margin:0 0 10px;}',
             '.ann-row{display:flex;align-items:center;gap:14px;padding:12px 6px;border-radius:10px;cursor:pointer;font-size:15px;color:#222;}',
@@ -1227,7 +1235,7 @@
             '.ann-footnote{font-size:11px;color:#999;margin-top:8px;}',
             '.ann-section{font-size:11px;letter-spacing:.06em;color:#888;margin:10px 0 2px;font-weight:600;}',
             // dialogs
-            '.ann-dialog{background:#fff;border-radius:14px;width:calc(100% - 32px);max-width:420px;max-height:82vh;overflow-y:auto;padding:18px;box-shadow:0 8px 32px rgba(0,0,0,.3);}',
+            '.ann-dialog{position:relative;background:#fff;border-radius:14px;width:calc(100% - 32px);max-width:420px;max-height:82vh;overflow-y:auto;padding:18px;box-shadow:0 8px 32px rgba(0,0,0,.3);}',
             '.ann-scrim.ann-center{align-items:center;}',
             '.ann-dialog h3{font-size:16px;margin:0 0 12px;color:#1a1a1a;}',
             '.ann-dialog textarea,.ann-dialog input[type=text]{width:100%;box-sizing:border-box;border:1px solid #ccc;border-radius:8px;padding:9px 10px;font-size:15px;font-family:inherit;color:#222;background:#fff;}',
@@ -1247,10 +1255,14 @@
             // marker grid
             '.ann-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px;}',
             '.ann-grid .ann-cat{grid-column:1/-1;font-size:11px;font-weight:700;letter-spacing:.04em;margin:8px 0 0;}',
-            '.ann-type{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;border-radius:10px;cursor:pointer;border:2px solid transparent;}',
+            '.ann-type{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;border-radius:10px;cursor:pointer;border:2px solid transparent;touch-action:pan-y;}',
             '.ann-type.sel{border-color:#2E7D32;background:#E8F5E9;}',
             '.ann-type .em{font-size:22px;line-height:1;}',
             '.ann-type .nm{font-size:10px;color:#444;text-align:center;line-height:1.15;}',
+            // Add appears right under the icon you tapped — no scrolling to the bottom
+            '.ann-cellsave{margin-top:4px;border:0;border-radius:12px;background:#2E7D32;color:#fff;font-size:11px;font-weight:700;padding:4px 14px;cursor:pointer;}',
+            // the icon flying under the pointer while dragging one onto the map
+            '.ann-ghost{position:fixed;z-index:3000;font-size:30px;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 2px 5px rgba(0,0,0,.45));}',
             // options menu
             '.ann-opt{display:flex;align-items:center;gap:16px;padding:13px 8px;border-radius:10px;cursor:pointer;font-size:15px;color:#222;}',
             '.ann-opt:hover,.ann-opt:active{background:#f4f4f4;}',
@@ -1329,6 +1341,15 @@
         b.addEventListener('click', onClick);
         return b;
     }
+    // On desktop the backdrop is click-through (the map stays usable), so every
+    // sheet/dialog carries its own ×.
+    function addCloseX(container, scrim) {
+        var x = el('button', 'ann-x', '×');
+        x.type = 'button';
+        x.setAttribute('aria-label', 'Close');
+        x.addEventListener('click', function () { closeScrim(scrim); });
+        container.appendChild(x);
+    }
     function confirmDialog(title, message, actionLabel, onConfirm) {
         var scrim = mkScrim(true);
         var d = el('div', 'ann-dialog');
@@ -1370,6 +1391,7 @@
     function composeTextDialog(existing, onResult) {
         var scrim = mkScrim(true);
         var d = el('div', 'ann-dialog');
+        addCloseX(d, scrim);
         d.appendChild(el('h3', null, existing ? 'Edit text' : 'Write on the map'));
         var ta = document.createElement('textarea');
         ta.placeholder = 'Your text — a plot number, a note…';
@@ -1406,18 +1428,43 @@
     }
 
     // Pick what the place IS and what to call it — grid grouped by category.
+    // Two ways out: tap an icon and press the Add that appears right under it
+    // (no scrolling to a bottom button), or DRAG an icon straight onto the map to
+    // place it exactly there. onResult(typeId, label, dropLatLng|null).
     function pickMarkerDialog(existing, onResult) {
         var scrim = mkScrim(true);
         var d = el('div', 'ann-dialog');
+        addCloseX(d, scrim);
         d.appendChild(el('h3', null, existing ? 'Edit marker' : 'Add marker'));
+        d.appendChild(el('p', 'ann-sub', existing
+            ? 'Drag an icon onto the map to move the marker there — or tap one and press Save.'
+            : 'Drag an icon onto the map to place it — or tap one and press Add.'));
         var input = document.createElement('input');
         input.type = 'text';
         input.placeholder = 'Name this place (optional)';
         input.value = existing ? existing.label : '';
         d.appendChild(input);
         var selectedId = existing ? existing.typeId : DEFAULT_TYPE_ID;
+        function commit(dropLatLng) {
+            closeScrim(scrim);
+            onResult(selectedId, input.value.trim(), dropLatLng || null);
+        }
         var grid = el('div', 'ann-grid');
         var cells = [];
+        var inlineBtn = null;
+        function selectCell(cell, typeId) {
+            selectedId = typeId;
+            cells.forEach(function (c) { c.classList.remove('sel'); });
+            cell.classList.add('sel');
+            if (inlineBtn && inlineBtn.parentNode) inlineBtn.parentNode.removeChild(inlineBtn);
+            inlineBtn = el('button', 'ann-cellsave', existing ? 'Save' : 'Add');
+            inlineBtn.type = 'button';
+            inlineBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                commit(null);
+            });
+            cell.appendChild(inlineBtn);
+        }
         CATEGORIES.forEach(function (cat, ci) {
             var head = el('div', 'ann-cat', cat[0]);
             head.style.color = cat[1];
@@ -1428,22 +1475,60 @@
                 var em = el('div', 'em', t[3] || '🔤');
                 cell.appendChild(em);
                 cell.appendChild(el('div', 'nm', t[1]));
-                cell.addEventListener('click', function () {
-                    selectedId = t[0];
-                    cells.forEach(function (c) { c.classList.remove('sel'); });
-                    cell.classList.add('sel');
+                cell.addEventListener('click', function () { selectCell(cell, t[0]); });
+                // Drag the icon out of the dialog and drop it on the map. Pointer
+                // capture keeps the stream on the cell, so the drop coordinates are
+                // trustworthy wherever the finger/mouse ends up.
+                cell.addEventListener('pointerdown', function (e) {
+                    var startX = e.clientX, startY = e.clientY;
+                    var dragging = false, ghost = null;
+                    cell.setPointerCapture(e.pointerId);
+                    function mv(ev) {
+                        if (!dragging && Math.hypot(ev.clientX - startX, ev.clientY - startY) > 8) {
+                            dragging = true;
+                            selectedId = t[0];
+                            ghost = el('div', 'ann-ghost', t[3] || '🔤');
+                            document.body.appendChild(ghost);
+                        }
+                        if (ghost) {
+                            ghost.style.left = ev.clientX + 'px';
+                            ghost.style.top = ev.clientY + 'px';
+                        }
+                    }
+                    function up(ev) {
+                        cell.removeEventListener('pointermove', mv);
+                        cell.removeEventListener('pointerup', up);
+                        cell.removeEventListener('pointercancel', cancel);
+                        if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+                        if (!dragging) return;             // plain tap: the click handler selects
+                        var dr = d.getBoundingClientRect();
+                        var overDialog = ev.clientX >= dr.left && ev.clientX <= dr.right &&
+                                         ev.clientY >= dr.top && ev.clientY <= dr.bottom;
+                        var mr = mapDiv().getBoundingClientRect();
+                        var overMap = ev.clientX >= mr.left && ev.clientX <= mr.right &&
+                                      ev.clientY >= mr.top && ev.clientY <= mr.bottom;
+                        if (overDialog || !overMap) return; // dropped back on the dialog: cancel
+                        var ll = containerPxToLatLng(ev.clientX - mr.left, ev.clientY - mr.top);
+                        commit({ lat: ll.lat(), lng: ll.lng() });
+                    }
+                    function cancel() {
+                        cell.removeEventListener('pointermove', mv);
+                        cell.removeEventListener('pointerup', up);
+                        cell.removeEventListener('pointercancel', cancel);
+                        if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+                    }
+                    cell.addEventListener('pointermove', mv);
+                    cell.addEventListener('pointerup', up);
+                    cell.addEventListener('pointercancel', cancel);
                 });
                 cells.push(cell);
                 grid.appendChild(cell);
+                if (t[0] === selectedId) selectCell(cell, t[0]);
             });
         });
         d.appendChild(grid);
         var row = el('div', 'ann-btnrow');
         row.appendChild(btn('Cancel', null, function () { closeScrim(scrim); }));
-        row.appendChild(btn(existing ? 'Save' : 'Add', 'ann-primary', function () {
-            closeScrim(scrim);
-            onResult(selectedId, input.value.trim());
-        }));
         d.appendChild(row);
         scrim.appendChild(d);
     }
@@ -1452,6 +1537,7 @@
     function describeShapeDialog(kindTitle, measurementNoun, current, onResult) {
         var scrim = mkScrim(true);
         var d = el('div', 'ann-dialog');
+        addCloseX(d, scrim);
         d.appendChild(el('h3', null, kindTitle));
         var input = document.createElement('input');
         input.type = 'text';
@@ -1499,6 +1585,7 @@
         if (layer.suspended || activeMode || placementOpen) return;
         var scrim = mkScrim(false);
         var d = el('div', 'ann-sheet');
+        addCloseX(d, scrim);
         d.appendChild(el('h3', null, displayName(a)));
         function opt(icon, label, danger, run) {
             var r = el('div', 'ann-opt' + (danger ? ' ann-del' : ''));
@@ -1517,8 +1604,9 @@
             });
         });
         if (a.kind === 'pin') opt('✏️', 'Edit label & type', false, function () {
-            pickMarkerDialog(a, function (typeId, label) {
+            pickMarkerDialog(a, function (typeId, label, dropLatLng) {
                 a.typeId = typeId; a.label = label;
+                if (dropLatLng) { a.lat = dropLatLng.lat; a.lng = dropLatLng.lng; }
                 layer.update(a);
             });
         });
@@ -2172,6 +2260,7 @@
     function promptName(title, current, onSave) {
         var scrim = mkScrim(true);
         var d = el('div', 'ann-dialog');
+        addCloseX(d, scrim);
         d.appendChild(el('h3', null, title));
         var input = document.createElement('input');
         input.type = 'text';
@@ -2386,13 +2475,17 @@
     function startAddMarker() {
         if (layer.isFull()) { toast('That is as many notes as one map can hold'); return; }
         stopHostMeasure();
-        pickMarkerDialog(null, function (typeId, label) {
-            var c = map.getCenter();
+        pickMarkerDialog(null, function (typeId, label, dropLatLng) {
+            var c = dropLatLng || (function () {
+                var m = map.getCenter();
+                return { lat: m.lat(), lng: m.lng() };
+            })();
             layer.add({
                 id: newId(), kind: 'pin', visible: true, order: 0,
-                lat: c.lat(), lng: c.lng(), typeId: typeId, label: label
+                lat: c.lat, lng: c.lng, typeId: typeId, label: label
             });
-            toast('Marker placed at the centre — drag it to fine-tune');
+            toast(dropLatLng ? 'Marker placed — drag it to fine-tune'
+                             : 'Marker placed at the centre — drag it to fine-tune');
         });
     }
 
@@ -2410,6 +2503,7 @@
     function openLayersPanel() {
         var scrim = mkScrim(false);
         var d = el('div', 'ann-sheet');
+        addCloseX(d, scrim);
         var title = el('h3', null, 'On this plan');
         var sub = el('p', 'ann-sub');
         d.appendChild(title); d.appendChild(sub);
@@ -2562,6 +2656,7 @@
         if (!ensureInit()) { toast('Map still loading — try again in a moment'); return; }
         var scrim = mkScrim(false);
         var d = el('div', 'ann-sheet');
+        addCloseX(d, scrim);
         d.appendChild(el('h3', null, 'Annotate this map'));
         d.appendChild(el('p', 'ann-sub', 'Everything you add is saved and printed with the map'));
         var last = lsGet(LS_LAST_TOOL);
@@ -2620,6 +2715,7 @@
         var noun = draft.kind === 'road' ? 'road' : 'area';
         var scrim = mkScrim(true);
         var d = el('div', 'ann-dialog');
+        addCloseX(d, scrim);
         d.appendChild(el('h3', null, 'Unfinished ' + noun + ' found'));
         var p = el('p', null, draft.points.length + ' points from an earlier session are saved. Continue from where you left off?');
         p.style.cssText = 'font-size:13px;color:#555;margin:0;line-height:1.5;';

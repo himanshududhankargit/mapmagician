@@ -43,7 +43,12 @@
         //       areas / roads in a LAZY-LOADED maps1-annotations.js (fetched on first
         //       Annotate tap — zero start-time cost), with capture-viewfinder
         //       ground-overlay stand-ins and annotation drawing on the export stitch.
-        var APP_VERSION = '071';
+        // 072 = Annotate desktop polish (dialogs dock LEFT over a click-through
+        //       backdrop, marker icons drag-and-drop onto the map, inline Add under
+        //       the tapped icon, × close everywhere) + download region-label
+        //       fallback (_dlmapRegionFromSources: paid downloads name their region
+        //       even when findDistrictAtCenter answers null).
+        var APP_VERSION = '072';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -10581,12 +10586,17 @@
         // mirrors the CanvasMapType ctor. Merged records contribute their subSheets.
         function _dlmapCollectSources(cz, rectLL) {
             var out = [], order = 0;
-            function push(link, polygon, holes, bbox, zMin, zMax, zIndex) {
+            function push(link, polygon, holes, bbox, zMin, zMax, zIndex, rec) {
                 if (!link) return;
                 if (cz < zMin || cz > zMax) return;                     // not visible on screen
                 if (bbox && !_dlmapBoxesOverlap(bbox, rectLL)) return;  // record-level fast reject
                 out.push({ link: link, polygon: polygon, holes: holes || [], bbox: bbox,
-                           zMin: zMin, zMax: zMax, zIndex: zIndex || 0, order: order++ });
+                           zMin: zMin, zMax: zMax, zIndex: zIndex || 0, order: order++,
+                           // Owning record's identity, carried only for the region-label
+                           // fallback in _dlmapRegionFromSources. Sub-sheets inherit it
+                           // from the merged parent — a sub-sheet is never sold separately.
+                           pid: (rec && rec.productPurchaseID) || '',
+                           vname: (rec && rec.villageName) || '' });
             }
             function addAll(data, defMin, defMax, recordFilter) {
                 for (var i = 0; i < data.length; i++) {
@@ -10597,11 +10607,11 @@
                         for (var s = 0; s < d.subSheets.length; s++) {
                             var sub = d.subSheets[s];
                             push(sub.link, sub.polygon, sub.holes, sub.bbox,
-                                 sub.minZoom || defMin, sub.maxZoom || defMax, sub.zIndex);
+                                 sub.minZoom || defMin, sub.maxZoom || defMax, sub.zIndex, d);
                         }
                     } else {
                         push(d.link, d.polygon, d.holes, d.bbox,
-                             d.minZoom || defMin, d.maxZoom || defMax, d.zIndex);
+                             d.minZoom || defMin, d.maxZoom || defMax, d.zIndex, d);
                     }
                 }
             }
@@ -10619,6 +10629,42 @@
                 addAll(villageLayerData, MIN_ZOOM_FOR_VILLAGEMAP, MAX_ZOOM_FOR_VILLAGEMAP,
                        function(d) { return d.villageName && hasVillagePurchase(d.villageName); });
             return out;
+        }
+
+        // Region label of LAST RESORT for the download records (order notes, delivery
+        // receipt, ledger, outcome event). The normal source is findDistrictAtCenter,
+        // which answers null more often than it looks: it scans dpLayerData ONLY and
+        // then needs a menuGIS (d4.bin) hit on top. So an old-DP sheet, a village-only
+        // box, a centre sitting in a polygon hole or just outside the edge of the sheet
+        // the box overlaps, or a session where d4.bin never parsed (fetchMenuLayerData
+        // returns silently and menuData stays []) all produced a paid download the admin
+        // panel could only label "(region not recorded)" — pay_TNa4fuhi50YA0Q reached
+        // Razorpay with districtPid:"" that way on 2026-08-09.
+        //
+        // The sheets we are about to FETCH always know which record they came from, so
+        // fall back to whichever one contributes the most tiles to this capture. This
+        // deliberately does NOT widen findDistrictAtCenter: that function drives the
+        // zoom paywall and the sticky-tile state, and changing what it matches would
+        // change what is free.
+        function _dlmapRegionFromSources(sources, jobs) {
+            if (!sources || !sources.length || !jobs || !jobs.length) return null;
+            var counts = {}, bestOrder = null, bestN = 0;
+            for (var i = 0; i < jobs.length; i++) {
+                var o = jobs[i].order;
+                counts[o] = (counts[o] || 0) + 1;
+                if (counts[o] > bestN) { bestN = counts[o]; bestOrder = o; }
+            }
+            var src = null;
+            for (var s = 0; s < sources.length; s++) {
+                if (sources[s].order === bestOrder) { src = sources[s]; break; }
+            }
+            if (!src) return null;
+            // A village sheet carries no productPurchaseID — its identity IS the name.
+            if (!src.pid) return src.vname ? { productPurchaseID: '', districtName: src.vname } : null;
+            // Prefer the catalog's human name; the raw id alone still answers
+            // "which region was this?", which is the whole point of the field.
+            return findDistrictByPurchaseId(src.pid) ||
+                   { productPurchaseID: src.pid, districtName: '' };
         }
 
         // One fetch job per (source, tile). Uses the same PADDED coverage test as
@@ -11045,11 +11091,12 @@
             // The box is much smaller than the viewport, so dig up to 3 zooms deeper
             // for print sharpness — the cap loop walks back down when it's too much.
             var gz = Math.min(cz + 3, MAX_ZOOM_FOR_DP);
-            var rect, jobs, baseJobs, canvasPx;
+            var rect, jobs, baseJobs, canvasPx, srcs;
             for (;;) {
                 rect = _dlmapComputeCaptureRectFrom(gz, cz, geo.hCss, geo.lat, geo.lng);
                 canvasPx = (rect.tx1 - rect.tx0 + 1) * 256 * (rect.ty1 - rect.ty0 + 1) * 256;
-                jobs = _dlmapEnumerateJobs(rect, _dlmapCollectSources(cz, rect.llBounds));
+                srcs = _dlmapCollectSources(cz, rect.llBounds);
+                jobs = _dlmapEnumerateJobs(rect, srcs);
                 baseJobs = jobs.length ? _dlmapBasemapJobs(rect) : [];
                 if ((jobs.length + baseJobs.length <= DLMAP_MAX_TILE_FETCHES && canvasPx <= DLMAP_MAX_CANVAS_PX) || gz <= cz) break;
                 gz--;                                                     // too big — drop a zoom and retry
@@ -11067,7 +11114,8 @@
             _dlmapSession = { running: true, abortCtrl: ctrl, phase: 'preview' };
             try {
                 var tmplName = _dlmapPickTemplateName();
-                var d = findDistrictAtCenterCached();
+                // Fallback only — findDistrictAtCenterCached stays the primary answer.
+                var d = findDistrictAtCenterCached() || _dlmapRegionFromSources(srcs, jobs);
                 var creditsPromise = _dlmapFetchCredits();
                 var res = await _dlmapRender(geo, pz, ctrl, 'Preparing preview');
                 if (!res) { _dlmapSession = null; return; }               // aborted
