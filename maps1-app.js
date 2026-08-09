@@ -75,7 +75,10 @@
         // 081 = floating ↶↷ undo/redo bar bottom-left whenever there is history to
         //       act on (not only inside the dock) + road names sit on an opaque
         //       road-coloured pill so the dashed centre line can't strike through.
-        var APP_VERSION = '081';
+        // 082 = viewfinder +/- zoom buttons: tap = 0.15 fractional nudge, hold =
+        //       smooth glide (wheel/pinch only step whole zooms — too coarse to
+        //       frame a capture precisely).
+        var APP_VERSION = '082';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7669,6 +7672,30 @@
             });
             document.getElementById('dlmap-vf-proceed').addEventListener('click', _dlmapProceedCapture);
             document.getElementById('dlmap-vf-cancel').addEventListener('click', _dlmapCloseViewfinder);
+            // Viewfinder +/- : tap = 0.15-zoom nudge, HOLD = smooth glide. Uses
+            // fractional setZoom — wheel/pinch move in whole steps, which is why
+            // framing felt imprecise. Capture itself still rounds (cz stays int).
+            function _dlmapHoldZoom(btnId, dir) {
+                var zbtn = document.getElementById(btnId);
+                if (!zbtn) return;
+                var timer = null;
+                function step(dz) {
+                    var z = Math.max(3, Math.min(21, map.getZoom() + dz));
+                    map.setZoom(z);
+                }
+                function stop() { if (timer) { clearInterval(timer); timer = null; } }
+                zbtn.addEventListener('pointerdown', function (e) {
+                    e.preventDefault();
+                    zbtn.setPointerCapture(e.pointerId);
+                    step(dir * 0.15);
+                    timer = setInterval(function () { step(dir * 0.07); }, 60);
+                });
+                zbtn.addEventListener('pointerup', stop);
+                zbtn.addEventListener('pointercancel', stop);
+                zbtn.addEventListener('lostpointercapture', stop);
+            }
+            _dlmapHoldZoom('dlmap-zoom-in', 1);
+            _dlmapHoldZoom('dlmap-zoom-out', -1);
             // Annotate — the whole feature lives in maps1-annotations.js, fetched on
             // the FIRST tap only (lazy: start time is untouched). ?v= rides the app
             // version so a deploy invalidates it in lockstep with this file.
