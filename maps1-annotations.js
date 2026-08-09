@@ -1297,6 +1297,13 @@
             '.ann-section{font-size:11px;letter-spacing:.06em;color:#888;margin:10px 0 2px;font-weight:600;}',
             // dialogs
             '.ann-dialog{position:relative;background:#fff;border-radius:14px;width:calc(100% - 32px);max-width:420px;max-height:82vh;overflow-y:auto;padding:18px;box-shadow:0 8px 32px rgba(0,0,0,.3);}',
+            // Nothing in these panels is selectable except what you type into.
+            // A press-and-hold is OUR gesture; Chrome answers the same hold with a
+            // text selection, and when the held element alone was unselectable it
+            // simply selected the heading instead — same cancelled drag, one
+            // paragraph over. Inputs opt back in below.
+            '.ann-dialog,.ann-sheet{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}',
+            '.ann-dialog input,.ann-dialog textarea,.ann-sheet input,.ann-sheet textarea{-webkit-user-select:text;user-select:text;}',
             '.ann-scrim.ann-center{align-items:center;}',
             '.ann-dialog h3{font-size:16px;margin:0 0 12px;color:#1a1a1a;}',
             '.ann-dialog textarea,.ann-dialog input[type=text]{width:100%;box-sizing:border-box;border:1px solid #ccc;border-radius:8px;padding:9px 10px;font-size:15px;font-family:inherit;color:#222;background:#fff;}',
@@ -1350,7 +1357,7 @@
             '.ann-panel .ann-prow{display:flex;align-items:center;gap:8px;}',
             '.ann-panel .ann-pname{flex:1;font-weight:700;font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
             '.ann-panel .ann-pname.drawing{font-weight:400;font-size:13px;color:#555;white-space:normal;}',
-            '.ann-iconbtn{border:0;background:none;font-size:18px;cursor:pointer;padding:5px;line-height:1;color:#555;}',
+            '.ann-iconbtn{border:0;background:none;font-size:18px;cursor:pointer;padding:5px;line-height:1;color:#555;vertical-align:middle;}',
             '.ann-panel .ann-checks{display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;align-items:center;}',
             '.ann-panel .ann-checks label{display:flex;gap:6px;align-items:center;font-size:13px;cursor:pointer;}',
             '.ann-tabs{display:flex;gap:18px;margin-top:10px;font-size:13px;font-weight:600;color:#888;user-select:none;}',
@@ -1391,8 +1398,12 @@
             '.ann-dock-body{overflow-y:auto;padding:0 12px 12px;}',
             // floating undo/redo, bottom-left, shown only when actionable
             '.ann-histbar{position:fixed;left:10px;bottom:calc(104px + env(safe-area-inset-bottom));z-index:1090;display:none;flex-direction:column;gap:8px;}',
-            '.ann-histbtn{width:42px;height:42px;border-radius:50%;border:none;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);font-size:20px;color:#333;cursor:pointer;user-select:none;}',
-            '.ann-histbtn:active{background:#f0f0f0;}'
+            '.ann-histbtn{width:42px;height:42px;border-radius:50%;border:none;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);font-size:20px;color:#333;cursor:pointer;user-select:none;display:inline-flex;align-items:center;justify-content:center;}',
+            '.ann-histbtn:active{background:#f0f0f0;}',
+            // undo/redo glyph — one arrow, mirrored for undo (see HIST_ARROW_SVG)
+            '.ann-histico{display:inline-flex;width:17px;height:17px;color:inherit;}',
+            '.ann-histico svg{width:100%;height:100%;display:block;}',
+            '.ann-histico.mir{transform:scaleX(-1);}'
         ].join('\n');
         document.head.appendChild(st);
     }
@@ -1424,6 +1435,25 @@
     function btn(label, cls, onClick) {
         var b = el('button', 'ann-btn' + (cls ? ' ' + cls : ''), label);
         b.type = 'button';
+        b.addEventListener('click', onClick);
+        return b;
+    }
+    // The redo arrow (Font Awesome Free 5.15.4, CC BY 4.0 — fontawesome.com/license/free),
+    // supplied by the owner. Undo is the SAME artwork mirrored across the vertical
+    // axis, so the pair always reads as one gesture in two directions.
+    var HIST_ARROW_SVG = '<svg viewBox="0 0 512 512" aria-hidden="true" focusable="false">' +
+        '<path fill="currentColor" d="M500.33 0h-47.41a12 12 0 0 0-12 12.57l4 82.76A247.42 247.42 0 0 0 256 8C119.34 8 7.9 119.53 8 256.19 8.1 393.07 119.1 504 256 504a247.1 247.1 0 0 0 166.18-63.91 12 12 0 0 0 .48-17.43l-34-34a12 12 0 0 0-16.38-.55A176 176 0 1 1 402.1 157.8l-101.53-4.87a12 12 0 0 0-12.57 12v47.41a12 12 0 0 0 12 12h200.33a12 12 0 0 0 12-12V12a12 12 0 0 0-12-12z"/></svg>';
+    function histIcon(undo) {
+        var s = el('span', 'ann-histico' + (undo ? ' mir' : ''));
+        s.innerHTML = HIST_ARROW_SVG;
+        return s;
+    }
+    // Buttons carry the glyph as a child element, not as text.
+    function histBtn(cls, undo, title, onClick) {
+        var b = el('button', cls);
+        b.type = 'button';
+        b.appendChild(histIcon(undo));
+        b.title = title;
         b.addEventListener('click', onClick);
         return b;
     }
@@ -1574,6 +1604,16 @@
     function pickMarkerDialog(existing, onResult, onBack) {
         var scrim = mkScrim(true);
         var d = el('div', 'ann-dialog');
+        // 🛑 Registered HERE, before a finger has touched the dialog — never inside
+        // pointerdown. Chrome decides at TOUCHSTART whether a gesture can be scrolled
+        // off the main thread, and a non-passive touchmove listener added after that
+        // is ignored for the gesture in flight: preventDefault returned silently, the
+        // grid scrolled anyway, and the scroll cancelled the pointer stream. That is
+        // what killed press-and-hold drag on Android — it buzzed, then died.
+        var carrying = false, stranded = false;
+        d.addEventListener('touchmove', function (ev) {
+            if (carrying && !stranded && ev.cancelable) ev.preventDefault();
+        }, { passive: false });
         addCloseX(d, scrim, onBack);
         d.appendChild(el('h3', null, existing ? 'Edit marker' : 'Add marker'));
         d.appendChild(el('p', 'ann-sub', existing
@@ -1625,9 +1665,9 @@
                     if (e.target && e.target.classList && e.target.classList.contains('ann-cellsave')) return;
                     selectCell(cell, t[0]);
                 });
-                // Drag the icon out of the dialog and drop it on the map. Pointer
-                // capture keeps the stream on the cell, so the drop coordinates are
-                // trustworthy wherever the finger/mouse ends up.
+                // Lift the icon out of the dialog and drop it on the map: press and
+                // HOLD on touch (an immediate drag is how the grid scrolls), drag
+                // straight away with a mouse.
                 cell.addEventListener('pointerdown', function (e) {
                     // NOT when the press starts on the inline Add button: capturing
                     // the pointer here retargets the eventual click to the CELL, so
@@ -1641,13 +1681,13 @@
                     // the icon: an immediate drag is how the grid scrolls.
                     var isMouse = e.pointerType === 'mouse';
                     var startX = e.clientX, startY = e.clientY;
-                    var dragging = false, ghost = null, holdT = null;
+                    var ghost = null, holdT = null, tapGuard = 0, bar = null;
                     var armed = isMouse;
-                    cell.setPointerCapture(e.pointerId);
+                    try { cell.setPointerCapture(e.pointerId); } catch (er0) {}
                     function beginDrag(x, y) {
-                        if (dragging) return;
-                        dragging = true;
-                        selectedId = t[0];
+                        if (carrying) return;
+                        carrying = true;                 // the dialog-level touchmove
+                        selectedId = t[0];               // blocker reads this flag
                         ghost = el('div', 'ann-ghost', t[3] || '🔤');
                         ghost.style.left = x + 'px';
                         ghost.style.top = y + 'px';
@@ -1669,11 +1709,32 @@
                         armed = true;
                         beginDrag(startX, startY);      // lifts under the still finger
                     }, 450);
-                    function mv(ev) {
-                        if (!dragging) {
+                    // The pointer stream died mid-lift — Chrome decided the finger was
+                    // scrolling after all. That must NOT drop the icon on the floor:
+                    // the dialog stays aside and the next tap on the map places it.
+                    function strand() {
+                        if (stranded) return;              // already waiting for a tap
+                        if (!carrying) { finish(); return; }   // it was only a scroll
+                        stranded = true;
+                        if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+                        ghost = null;
+                        bar = el('div', 'ann-bar');
+                        // Kept short: .ann-readout is nowrap and the bar is capped at
+                        // the viewport width, so a long type name would overflow it.
+                        bar.appendChild(el('span', 'ann-readout', 'Tap the map to place it'));
+                        var cb = el('button', 'ann-pill', 'Cancel');
+                        cb.style.background = '#616161';
+                        cb.addEventListener('click', function (ev) { ev.stopPropagation(); finish(); });
+                        bar.appendChild(cb);
+                        document.body.appendChild(bar);
+                        tapGuard = Date.now() + 250;    // not the release of the dead gesture
+                    }
+                    function onMove(ev) {
+                        if (stranded) return;
+                        if (!carrying) {
                             var moved = Math.hypot(ev.clientX - startX, ev.clientY - startY) > 8;
                             if (!armed) {
-                                if (moved) cancel();     // it's a scroll — let the browser have it
+                                if (moved) finish();     // it's a scroll — let the browser have it
                                 return;
                             }
                             if (moved) beginDrag(ev.clientX, ev.clientY);
@@ -1683,36 +1744,48 @@
                             ghost.style.top = ev.clientY + 'px';
                         }
                     }
-                    // Non-passive: while a drag is live, scrolling must not take
-                    // over the gesture (touch-action can't change mid-gesture).
-                    function tmBlock(ev) { if (dragging) ev.preventDefault(); }
-                    function unhook() {
+                    function finish() {
                         clearTimeout(holdT);
-                        cell.removeEventListener('pointermove', mv);
-                        cell.removeEventListener('pointerup', up);
-                        cell.removeEventListener('pointercancel', cancel);
-                        cell.removeEventListener('touchmove', tmBlock);
+                        carrying = false; stranded = false;
+                        document.removeEventListener('pointermove', onMove, true);
+                        document.removeEventListener('pointerup', onUp, true);
+                        document.removeEventListener('pointercancel', strand, true);
                         if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+                        if (bar && bar.parentNode) bar.parentNode.removeChild(bar);
+                        ghost = null; bar = null;
                         scrim.classList.remove('ann-dragging');
                     }
-                    function up(ev) {
-                        var wasDragging = dragging;
-                        unhook();
-                        if (!wasDragging) return;          // plain tap: the click handler selects
-                        // The dialog is hidden during the drag, so anywhere on the
-                        // map places the marker; releasing off the map cancels.
+                    function placeAt(x, y) {
+                        // The dialog is hidden while carrying, so anywhere on the map
+                        // places the marker; letting go off the map cancels.
                         var mr = mapDiv().getBoundingClientRect();
-                        var overMap = ev.clientX >= mr.left && ev.clientX <= mr.right &&
-                                      ev.clientY >= mr.top && ev.clientY <= mr.bottom;
+                        var overMap = x >= mr.left && x <= mr.right && y >= mr.top && y <= mr.bottom;
+                        finish();
                         if (!overMap) return;
-                        var ll = containerPxToLatLng(ev.clientX - mr.left, ev.clientY - mr.top);
+                        var ll = containerPxToLatLng(x - mr.left, y - mr.top);
                         commit({ lat: ll.lat(), lng: ll.lng() });
                     }
-                    function cancel() { unhook(); }
-                    cell.addEventListener('pointermove', mv);
-                    cell.addEventListener('pointerup', up);
-                    cell.addEventListener('pointercancel', cancel);
-                    cell.addEventListener('touchmove', tmBlock, { passive: false });
+                    function onUp(ev) {
+                        if (stranded) {
+                            if (Date.now() < tapGuard) return;
+                            // Our own bar is not the map: this listener is on document
+                            // in the CAPTURE phase, so without this the Cancel button
+                            // would place a marker underneath itself before its own
+                            // click handler ever ran.
+                            if (bar && ev.target && bar.contains(ev.target)) return;
+                            placeAt(ev.clientX, ev.clientY);
+                            return;
+                        }
+                        if (!carrying) { finish(); return; }  // plain tap: the click handler selects
+                        placeAt(ev.clientX, ev.clientY);
+                    }
+                    // 🛑 On DOCUMENT, in the capture phase — never on the cell. Once the
+                    // icon is up the cell is inside a hidden dialog and its pointer
+                    // capture can be released out from under us; document sees the
+                    // whole gesture either way.
+                    document.addEventListener('pointermove', onMove, true);
+                    document.addEventListener('pointerup', onUp, true);
+                    document.addEventListener('pointercancel', strand, true);
                 });
                 cells.push(cell);
                 grid.appendChild(cell);
@@ -2262,7 +2335,8 @@
         var prow = el('div', 'ann-prow');
         var nameEl = el('span', 'ann-pname');
         var renameB = el('button', 'ann-iconbtn', '✏️');
-        var undoB = el('button', 'ann-iconbtn', '↶');
+        var undoB = el('button', 'ann-iconbtn');
+        undoB.appendChild(histIcon(true));
         var delB = el('button', 'ann-iconbtn', '🗑️');
         var doneB = el('button', 'ann-pill', 'Done');
         doneB.style.background = '#2E7D32';
@@ -2568,7 +2642,8 @@
         var prow = el('div', 'ann-prow');
         var nameEl = el('span', 'ann-pname');
         var renameB = el('button', 'ann-iconbtn', '✏️');
-        var undoB = el('button', 'ann-iconbtn', '↶');
+        var undoB = el('button', 'ann-iconbtn');
+        undoB.appendChild(histIcon(true));
         var delB = el('button', 'ann-iconbtn', '🗑️');
         var doneB = el('button', 'ann-pill', 'Done');
         doneB.style.background = '#2E7D32';
@@ -2882,12 +2957,8 @@
     function ensureHistBar() {
         if (histBar) return;
         histBar = el('div', 'ann-histbar');
-        histBarU = el('button', 'ann-histbtn', '↶');
-        histBarU.title = 'Undo annotation change (Ctrl+Z)';
-        histBarU.addEventListener('click', annUndo);
-        histBarR = el('button', 'ann-histbtn', '↷');
-        histBarR.title = 'Redo (Ctrl+Y)';
-        histBarR.addEventListener('click', annRedo);
+        histBarU = histBtn('ann-histbtn', true, 'Undo annotation change (Ctrl+Z)', annUndo);
+        histBarR = histBtn('ann-histbtn', false, 'Redo (Ctrl+Y)', annRedo);
         histBar.appendChild(histBarU);
         histBar.appendChild(histBarR);
         document.body.appendChild(histBar);
@@ -2965,12 +3036,8 @@
         var d = el('div', 'ann-dock');
         var head = el('div', 'ann-dock-head');
         var title = el('h3', null, 'On this plan');
-        histUndoB = el('button', 'ann-iconbtn', '↶');
-        histUndoB.title = 'Undo';
-        histUndoB.addEventListener('click', annUndo);
-        histRedoB = el('button', 'ann-iconbtn', '↷');
-        histRedoB.title = 'Redo';
-        histRedoB.addEventListener('click', annRedo);
+        histUndoB = histBtn('ann-iconbtn', true, 'Undo', annUndo);
+        histRedoB = histBtn('ann-iconbtn', false, 'Redo', annRedo);
         var collapseB = el('button', 'ann-iconbtn', '×');
         collapseB.style.fontSize = '22px';
         collapseB.addEventListener('click', collapseLayersDock);

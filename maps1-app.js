@@ -133,7 +133,21 @@
         //       105/106 also stops the new restore from discarding the PREVIOUS
         //       pin's pending one — long-pressing two markers in a row left the
         //       first stranded as an orange dot.
-        var APP_VERSION = '105';
+        // 107/108 = press-and-hold drag out of Add marker actually works on
+        //       Android. Root cause was NOT the hold timing: a non-passive touchmove
+        //       listener registered inside pointerdown is IGNORED for the gesture in
+        //       flight, because Chrome decides at touchstart whether the touch can be
+        //       scrolled off the main thread. preventDefault returned silently, the
+        //       grid scrolled, and the scroll cancelled the pointer stream. The
+        //       blocker is now registered on the dialog at build time; the drag
+        //       listens on document (the cell sits inside a hidden dialog and can
+        //       lose pointer capture); and a cancelled stream no longer drops the
+        //       icon -- the dialog stays aside and the next tap on the map places it.
+        //       Selection is off across the whole annotation UI (inputs excepted):
+        //       making only the cell unselectable just moved Chrome's long-press
+        //       selection onto the heading. Undo/redo now use the owner's Font
+        //       Awesome arrow, mirrored across the vertical axis for undo.
+        var APP_VERSION = '107';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
