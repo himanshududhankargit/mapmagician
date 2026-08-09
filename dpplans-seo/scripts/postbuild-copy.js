@@ -40,6 +40,11 @@ function copyIfExists(srcRel, destRel) {
 
 copyIfExists('maps.html', 'maps.html');
 copyIfExists('maps-app.js', 'maps-app.js');
+// The Annotate feature, lazy-loaded by maps-app.js on first tap via a same-origin
+// relative URL. dpplans.com serves ONLY what this script copies, so without it the
+// button 404s and the tools never open — the map itself still works, which is
+// exactly the kind of half-broken this allowlist keeps producing.
+copyIfExists('maps-annotations.js', 'maps-annotations.js');
 copyIfExists('manifest.json', 'manifest.json');
 copyIfExists('sw.js', 'sw.js');
 copyIfExists('AssetsGIS', 'AssetsGIS');
@@ -57,9 +62,10 @@ copyIfExists('index1.html', 'index.html');
 copyIfExists('index1.html', 'index1.html');
 
 // Staging slots: maps1.html, maps2.html, etc. — always test these on dpplans.com before promoting.
-// Also pick up their *-app.js companions (maps1-app.js, maps2-app.js, ...).
+// Also pick up their *-app.js and *-annotations.js companions.
 fs.readdirSync(MM_ROOT)
-  .filter(f => /^maps\d+\.html$/.test(f) || /^maps\d+-app\.js$/.test(f))
+  .filter(f => /^maps\d+\.html$/.test(f) || /^maps\d+-app\.js$/.test(f) ||
+               /^maps\d+-annotations\.js$/.test(f))
   .forEach(f => copyIfExists(f, f));
 
 // CNAME tells GitHub Pages / Cloudflare Pages which custom domain to bind. Cloudflare

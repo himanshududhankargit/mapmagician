@@ -36,14 +36,82 @@
         // 062 = Proceed/Cancel bar moved just below the capture box (outside it).
         // 064 = geodetic scale bar drawn bottom-right of the map window on the sheet.
         // 066 = "Add scale bar" option in the dialog, checked by default.
-        // 067 = LIVE promotion of 066 (a promotion is a push: live takes max(maps,maps1)+1).
-        // 068 = download records name their region (districtName sent with the order) and
-        //       report delivered/failed back to the server (logDownloadOutcome), so the
-        //       admin panel can see who downloaded what and which downloads never landed.
-        // 070 = LIVE promotion of 069: "Don't show this again" on the download explainer
-        //       actually decides — the dialog reappears on every tap unless the box is ticked
-        //       (it was suppressed after one showing per page load regardless).
-        var APP_VERSION = '088';
+        // 069 = "Don't show this again" on the download explainer actually decides: the dialog
+        //       reappears on every tap unless the box is ticked (it was suppressed after one
+        //       showing per page load regardless, which made the checkbox do nothing).
+        // 071 = Annotate feature (Android annotations/ package port): text / markers /
+        //       areas / roads in a LAZY-LOADED maps1-annotations.js (fetched on first
+        //       Annotate tap — zero start-time cost), with capture-viewfinder
+        //       ground-overlay stand-ins and annotation drawing on the export stitch.
+        // 072 = Annotate desktop polish (dialogs dock LEFT over a click-through
+        //       backdrop, marker icons drag-and-drop onto the map, inline Add under
+        //       the tapped icon, × close everywhere) + download region-label
+        //       fallback (_dlmapRegionFromSources: paid downloads name their region
+        //       even when findDistrictAtCenter answers null).
+        // 074 = version renumber only: 072 was stamped while a parallel promotion
+        //       took live to 073, so staging re-stamps at max(073,072)+1 to keep the
+        //       counter monotonic. No behaviour change vs 072.
+        // 075 = region editor Fill/Border tabs actually switch (the port never
+        //       attached their click listeners — clicking Border only text-selected
+        //       it) + user-select:none on the panel controls.
+        // 076 = marker picker's inline Add works: the cell's drag handler captured
+        //       the pointer on ANY press inside the cell, retargeting the click to
+        //       the cell — presses starting on the Add button are now exempt.
+        // 077 = My-annotations fab above the Layers fab expanding into a non-modal
+        //       dock (Android layers-sheet counterpart); restack drag fixed
+        //       (document-level listeners — setPointerCapture died when insertBefore
+        //       moved the row); ‹ Back from Marker/Text dialogs to the annotate
+        //       sheet; global undo/redo (50 snapshots, dock buttons + Ctrl+Z/Y);
+        //       drag-an-icon hides the dialog mid-drag, touch lifts via press-hold.
+        // 078 = markers are named AFTER they land on the map (picker has no name
+        //       field for new pins; edit keeps it) + the dialogs' × is sticky so
+        //       it survives scrolling the 40-type grid.
+        // 079 = Annotate shows "Opening…" while the lazy JS downloads and swallows
+        //       double taps (they used to stack two copies of the sheet); openSheet
+        //       is idempotent; dock toggle debounced 350ms.
+        // 080 = previous annotations are OFFERED on first use ("Load your previous
+        //       annotations?" — declining keeps them loadable from the panel), and
+        //       double-clicking an annotation no longer stacks its options sheet.
+        // 081 = floating ↶↷ undo/redo bar bottom-left whenever there is history to
+        //       act on (not only inside the dock) + road names sit on an opaque
+        //       road-coloured pill so the dashed centre line can't strike through.
+        // 082 = viewfinder +/- zoom buttons: tap = 0.15 fractional nudge, hold =
+        //       smooth glide (wheel/pinch only step whole zooms — too coarse to
+        //       frame a capture precisely).
+        // 083 = the annotate sheet's "N on this map" line is live (loading the
+        //       previous annotations while the sheet was open kept showing 0) +
+        //       the dialogs' bottom button row (‹ Back / Add) is sticky like the ×,
+        //       so it stays visible however far the marker grid is scrolled.
+        // 084 = viewfinder +/- actually zooms: this is a RASTER map, so fractional
+        //       setZoom was silently rounded back until isFractionalZoomEnabled is
+        //       on — enabled for the framing session only, snapped+restored on
+        //       close; Proceed reads the exact zoom first and the capture rect
+        //       carries the fractional cz (fetch zooms gz/pz stay integer).
+        // 085 = annotations render at FINAL-SHEET resolution: they moved from the
+        //       stitch pass into _dlmapComposeFinal (drawOnSheet), re-rendering the
+        //       artwork for the true on-sheet size — stitch-drawn markers blurred
+        //       whenever the compose upscaled (gz capped at MAX_ZOOM_FOR_DP).
+        // 086 = the text-placement Done/Cancel bar (and the road drawing bar) sits
+        //       ABOVE the bottom controls row on every screen — it was pinned 26px
+        //       from the map's bottom edge, underneath the slider/Browse row.
+        // 087 = smooth layer restacking: the dragged row follows the pointer with a
+        //       lifted look, displaced rows FLIP-slide into their new slots, and the
+        //       drop settles with a short ease instead of an instant rebuild.
+        // 089 = picker icons lift ONLY via press-and-hold unless the pointer is a
+        //       real mouse — browsers reporting an empty pointerType were treated
+        //       as mouse and dragged instantly on touch; hold raised to 450ms.
+        //       (088 was claimed by a parallel live-pair change.)
+        // 090 = road-drawing red dots get the full vertex treatment (drag to move,
+        //       tap for the orange move disc + × delete — Android parity); the
+        //       region/road EDITORS already had it via showVertexHandle.
+        // 091 = rename dialogs commit reliably: OK button (was Save), Enter key
+        //       saves, existing text pre-selected — the owner typed a name and
+        //       fumbled to save it.
+        // 092 = placed markers no longer drag on touch: a swipe starting on a pin
+        //       pans the map, and a 450ms LONG PRESS raises the orange move disc
+        //       (+ × delete) to reposition it. Mouse keeps direct dragging; the
+        //       options menu gains "Move this marker" on touch.
+        var APP_VERSION = '093';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7637,6 +7705,89 @@
             });
             document.getElementById('dlmap-vf-proceed').addEventListener('click', _dlmapProceedCapture);
             document.getElementById('dlmap-vf-cancel').addEventListener('click', _dlmapCloseViewfinder);
+            // Viewfinder +/- : tap = 0.15-zoom nudge, HOLD = smooth glide. Uses
+            // fractional setZoom — wheel/pinch move in whole steps, which is why
+            // framing felt imprecise. Capture itself still rounds (cz stays int).
+            function _dlmapHoldZoom(btnId, dir) {
+                var zbtn = document.getElementById(btnId);
+                if (!zbtn) return;
+                var timer = null;
+                function step(dz) {
+                    var z = Math.max(3, Math.min(21, map.getZoom() + dz));
+                    map.setZoom(z);
+                }
+                function stop() { if (timer) { clearInterval(timer); timer = null; } }
+                zbtn.addEventListener('pointerdown', function (e) {
+                    e.preventDefault();
+                    zbtn.setPointerCapture(e.pointerId);
+                    step(dir * 0.15);
+                    timer = setInterval(function () { step(dir * 0.07); }, 60);
+                });
+                zbtn.addEventListener('pointerup', stop);
+                zbtn.addEventListener('pointercancel', stop);
+                zbtn.addEventListener('lostpointercapture', stop);
+            }
+            _dlmapHoldZoom('dlmap-zoom-in', 1);
+            _dlmapHoldZoom('dlmap-zoom-out', -1);
+            // Annotate — the whole feature lives in maps1-annotations.js, fetched on
+            // the FIRST tap only (lazy: start time is untouched). ?v= rides the app
+            // version so a deploy invalidates it in lockstep with this file.
+            var _annLoading = null;
+            function loadAnnotations() {
+                if (window.mmAnnotations) return Promise.resolve(window.mmAnnotations);
+                if (_annLoading) return _annLoading;
+                _annLoading = new Promise(function (resolve, reject) {
+                    var sc = document.createElement('script');
+                    sc.src = 'maps-annotations.js?v=' + APP_VERSION;
+                    sc.onload = function () {
+                        if (window.mmAnnotations) resolve(window.mmAnnotations);
+                        else { _annLoading = null; reject(new Error('annotations init failed')); }
+                    };
+                    sc.onerror = function () { _annLoading = null; reject(new Error('annotations load failed')); };
+                    document.head.appendChild(sc);
+                });
+                return _annLoading;
+            }
+            // While the lazy JS downloads the button says so and further taps are
+            // swallowed — a double tap used to queue openSheet twice and stack
+            // two copies of the dialog.
+            var _annOpening = false;
+            function _annRun(btn, busyLabel, action) {
+                if (_annOpening) return;
+                var loaded = !!window.mmAnnotations;
+                if (!loaded) {
+                    _annOpening = true;
+                    btn.disabled = true;
+                    if (busyLabel) btn.textContent = busyLabel;
+                    btn.style.opacity = '0.6';
+                }
+                function restore() {
+                    _annOpening = false;
+                    btn.disabled = false;
+                    if (busyLabel) btn.textContent = 'Annotate';
+                    btn.style.opacity = '';
+                }
+                loadAnnotations().then(function (m) {
+                    restore();
+                    action(m);
+                }).catch(function (e) {
+                    restore();
+                    console.error('annotate load failed:', e);
+                    _dlmapToast('Could not load the annotate tools — check your connection');
+                });
+            }
+            var _annBtn = document.getElementById('btn-annotate');
+            if (_annBtn) _annBtn.addEventListener('click', function () {
+                try { mmAnalytics.event('annotate_open', {}); } catch (e) {}
+                _annRun(_annBtn, 'Opening…', function (m) { m.openSheet(); });
+            });
+            // My-annotations fab (above the Layers fab): expands the annotation
+            // layers dock, same lazy module.
+            var _annLayersBtn = document.getElementById('btn-my-annotations');
+            if (_annLayersBtn) _annLayersBtn.addEventListener('click', function () {
+                try { mmAnalytics.event('annotate_layers_open', {}); } catch (e) {}
+                _annRun(_annLayersBtn, null, function (m) { m.toggleLayersDock(); });
+            });
             document.getElementById('dlmap-unowned-cancel').addEventListener('click', function() {
                 document.getElementById('dlmap-unowned-overlay').classList.remove('open');
             });
@@ -10410,13 +10561,13 @@
                 return;
             }
             try {
-                var createDownloadOrder = functions.httpsCallable('createDownloadOrder');
                 // Grab the ID token NOW, while we can await it. The pagehide reporter
                 // runs during unload where getIdToken() will never resolve, and a
                 // token minted here is good for an hour against a render that takes
                 // seconds. Failure is non-fatal: it only costs the unload report.
                 var idToken = '';
                 try { idToken = await user.getIdToken(); } catch (e) {}
+                var createDownloadOrder = functions.httpsCallable('createDownloadOrder');
                 // districtName rides along so every server-side record (ledger, delivery
                 // receipt, outcome event) carries a region a human can read, instead of
                 // just the raw productPurchaseID.
@@ -10802,7 +10953,7 @@
         // contain-fit the capture into the template's map window, centered; caption
         // white-out + text only when the user changed the default (Android parity —
         // the template carries its own printed caption otherwise).
-        function _dlmapComposeFinal(tmpl, stitch, rect, caption) {
+        function _dlmapComposeFinal(tmpl, stitch, rect, caption, geo) {
             var c = document.createElement('canvas');
             c.width = DLMAP_TEMPLATE_W; c.height = DLMAP_TEMPLATE_H;
             var ctx = c.getContext('2d');
@@ -10814,6 +10965,14 @@
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(stitch, rect.left - rect.ox, rect.top - rect.oy, rect.w, rect.h, dx, dy, dw, dh);
+            // User annotations, drawn HERE at final-sheet resolution: the artwork is
+            // re-rendered for the true on-sheet size (the stitch pass blurred it
+            // whenever the compose upscaled). Failure must never cost the sheet.
+            if (window.mmAnnotations && geo) {
+                try {
+                    window.mmAnnotations.drawOnSheet(ctx, rect, geo, { dx: dx, dy: dy, scale: scale });
+                } catch (e) { console.error('annotation draw failed:', e); }
+            }
             if (caption && caption !== DLMAP_DEFAULT_CAPTION) {
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillRect(122, 2290, 3022 - 122, 2394 - 2290);       // kt white-out rect
@@ -10947,6 +11106,11 @@
                 });
                 if (ctrl.signal.aborted) return null;
                 txt.textContent = 'Rendering…';
+                // NOTE: user annotations are NOT drawn here. They are drawn in
+                // _dlmapComposeFinal at final-sheet resolution — drawing them on
+                // the stitch blurred them whenever the compose step upscaled
+                // (gz capped at MAX_ZOOM_FOR_DP makes the stitch smaller than the
+                // template window). The artwork is re-rendered for the sheet.
                 return { rect: rect, stitch: _dlmapStitch(rect, jobs), missing: missing };
             } finally {
                 overlay.classList.remove('open');
@@ -11022,8 +11186,17 @@
         function _dlmapCloseViewfinder() {
             document.getElementById('dlmap-viewfinder').style.display = 'none';
             document.body.classList.remove('dlmap-capturing');
+            // Back to the app's integer-zoom world. Proceed reads the exact
+            // fractional zoom BEFORE calling this, so the framing is not lost.
+            try {
+                map.setOptions({ isFractionalZoomEnabled: false });
+                map.setZoom(Math.round(map.getZoom()));
+            } catch (e) {}
             _dlmapChipListeners.forEach(function(l) { try { l.remove(); } catch (e) {} });
             _dlmapChipListeners = [];
+            // Restore live annotations (drops the to-scale stand-ins) — must run
+            // before any capture starts, and on plain Cancel.
+            if (window.mmAnnotations) { try { window.mmAnnotations.endCapturePreview(); } catch (e) {} }
         }
 
         function startDownloadMapFlow() {
@@ -11037,11 +11210,25 @@
             _dlmapUnownedWarned = false;
             document.body.classList.add('dlmap-capturing');
             document.getElementById('dlmap-viewfinder').style.display = '';
+            // Fractional zoom ON for the framing session: this is a RASTER map, and
+            // with isFractionalZoomEnabled=false (raster default) setZoom(z+0.15)
+            // rounds straight back to the integer — the +/- buttons did nothing.
+            // Restored (and snapped) in _dlmapCloseViewfinder.
+            try { map.setOptions({ isFractionalZoomEnabled: true }); } catch (e) {}
             _dlmapUpdateQualityChip();
             _dlmapChipListeners = [
                 map.addListener('zoom_changed', _dlmapUpdateQualityChip),
                 map.addListener('idle', _dlmapUpdateQualityChip)
             ];
+            // Annotations: screen-space stamps (pins, road names) hand over to
+            // ground-pinned stand-ins sized for the sheet, rebuilt as the camera
+            // settles — so the box previews exactly what the download will carry.
+            if (window.mmAnnotations) {
+                try { window.mmAnnotations.beginCapturePreview(); } catch (e) {}
+                _dlmapChipListeners.push(map.addListener('idle', function() {
+                    try { window.mmAnnotations.refreshCapturePreview(); } catch (e) {}
+                }));
+            }
         }
 
         async function _dlmapProceedCapture() {
@@ -11061,6 +11248,11 @@
             }
             var boxEl = document.getElementById('dlmap-viewfinder-box');
             var boxH = boxEl ? boxEl.offsetHeight : 0;
+            // Read the EXACT (possibly fractional — see the +/- buttons) framing
+            // before _dlmapCloseViewfinder snaps the camera back to integer zoom.
+            var cz = map.getZoom();
+            var czInt = Math.round(cz);
+            var c = map.getCenter();
             _dlmapCloseViewfinder();
             if (_dlmapSession && _dlmapSession.running) return;
             if (!map) return;
@@ -11068,8 +11260,6 @@
                 _dlmapToast('Connecting to tile server…');
                 if (!(await fetchCloudFrontCookies())) { _dlmapToast('Tile server not ready — try again'); return; }
             }
-            var cz = Math.round(map.getZoom());
-            var c = map.getCenter();
             // The box is centred over the full-viewport map, so the map centre IS the
             // box centre; its CSS height drives the capture rect (regen records store
             // it, so a saved boxed download reproduces identically).
@@ -11080,7 +11270,9 @@
             // nothing) so the preview promises exactly what the paid render delivers.
             // The box is much smaller than the viewport, so dig up to 3 zooms deeper
             // for print sharpness — the cap loop walks back down when it's too much.
-            var gz = Math.min(cz + 3, MAX_ZOOM_FOR_DP);
+            // Fetch zooms (gz/pz) are tile-pyramid levels and stay INTEGER; only the
+            // viewing zoom cz may be fractional, and the rect math handles that.
+            var gz = Math.min(czInt + 3, MAX_ZOOM_FOR_DP);
             var rect, jobs, baseJobs, canvasPx, srcs;
             for (;;) {
                 rect = _dlmapComputeCaptureRectFrom(gz, cz, geo.hCss, geo.lat, geo.lng);
@@ -11088,7 +11280,7 @@
                 srcs = _dlmapCollectSources(cz, rect.llBounds);
                 jobs = _dlmapEnumerateJobs(rect, srcs);
                 baseJobs = jobs.length ? _dlmapBasemapJobs(rect) : [];
-                if ((jobs.length + baseJobs.length <= DLMAP_MAX_TILE_FETCHES && canvasPx <= DLMAP_MAX_CANVAS_PX) || gz <= cz) break;
+                if ((jobs.length + baseJobs.length <= DLMAP_MAX_TILE_FETCHES && canvasPx <= DLMAP_MAX_CANVAS_PX) || gz <= czInt) break;
                 gz--;                                                     // too big — drop a zoom and retry
             }
             if (jobs.length === 0) { _dlmapToast('No plan layers here — move over a development plan'); return; }
@@ -11099,7 +11291,7 @@
             // PREVIEW at one zoom BELOW the screen: ~1/16th the tiles (and CDN egress)
             // of the final render. Full-quality tiles are fetched only after payment —
             // see _dlmapFinalizeDownload.
-            var pz = Math.max(cz - 1, MIN_ZOOM_FOR_DP);
+            var pz = Math.max(czInt - 1, MIN_ZOOM_FOR_DP);
             var ctrl = new AbortController();
             _dlmapSession = { running: true, abortCtrl: ctrl, phase: 'preview' };
             try {
@@ -11275,7 +11467,7 @@
             procNote.style.display = 'flex';
             var caption = document.getElementById('dlmap-caption').value.trim() || DLMAP_DEFAULT_CAPTION;
             s.caption = caption;
-            s.finalCanvas = _dlmapComposeFinal(s.tmpl, s.stitch, s.rect, caption);
+            s.finalCanvas = _dlmapComposeFinal(s.tmpl, s.stitch, s.rect, caption, s.geo);
             s.finalCanvas.toBlob(function(blob) {
                 procNote.style.display = 'none';
                 if (!blob || _dlmapSession !== s) {

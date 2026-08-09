@@ -496,6 +496,16 @@
         /* z-index above the bottom bar (1000) so the Proceed/Cancel bar is never
            covered; bar raised clear of the bottom navigation. */
         #dlmap-viewfinder { position:fixed; inset:0; z-index:1100; pointer-events:none; }
+        #dlmap-zoom-btns {
+            position:absolute; right:10px; top:50%; transform:translateY(-50%);
+            display:flex; flex-direction:column; gap:10px; pointer-events:auto;
+        }
+        #dlmap-zoom-btns button {
+            width:44px; height:44px; border-radius:50%; border:none; background:#fff;
+            box-shadow:0 2px 6px rgba(0,0,0,0.35); font-size:24px; line-height:1;
+            color:#333; cursor:pointer; touch-action:none; user-select:none;
+        }
+        #dlmap-zoom-btns button:active { background:#e8f5e9; }
         #dlmap-viewfinder-box {
             position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
             width:min(calc(100vw - 48px), calc((100dvh - 200px) * 1.3418));
@@ -1433,6 +1443,8 @@
     <div class="toolbar-scroll">
         <!-- Download Map deliberately first (owner request 2026-08-07) -->
         <button class="pill-btn" id="btn-download-map">Download Map</button>
+        <!-- Annotate: the feature JS (maps-annotations.js) lazy-loads on first tap -->
+        <button class="pill-btn" id="btn-annotate">Annotate</button>
         <button class="pill-btn" id="btn-addon-maps" style="display:none;background:#2E7D32;color:#fff;font-weight:600;">0 Add-On Maps</button>
         <button class="pill-btn" id="btn-old-maps" style="display:none">Load Old Maps</button>
         <button class="pill-btn" id="btn-legend">Legend</button>
@@ -1523,6 +1535,14 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
                 <circle cx="12" cy="12" r="3"/>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+        </button>
+        <!-- My annotations — expands into the annotation-layers dock
+             (feature JS lazy-loads on first tap, same file as the Annotate pill) -->
+        <button class="fab" id="btn-my-annotations" title="My annotations">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
+                <path d="M12 20h9"/>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
             </svg>
         </button>
         <!-- Layers button -->
@@ -2353,6 +2373,12 @@
     <div id="dlmap-viewfinder" style="display:none;">
         <div id="dlmap-viewfinder-box">
             <div id="dlmap-quality-chip">★★★★ Best quality at this zoom</div>
+            <!-- Precise framing: tap nudges the zoom a fraction, HOLD glides it.
+                 Wheel/pinch only move in whole zoom steps, too coarse for framing. -->
+            <div id="dlmap-zoom-btns">
+                <button id="dlmap-zoom-in" aria-label="Zoom in">+</button>
+                <button id="dlmap-zoom-out" aria-label="Zoom out">−</button>
+            </div>
             <!-- Bottom-centred just OUTSIDE the box, keeping the capture area clear -->
             <div id="dlmap-viewfinder-bar">
                 <button id="dlmap-vf-cancel" style="background:#616161;">Cancel</button>
@@ -2887,7 +2913,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps-app.js?v=088" defer></script>
+    <script src="maps-app.js?v=093" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
