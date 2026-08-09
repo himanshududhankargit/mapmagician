@@ -82,7 +82,12 @@
         //       previous annotations while the sheet was open kept showing 0) +
         //       the dialogs' bottom button row (‹ Back / Add) is sticky like the ×,
         //       so it stays visible however far the marker grid is scrolled.
-        var APP_VERSION = '083';
+        // 084 = viewfinder +/- actually zooms: this is a RASTER map, so fractional
+        //       setZoom was silently rounded back until isFractionalZoomEnabled is
+        //       on — enabled for the framing session only, snapped+restored on
+        //       close; Proceed reads the exact zoom first and the capture rect
+        //       carries the fractional cz (fetch zooms gz/pz stay integer).
+        var APP_VERSION = '084';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -11109,6 +11114,12 @@
         function _dlmapCloseViewfinder() {
             document.getElementById('dlmap-viewfinder').style.display = 'none';
             document.body.classList.remove('dlmap-capturing');
+            // Back to the app's integer-zoom world. Proceed reads the exact
+            // fractional zoom BEFORE calling this, so the framing is not lost.
+            try {
+                map.setOptions({ isFractionalZoomEnabled: false });
+                map.setZoom(Math.round(map.getZoom()));
+            } catch (e) {}
             _dlmapChipListeners.forEach(function(l) { try { l.remove(); } catch (e) {} });
             _dlmapChipListeners = [];
             // Restore live annotations (drops the to-scale stand-ins) — must run
@@ -11127,6 +11138,11 @@
             _dlmapUnownedWarned = false;
             document.body.classList.add('dlmap-capturing');
             document.getElementById('dlmap-viewfinder').style.display = '';
+            // Fractional zoom ON for the framing session: this is a RASTER map, and
+            // with isFractionalZoomEnabled=false (raster default) setZoom(z+0.15)
+            // rounds straight back to the integer — the +/- buttons did nothing.
+            // Restored (and snapped) in _dlmapCloseViewfinder.
+            try { map.setOptions({ isFractionalZoomEnabled: true }); } catch (e) {}
             _dlmapUpdateQualityChip();
             _dlmapChipListeners = [
                 map.addListener('zoom_changed', _dlmapUpdateQualityChip),
@@ -11160,6 +11176,11 @@
             }
             var boxEl = document.getElementById('dlmap-viewfinder-box');
             var boxH = boxEl ? boxEl.offsetHeight : 0;
+            // Read the EXACT (possibly fractional — see the +/- buttons) framing
+            // before _dlmapCloseViewfinder snaps the camera back to integer zoom.
+            var cz = map.getZoom();
+            var czInt = Math.round(cz);
+            var c = map.getCenter();
             _dlmapCloseViewfinder();
             if (_dlmapSession && _dlmapSession.running) return;
             if (!map) return;
@@ -11167,8 +11188,6 @@
                 _dlmapToast('Connecting to tile server…');
                 if (!(await fetchCloudFrontCookies())) { _dlmapToast('Tile server not ready — try again'); return; }
             }
-            var cz = Math.round(map.getZoom());
-            var c = map.getCenter();
             // The box is centred over the full-viewport map, so the map centre IS the
             // box centre; its CSS height drives the capture rect (regen records store
             // it, so a saved boxed download reproduces identically).
@@ -11179,7 +11198,9 @@
             // nothing) so the preview promises exactly what the paid render delivers.
             // The box is much smaller than the viewport, so dig up to 3 zooms deeper
             // for print sharpness — the cap loop walks back down when it's too much.
-            var gz = Math.min(cz + 3, MAX_ZOOM_FOR_DP);
+            // Fetch zooms (gz/pz) are tile-pyramid levels and stay INTEGER; only the
+            // viewing zoom cz may be fractional, and the rect math handles that.
+            var gz = Math.min(czInt + 3, MAX_ZOOM_FOR_DP);
             var rect, jobs, baseJobs, canvasPx, srcs;
             for (;;) {
                 rect = _dlmapComputeCaptureRectFrom(gz, cz, geo.hCss, geo.lat, geo.lng);
@@ -11187,7 +11208,7 @@
                 srcs = _dlmapCollectSources(cz, rect.llBounds);
                 jobs = _dlmapEnumerateJobs(rect, srcs);
                 baseJobs = jobs.length ? _dlmapBasemapJobs(rect) : [];
-                if ((jobs.length + baseJobs.length <= DLMAP_MAX_TILE_FETCHES && canvasPx <= DLMAP_MAX_CANVAS_PX) || gz <= cz) break;
+                if ((jobs.length + baseJobs.length <= DLMAP_MAX_TILE_FETCHES && canvasPx <= DLMAP_MAX_CANVAS_PX) || gz <= czInt) break;
                 gz--;                                                     // too big — drop a zoom and retry
             }
             if (jobs.length === 0) { _dlmapToast('No plan layers here — move over a development plan'); return; }
@@ -11198,7 +11219,7 @@
             // PREVIEW at one zoom BELOW the screen: ~1/16th the tiles (and CDN egress)
             // of the final render. Full-quality tiles are fetched only after payment —
             // see _dlmapFinalizeDownload.
-            var pz = Math.max(cz - 1, MIN_ZOOM_FOR_DP);
+            var pz = Math.max(czInt - 1, MIN_ZOOM_FOR_DP);
             var ctrl = new AbortController();
             _dlmapSession = { running: true, abortCtrl: ctrl, phase: 'preview' };
             try {
