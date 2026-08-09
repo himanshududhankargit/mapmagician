@@ -120,7 +120,17 @@
         //       refused with a "finish what you started" notice instead of silently
         //       tearing the first down (a child of the owner's had the road, the
         //       region AND the text surface live at once).
-        var APP_VERSION = '101';
+        // 103/104 = three mobile fixes. (a) The 095/096 pin-icon restore never ran:
+        //       showVertexHandle's first act is to call hideVertexHandle, so the
+        //       wrapper consumed the pending restore before the host had even
+        //       restyled the pin — it is now registered AFTER the call returns, so
+        //       a long-pressed marker keeps its own artwork. (b) Dragging an icon
+        //       out of Add marker died on touch: Android Chrome answers the same
+        //       press-and-hold with a text selection, whose pointercancel killed
+        //       the lift (it buzzed, then nothing) — the grid cells are
+        //       user-select:none now. (c) The redundant "Name & colour" row is gone
+        //       from the annotation menu; both editors already own those settings.
+        var APP_VERSION = '103';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

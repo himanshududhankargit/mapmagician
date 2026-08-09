@@ -1318,8 +1318,12 @@
             '.ann-cap{font-size:11px;letter-spacing:.06em;color:#888;margin:14px 0 0;font-weight:600;}',
             // marker grid
             '.ann-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px;}',
-            '.ann-grid .ann-cat{grid-column:1/-1;font-size:11px;font-weight:700;letter-spacing:.04em;margin:8px 0 0;}',
-            '.ann-type{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;border-radius:10px;cursor:pointer;border:2px solid transparent;touch-action:pan-y;}',
+            '.ann-grid .ann-cat{grid-column:1/-1;font-size:11px;font-weight:700;letter-spacing:.04em;margin:8px 0 0;-webkit-user-select:none;user-select:none;}',
+            // user-select MUST be off: a press-and-hold on a cell is our drag
+            // gesture, and Android Chrome answers the same hold by starting a TEXT
+            // SELECTION, which fires pointercancel and kills the drag mid-lift —
+            // the "it vibrates but nothing happens, it just selects the text" bug.
+            '.ann-type{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;border-radius:10px;cursor:pointer;border:2px solid transparent;touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}',
             '.ann-type.sel{border-color:#2E7D32;background:#E8F5E9;}',
             '.ann-type .em{font-size:22px;line-height:1;}',
             '.ann-type .nm{font-size:10px;color:#444;text-align:center;line-height:1.15;}',
@@ -1652,6 +1656,13 @@
                         // finger — the whole point of dragging, and on mobile the
                         // sheet would otherwise cover the drop target completely.
                         scrim.classList.add('ann-dragging');
+                        // Drop any selection the browser managed to start before the
+                        // hold completed — left standing it keeps the blue highlight
+                        // (and its drag handles) over the sheet for the whole gesture.
+                        try {
+                            var sel = window.getSelection && window.getSelection();
+                            if (sel && sel.removeAllRanges) sel.removeAllRanges();
+                        } catch (er2) {}
                         try { if (navigator.vibrate) navigator.vibrate(20); } catch (er) {}
                     }
                     if (!isMouse) holdT = setTimeout(function () {
@@ -1778,8 +1789,16 @@
         // another dot — neither knows about a pin's own artwork. Remember the
         // real icon, undo the restyle immediately, and put it back after any
         // hide (see wrapHideVertexHandle) so a pin never turns into a vertex.
-        pinIconRestore = { marker: h.marker, icon: h.marker.getIcon() };
+        var realIcon = h.marker.getIcon();
         wrapHideVertexHandle();
+        // 🛑 The restore is registered AFTER showVertexHandle returns, never before.
+        // The host's very first act is to call hideVertexHandle() itself (to clear
+        // any previous handle) — so a restore parked beforehand was consumed by our
+        // own wrapper, leaving pinIconRestore null by the time the icon actually
+        // needed putting back. That is why the pin turned into an orange dot AND
+        // stayed one: both the show-time and every later hide-time restore were
+        // silently no-ops.
+        pinIconRestore = null;
         showVertexHandle(h.marker, {
             isSaved: false,
             onMove: function (latLng) {
@@ -1792,6 +1811,7 @@
                 layer.remove(a.id);
             }
         });
+        pinIconRestore = { marker: h.marker, icon: realIcon };
         restorePinIcon();                            // undo the show-time restyle
         toast('Drag the orange disc to move · × deletes');
     }
@@ -1861,25 +1881,10 @@
                 layer.update(a);
             });
         });
-        if (a.kind === 'area' || a.kind === 'road') opt('🎨', 'Name & colour', false, function () {
-            var isArea = a.kind === 'area';
-            describeShapeDialog(
-                isArea ? 'Region' : 'Road', isArea ? 'area' : 'length',
-                { label: a.label, color: a.color, showMeasurement: isArea ? a.showArea : a.showLength },
-                function (label, color, showMeasurement) {
-                    a.label = label;
-                    if (isArea) {
-                        if (a.borderColor === a.color) a.borderColor = color;   // paired inks follow
-                        a.color = color;
-                        a.showArea = showMeasurement;
-                    } else {
-                        a.color = color;
-                        a.showLength = showMeasurement;
-                    }
-                    layer.update(a);
-                }
-            );
-        });
+        // No "Name & colour" row: it duplicated the editors above. Both the region
+        // and road editor panels already carry the name (✏️), the palette, the
+        // opacity/thickness slider and the Show-name/Show-measurement checkboxes —
+        // two doors onto the same settings only invite them to disagree.
         if (a.kind === 'text') opt('🧭', 'Move, resize & rotate', false, function () {
             startTextPlacement(a.text, a.centered, a);
         });
