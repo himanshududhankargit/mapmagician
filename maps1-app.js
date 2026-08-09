@@ -91,7 +91,10 @@
         //       stitch pass into _dlmapComposeFinal (drawOnSheet), re-rendering the
         //       artwork for the true on-sheet size — stitch-drawn markers blurred
         //       whenever the compose upscaled (gz capped at MAX_ZOOM_FOR_DP).
-        var APP_VERSION = '085';
+        // 086 = the text-placement Done/Cancel bar (and the road drawing bar) sits
+        //       ABOVE the bottom controls row on every screen — it was pinned 26px
+        //       from the map's bottom edge, underneath the slider/Browse row.
+        var APP_VERSION = '086';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

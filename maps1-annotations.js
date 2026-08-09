@@ -1304,8 +1304,9 @@
             '.ann-opt{display:flex;align-items:center;gap:16px;padding:13px 8px;border-radius:10px;cursor:pointer;font-size:15px;color:#222;}',
             '.ann-opt:hover,.ann-opt:active{background:#f4f4f4;}',
             '.ann-opt.ann-del{color:#E53935;}',
-            // drawing bar (road tap-out) — sits above the bottom toolbar
-            '.ann-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom));background:#fff;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.3);display:flex;align-items:center;gap:8px;padding:10px 14px;z-index:1150;max-width:calc(100vw - 20px);}',
+            // drawing/placement bar — always clear of the bottom controls row
+            // (opacity slider + Browse Regions), on mobile and desktop alike
+            '.ann-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(112px + env(safe-area-inset-bottom));background:#fff;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.3);display:flex;align-items:center;gap:8px;padding:10px 14px;z-index:1150;max-width:calc(100vw - 20px);}',
             '.ann-bar .ann-readout{font-size:14px;font-weight:700;color:#212121;min-width:100px;white-space:nowrap;}',
             '.ann-pill{border:0;border-radius:20px;color:#fff;font-size:13px;font-weight:700;padding:8px 14px;cursor:pointer;white-space:nowrap;}',
             // editor panel card
@@ -1917,9 +1918,9 @@
             return ctx;
         });
 
+        // The class position is FIXED above the bottom controls — the bar used to
+        // sit 26px from the map's bottom edge, underneath the slider/Browse row.
         var bar = el('div', 'ann-bar');
-        bar.style.position = 'absolute';
-        bar.style.bottom = '26px';
         bar.appendChild(el('span', 'ann-readout', 'Drag · pinch or ⤢ to size'));
         var cancelB = el('button', 'ann-pill', 'Cancel');
         cancelB.style.background = '#616161';
