@@ -2078,6 +2078,14 @@
         // opts: { points, closed, minPoints, onLiveChange(), onCommit(), noun }
         var vertexMarkers = [], midMarkers = [];
         var undoStack = [];
+        // Midpoints slide to the new edge centres WHILE a corner is being dragged,
+        // so one can end up directly under the finger — and the click synthesized
+        // at release then lands on it and splits the edge, adding a vertex the
+        // user never asked for (owner report: intermittent, because it depends on
+        // where the midpoint settles). Any drag arms this window; a midpoint click
+        // inside it is treated as the tail of that gesture, not a new intent.
+        var midClickGuardUntil = 0;
+        function armMidGuard() { midClickGuardUntil = Date.now() + 400; }
         function pushUndo() {
             undoStack.push(opts.points.map(function (p) { return { lat: p.lat, lng: p.lng }; }));
             if (undoStack.length > UNDO_DEPTH) undoStack.shift();
@@ -2109,11 +2117,13 @@
                     var ll = m.getPosition();
                     opts.points[m._idx] = { lat: ll.lat(), lng: ll.lng() };
                     repositionMids();
+                    armMidGuard();
                     opts.onLiveChange();
                     if (typeof moveMagnifier === 'function') moveMagnifier(ll);
                 });
                 m.addListener('dragend', function () {
                     if (typeof hideMagnifier === 'function') hideMagnifier();
+                    armMidGuard();
                     opts.onCommit();
                 });
                 m.addListener('click', function () {
@@ -2123,9 +2133,10 @@
                         onMove: function (latLng) {
                             opts.points[m._idx] = { lat: latLng.lat(), lng: latLng.lng() };
                             repositionMids();
+                            armMidGuard();
                             opts.onLiveChange();
                         },
-                        onMoveEnd: function () { opts.onCommit(); },
+                        onMoveEnd: function () { armMidGuard(); opts.onCommit(); },
                         onDelete: function () {
                             if (opts.points.length <= opts.minPoints) {
                                 toast('A ' + opts.noun + ' needs at least ' + opts.minPoints + ' points');
@@ -2150,6 +2161,7 @@
                         zIndex: 200001, clickable: true
                     });
                     m.addListener('click', function () {   // a green midpoint splits its edge
+                        if (Date.now() < midClickGuardUntil) return;   // tail of a drag
                         pushUndo();
                         opts.points.splice(i + 1, 0, midOf(opts.points[i], opts.points[(i + 1) % opts.points.length]));
                         rebuild();
