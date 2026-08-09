@@ -873,9 +873,19 @@
                     if (longPressed) { longPressed = false; return; }   // the hold owned it
                     openOptions(a);
                 });
+                // A native drag must not also count as a long press, or the handle
+                // is torn down and rebuilt underneath the moving finger.
+                h.marker.addListener('dragstart', cancelPress);
                 h.marker.addListener('drag', function () {
                     var p = h.marker.getPosition();
                     a.lat = p.lat(); a.lng = p.lng();
+                    // The move disc is drawn from the marker's position, but only when
+                    // the MAP redraws — which a marker drag does not do. Nudge it so
+                    // the handle travels with the pin instead of staying behind.
+                    try {
+                        if (typeof activeVertexHandle !== 'undefined' && activeVertexHandle &&
+                            activeVertexHandle._marker === h.marker) activeVertexHandle.draw();
+                    } catch (e) {}
                 });
                 h.marker.addListener('dragend', function () {
                     var p = h.marker.getPosition();
@@ -1886,17 +1896,33 @@
                 layer.remove(a.id);
             }
         });
-        pinIconRestore = { marker: h.marker, icon: realIcon };
+        pinIconRestore = { marker: h.marker, icon: realIcon, draggable: !!h.marker.getDraggable() };
         restorePinIcon();                            // undo the show-time restyle
-        toast('Drag the orange disc to move · × deletes');
+        // 🛑 THE MARKER ITSELF becomes draggable for as long as the handle is up.
+        // The host's disc is a 20 px target built for measure vertices and its drag
+        // rides on listeners registered inside touchstart; on a phone that is a
+        // coin-toss, and "the handle appears but the icon will not move" was the
+        // result. Google's own marker dragging is a big target and is the one touch
+        // path that is genuinely well tested — so the pin answers the finger
+        // directly, and the disc stays as the precise alternative. Normal (no
+        // handle) touch dragging is still off, so a swipe across a pin pans the map;
+        // restorePinIcon puts this back exactly as it was.
+        try { h.marker.setDraggable(true); } catch (e) {}
+        toast('Drag the marker or the orange disc · × deletes');
     }
 
-    // Put a pin's own artwork back after the host handle has restyled it.
+    // Put a pin's own artwork — and its no-touch-drag rule — back after the host
+    // handle has restyled it.
     var pinIconRestore = null;
     function restorePinIcon() {
         var r = pinIconRestore;
         if (!r || !r.marker) return;
-        try { if (r.marker.getMap()) r.marker.setIcon(r.icon); } catch (e) {}
+        try {
+            if (r.marker.getMap()) {
+                r.marker.setIcon(r.icon);
+                r.marker.setDraggable(r.draggable);
+            }
+        } catch (e) {}
     }
     // The host hides the handle from several places of its own (a map click, a
     // new handle, measure teardown), each ending in that dot restyle. Wrapping
