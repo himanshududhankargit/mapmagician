@@ -2642,9 +2642,13 @@
     // #btn-my-annotations fab (sitting above the map-layers fab) and shrinks back
     // into it — the web's version of the Android layers bottom sheet. Non-modal:
     // the map stays live beside it.
-    var dockEl = null, dockClosing = null;
+    var dockEl = null, dockClosing = null, dockLastToggle = 0;
     function toggleLayersDock() {
         if (!ensureInit()) { toast('Map still loading — try again in a moment'); return; }
+        // A double-click is one intent, not open-then-instantly-close.
+        var now = Date.now();
+        if (now - dockLastToggle < 350) return;
+        dockLastToggle = now;
         if (dockEl) collapseLayersDock(); else expandLayersDock();
     }
     function expandLayersDock() {
@@ -2858,6 +2862,9 @@
     // One chooser for every tool that puts something on the map (AnnotateSheet).
     function openSheet() {
         if (!ensureInit()) { toast('Map still loading — try again in a moment'); return; }
+        // A double tap on the Annotate pill must not stack a second copy — if any
+        // annotate modal is already up, this one keeps it.
+        if (openScrims.length) return;
         var scrim = mkScrim(false);
         var d = el('div', 'ann-sheet');
         addCloseX(d, scrim);
