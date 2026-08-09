@@ -156,7 +156,7 @@
         //       disc stays as the precise alternative and the handle now travels with
         //       the pin during a native drag. Ordinary touch dragging is still off,
         //       so a swipe across a pin still pans the map.
-        var APP_VERSION = '109';
+        var APP_VERSION = '111';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

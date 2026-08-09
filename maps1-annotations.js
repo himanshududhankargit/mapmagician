@@ -115,6 +115,32 @@
         return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
     }
 
+    // Where the finger actually is, recorded at the DOCUMENT in capture — i.e.
+    // before Maps sees the event. Maps synthesizes a marker's mousedown/click
+    // from touch and those synthetic events carry no usable client coordinates,
+    // so this is the only way a long press can know where the press landed, how
+    // far it has since travelled, and which pointer to follow while carrying.
+    var lastPointer = null;
+    var PRESS_SLOP = 12;               // px a hold may wander before it is a pan
+    if ('PointerEvent' in window) {
+        document.addEventListener('pointerdown', function (e) {
+            // Primary only — a second finger arriving mid-press (a pinch attempt)
+            // must not become the one the carry follows.
+            if (e.isPrimary === false) return;
+            lastPointer = { id: e.pointerId, x: e.clientX, y: e.clientY,
+                            x0: e.clientX, y0: e.clientY };
+        }, true);
+        document.addEventListener('pointermove', function (e) {
+            if (lastPointer && e.pointerId === lastPointer.id) {
+                lastPointer.x = e.clientX; lastPointer.y = e.clientY;
+            }
+        }, true);
+    }
+    function pointerDrift() {
+        if (!lastPointer) return 0;
+        return Math.hypot(lastPointer.x - lastPointer.x0, lastPointer.y - lastPointer.y0);
+    }
+
     function toast(msg) {
         if (typeof _dlmapToast === 'function') { _dlmapToast(msg); return; }
         console.log('[annotations]', msg);
@@ -844,9 +870,9 @@
                         anchor: new google.maps.Point(pb.w / 2, pinAnchorV(type, pb) * pb.h)
                     },
                     // Touch: NOT draggable — a swipe that starts on a pin must pan
-                    // the map, not carry the pin off. A long press raises the move
-                    // disc instead (below), which is also the precise way to place
-                    // it. Mouse keeps direct dragging.
+                    // the map, not carry the pin off. A long press hands the pin to
+                    // the finger instead (startPinCarry, below). Mouse keeps
+                    // Google's own direct dragging.
                     draggable: !isCoarsePointer(),
                     clickable: true, visible: false,
                     zIndex: 100000 + a.order, title: displayName(a)
@@ -861,9 +887,14 @@
                     cancelPress();
                     pressTimer = setTimeout(function () {
                         pressTimer = null;
+                        // A hold that has already travelled is a pan that happened
+                        // to begin on a pin — leave that gesture to the map.
+                        if (pointerDrift() > PRESS_SLOP) return;
                         longPressed = true;
                         try { if (navigator.vibrate) navigator.vibrate(20); } catch (e) {}
-                        showPinMoveHandle(h, a);
+                        // The pin follows the finger from here, in the SAME gesture.
+                        // The disc is the fallback when there is no pointer to follow.
+                        if (!startPinCarry(h, a)) showPinMoveHandle(h, a);
                     }, 450);
                 });
                 h.marker.addListener('mouseup', cancelPress);
@@ -1861,10 +1892,81 @@
         scrim.appendChild(d);
     }
 
+    // ------------------------------------------------- press and carry (touch)
+    // Hold a pin and it lifts and follows the finger, in the same gesture — what
+    // a hold is expected to do, and what the Android app does.
+    //
+    // 🛑 It cannot be Google's own marker dragging. That only ever latches at
+    // touchstart, so a marker made draggable 450 ms into the press ignores the
+    // finger already sitting on it: the pin "becomes draggable" and yet refuses
+    // to move until you lift and press again. So the carry is driven here from
+    // raw pointer events, with the map frozen for its duration. The orange disc
+    // survives as the precise, no-hold alternative (options → Move this marker)
+    // and as the fallback when there is no pointer to follow.
+    var carry = null;
+    function startPinCarry(h, a) {
+        if (carry || !h.marker || !lastPointer) return false;
+        ensureProjHelper();
+        var md = mapDiv();
+        var px = latLngToContainerPx(a.lat, a.lng);
+        if (!md || !px) return false;            // no projection yet — use the disc
+        var rect = md.getBoundingClientRect();
+        carry = {
+            h: h, a: a, id: lastPointer.id, rect: rect,
+            // Grab offset: the pin holds its exact position under the finger
+            // rather than snapping its anchor to the fingertip.
+            dx: (rect.left + px.x) - lastPointer.x,
+            dy: (rect.top + px.y) - lastPointer.y,
+            gesture: map.get('gestureHandling') || 'greedy'
+        };
+        // Two locks on the map, because which one bites depends on how Maps
+        // happens to be listening: the option stops its gesture handler, the
+        // capture-phase swallow stops the events reaching it at all.
+        map.setOptions({ gestureHandling: 'none' });
+        document.addEventListener('pointermove', carryMove, true);
+        document.addEventListener('pointerup', carryEnd, true);
+        document.addEventListener('pointercancel', carryEnd, true);
+        document.addEventListener('touchmove', carrySwallow, { capture: true, passive: false });
+        // Without this Chrome starts a text selection under the held finger and
+        // then pointercancels the drag out from under us.
+        document.body.style.userSelect = 'none';
+        document.body.style.webkitUserSelect = 'none';
+        toast('Moving — lift your finger to drop it');
+        return true;
+    }
+    function carrySwallow(e) {
+        if (!carry) return;
+        e.stopPropagation();
+        if (e.cancelable) e.preventDefault();
+    }
+    function carryMove(e) {
+        if (!carry || e.pointerId !== carry.id) return;
+        e.stopPropagation();
+        var ll = containerPxToLatLng(e.clientX + carry.dx - carry.rect.left,
+                                     e.clientY + carry.dy - carry.rect.top);
+        carry.a.lat = ll.lat(); carry.a.lng = ll.lng();
+        try { carry.h.marker.setPosition(ll); } catch (er) {}
+    }
+    // pointerup is deliberately NOT swallowed: Maps needs it to close out its own
+    // gesture, and the click it then synthesizes is already eaten by longPressed.
+    function carryEnd(e) {
+        if (!carry || (e && e.pointerId !== carry.id)) return;
+        var c = carry;
+        carry = null;
+        document.removeEventListener('pointermove', carryMove, true);
+        document.removeEventListener('pointerup', carryEnd, true);
+        document.removeEventListener('pointercancel', carryEnd, true);
+        document.removeEventListener('touchmove', carrySwallow, true);
+        document.body.style.userSelect = '';
+        document.body.style.webkitUserSelect = '';
+        map.setOptions({ gestureHandling: c.gesture });
+        layer.persist();
+    }
+
     // What can be done to the annotation the user tapped (annotationOptions).
-    // The orange move disc + red × over a pin, raised by a long press on touch.
-    // Same handle the vertices use, so "hold, then drag the disc" means the same
-    // thing everywhere — and the disc keeps the fingertip off the pin itself.
+    // The orange move disc + red × over a pin — now reached from the options
+    // sheet rather than from a hold (a hold carries the pin instead, above).
+    // Same handle the vertices use, and it keeps the fingertip off the pin.
     function showPinMoveHandle(h, a) {
         if (typeof showVertexHandle !== 'function' || !h.marker) return;
         // The host handle is built for measure vertices: it restyles the marker
@@ -1968,9 +2070,9 @@
                 startTextPlacement(text, centered, a);
             });
         });
-        // Touch has no direct drag on a pin (a swipe pans the map), so the
-        // menu carries the move affordance too — long press is a shortcut,
-        // not the only way in.
+        // A hold carries the pin, but a swipe across one still pans the map — so
+        // the menu keeps a move affordance of its own: the orange disc, for a
+        // nudge that wants precision rather than a fingertip.
         if (a.kind === 'pin' && isCoarsePointer()) opt('🧭', 'Move this marker', false, function () {
             var h = layer.handles.get(a.id);
             if (h) showPinMoveHandle(h, a);
