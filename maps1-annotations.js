@@ -712,10 +712,24 @@
             if (!centre || (centre.lat === 0 && centre.lng === 0)) return;
             this.restored = true;
             var self = this;
+            var nearby = [];
             storeLoad().forEach(function (a) {
-                if (sphDistance(centre, anchorOf(a)) <= NEARBY_METERS) self.attach(a);
+                if (sphDistance(centre, anchorOf(a)) <= NEARBY_METERS) nearby.push(a);
                 else self.dormant.push(a);
             });
+            if (histSuppress) {
+                // An undo/redo rebuild reproduces the state directly — no prompt.
+                nearby.forEach(function (a) { self.attach(a); });
+            } else if (nearby.length) {
+                // Previous work is OFFERED, not imposed (owner request). Until the
+                // user decides, the items ride in dormant so any persist() writes
+                // them back — declining must never be able to lose them.
+                nearby.forEach(function (a) { self.dormant.push(a); });
+                restoreOffer = nearby;
+                // Deferred a tick so it lands ON TOP of whatever the user opened
+                // (the annotate sheet or the dock), not instead of it.
+                setTimeout(offerPreviousAnnotations, 0);
+            }
             this.renumber();
             this.applyZoom(zoom);
             histPush(lsGet(LS_ITEMS) || '[]');   // undo's floor: the state as restored
@@ -1659,8 +1673,9 @@
     // What can be done to the annotation the user tapped (annotationOptions).
     function openOptions(a) {
         // Ignored while another tool owns the screen (an editor, the placement
-        // surface, or the capture viewfinder).
-        if (layer.suspended || activeMode || placementOpen) return;
+        // surface, or the capture viewfinder) — and idempotent: a double click
+        // on an annotation must not stack the options sheet twice.
+        if (layer.suspended || activeMode || placementOpen || openScrims.length) return;
         var scrim = mkScrim(false);
         var d = el('div', 'ann-sheet');
         addCloseX(d, scrim);
@@ -2638,6 +2653,47 @@
         if (histRedoB) histRedoB.style.opacity = histIndex < hist.length - 1 ? 1 : 0.35;
     }
 
+    // ----- "load your previous annotations?" — saved work near this map is
+    // offered back rather than silently re-attached. Declined items stay in
+    // layer.dormant (so nothing can delete them) and remain loadable from the
+    // My-annotations panel for the rest of the session.
+    var restoreOffer = null, restoreDeclined = [];
+    function loadPreviousAnnotations(items) {
+        items.forEach(function (a) {
+            var i = layer.dormant.indexOf(a);
+            if (i >= 0) layer.dormant.splice(i, 1);
+            layer.attach(a);
+        });
+        layer.renumber();
+        layer.applyZoom(map.getZoom());
+        refreshOpenPanels();
+        toast(items.length + ' previous annotation' + (items.length > 1 ? 's' : '') + ' loaded');
+    }
+    function offerPreviousAnnotations() {
+        var items = restoreOffer;
+        restoreOffer = null;
+        if (!items || !items.length) return;
+        var scrim = mkScrim(true);
+        var d = el('div', 'ann-dialog');
+        d.appendChild(el('h3', null, 'Load your previous annotations?'));
+        var p = el('p', null, items.length + ' saved annotation' + (items.length > 1 ? 's' : '') +
+            ' found for this area — put them back on the map?');
+        p.style.cssText = 'font-size:13px;color:#555;margin:0;line-height:1.5;';
+        d.appendChild(p);
+        var row = el('div', 'ann-btnrow');
+        row.appendChild(btn('Not now', null, function () {
+            closeScrim(scrim);
+            restoreDeclined = items;             // still loadable from the panel
+            refreshOpenPanels();
+        }));
+        row.appendChild(btn('Load', 'ann-primary', function () {
+            closeScrim(scrim);
+            loadPreviousAnnotations(items);
+        }));
+        d.appendChild(row);
+        scrim.appendChild(d);
+    }
+
     // ----- "My annotations" dock: a floating panel that EXPANDS out of the
     // #btn-my-annotations fab (sitting above the map-layers fab) and shrinks back
     // into it — the web's version of the Android layers bottom sheet. Non-modal:
@@ -2752,6 +2808,20 @@
             clearB.style.display = items.length ? '' : 'none';
 
             draftHost.innerHTML = '';
+            // Previous annotations the user chose not to load yet — second chance.
+            if (restoreDeclined.length) {
+                var prevRow = el('div', 'ann-draft');
+                prevRow.appendChild(el('span', null, restoreDeclined.length + ' previous annotation' +
+                    (restoreDeclined.length > 1 ? 's' : '') + ' not loaded'));
+                var loadB = btn('Load', 'ann-primary', function () {
+                    var items = restoreDeclined;
+                    restoreDeclined = [];
+                    loadPreviousAnnotations(items);
+                });
+                loadB.style.marginLeft = 'auto';
+                prevRow.appendChild(loadB);
+                draftHost.appendChild(prevRow);
+            }
             var draft = draftLoad();
             if (draft && !activeMode) {
                 var noun = draft.kind === 'road' ? 'road' : 'area';

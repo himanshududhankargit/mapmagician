@@ -69,7 +69,10 @@
         // 079 = Annotate shows "Opening…" while the lazy JS downloads and swallows
         //       double taps (they used to stack two copies of the sheet); openSheet
         //       is idempotent; dock toggle debounced 350ms.
-        var APP_VERSION = '079';
+        // 080 = previous annotations are OFFERED on first use ("Load your previous
+        //       annotations?" — declining keeps them loadable from the panel), and
+        //       double-clicking an annotation no longer stacks its options sheet.
+        var APP_VERSION = '080';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
