@@ -111,7 +111,7 @@
         //       pans the map, and a 450ms LONG PRESS raises the orange move disc
         //       (+ × delete) to reposition it. Mouse keeps direct dragging; the
         //       options menu gains "Move this marker" on touch.
-        var APP_VERSION = '092';
+        var APP_VERSION = '094';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
