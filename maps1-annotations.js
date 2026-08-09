@@ -3087,24 +3087,29 @@
         histButtonsSync();
     }
 
-    // Draw the user's annotations onto the stitched export canvas, in world pixels
-    // at rect.z (TileStitchExporter.drawAnnotations). Ground-pinned artwork takes
-    // kGround; screen-space artwork also shrinks by the box/viewport ratio so it
-    // occupies the same fraction of the sheet it occupied of the box.
-    function drawOnStitch(stitch, rect, geo) {
+    // Draw the user's annotations onto the FINAL composed sheet, at final-sheet
+    // resolution (TileStitchExporter.drawAnnotations with renderScale folded in).
+    // Drawing on the stitch instead capped the artwork at stitch resolution, and
+    // whenever the compose upscaled (gz capped by MAX_ZOOM_FOR_DP) every marker
+    // came out soft — the owner's 2026-08-09 sheet. `fit` is the compose mapping:
+    // {dx, dy, scale} of the stitch window into the template.
+    // Ground-pinned artwork takes kGround; screen-space artwork also shrinks by
+    // the box/viewport ratio so it occupies the same fraction of the sheet it
+    // occupied of the box.
+    function drawOnSheet(ctx, rect, geo, fit) {
         if (!initDone || !layer.handles.size) return;
-        var ctx = stitch.getContext('2d');
-        var kGround = Math.pow(2, rect.z - geo.cz);
+        var kGround = Math.pow(2, rect.z - geo.cz) * fit.scale;
         var ss = geo.hCss && vpH() ? geo.hCss / vpH() : 1;
         var k = kGround * ss;
-        var scale = 256 * Math.pow(2, rect.z);
+        var worldSize = 256 * Math.pow(2, rect.z);
         function px(lat, lng) {
             var sinY = Math.min(Math.max(Math.sin(rad(lat)), -0.9999), 0.9999);
             return {
-                x: (lng + 180) / 360 * scale - rect.ox,
-                y: (0.5 - Math.log((1 + sinY) / (1 - sinY)) / (4 * Math.PI)) * scale - rect.oy
+                x: fit.dx + ((lng + 180) / 360 * worldSize - rect.left) * fit.scale,
+                y: fit.dy + ((0.5 - Math.log((1 + sinY) / (1 - sinY)) / (4 * Math.PI)) * worldSize - rect.top) * fit.scale
             };
         }
+        ctx.save();
         // Drawn geometry first, then every bitmap over it — a caption is never
         // buried under the wash of a region drawn after it.
         layer.captureShapes().sort(function (a, b) { return a.order - b.order; }).forEach(function (s) {
@@ -3148,6 +3153,7 @@
             ctx.drawImage(art.canvas, left, top, w, h);
             if (rot) ctx.restore();
         });
+        ctx.restore();
     }
 
     // ---------------------------------------------------------------------- init
@@ -3194,7 +3200,7 @@
         beginCapturePreview: beginCapturePreview,
         refreshCapturePreview: refreshCapturePreview,
         endCapturePreview: endCapturePreview,
-        drawOnStitch: drawOnStitch,
+        drawOnSheet: drawOnSheet,
         count: function () { return initDone ? layer.handles.size : 0; }
     };
     ensureInit();

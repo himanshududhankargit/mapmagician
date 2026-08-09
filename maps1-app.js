@@ -87,7 +87,11 @@
         //       on — enabled for the framing session only, snapped+restored on
         //       close; Proceed reads the exact zoom first and the capture rect
         //       carries the fractional cz (fetch zooms gz/pz stay integer).
-        var APP_VERSION = '084';
+        // 085 = annotations render at FINAL-SHEET resolution: they moved from the
+        //       stitch pass into _dlmapComposeFinal (drawOnSheet), re-rendering the
+        //       artwork for the true on-sheet size — stitch-drawn markers blurred
+        //       whenever the compose upscaled (gz capped at MAX_ZOOM_FOR_DP).
+        var APP_VERSION = '085';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -10886,7 +10890,7 @@
         // contain-fit the capture into the template's map window, centered; caption
         // white-out + text only when the user changed the default (Android parity —
         // the template carries its own printed caption otherwise).
-        function _dlmapComposeFinal(tmpl, stitch, rect, caption) {
+        function _dlmapComposeFinal(tmpl, stitch, rect, caption, geo) {
             var c = document.createElement('canvas');
             c.width = DLMAP_TEMPLATE_W; c.height = DLMAP_TEMPLATE_H;
             var ctx = c.getContext('2d');
@@ -10898,6 +10902,14 @@
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(stitch, rect.left - rect.ox, rect.top - rect.oy, rect.w, rect.h, dx, dy, dw, dh);
+            // User annotations, drawn HERE at final-sheet resolution: the artwork is
+            // re-rendered for the true on-sheet size (the stitch pass blurred it
+            // whenever the compose upscaled). Failure must never cost the sheet.
+            if (window.mmAnnotations && geo) {
+                try {
+                    window.mmAnnotations.drawOnSheet(ctx, rect, geo, { dx: dx, dy: dy, scale: scale });
+                } catch (e) { console.error('annotation draw failed:', e); }
+            }
             if (caption && caption !== DLMAP_DEFAULT_CAPTION) {
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillRect(122, 2290, 3022 - 122, 2394 - 2290);       // kt white-out rect
@@ -11031,15 +11043,12 @@
                 });
                 if (ctrl.signal.aborted) return null;
                 txt.textContent = 'Rendering…';
-                var stitched = _dlmapStitch(rect, jobs);
-                // User annotations are map objects, not tiles — without this pass the
-                // download loses them (same reason Android's TileStitchExporter has
-                // drawAnnotations). Failure must not cost the customer their sheet.
-                if (window.mmAnnotations) {
-                    try { window.mmAnnotations.drawOnStitch(stitched, rect, geo); }
-                    catch (e) { console.error('annotation draw failed:', e); }
-                }
-                return { rect: rect, stitch: stitched, missing: missing };
+                // NOTE: user annotations are NOT drawn here. They are drawn in
+                // _dlmapComposeFinal at final-sheet resolution — drawing them on
+                // the stitch blurred them whenever the compose step upscaled
+                // (gz capped at MAX_ZOOM_FOR_DP makes the stitch smaller than the
+                // template window). The artwork is re-rendered for the sheet.
+                return { rect: rect, stitch: _dlmapStitch(rect, jobs), missing: missing };
             } finally {
                 overlay.classList.remove('open');
                 _dlmapCleanupJobs(jobs);                                  // bitmaps only live until the stitch
@@ -11395,7 +11404,7 @@
             procNote.style.display = 'flex';
             var caption = document.getElementById('dlmap-caption').value.trim() || DLMAP_DEFAULT_CAPTION;
             s.caption = caption;
-            s.finalCanvas = _dlmapComposeFinal(s.tmpl, s.stitch, s.rect, caption);
+            s.finalCanvas = _dlmapComposeFinal(s.tmpl, s.stitch, s.rect, caption, s.geo);
             s.finalCanvas.toBlob(function(blob) {
                 procNote.style.display = 'none';
                 if (!blob || _dlmapSession !== s) {
