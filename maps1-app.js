@@ -191,7 +191,11 @@
         //       admin panel's Downloads tab shows them (tap = open in Google Maps).
         //       Until now a sale said only which district, so "this is the wrong area"
         //       could not be checked against what the customer actually captured.
-        var APP_VERSION = '117';
+        // 119/120 = village boundaries now appear in a downloaded sheet. They are a canvas
+        //       OverlayView on screen, never tiles, so the stitch never contained them and
+        //       every download came out without them. Drawn in _dlmapComposeFinal under the
+        //       annotations, honouring the layer toggle and MIN_ZOOM_FOR_GEOJSON.
+        var APP_VERSION = '119';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -11063,6 +11067,74 @@
         // contain-fit the capture into the template's map window, centered; caption
         // white-out + text only when the user changed the default (Android parity —
         // the template carries its own printed caption otherwise).
+        // Village boundaries onto the sheet. On screen these are a canvas OverlayView
+        // (VillageBoundaryOverlayClass), NOT tiles — so the tile stitch never contained
+        // them and every download came out missing the boundaries the customer could
+        // plainly see on the map. Same reason annotations are drawn here rather than on
+        // the stitch: vector artwork belongs at final-sheet resolution.
+        //
+        // Mirrors the on-screen rules instead of always drawing, so the sheet shows
+        // boundaries exactly when the map did: the layer toggle and MIN_ZOOM_FOR_GEOJSON
+        // both apply. `renderedDistricts` holds only viewport-loaded districts and every
+        // ring is culled against the capture rect, so a Regenerate taken from elsewhere
+        // on the map can only OMIT boundaries — it can never draw a different district's.
+        function _dlmapDrawVillageBoundaries(ctx, rect, geo, fit) {
+            if (!isVillageBoundaryEnabled) return;
+            if (geo.cz < MIN_ZOOM_FOR_GEOJSON) return;
+            if (!renderedDistricts.size) return;
+            // Same Web-Mercator mapping the annotation layer uses (maps-annotations.js
+            // drawOnSheet) — one projection for all vector artwork on the sheet.
+            var worldSize = 256 * Math.pow(2, rect.z);
+            function px(lat, lng) {
+                var sinY = Math.min(Math.max(Math.sin(lat * Math.PI / 180), -0.9999), 0.9999);
+                return {
+                    x: fit.dx + ((lng + 180) / 360 * worldSize - rect.left) * fit.scale,
+                    y: fit.dy + ((0.5 - Math.log((1 + sinY) / (1 - sinY)) / (4 * Math.PI)) * worldSize - rect.top) * fit.scale
+                };
+            }
+            // Screen-space weight, scaled the way annotation strokes are, so the two
+            // kinds of line on one sheet never disagree about how heavy 2px should be.
+            var mapH = document.getElementById('map').clientHeight || geo.hCss;
+            var k = Math.pow(2, rect.z - geo.cz) * fit.scale * ((geo.hCss || mapH) / mapH);
+            var b = rect.llBounds;
+            ctx.save();
+            // Rings run far past the captured area and the compose contain-fits that
+            // area into the template, so unclipped strokes paint over the printed
+            // margin, the title block and the scale bar.
+            ctx.beginPath();
+            ctx.rect(fit.dx, fit.dy, rect.w * fit.scale, rect.h * fit.scale);
+            ctx.clip();
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.lineWidth = Math.max(2, 2 * k);          // 2px on screen; never sub-pixel here
+            renderedDistricts.forEach(function(entry) {
+                if (entry.loading || !entry.villages || !entry.villages.length) return;
+                ctx.strokeStyle = GEOJSON_DISTRICT_COLORS[entry.colorIndex % GEOJSON_DISTRICT_COLORS.length];
+                ctx.beginPath();
+                var drew = false;
+                for (var vi = 0; vi < entry.villages.length; vi++) {
+                    var vb = entry.villages[vi].bounds;
+                    if (!vb) continue;
+                    if (vb.s > b.maxLat || vb.n < b.minLat || vb.w > b.maxLng || vb.e < b.minLng) continue;
+                    var rings = entry.villages[vi].polygons || [];
+                    for (var pi = 0; pi < rings.length; pi++) {
+                        var ring = rings[pi];
+                        if (!ring || ring.length < 2) continue;
+                        var first = px(ring[0].lat, ring[0].lng);
+                        ctx.moveTo(first.x, first.y);
+                        for (var i = 1; i < ring.length; i++) {
+                            var p = px(ring[i].lat, ring[i].lng);
+                            ctx.lineTo(p.x, p.y);
+                        }
+                        ctx.lineTo(first.x, first.y);     // close the ring, as the overlay does
+                        drew = true;
+                    }
+                }
+                if (drew) ctx.stroke();
+            });
+            ctx.restore();
+        }
+
         function _dlmapComposeFinal(tmpl, stitch, rect, caption, geo) {
             var c = document.createElement('canvas');
             c.width = DLMAP_TEMPLATE_W; c.height = DLMAP_TEMPLATE_H;
@@ -11075,6 +11147,13 @@
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(stitch, rect.left - rect.ox, rect.top - rect.oy, rect.w, rect.h, dx, dy, dw, dh);
+            // Village boundaries UNDER the user's own annotations — their marks are the
+            // point of the sheet and must never be buried by a boundary line.
+            if (geo) {
+                try {
+                    _dlmapDrawVillageBoundaries(ctx, rect, geo, { dx: dx, dy: dy, scale: scale });
+                } catch (e) { console.error('village boundary draw failed:', e); }
+            }
             // User annotations, drawn HERE at final-sheet resolution: the artwork is
             // re-rendered for the true on-sheet size (the stitch pass blurred it
             // whenever the compose upscaled). Failure must never cost the sheet.
