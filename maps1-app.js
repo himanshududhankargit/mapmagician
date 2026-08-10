@@ -185,7 +185,13 @@
         // 115 = those handles 20% smaller -- 38px circle to 30px, 20px icon to 16px.
         //       Only HANDLE_PX and the svg rule move; positionHandles reads the
         //       constant, so the circles stay centred on their corners by itself.
-        var APP_VERSION = '115';
+        // 116 = 113-115 promoted to live, verified on a device via maps1 first.
+        // 117/118 = a download records WHERE it was taken: the capture box centre and the
+        //       on-screen zoom go to createDownloadOrder / logDownloadOutcome, and the
+        //       admin panel's Downloads tab shows them (tap = open in Google Maps).
+        //       Until now a sale said only which district, so "this is the wrong area"
+        //       could not be checked against what the customer actually captured.
+        var APP_VERSION = '117';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -10563,6 +10569,25 @@
             }
         }
 
+        // Where this sheet was captured: the centre of the capture box and the on-screen
+        // zoom, taken from the session's own `geo` (the same numbers the render used, so
+        // it is the captured area — not wherever the map has drifted to since). Sent with
+        // the sale so the admin panel can point at the plot; the region name alone only
+        // narrows a download to a whole city.
+        //
+        // Returns {} when the session has no usable centre, and the caller then sends
+        // nothing — a 0,0 fallback would record a real place in the Atlantic.
+        function _dlmapCaptureGeo(s) {
+            var g = (s && s.geo) || {};
+            var lat = Number(g.lat), lng = Number(g.lng), z = Number(g.cz);
+            if (!isFinite(lat) || !isFinite(lng) || (lat === 0 && lng === 0)) return {};
+            return {
+                lat: Math.round(lat * 1e6) / 1e6,          // ~0.1 m; finer is noise
+                lng: Math.round(lng * 1e6) / 1e6,
+                zoom: isFinite(z) ? Math.round(z * 100) / 100 : null
+            };
+        }
+
         // ---- Download outcome reporting --------------------------------------------
         // The money is taken BEFORE the full-quality render, so "paid" and "got the
         // file" are two separate facts and the server only ever knew the first. This
@@ -10586,6 +10611,11 @@
                 districtPid: ctx.districtPid || '',
                 districtName: ctx.districtName || ''
             };
+            // Only when we actually have one — the server records an absent capture point
+            // as "not recorded" rather than inventing coordinates, and so must we.
+            if (typeof ctx.lat === 'number') {
+                payload.lat = ctx.lat; payload.lng = ctx.lng; payload.zoom = ctx.zoom;
+            }
             // The page is going away: the SDK's XHR would be killed mid-flight, so post
             // to the same callable endpoint with keepalive, which the browser is
             // required to let finish after unload. The token has to be the one cached
@@ -10644,17 +10674,22 @@
                 var createDownloadOrder = functions.httpsCallable('createDownloadOrder');
                 // districtName rides along so every server-side record (ledger, delivery
                 // receipt, outcome event) carries a region a human can read, instead of
-                // just the raw productPurchaseID.
+                // just the raw productPurchaseID. The capture point rides with it for the
+                // same reason, one level finer: which plot, not just which city.
+                var cap = _dlmapCaptureGeo(s);
                 var resp = (await createDownloadOrder({
                     districtPid: s.districtPid || '',
-                    districtName: s.districtName || ''
+                    districtName: s.districtName || '',
+                    lat: cap.lat, lng: cap.lng, zoom: cap.zoom
                 })).data || {};
                 var region = { districtPid: s.districtPid || '', districtName: s.districtName || '',
-                               idToken: idToken };
+                               idToken: idToken,
+                               lat: cap.lat, lng: cap.lng, zoom: cap.zoom };
                 if (resp.viaCredit) {
                     _dlmapToast('1 credit used — ' + (resp.creditsLeft || 0) + ' left');
                     s.outcomeCtx = { viaCredit: true, districtPid: region.districtPid,
-                                     districtName: region.districtName, idToken: idToken };
+                                     districtName: region.districtName, idToken: idToken,
+                                     lat: cap.lat, lng: cap.lng, zoom: cap.zoom };
                     _dlmapFinalizeDownload();
                     return;
                 }
@@ -10722,7 +10757,8 @@
                             s.outcomeCtx = {
                                 paymentId: response.razorpay_payment_id,
                                 districtPid: region.districtPid, districtName: region.districtName,
-                                idToken: idToken
+                                idToken: idToken,
+                                lat: region.lat, lng: region.lng, zoom: region.zoom
                             };
                             _dlmapFinalizeDownload();
                         })();
