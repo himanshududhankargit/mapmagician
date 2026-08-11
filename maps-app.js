@@ -195,7 +195,7 @@
         //       OverlayView on screen, never tiles, so the stitch never contained them and
         //       every download came out without them. Drawn in _dlmapComposeFinal under the
         //       annotations, honouring the layer toggle and MIN_ZOOM_FOR_GEOJSON.
-        var APP_VERSION = '120';
+        var APP_VERSION = '125';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7878,7 +7878,19 @@
             document.getElementById('dlmap-unowned-continue').addEventListener('click', function() {
                 document.getElementById('dlmap-unowned-overlay').classList.remove('open');
                 _dlmapUnownedWarned = true;   // one warning per viewfinder session
+                try { mmAnalytics.event('download_map_basic_chosen', { pid: _dlmapUnownedPid }); } catch (e) {}
                 _dlmapProceedCapture();
+            });
+            // "View plans": abandon the capture and hand over to the normal paywall for
+            // the first unowned sheet. The viewfinder must close too — leaving it up
+            // behind the purchase dialog strands the camera in fractional-zoom mode.
+            document.getElementById('dlmap-unowned-plans').addEventListener('click', function() {
+                document.getElementById('dlmap-unowned-overlay').classList.remove('open');
+                _dlmapCloseViewfinder();
+                var d = _dlmapUnownedPid ? findDistrictByPurchaseId(_dlmapUnownedPid) : null;
+                if (d && d.productPurchaseID) showZoomRestrictionDialog(d);
+                else _dlmapToast('Open Browse Regions to see the plans for this area');
+                try { mmAnalytics.event('download_map_view_plans', { pid: _dlmapUnownedPid }); } catch (e) {}
             });
             document.getElementById('dlmap-progress-cancel').addEventListener('click', function() {
                 if (_dlmapSession && _dlmapSession.abortCtrl) _dlmapSession.abortCtrl.abort();
@@ -10942,6 +10954,57 @@
                    { productPurchaseID: src.pid, districtName: '' };
         }
 
+        // Is this sheet's premium (z15+) tile actually fetchable for this user?
+        // Mirrors _computeAllowedTileFolders: no productPurchaseID => free sheet,
+        // nothing to buy. Village sheets never reach here unowned (_dlmapCollectSources
+        // filters them) and /VillagePlans/ is not edge-gated in any case.
+        function _dlmapSourceOwned(s) {
+            if (!s.pid) return true;                                  // free sheet
+            if (!/(^|\/)dpplans\//.test(s.link || '')) return true;   // not an edge-gated path
+            return hasPurchase(s.pid);
+        }
+
+        // Human names of the gated sheets in the current frame that are NOT owned.
+        // Drives the pre-flight consent dialog and the framing quality chip.
+        //
+        // This replaces findDistrictAtCenterCached as the warning's source of truth:
+        // that function scans dpLayerData and then needs a menuGIS hit on top, so it
+        // answers null for old-DP sheets, polygon holes, frame edges and unparsed
+        // d4.bin — and it only ever describes the CENTRE, so a frame straddling an
+        // owned district and an unowned neighbour warned about neither.
+        //
+        // The rect is built at or below MAX_FREE_ZOOM deliberately: coverage is the
+        // only question here, and at that zoom the entitlement clamp in
+        // _dlmapEnumerateJobs cannot fire, so no unowned sheet can be skipped out of
+        // the answer. `precise` pays for a job enumeration (a bbox can overlap the
+        // frame while the sheet's polygon covers no tile in it); the chip skips it,
+        // since an over-warn in a chip costs nothing. Pure math — nothing is fetched.
+        function _dlmapUnownedNames(cz, hCss, precise) {
+            if (!map) return [];
+            var c = map.getCenter();
+            if (!c) return [];
+            var rect = _dlmapComputeCaptureRectFrom(
+                Math.min(Math.round(cz), MAX_FREE_ZOOM), cz,
+                hCss || document.getElementById('map').clientHeight, c.lat(), c.lng());
+            var srcs = _dlmapCollectSources(cz, rect.llBounds);
+            if (precise) {
+                var used = {}, jobs = _dlmapEnumerateJobs(rect, srcs);
+                for (var j = 0; j < jobs.length; j++) used[jobs[j].order] = 1;
+                srcs = srcs.filter(function(s) { return used[s.order]; });
+            }
+            var out = [], seen = {};
+            for (var i = 0; i < srcs.length; i++) {
+                var s = srcs[i];
+                if (!s.pid || seen[s.pid] || _dlmapSourceOwned(s)) continue;
+                seen[s.pid] = 1;
+                var rec = findDistrictByPurchaseId(s.pid);
+                out.push({ pid: s.pid, name: (rec && rec.districtName) || s.pid });
+            }
+            return out;
+        }
+        // The sheet "View plans" should open — first unowned sheet of the last warning.
+        var _dlmapUnownedPid = '';
+
         // One fetch job per (source, tile). Uses the same PADDED coverage test as
         // CanvasMapType.getTile (TILE_EDGE_TOLERANCE) — without it the boundary-hole
         // bug the tolerance exists for would reappear in downloads.
@@ -10954,6 +11017,20 @@
                 // 256px tile is drawn scaled DOWN; below rect.z it is scaled UP as before.
                 var fz = Math.min(rect.z, s.zMax);
                 if (typeof s.zMin === 'number' && fz < s.zMin) fz = Math.min(s.zMin, s.zMax);
+                // ENTITLEMENT CLAMP. The capture digs up to 3 zooms past the screen for
+                // print sharpness, but an unowned district is capped at MAX_FREE_ZOOM on
+                // screen — so the download used to request z15+ tiles the CloudFront gate
+                // 403s, and _dlmapFetchAll left every one of them WHITE. The customer paid
+                // and received a blank sheet (see the 2026-08-11 report). Fetch the free
+                // tile instead and let the existing fz<rect.z path scale it up: a COMPLETE
+                // sheet at free detail, which is exactly what they can already see.
+                // Premium sharpness still needs the plan — that upsell is unchanged.
+                if (fz > MAX_FREE_ZOOM && !_dlmapSourceOwned(s)) {
+                    // A sheet that only exists above the free line has nothing to offer
+                    // unowned: skip it rather than spend requests on guaranteed 403s.
+                    if (typeof s.zMin === 'number' && s.zMin > MAX_FREE_ZOOM) continue;
+                    fz = Math.min(MAX_FREE_ZOOM, s.zMax);
+                }
                 var sizePx = fz <= rect.z ? (256 << (rect.z - fz))
                                           : Math.max(1, 256 >> (fz - rect.z));
                 var prefix = _dlmapUrlPrefix(s.link);
@@ -10992,12 +11069,11 @@
             return jobs;
         }
 
-        // Fetch every job, 6 at a time. Reuses the IDB tile cache (read + write) but
-        // NEVER healStaleTokenFor — a bulk run must not burn the 3-per-session heal
-        // budget. 403 / network error => tile stays white, counted. 404 => off-sheet,
-        // normal, silent. Returns the missing count.
+        // Fetch every job, 6 at a time. Reuses the IDB tile cache (read + write).
+        // 403 / network error => tile stays white, counted. 404 => off-sheet, normal,
+        // silent. Returns the missing count.
         async function _dlmapFetchAll(jobs, signal, onProgress) {
-            var done = 0, missing = 0, next = 0;
+            var done = 0, missing = 0, next = 0, healed = false;
             async function worker() {
                 while (next < jobs.length && !signal.aborted) {
                     var job = jobs[next++];
@@ -11010,6 +11086,19 @@
                             var resp = await fetch(job.url,
                                 job.isBase ? { signal: signal }
                                            : { credentials: 'include', signal: signal });
+                            // With the entitlement clamp in _dlmapEnumerateJobs an unowned
+                            // sheet never requests a gated tile, so a 403 here means the
+                            // edge is holding an mmp-token minted before the purchase —
+                            // the same stale-token case loadTileWithCache heals. Heal ONCE
+                            // per run and retry: healStaleTokenFor no-ops for folders we
+                            // do not own and keeps its own 3-per-session / 60s budget, so
+                            // this cannot approach a per-tile backend call.
+                            if (resp.status === 403 && !job.isBase && !healed) {
+                                healed = true;
+                                if (await healStaleTokenFor(job.url)) {
+                                    resp = await fetch(job.url, { credentials: 'include', signal: signal });
+                                }
+                            }
                             if (resp.status === 200) {
                                 blob = await resp.blob();
                                 if (!job.isBase) {
@@ -11359,16 +11448,22 @@
             var chip = document.getElementById('dlmap-quality-chip');
             if (!chip || !map) return;
             var cz = Math.round(map.getZoom());
+            var boxEl = document.getElementById('dlmap-viewfinder-box');
+            // Cheap (bbox-level) answer — this fires on every zoom_changed AND idle
+            // while framing, so it must not enumerate tiles.
+            var locked = _dlmapUnownedNames(map.getZoom(),
+                             boxEl ? boxEl.offsetHeight : 0, false).length > 0;
+            // An unowned sheet is fetched at MAX_FREE_ZOOM, so the stars have to
+            // describe the detail that will land in the FILE, not the zoom on screen.
+            var ez = locked ? Math.min(cz, MAX_FREE_ZOOM) : cz;
             var stars, label;
-            if (cz >= 15)      { stars = '★★★★'; label = 'Best quality'; }
-            else if (cz >= 14) { stars = '★★★☆'; label = 'Good quality'; }
-            else if (cz >= 13) { stars = '★★☆☆'; label = 'OK quality'; }
+            if (ez >= 15)      { stars = '★★★★'; label = 'Best quality'; }
+            else if (ez >= 14) { stars = '★★★☆'; label = 'Good quality'; }
+            else if (ez >= 13) { stars = '★★☆☆'; label = 'OK quality'; }
             else               { stars = '★☆☆☆'; label = 'Low quality — zoom in'; }
-            var d = findDistrictAtCenterCached();
-            var locked = !!(d && !hasPurchase(d.productPurchaseID));
             chip.classList.toggle('locked', locked);
             chip.textContent = locked
-                ? '🔒 Subscription / Active Plan needed for full details · ' + stars + ' ' + label
+                ? '🔒 Free detail · ' + stars + ' ' + label + ' — unlock for full sharpness'
                 : stars + ' ' + label + ' at this zoom';
         }
 
@@ -11421,22 +11516,30 @@
         }
 
         async function _dlmapProceedCapture() {
-            // GIS-app-style pre-flight warning: an unowned district's premium tiles
-            // (zoom 15+) 403 at the edge, so the paid download would carry only the
-            // free base detail — warn BEFORE any capture or charge. The cheap low-res
-            // preview can't show this (it fetches free-zone zooms), which is exactly
-            // why the warning must come first.
-            var warnDistrict = findDistrictAtCenterCached();
-            if (!_dlmapUnownedWarned && warnDistrict && !hasPurchase(warnDistrict.productPurchaseID)) {
-                document.getElementById('dlmap-unowned-text').textContent =
-                    'You don’t have an active Subscription / Plan for ' + warnDistrict.districtName + '. ' +
-                    'Premium map detail (zoom 15+) needs an active Subscription / Plan and will NOT ' +
-                    'appear in this download — only the free base detail will be included.';
-                document.getElementById('dlmap-unowned-overlay').classList.add('open');
-                return;   // viewfinder stays up behind the dialog
-            }
             var boxEl = document.getElementById('dlmap-viewfinder-box');
             var boxH = boxEl ? boxEl.offsetHeight : 0;
+            // GIS-app-style pre-flight consent: an unowned sheet is fetched at free
+            // detail (see the entitlement clamp in _dlmapEnumerateJobs), so the file is
+            // complete but not print-sharp — say so BEFORE any capture or charge, since
+            // the cheap preview renders in the free zone and cannot show the difference.
+            // Must also run BEFORE _dlmapCloseViewfinder below: closing snaps the camera
+            // to integer zoom and drops the box, so a "Download anyway" re-entry would
+            // silently reframe the capture.
+            if (!_dlmapUnownedWarned) {
+                var unowned = _dlmapUnownedNames(map.getZoom(), boxH, true);
+                if (unowned.length) {
+                    _dlmapUnownedPid = unowned[0].pid;
+                    var _unNames = unowned.map(function(u) { return u.name; }).join(' · ');
+                    var _unEl = document.getElementById('dlmap-unowned-district');
+                    _unEl.textContent = _unNames;
+                    // The 5a chip is one nowrap line with an ellipsis, so several unowned
+                    // sheets in one frame would truncate silently — keep the full list
+                    // reachable on hover/long-press instead of losing the names.
+                    _unEl.title = _unNames;
+                    document.getElementById('dlmap-unowned-overlay').classList.add('open');
+                    return;   // viewfinder stays up behind the dialog
+                }
+            }
             // Read the EXACT (possibly fractional — see the +/- buttons) framing
             // before _dlmapCloseViewfinder snaps the camera back to integer zoom.
             var cz = map.getZoom();
@@ -11555,10 +11658,13 @@
             try { localStorage.setItem(DLMAP_HISTORY_KEY, JSON.stringify(list.slice(0, 10))); } catch (e) {}
         }
         function _dlmapHistoryAdd(s) {
-            // Only plan-tied downloads are saved: no resolvable active purchase for the
-            // district means no record — a regen without entitlement could never fetch
-            // premium tiles anyway (the edge issues no cookies for an expired plan).
-            if (!s.districtPid || !hasPurchase(s.districtPid)) return;
+            // EVERY paid download is saved, owned or not. This used to require an active
+            // purchase, on the reasoning that a regen without entitlement "could never
+            // fetch premium tiles anyway" — true, but it meant an unowned-region buyer
+            // paid the same Rs.59 and got no re-download safety net at all. Since the
+            // entitlement clamp in _dlmapEnumerateJobs, a regen re-fetches at whatever
+            // the user is entitled to TODAY: full detail while the plan is live, free
+            // detail after it lapses, never a white sheet and never a premium leak.
             var expiry = Date.now() + 7 * 864e5;              // fallback: one 7-day pass
             var entry = findPurchaseEntry(s.districtPid);
             if (entry && entry.expiry) {
@@ -11583,11 +11689,13 @@
             if (!box || !empty) return;
             var list = _dlmapHistoryList();
             _dlmapHistoryWrite(list);                         // persist expiry pruning
-            // Re-download expires WITH the plan: a record whose pass is no longer
-            // active is hidden (and Regenerate re-checks) — no free re-downloads
-            // after expiry. The edge 403s premium tiles regardless, so a tampered
-            // localStorage only ever yields a white map.
-            var usable = list.filter(function(r) { return r.pid && hasPurchase(r.pid); });
+            // Re-download is tied to the RECORD's own window (_dlmapHistoryList already
+            // prunes on r.expiry), not to a live plan: the user paid for these exact
+            // coordinates. Entitlement is re-evaluated at render time by the clamp in
+            // _dlmapEnumerateJobs, so a lapsed pass silently degrades to free detail —
+            // a tampered localStorage can only ever buy back detail the user could
+            // already see on screen.
+            var usable = list.slice();
             box.innerHTML = '';
             empty.style.display = usable.length ? 'none' : '';
             if (!usable.length) return;
@@ -11611,13 +11719,14 @@
         }
         // Re-render a paid download from its stored parameters. No charge and no new
         // history record — the user already paid for these coordinates. Layer toggles
-        // and entitlements are today's, so an expired pass shows white above z14.
+        // and entitlements are TODAY's: the entitlement clamp in _dlmapEnumerateJobs
+        // re-fetches each sheet at whatever the user is entitled to now, so a pass that
+        // lapsed since the purchase degrades the sheet to free detail instead of the
+        // white holes this path used to hand back (it replayed the stored gz blindly).
         async function _dlmapRegenerate(rec) {
             if (_dlmapSession && _dlmapSession.running) return;
-            if (!rec.pid || !hasPurchase(rec.pid)) {          // pass lapsed since the list rendered
-                _dlmapToast('Your pass for this region has expired — re-download is no longer available');
-                _dlmapRenderHistory();
-                return;
+            if (rec.pid && !hasPurchase(rec.pid)) {          // pass lapsed since the purchase
+                _dlmapToast('Your plan for this region has ended — re-rendering at free detail');
             }
             if (!cfCookiesReady) {
                 _dlmapToast('Connecting to tile server…');
