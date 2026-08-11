@@ -561,10 +561,17 @@
             color:#1D1B1A; text-align:center; }
         .m3-dlg-sub { margin:0 auto 12px; max-width:400px; font-size:14px; line-height:1.43;
             letter-spacing:.016em; color:#4A4543; text-align:center; }
-        .m3-region { display:table; margin:0 auto 20px; max-width:400px; padding:6px 14px;
-            border-radius:999px; background:#EEF4EF; color:#3C5A47; font-size:13px;
-            font-weight:600; text-align:center;
-            white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        /* WRAPS — does not truncate. A frame can straddle three unowned sheets
+           ("Karjat · Pune–Mumbai · NAINA"), and each name is the one thing the user
+           needs in order to judge the choice, so losing them to an ellipsis defeats
+           the chip. display:block (NOT table): a table box floors its used width at
+           min-content, so with nowrap it ignored max-width and spilled past the
+           card edge. width:fit-content keeps a single short name a neat pill. */
+        .m3-region { display:block; width:fit-content; margin:0 auto 20px;
+            max-width:100%; padding:8px 14px; border-radius:14px;
+            background:#EEF4EF; color:#3C5A47; font-size:13px;
+            font-weight:600; text-align:center; line-height:1.45;
+            overflow-wrap:anywhere; }
         .m3-region:empty { display:none; }
 
         .m3-opts { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:stretch; }
@@ -3003,7 +3010,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=122" defer></script>
+    <script src="maps1-app.js?v=123" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
