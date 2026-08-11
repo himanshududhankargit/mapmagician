@@ -545,6 +545,16 @@
         /* --- Download Map dialog — Claude Design 1b (desktop) / 2a bottom sheet (mobile).
                One markup; the 720px query flips between the two. --- */
         .dlmap-btn-row { display:flex; gap:8px; margin-top:12px; }  /* still used by the unowned-district dialog */
+        /* Unowned-district consent dialog — Claude Design 2a: an in/out ledger, so the
+           user sees what the file WILL contain, not only what it won't. */
+        .dlmap-unowned-row { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; }
+        .dlmap-unowned-ico { flex:0 0 auto; width:18px; height:18px; border-radius:50%;
+            font-size:12px; font-weight:700; display:flex; align-items:center;
+            justify-content:center; margin-top:1px; }
+        .dlmap-unowned-ico.ok { background:#E8F5E9; color:#2E7D32; }
+        .dlmap-unowned-ico.no { background:#FFF3E0; color:#E65100; }
+        .dlmap-unowned-h { font-size:13px; font-weight:600; color:#212121; }
+        .dlmap-unowned-p { font-size:12.5px; color:#666; line-height:1.55; }
         /* .zoom-dialog.dlmapd (two classes), NOT .dlmapd: the .zoom-dialog base rule
            lives LATER in this sheet with max-width:400px, so a single-class selector
            here loses the cascade and the desktop dialog collapses to 400px (the
@@ -1443,7 +1453,7 @@
     <div class="toolbar-scroll">
         <!-- Download Map deliberately first (owner request 2026-08-07) -->
         <button class="pill-btn" id="btn-download-map">Download Map</button>
-        <!-- Annotate: the feature JS (maps1-annotations.js) lazy-loads on first tap -->
+        <!-- Annotate: the feature JS (maps-annotations.js) lazy-loads on first tap -->
         <button class="pill-btn" id="btn-annotate">Annotate</button>
         <button class="pill-btn" id="btn-addon-maps" style="display:none;background:#2E7D32;color:#fff;font-weight:600;">0 Add-On Maps</button>
         <button class="pill-btn" id="btn-old-maps" style="display:none">Load Old Maps</button>
@@ -2387,16 +2397,42 @@
         </div>
     </div>
 
-    <!-- Unowned-district warning before capture: the cheap preview fetches free-zone
-         zooms and cannot reveal that premium tiles (z15+) will 403 for an unowned
-         district — this consent gate runs BEFORE any capture or charge. -->
+    <!-- Unowned-district consent before capture: the cheap preview renders in the free
+         zoom zone and cannot show that an unowned sheet is fetched at free detail, so
+         this gate runs BEFORE any capture or charge. The district chip is filled from
+         _dlmapUnownedNames — EVERY unowned sheet in the frame, not just the centre. -->
     <div class="zoom-dialog-overlay" id="dlmap-unowned-overlay" data-dismiss="dlmap-unowned-cancel">
-        <div class="zoom-dialog" style="max-width:420px;text-align:left;padding:20px;">
-            <h3 style="margin-bottom:8px;">Limited detail without a Subscription / Active Plan</h3>
-            <p id="dlmap-unowned-text" style="font-size:13px;color:#555;line-height:1.6;margin:0 0 14px;"></p>
-            <div class="dlmap-btn-row">
-                <button class="zoom-dialog-btn" id="dlmap-unowned-cancel" style="background:#eee;color:#333;">Cancel</button>
-                <button class="zoom-dialog-btn" id="dlmap-unowned-continue" style="background:#E65100;color:#fff;flex:1;">Continue anyway</button>
+        <div class="zoom-dialog" style="max-width:420px;text-align:left;padding:0;">
+            <div style="padding:20px 20px 16px;">
+                <h3 style="margin:0 0 8px;">This download will be low detail</h3>
+                <p style="margin:0;font-size:13px;color:#555;line-height:1.6;">You don’t have an active
+                    Subscription / Plan for this area, so the sharpest map detail can’t be included
+                    in the file.</p>
+            </div>
+            <div class="zoom-dialog-region" id="dlmap-unowned-district" style="margin:0 20px 16px;"></div>
+            <div style="margin:0 20px 16px;border:1px solid #ECECEC;border-radius:10px;overflow:hidden;">
+                <div class="dlmap-unowned-row" style="border-bottom:1px solid #ECECEC;">
+                    <span class="dlmap-unowned-ico ok">&#10003;</span>
+                    <div><div class="dlmap-unowned-h">You will get</div>
+                        <div class="dlmap-unowned-p">Free base detail up to zoom 14 — roads, place names
+                            and the area outline.</div></div>
+                </div>
+                <div class="dlmap-unowned-row">
+                    <span class="dlmap-unowned-ico no">&#10005;</span>
+                    <div><div class="dlmap-unowned-h">You will not get</div>
+                        <div class="dlmap-unowned-p">Premium detail at zoom 15 and closer — the fine plan
+                            lines and labels.</div></div>
+                </div>
+            </div>
+            <p style="margin:0 20px 16px;font-size:12px;color:#888;line-height:1.55;">Activate a plan
+                and download again to get the full-detail file.</p>
+            <div class="dlmap-btn-row" style="padding:0 20px 20px;margin-top:0;align-items:center;">
+                <button class="zoom-dialog-btn" id="dlmap-unowned-cancel"
+                        style="background:#eee;color:#333;padding:12px 20px;">Cancel</button>
+                <button class="zoom-dialog-btn" id="dlmap-unowned-plans"
+                        style="background:none;color:#E65100;padding:12px 14px;">View plans</button>
+                <button class="zoom-dialog-btn" id="dlmap-unowned-continue"
+                        style="background:#E65100;color:#fff;flex:1;padding:12px 20px;">Download anyway</button>
             </div>
         </div>
     </div>
@@ -2913,7 +2949,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=119" defer></script>
+    <script src="maps1-app.js?v=121" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
