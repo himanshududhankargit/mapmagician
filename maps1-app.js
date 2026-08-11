@@ -195,7 +195,7 @@
         //       OverlayView on screen, never tiles, so the stitch never contained them and
         //       every download came out without them. Drawn in _dlmapComposeFinal under the
         //       annotations, honouring the layer toggle and MIN_ZOOM_FOR_GEOJSON.
-        var APP_VERSION = '121';
+        var APP_VERSION = '122';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7878,6 +7878,7 @@
             document.getElementById('dlmap-unowned-continue').addEventListener('click', function() {
                 document.getElementById('dlmap-unowned-overlay').classList.remove('open');
                 _dlmapUnownedWarned = true;   // one warning per viewfinder session
+                try { mmAnalytics.event('download_map_basic_chosen', { pid: _dlmapUnownedPid }); } catch (e) {}
                 _dlmapProceedCapture();
             });
             // "View plans": abandon the capture and hand over to the normal paywall for
@@ -11528,8 +11529,13 @@
                 var unowned = _dlmapUnownedNames(map.getZoom(), boxH, true);
                 if (unowned.length) {
                     _dlmapUnownedPid = unowned[0].pid;
-                    document.getElementById('dlmap-unowned-district').textContent =
-                        unowned.map(function(u) { return u.name; }).join(' · ');
+                    var _unNames = unowned.map(function(u) { return u.name; }).join(' · ');
+                    var _unEl = document.getElementById('dlmap-unowned-district');
+                    _unEl.textContent = _unNames;
+                    // The 5a chip is one nowrap line with an ellipsis, so several unowned
+                    // sheets in one frame would truncate silently — keep the full list
+                    // reachable on hover/long-press instead of losing the names.
+                    _unEl.title = _unNames;
                     document.getElementById('dlmap-unowned-overlay').classList.add('open');
                     return;   // viewfinder stays up behind the dialog
                 }

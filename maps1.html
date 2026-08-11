@@ -544,17 +544,60 @@
 
         /* --- Download Map dialog — Claude Design 1b (desktop) / 2a bottom sheet (mobile).
                One markup; the 720px query flips between the two. --- */
-        .dlmap-btn-row { display:flex; gap:8px; margin-top:12px; }  /* still used by the unowned-district dialog */
-        /* Unowned-district consent dialog — Claude Design 2a: an in/out ledger, so the
-           user sees what the file WILL contain, not only what it won't. */
-        .dlmap-unowned-row { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; }
-        .dlmap-unowned-ico { flex:0 0 auto; width:18px; height:18px; border-radius:50%;
-            font-size:12px; font-weight:700; display:flex; align-items:center;
-            justify-content:center; margin-top:1px; }
-        .dlmap-unowned-ico.ok { background:#E8F5E9; color:#2E7D32; }
-        .dlmap-unowned-ico.no { background:#FFF3E0; color:#E65100; }
-        .dlmap-unowned-h { font-size:13px; font-weight:600; color:#212121; }
-        .dlmap-unowned-p { font-size:12.5px; color:#666; line-height:1.55; }
+        /* Unowned-district consent dialog — Claude Design 5a: a two-option chooser, so
+           the free download and the subscription upsell are equal, self-describing
+           choices rather than a warning the user has to decode. Deliberately NOT
+           built on .zoom-dialog: that base rule lives later in this sheet with
+           max-width:400px and would crush the 600px two-column grid (same cascade
+           trap documented for .zoom-dialog.dlmapd below). */
+        .m3-dlg { box-sizing:border-box; background:#FDFCFB; border-radius:28px; padding:28px;
+            text-align:left; box-shadow:0 8px 12px 6px rgba(0,0,0,.15), 0 4px 4px rgba(0,0,0,.3); }
+        .m3-dlg.choose { width:min(600px,94vw); }
+        /* margin:auto (not just the overlay's align-items:center) so a tall stacked
+           dialog on a short phone can still be scrolled to its top — centred flex
+           children overflow upward into unreachable space. */
+        #dlmap-unowned-overlay .m3-dlg { margin:auto; }
+        .m3-dlg-title { margin:0 0 8px; font-size:24px; line-height:1.33; font-weight:400;
+            color:#1D1B1A; text-align:center; }
+        .m3-dlg-sub { margin:0 auto 12px; max-width:400px; font-size:14px; line-height:1.43;
+            letter-spacing:.016em; color:#4A4543; text-align:center; }
+        .m3-region { display:table; margin:0 auto 20px; max-width:400px; padding:6px 14px;
+            border-radius:999px; background:#EEF4EF; color:#3C5A47; font-size:13px;
+            font-weight:600; text-align:center;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .m3-region:empty { display:none; }
+
+        .m3-opts { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:stretch; }
+        .m3-opt { box-sizing:border-box; display:flex; flex-direction:column; padding:20px;
+            border-radius:20px; background:#EEF4EF; border:1px solid #D9E5DC; }
+        .m3-opt.pro { background:#EEF2F7; border-color:#D8E0EA; }
+        .m3-opt-tag { min-height:36px; display:flex; align-items:flex-start; margin-bottom:4px; }
+        .m3-badge { padding:4px 10px; border-radius:999px; background:#F2EADD; color:#6E6252;
+            font-size:11px; font-weight:600; letter-spacing:.02em; line-height:1.35; }
+        .m3-opt-name { font-size:17px; font-weight:600; color:#1D1B1A; margin-bottom:14px; }
+        .m3-feat { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+        .m3-feat div { display:flex; gap:9px; align-items:flex-start; font-size:13.5px;
+            line-height:1.45; color:#4A4543; }
+        .m3-feat i { flex:0 0 auto; font-style:normal; font-weight:700; }
+        .m3-feat i.ok { color:#2E6B41; }
+        .m3-feat i.pro { color:#3D5A80; }
+
+        .m3-dlg-foot { margin:20px 0 16px; font-size:12.5px; line-height:1.5; letter-spacing:.02em;
+            color:#6E6862; text-align:center; }
+        .m3-actions.center { display:flex; justify-content:center; }
+
+        .m3-btn { border:1px solid transparent; border-radius:20px; font-family:inherit;
+            font-size:14px; font-weight:600; cursor:pointer; padding:12px 16px;
+            box-sizing:border-box; }
+        .m3-btn.block { width:100%; margin-top:auto; }
+        .m3-btn.filled { background:#8F4B22; color:#fff; }
+        .m3-btn.filled:hover { background:#75391A; }
+        .m3-btn.outlined { background:none; color:#8F4B22; border-color:#D9C0AC; }
+        .m3-btn.outlined:hover { background:#FBF3EE; }
+        .m3-btn.quiet { background:none; color:#7C7570; padding:8px 16px; }
+        .m3-btn.quiet:hover { background:#F1ECE8; }
+
+        @media (max-width:640px) { .m3-opts { grid-template-columns:1fr; } }
         /* .zoom-dialog.dlmapd (two classes), NOT .dlmapd: the .zoom-dialog base rule
            lives LATER in this sheet with max-width:400px, so a single-class selector
            here loses the cascade and the desktop dialog collapses to 400px (the
@@ -2400,39 +2443,50 @@
     <!-- Unowned-district consent before capture: the cheap preview renders in the free
          zoom zone and cannot show that an unowned sheet is fetched at free detail, so
          this gate runs BEFORE any capture or charge. The district chip is filled from
-         _dlmapUnownedNames — EVERY unowned sheet in the frame, not just the centre. -->
+         _dlmapUnownedNames — EVERY unowned sheet in the frame, not just the centre.
+         Claude Design 5a: presented as a CHOOSER (basic now vs subscribe for full
+         detail) rather than a warning — both outcomes are legitimate, and the basic
+         file is complete at free detail thanks to the entitlement clamp in
+         _dlmapEnumerateJobs. Button ids are unchanged from the previous design, so
+         the listeners at ~7875 in maps1-app.js keep working as-is. -->
     <div class="zoom-dialog-overlay" id="dlmap-unowned-overlay" data-dismiss="dlmap-unowned-cancel">
-        <div class="zoom-dialog" style="max-width:420px;text-align:left;padding:0;">
-            <div style="padding:20px 20px 16px;">
-                <h3 style="margin:0 0 8px;">This download will be low detail</h3>
-                <p style="margin:0;font-size:13px;color:#555;line-height:1.6;">You don’t have an active
-                    Subscription / Plan for this area, so the sharpest map detail can’t be included
-                    in the file.</p>
-            </div>
-            <div class="zoom-dialog-region" id="dlmap-unowned-district" style="margin:0 20px 16px;"></div>
-            <div style="margin:0 20px 16px;border:1px solid #ECECEC;border-radius:10px;overflow:hidden;">
-                <div class="dlmap-unowned-row" style="border-bottom:1px solid #ECECEC;">
-                    <span class="dlmap-unowned-ico ok">&#10003;</span>
-                    <div><div class="dlmap-unowned-h">You will get</div>
-                        <div class="dlmap-unowned-p">Free base detail up to zoom 14 — roads, place names
-                            and the area outline.</div></div>
+        <div class="m3-dlg choose">
+            <h2 class="m3-dlg-title">Choose your download</h2>
+            <p class="m3-dlg-sub">Choose the level of map detail you need.</p>
+            <div class="m3-region" id="dlmap-unowned-district"></div>
+
+            <div class="m3-opts">
+                <div class="m3-opt">
+                    <div class="m3-opt-tag"></div>
+                    <div class="m3-opt-name">Basic Map</div>
+                    <div class="m3-feat">
+                        <div><i class="ok">&#10003;</i>Zoom up to 14</div>
+                        <div><i class="ok">&#10003;</i>Survey / plot boundaries</div>
+                        <div><i class="ok">&#10003;</i>Clearer map</div>
+                        <div><i class="ok">&#10003;</i>Village boundaries</div>
+                        <div><i class="ok">&#10003;</i>Roads &amp; place names</div>
+                    </div>
+                    <button class="m3-btn filled block" id="dlmap-unowned-continue">Download Basic Map</button>
                 </div>
-                <div class="dlmap-unowned-row">
-                    <span class="dlmap-unowned-ico no">&#10005;</span>
-                    <div><div class="dlmap-unowned-h">You will not get</div>
-                        <div class="dlmap-unowned-p">Premium detail at zoom 15 and closer — the fine plan
-                            lines and labels.</div></div>
+
+                <div class="m3-opt pro">
+                    <div class="m3-opt-tag"><span class="m3-badge">Subscription for Full Detail</span></div>
+                    <div class="m3-opt-name">Full Detail Map</div>
+                    <div class="m3-feat">
+                        <div><i class="pro">&#10022;</i>Zoom 15+ and closer</div>
+                        <div><i class="pro">&#10022;</i>Detailed survey / plot boundaries</div>
+                        <div><i class="pro">&#10022;</i>High-detail map &amp; labels</div>
+                        <div><i class="pro">&#10022;</i>Detailed village boundaries</div>
+                        <div><i class="pro">&#10022;</i>Reservation / plan details</div>
+                    </div>
+                    <button class="m3-btn outlined block" id="dlmap-unowned-plans">See Plans</button>
                 </div>
             </div>
-            <p style="margin:0 20px 16px;font-size:12px;color:#888;line-height:1.55;">Activate a plan
-                and download again to get the full-detail file.</p>
-            <div class="dlmap-btn-row" style="padding:0 20px 20px;margin-top:0;align-items:center;">
-                <button class="zoom-dialog-btn" id="dlmap-unowned-cancel"
-                        style="background:#eee;color:#333;padding:12px 20px;">Cancel</button>
-                <button class="zoom-dialog-btn" id="dlmap-unowned-plans"
-                        style="background:none;color:#E65100;padding:12px 14px;">View plans</button>
-                <button class="zoom-dialog-btn" id="dlmap-unowned-continue"
-                        style="background:#E65100;color:#fff;flex:1;padding:12px 20px;">Download anyway</button>
+
+            <p class="m3-dlg-foot">Want more detail? You can subscribe anytime and
+                download the full-detail map.</p>
+            <div class="m3-actions center">
+                <button class="m3-btn quiet" id="dlmap-unowned-cancel">Cancel</button>
             </div>
         </div>
     </div>
@@ -2949,7 +3003,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=121" defer></script>
+    <script src="maps1-app.js?v=122" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
