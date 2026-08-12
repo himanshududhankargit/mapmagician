@@ -195,7 +195,7 @@
         //       OverlayView on screen, never tiles, so the stitch never contained them and
         //       every download came out without them. Drawn in _dlmapComposeFinal under the
         //       annotations, honouring the layer toggle and MIN_ZOOM_FOR_GEOJSON.
-        var APP_VERSION = '126';
+        var APP_VERSION = '127';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7904,32 +7904,128 @@
             document.getElementById('dlmap-scalebar-opt').addEventListener('change', function() {
                 _dlmapRenderPreview();          // recompose from the kept stitch — cheap
             });
-            // Sharpness loupe: press-and-hold the preview shows the true-download-detail
-            // sample for the centre patch (built by _dlmapFetchClaritySample). Pointerdown
-            // shows, any release/cancel hides — a drag that turns into a scroll fires
-            // pointercancel, so scrolling the dialog keeps working untouched.
+            // Sharpness loupe: press-and-hold (instant with a mouse) anywhere on the
+            // preview shows the true pixels of the paid file at that spot, and follows
+            // the pointer while held. Until a patch lands the loupe magnifies the
+            // preview itself, so it always answers instantly and the sharp pixels
+            // paint over when ready (fetched on demand by _dlmapBuildSamplePatch).
             (function() {
                 var wrap = document.getElementById('dlmap-preview-wrap');
                 var loupe = document.getElementById('dlmap-loupe');
-                var clip = document.getElementById('dlmap-loupe-clip');
-                if (!wrap || !loupe || !clip) return;
-                function hide() { loupe.style.display = 'none'; }
+                var cnv = document.getElementById('dlmap-loupe-canvas');
+                var lab = document.getElementById('dlmap-loupe-label');
+                if (!wrap || !loupe || !cnv || !lab) return;
+                var active = false, holdTimer = null, fetchTimer = null, lastEv = null, downX = 0, downY = 0;
+                function hide() {
+                    active = false;
+                    clearTimeout(holdTimer); holdTimer = null;
+                    clearTimeout(fetchTimer); fetchTimer = null;
+                    loupe.style.display = 'none';
+                }
                 _dlmapLoupeHide = hide;
+                // Pointer position -> sheet px (clamped into the map window) + img-local px.
+                function sheetPoint(ev) {
+                    var s = _dlmapSession;
+                    if (!s || !s.sample) return null;
+                    var r = document.getElementById('dlmap-preview-img').getBoundingClientRect();
+                    if (!r.width || !r.height) return null;
+                    var sp = s.sample;
+                    return {
+                        rx: ev.clientX - r.left, ry: ev.clientY - r.top, imgW: r.width, imgH: r.height,
+                        x: Math.max(sp.dx, Math.min((ev.clientX - r.left) / r.width * DLMAP_TEMPLATE_W,
+                                                    sp.dx + sp.rect.w * sp.scale)),
+                        y: Math.max(sp.dy, Math.min((ev.clientY - r.top) / r.height * DLMAP_TEMPLATE_H,
+                                                    sp.dy + sp.rect.h * sp.scale))
+                    };
+                }
+                function draw(s, pt) {
+                    var sp = s.sample, w = cnv.width, h = cnv.height;
+                    var ctx = cnv.getContext('2d');
+                    var vx = pt.x - w / 2, vy = pt.y - h / 2;
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, w, h);
+                    // Base layer: the preview sheet's own pixels at 1:1 (same sheet-px
+                    // space as the patches, so swapping them in is apples-to-apples).
+                    if (s.finalCanvas) ctx.drawImage(s.finalCanvas, vx, vy, w, h, 0, 0, w, h);
+                    var sharp = false;
+                    for (var i = 0; i < sp.patches.length; i++) {
+                        var p = sp.patches[i];
+                        var ix0 = Math.max(vx, p.sheetX), iy0 = Math.max(vy, p.sheetY);
+                        var ix1 = Math.min(vx + w, p.sheetX + p.canvas.width);
+                        var iy1 = Math.min(vy + h, p.sheetY + p.canvas.height);
+                        if (ix1 <= ix0 || iy1 <= iy0) continue;
+                        ctx.drawImage(p.canvas, ix0 - p.sheetX, iy0 - p.sheetY, ix1 - ix0, iy1 - iy0,
+                                      ix0 - vx, iy0 - vy, ix1 - ix0, iy1 - iy0);
+                        if (pt.x >= p.sheetX && pt.x <= p.sheetX + p.canvas.width &&
+                            pt.y >= p.sheetY && pt.y <= p.sheetY + p.canvas.height) sharp = true;
+                    }
+                    var k = _dlmapSampleKeyAt(sp, sp.rect.left + (pt.x - sp.dx) / sp.scale,
+                                                  sp.rect.top + (pt.y - sp.dy) / sp.scale).key;
+                    lab.textContent = sharp ? 'Actual sharpness of your download'
+                        : sp.pending[k] ? 'Loading true detail…'
+                        : sp.failed[k] ? 'No plan detail at this spot'
+                        : sp.jobsUsed >= DLMAP_SAMPLE_SESSION_JOBS ? 'Sample limit reached — preview quality'
+                        : 'Loading true detail…';
+                }
+                function place(pt) {
+                    var half = (loupe.offsetWidth || 240) / 2;
+                    var lx = Math.max(half, Math.min(pt.rx, pt.imgW - half));
+                    var ly = pt.ry - (half + 46);              // float above the finger
+                    if (ly < half + 4) ly = pt.ry + half + 46; // near the top edge: flip below
+                    loupe.style.left = lx + 'px';
+                    loupe.style.top = Math.max(half, Math.min(ly, pt.imgH - half)) + 'px';
+                }
+                function update(ev) {
+                    var s = _dlmapSession;
+                    if (!active || !s || s.phase !== 'preview' || !s.sample) return;
+                    var pt = sheetPoint(ev);
+                    if (!pt) return;
+                    place(pt);
+                    draw(s, pt);
+                }
+                function requestPatchAt(ev) {
+                    var s = _dlmapSession;
+                    if (!active || !s || !s.sample) return;
+                    var pt = sheetPoint(ev);
+                    if (!pt) return;
+                    var sp = s.sample;
+                    var pr = _dlmapBuildSamplePatch(s, sp.rect.left + (pt.x - sp.dx) / sp.scale,
+                                                       sp.rect.top + (pt.y - sp.dy) / sp.scale);
+                    if (pr && typeof pr.then === 'function') pr.then(function() {
+                        if (active && lastEv) update(lastEv);  // sharp pixels paint in when ready
+                    });
+                }
+                function activate(ev) {
+                    active = true;
+                    loupe.style.display = 'block';
+                    update(ev);
+                    requestPatchAt(ev);
+                }
                 wrap.addEventListener('pointerdown', function(ev) {
                     var s = _dlmapSession;
-                    if (!s || s.phase !== 'preview' || !s.sampleCanvas) return;
-                    if (clip.firstChild !== s.sampleCanvas) {
-                        clip.textContent = '';
-                        clip.appendChild(s.sampleCanvas);
+                    if (!s || s.phase !== 'preview' || !s.sample) return;
+                    lastEv = ev; downX = ev.clientX; downY = ev.clientY;
+                    if (ev.pointerType === 'mouse') { activate(ev); ev.preventDefault(); }
+                    // Touch: require a real hold, so a plain swipe still scrolls the dialog.
+                    else holdTimer = setTimeout(function() { holdTimer = null; if (lastEv) activate(lastEv); }, 260);
+                });
+                wrap.addEventListener('pointermove', function(ev) {
+                    lastEv = ev;
+                    if (holdTimer && (Math.abs(ev.clientX - downX) > 12 || Math.abs(ev.clientY - downY) > 12)) {
+                        clearTimeout(holdTimer); holdTimer = null;    // it became a scroll, not a hold
                     }
-                    loupe.style.left = (s.sampleFx * 100) + '%';
-                    loupe.style.top = (s.sampleFy * 100) + '%';
-                    loupe.style.display = 'block';
-                    ev.preventDefault();
+                    if (active) {
+                        update(ev);
+                        // Fetch only when the finger pauses, not per pixel of movement.
+                        clearTimeout(fetchTimer);
+                        fetchTimer = setTimeout(function() { if (lastEv) requestPatchAt(lastEv); }, 180);
+                    }
                 });
                 wrap.addEventListener('pointerup', hide);
                 wrap.addEventListener('pointercancel', hide);
                 wrap.addEventListener('pointerleave', hide);
+                // Once the loupe is up, finger drags move IT — not the dialog scroll.
+                wrap.addEventListener('touchmove', function(ev) { if (active) ev.preventDefault(); }, { passive: false });
                 // Long-press must pop the loupe, not the image-save context menu.
                 wrap.addEventListener('contextmenu', function(ev) { ev.preventDefault(); });
             })();
@@ -10547,9 +10643,9 @@
         // can prove what the paid file will look like. Hard-capped — it must stay a
         // rounding error next to the paid render's tile bill, and the tiles land in the
         // IDB cache so a buyer's final render reuses them (near-zero marginal egress).
-        var DLMAP_SAMPLE_SPAN_PX = 512;          // 2x2 tiles of world px around the centre
-                                                 // (3x3 when it straddles tile boundaries)
-        var DLMAP_SAMPLE_MAX_JOBS = 30;          // plan + basemap; over this, skip the loupe
+        var DLMAP_SAMPLE_SPAN_PX = 512;          // world px per loupe patch (2x2 tiles typical)
+        var DLMAP_SAMPLE_MAX_JOBS = 30;          // per patch: plan + basemap; over this, skip
+        var DLMAP_SAMPLE_SESSION_JOBS = 90;      // per session: total sample tiles, hard cap
         var DLMAP_FETCH_CONCURRENCY = 6;
         // Free satellite basemap under the plan tiles (Google's map cannot be exported —
         // no CORS, no web snapshot API, and scraping it breaks ToS). Esri World Imagery
@@ -11434,86 +11530,103 @@
         }
 
         // ---- Sharpness loupe sample -------------------------------------------------
-        // Fetches a small centre patch at the FINAL fetch zoom (the same gz the paid
-        // render will use) and composes it at the final-sheet scale — byte-for-byte the
-        // pixels the paid JPEG will carry for that spot (vector overlays excepted).
-        // Fire-and-forget after the preview dialog opens: any failure just means the
-        // loupe never appears, and the purchase flow is never blocked or delayed.
+        // Press-and-hold anywhere on the preview shows the TRUE pixels of the paid file
+        // at that spot: small patches are fetched ON DEMAND at the FINAL fetch zoom (the
+        // same gz the paid render will use) and composed at the final-sheet scale —
+        // byte-for-byte what the paid JPEG will carry there (vector overlays excepted).
+        // Budgeted hard: DLMAP_SAMPLE_MAX_JOBS per patch and DLMAP_SAMPLE_SESSION_JOBS
+        // per session, and every tile lands in the IDB cache where the paid render
+        // reuses it — a buyer's sample egress rounds to zero. Any failure just means
+        // that spot keeps showing preview pixels; the purchase flow is never blocked.
         // The entitlement clamp in _dlmapEnumerateJobs applies unchanged, so an unowned
         // district's loupe honestly shows the free-zoom detail its file would contain.
-        async function _dlmapFetchClaritySample(s) {
-            if (!s || s.phase !== 'preview' || s.sampleCanvas || s.sampleCtrl) return;
-            var ctrl = new AbortController();
-            s.sampleCtrl = ctrl;
-            try {
-                // Identical inputs to _dlmapFinalizeDownload's render, so zoom + scale
-                // match the paid file exactly.
-                var rect = _dlmapComputeCaptureRectFrom(s.gz, s.geo.cz, s.geo.hCss, s.geo.lat, s.geo.lng);
-                var areaW = DLMAP_MAP_RIGHT - DLMAP_MAP_LEFT, areaH = DLMAP_MAP_BOTTOM - DLMAP_MAP_TOP;
-                var scale = Math.min(areaW / rect.w, areaH / rect.h);     // _dlmapComposeFinal's contain-fit
-                // Patch centred on the sheet centre, clamped inside the capture rect.
-                // The 1024/scale term caps the composed canvas at ~1024px on a side —
-                // scale can exceed 1 when the user frames already deep in the zoom.
-                var span = Math.floor(Math.min(DLMAP_SAMPLE_SPAN_PX, rect.w, rect.h, Math.ceil(1024 / scale)));
-                if (span < 64) return;
-                var left = Math.round(rect.left + (rect.w - span) / 2);
-                var top = Math.round(rect.top + (rect.h - span) / 2);
-                var mini = { z: rect.z, left: left, top: top, w: span, h: span,
-                             tx0: Math.floor(left / 256), ty0: Math.floor(top / 256),
-                             tx1: Math.floor((left + span - 1) / 256), ty1: Math.floor((top + span - 1) / 256) };
-                var nw = _dlmapWorldPxToLatLng(left, top, rect.z);
-                var se = _dlmapWorldPxToLatLng(left + span, top + span, rect.z);
-                mini.llBounds = { minLat: se.lat, maxLat: nw.lat, minLng: nw.lng, maxLng: se.lng };
-                var jobs = _dlmapEnumerateJobs(mini, _dlmapCollectSources(s.geo.cz, mini.llBounds));
-                if (jobs.length === 0) return;                            // no plan sheet at the centre
-                jobs = _dlmapBasemapJobs(mini).concat(jobs);
-                if (jobs.length > DLMAP_SAMPLE_MAX_JOBS) return;          // cost cap — skip, never spend
-                var stitch;
-                try {
-                    await _dlmapFetchAll(jobs, ctrl.signal, function() {});
-                    if (ctrl.signal.aborted || _dlmapSession !== s) return;
-                    stitch = _dlmapStitch(mini, jobs);
-                } finally {
-                    _dlmapCleanupJobs(jobs);
-                }
-                var out = document.createElement('canvas');
-                out.width = Math.max(1, Math.round(span * scale));
-                out.height = Math.max(1, Math.round(span * scale));
-                var ctx = out.getContext('2d');
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillRect(0, 0, out.width, out.height);
-                ctx.drawImage(stitch, mini.left - mini.ox, mini.top - mini.oy, span, span,
-                              0, 0, out.width, out.height);
-                if (_dlmapSession !== s || s.phase !== 'preview') return;
-                s.sampleCanvas = out;
-                // Patch centre as a fraction of the TEMPLATE — the preview <img> shows
-                // the whole template, so these place the marker with percentage CSS.
-                var dx = DLMAP_MAP_LEFT + (areaW - rect.w * scale) / 2;
-                var dy = DLMAP_MAP_TOP + (areaH - rect.h * scale) / 2;
-                s.sampleFx = (dx + (left + span / 2 - rect.left) * scale) / DLMAP_TEMPLATE_W;
-                s.sampleFy = (dy + (top + span / 2 - rect.top) * scale) / DLMAP_TEMPLATE_H;
-                _dlmapShowSampleMarker(s);
-                document.getElementById('dlmap-quality-note').textContent =
-                    'Preview quality — press & hold the image to see the true sharpness of your download.';
-            } catch (e) {
-                // silent — the loupe is a bonus, never an error the user sees
-            } finally {
-                if (s.sampleCtrl === ctrl) s.sampleCtrl = null;
-            }
+        function _dlmapSampleInit(s) {
+            // Identical inputs to _dlmapFinalizeDownload's render, so zoom + scale
+            // match the paid file exactly.
+            var rect = _dlmapComputeCaptureRectFrom(s.gz, s.geo.cz, s.geo.hCss, s.geo.lat, s.geo.lng);
+            var areaW = DLMAP_MAP_RIGHT - DLMAP_MAP_LEFT, areaH = DLMAP_MAP_BOTTOM - DLMAP_MAP_TOP;
+            var scale = Math.min(areaW / rect.w, areaH / rect.h);     // _dlmapComposeFinal's contain-fit
+            // The 1024/scale term caps a composed patch at ~1024px on a side — scale
+            // can exceed 1 when the user frames already deep in the zoom.
+            var span = Math.floor(Math.min(DLMAP_SAMPLE_SPAN_PX, rect.w, rect.h, Math.ceil(1024 / scale)));
+            if (span < 64) return;
+            s.sampleCtrl = new AbortController();
+            s.sample = { rect: rect, scale: scale, span: span,
+                         dx: DLMAP_MAP_LEFT + (areaW - rect.w * scale) / 2,
+                         dy: DLMAP_MAP_TOP + (areaH - rect.h * scale) / 2,
+                         patches: [], pending: {}, failed: {}, jobsUsed: 0 };
+            // Seed the centre so the first hold usually answers instantly.
+            _dlmapBuildSamplePatch(s, rect.left + rect.w / 2, rect.top + rect.h / 2);
         }
 
-        function _dlmapShowSampleMarker(s) {
-            var marker = document.getElementById('dlmap-sample-marker');
-            if (!marker) return;
-            if (s && s.phase === 'preview' && s.sampleCanvas) {
-                marker.style.left = (s.sampleFx * 100) + '%';
-                marker.style.top = (s.sampleFy * 100) + '%';
-                marker.style.display = '';
-            } else {
-                marker.style.display = 'none';
-            }
+        // Snap a world-px point to its patch slot: a half-span grid, clamped inside the
+        // capture rect, so nearby presses share one patch instead of minting overlaps.
+        function _dlmapSampleKeyAt(sp, wx, wy) {
+            var half = sp.span / 2;
+            var left = Math.round((wx - half) / half) * half;
+            var top = Math.round((wy - half) / half) * half;
+            left = Math.max(sp.rect.left, Math.min(left, sp.rect.left + sp.rect.w - sp.span));
+            top = Math.max(sp.rect.top, Math.min(top, sp.rect.top + sp.rect.h - sp.span));
+            return { key: left + '_' + top, left: left, top: top };
+        }
+
+        // Build (or return) the sample patch containing world-px point (wx, wy) at the
+        // final zoom. Returns the finished patch, a Promise of it, or null (no sheet
+        // here / budget spent / previous failure).
+        function _dlmapBuildSamplePatch(s, wx, wy) {
+            var sp = s.sample;
+            if (!sp || !s.sampleCtrl) return null;
+            var slot = _dlmapSampleKeyAt(sp, wx, wy);
+            var key = slot.key, left = slot.left, top = slot.top, span = sp.span, rect = sp.rect;
+            for (var i = 0; i < sp.patches.length; i++)
+                if (sp.patches[i].key === key) return sp.patches[i];
+            if (sp.pending[key]) return sp.pending[key];
+            if (sp.failed[key] || sp.jobsUsed >= DLMAP_SAMPLE_SESSION_JOBS) return null;
+            var mini = { z: rect.z, left: left, top: top, w: span, h: span,
+                         tx0: Math.floor(left / 256), ty0: Math.floor(top / 256),
+                         tx1: Math.floor((left + span - 1) / 256), ty1: Math.floor((top + span - 1) / 256) };
+            var nw = _dlmapWorldPxToLatLng(left, top, rect.z);
+            var se = _dlmapWorldPxToLatLng(left + span, top + span, rect.z);
+            mini.llBounds = { minLat: se.lat, maxLat: nw.lat, minLng: nw.lng, maxLng: se.lng };
+            var jobs = _dlmapEnumerateJobs(mini, _dlmapCollectSources(s.geo.cz, mini.llBounds));
+            if (jobs.length === 0) { sp.failed[key] = 1; return null; }   // no plan sheet here
+            jobs = _dlmapBasemapJobs(mini).concat(jobs);
+            if (jobs.length > DLMAP_SAMPLE_MAX_JOBS) { sp.failed[key] = 1; return null; }
+            sp.jobsUsed += jobs.length;
+            var ctrl = s.sampleCtrl;
+            sp.pending[key] = (async function() {
+                try {
+                    var stitch;
+                    try {
+                        await _dlmapFetchAll(jobs, ctrl.signal, function() {});
+                        if (ctrl.signal.aborted || _dlmapSession !== s) return null;
+                        stitch = _dlmapStitch(mini, jobs);
+                    } finally {
+                        _dlmapCleanupJobs(jobs);
+                    }
+                    var out = document.createElement('canvas');
+                    out.width = Math.max(1, Math.round(span * sp.scale));
+                    out.height = Math.max(1, Math.round(span * sp.scale));
+                    var ctx = out.getContext('2d');
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, out.width, out.height);
+                    ctx.drawImage(stitch, mini.left - mini.ox, mini.top - mini.oy, span, span,
+                                  0, 0, out.width, out.height);
+                    var patch = { key: key, canvas: out,
+                                  sheetX: sp.dx + (left - rect.left) * sp.scale,
+                                  sheetY: sp.dy + (top - rect.top) * sp.scale };
+                    sp.patches.push(patch);
+                    return patch;
+                } catch (e) {
+                    sp.failed[key] = 1;               // silent — that spot keeps preview pixels
+                    return null;
+                } finally {
+                    delete sp.pending[key];
+                }
+            })();
+            return sp.pending[key];
         }
 
         function _dlmapShowDialog() {
@@ -11529,12 +11642,13 @@
             note.style.display = s.missing ? '' : 'none';
             if (s.missing) note.textContent = s.missing + ' tile(s) unavailable — shown as white areas';
             document.getElementById('dlmap-quality-note').textContent = s.phase === 'preview'
-                ? (s.sampleCanvas
-                    ? 'Preview quality — press & hold the image to see the true sharpness of your download.'
+                ? (s.sample
+                    ? 'Preview quality — press & hold anywhere on the image to see the true sharpness of your download.'
                     : 'Preview quality — the downloaded file is rendered in full resolution.')
                 : 'Full resolution.';
             if (_dlmapLoupeHide) _dlmapLoupeHide();
-            _dlmapShowSampleMarker(s);           // hides itself for the post-pay (full-res) dialog
+            document.getElementById('dlmap-sample-hint').style.display =
+                (s.phase === 'preview' && s.sample) ? '' : 'none';    // post-pay preview IS full res
             document.getElementById('dlmap-caption').value = s.caption || DLMAP_DEFAULT_CAPTION;
             document.getElementById('dlmap-scalebar-opt').checked = true;   // default ON each session
             var price = _dlmapPrice();
@@ -11725,8 +11839,8 @@
                                   districtPid: (d && d.productPurchaseID) || '',
                                   missing: res.missing,
                                   credits: await creditsPromise };
+                _dlmapSampleInit(_dlmapSession);           // loupe geometry + centre-seed prefetch
                 _dlmapShowDialog();
-                _dlmapFetchClaritySample(_dlmapSession);   // fire-and-forget sharpness loupe
                 try { mmAnalytics.event('download_map_preview', { zoom: cz }); } catch (e) {}
             } catch (e) {
                 if (!ctrl.signal.aborted) _dlmapToast('Could not create map — try again');
@@ -11939,15 +12053,13 @@
             var s = _dlmapSession;
             _dlmapSession = null;
             if (_dlmapLoupeHide) _dlmapLoupeHide();
-            _dlmapShowSampleMarker(null);
-            var clip = document.getElementById('dlmap-loupe-clip');
-            if (clip) clip.textContent = '';
+            document.getElementById('dlmap-sample-hint').style.display = 'none';
             if (s) {
                 if (s.sampleCtrl) { try { s.sampleCtrl.abort(); } catch (e) {} }
                 var url = s.previewUrl;
                 if (url) setTimeout(function() { try { URL.revokeObjectURL(url); } catch (e) {} }, 1500);
                 s.stitch = null; s.finalCanvas = null; s.blob = null; s.tmpl = null;   // free the big canvases
-                s.sampleCanvas = null;
+                s.sample = null;
             }
             document.getElementById('dlmap-preview-img').removeAttribute('src');
         }
