@@ -693,6 +693,21 @@
         #dlmap-img-processing { position:absolute; inset:0; background:rgba(255,255,255,0.78);
                                 align-items:center; justify-content:center; font-size:14px; font-weight:700;
                                 color:#00695C; text-align:center; padding:12px; }
+        /* ---- Sharpness loupe: press-and-hold true-detail magnifier ---- */
+        #dlmap-preview-wrap { position:relative; }
+        #dlmap-preview-wrap img { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+        #dlmap-sample-hint { position:absolute; left:50%; bottom:10px; transform:translateX(-50%); z-index:3;
+                             background:rgba(33,33,33,0.72); color:#fff; font-size:11px; font-weight:600;
+                             padding:5px 10px; border-radius:999px; white-space:nowrap;
+                             box-shadow:0 1px 4px rgba(0,0,0,0.3); pointer-events:none; }
+        #dlmap-loupe { position:absolute; display:none; width:240px; height:240px; max-width:86%;
+                       transform:translate(-50%,-50%); z-index:4; border-radius:12px; overflow:hidden;
+                       border:2px solid #fff; box-shadow:0 4px 18px rgba(0,0,0,0.45); background:#fff;
+                       pointer-events:none; animation:dlmapSavedIn 0.18s ease; }
+        #dlmap-loupe canvas { display:block; width:100%; height:100%; }
+        #dlmap-loupe-label { position:absolute; left:0; right:0; bottom:0; z-index:2; text-align:center;
+                             background:rgba(27,94,32,0.85); color:#fff; font-size:11px; font-weight:600;
+                             padding:4px 6px; }
         /* ---- 2a: mobile bottom sheet (columns stack, footer sticks) ---- */
         @media (max-width:720px) {
             #dlmap-preview-overlay { align-items:flex-end; padding:0; }
@@ -1715,7 +1730,16 @@
             <div class="dlmapd-grid">
                 <div class="dlmapd-left">
                     <div class="dlmapd-previewbox">
-                        <img id="dlmap-preview-img" alt="Preview of the map sheet">
+                        <!-- Wrapper shrink-wraps the img so the loupe/marker can be placed
+                             with percentage coords of the SHEET even when the box scrolls. -->
+                        <div id="dlmap-preview-wrap">
+                            <img id="dlmap-preview-img" alt="Preview of the map sheet">
+                            <div id="dlmap-sample-hint" style="display:none;">&#128269; Press &amp; hold to check sharpness</div>
+                            <div id="dlmap-loupe">
+                                <canvas id="dlmap-loupe-canvas" width="236" height="236"></canvas>
+                                <div id="dlmap-loupe-label">Actual sharpness of your download</div>
+                            </div>
+                        </div>
                         <div id="dlmap-img-processing" style="display:none;">Processing your map…</div>
                     </div>
                     <p id="dlmap-quality-note" class="dlmapd-qnote"></p>
@@ -3010,7 +3034,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps-app.js?v=125" defer></script>
+    <script src="maps-app.js?v=128" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
