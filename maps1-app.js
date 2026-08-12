@@ -195,7 +195,7 @@
         //       OverlayView on screen, never tiles, so the stitch never contained them and
         //       every download came out without them. Drawn in _dlmapComposeFinal under the
         //       annotations, honouring the layer toggle and MIN_ZOOM_FOR_GEOJSON.
-        var APP_VERSION = '124';
+        var APP_VERSION = '126';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -7904,6 +7904,35 @@
             document.getElementById('dlmap-scalebar-opt').addEventListener('change', function() {
                 _dlmapRenderPreview();          // recompose from the kept stitch — cheap
             });
+            // Sharpness loupe: press-and-hold the preview shows the true-download-detail
+            // sample for the centre patch (built by _dlmapFetchClaritySample). Pointerdown
+            // shows, any release/cancel hides — a drag that turns into a scroll fires
+            // pointercancel, so scrolling the dialog keeps working untouched.
+            (function() {
+                var wrap = document.getElementById('dlmap-preview-wrap');
+                var loupe = document.getElementById('dlmap-loupe');
+                var clip = document.getElementById('dlmap-loupe-clip');
+                if (!wrap || !loupe || !clip) return;
+                function hide() { loupe.style.display = 'none'; }
+                _dlmapLoupeHide = hide;
+                wrap.addEventListener('pointerdown', function(ev) {
+                    var s = _dlmapSession;
+                    if (!s || s.phase !== 'preview' || !s.sampleCanvas) return;
+                    if (clip.firstChild !== s.sampleCanvas) {
+                        clip.textContent = '';
+                        clip.appendChild(s.sampleCanvas);
+                    }
+                    loupe.style.left = (s.sampleFx * 100) + '%';
+                    loupe.style.top = (s.sampleFy * 100) + '%';
+                    loupe.style.display = 'block';
+                    ev.preventDefault();
+                });
+                wrap.addEventListener('pointerup', hide);
+                wrap.addEventListener('pointercancel', hide);
+                wrap.addEventListener('pointerleave', hide);
+                // Long-press must pop the loupe, not the image-save context menu.
+                wrap.addEventListener('contextmenu', function(ev) { ev.preventDefault(); });
+            })();
             document.getElementById('dlmap-cancel-btn').addEventListener('click', _dlmapCloseDialog);
             document.getElementById('dlmap-pay-btn').addEventListener('click', function() {
                 var s = _dlmapSession;
@@ -10514,6 +10543,13 @@
         var DLMAP_DEFAULT_CAPTION = 'Part Development Plan';
         var DLMAP_MAX_TILE_FETCHES = 700;
         var DLMAP_MAX_CANVAS_PX = 4096 * 4096;   // iOS Safari canvas-area ceiling
+        // Sharpness loupe: a tiny centre patch fetched at the FINAL zoom so the preview
+        // can prove what the paid file will look like. Hard-capped — it must stay a
+        // rounding error next to the paid render's tile bill, and the tiles land in the
+        // IDB cache so a buyer's final render reuses them (near-zero marginal egress).
+        var DLMAP_SAMPLE_SPAN_PX = 512;          // 2x2 tiles of world px around the centre
+                                                 // (3x3 when it straddles tile boundaries)
+        var DLMAP_SAMPLE_MAX_JOBS = 30;          // plan + basemap; over this, skip the loupe
         var DLMAP_FETCH_CONCURRENCY = 6;
         // Free satellite basemap under the plan tiles (Google's map cannot be exported —
         // no CORS, no web snapshot API, and scraping it breaks ToS). Esri World Imagery
@@ -10526,6 +10562,7 @@
         var DLMAP_BASEMAP_ATTRIB = 'Imagery © Esri, Maxar, Earthstar Geographics';
         var _dlmapSession = null;                // one download at a time
         var _dlmapTemplateCache = {};            // name -> Promise<HTMLImageElement>
+        var _dlmapLoupeHide = null;              // set by the loupe wiring; hides the overlay
 
         // ---- DOWNLOAD BILLING -------------------------------------------------------
         // A consumable charge per download (like Android's "screenshot" product), NOT a
@@ -11396,6 +11433,89 @@
             }
         }
 
+        // ---- Sharpness loupe sample -------------------------------------------------
+        // Fetches a small centre patch at the FINAL fetch zoom (the same gz the paid
+        // render will use) and composes it at the final-sheet scale — byte-for-byte the
+        // pixels the paid JPEG will carry for that spot (vector overlays excepted).
+        // Fire-and-forget after the preview dialog opens: any failure just means the
+        // loupe never appears, and the purchase flow is never blocked or delayed.
+        // The entitlement clamp in _dlmapEnumerateJobs applies unchanged, so an unowned
+        // district's loupe honestly shows the free-zoom detail its file would contain.
+        async function _dlmapFetchClaritySample(s) {
+            if (!s || s.phase !== 'preview' || s.sampleCanvas || s.sampleCtrl) return;
+            var ctrl = new AbortController();
+            s.sampleCtrl = ctrl;
+            try {
+                // Identical inputs to _dlmapFinalizeDownload's render, so zoom + scale
+                // match the paid file exactly.
+                var rect = _dlmapComputeCaptureRectFrom(s.gz, s.geo.cz, s.geo.hCss, s.geo.lat, s.geo.lng);
+                var areaW = DLMAP_MAP_RIGHT - DLMAP_MAP_LEFT, areaH = DLMAP_MAP_BOTTOM - DLMAP_MAP_TOP;
+                var scale = Math.min(areaW / rect.w, areaH / rect.h);     // _dlmapComposeFinal's contain-fit
+                // Patch centred on the sheet centre, clamped inside the capture rect.
+                // The 1024/scale term caps the composed canvas at ~1024px on a side —
+                // scale can exceed 1 when the user frames already deep in the zoom.
+                var span = Math.floor(Math.min(DLMAP_SAMPLE_SPAN_PX, rect.w, rect.h, Math.ceil(1024 / scale)));
+                if (span < 64) return;
+                var left = Math.round(rect.left + (rect.w - span) / 2);
+                var top = Math.round(rect.top + (rect.h - span) / 2);
+                var mini = { z: rect.z, left: left, top: top, w: span, h: span,
+                             tx0: Math.floor(left / 256), ty0: Math.floor(top / 256),
+                             tx1: Math.floor((left + span - 1) / 256), ty1: Math.floor((top + span - 1) / 256) };
+                var nw = _dlmapWorldPxToLatLng(left, top, rect.z);
+                var se = _dlmapWorldPxToLatLng(left + span, top + span, rect.z);
+                mini.llBounds = { minLat: se.lat, maxLat: nw.lat, minLng: nw.lng, maxLng: se.lng };
+                var jobs = _dlmapEnumerateJobs(mini, _dlmapCollectSources(s.geo.cz, mini.llBounds));
+                if (jobs.length === 0) return;                            // no plan sheet at the centre
+                jobs = _dlmapBasemapJobs(mini).concat(jobs);
+                if (jobs.length > DLMAP_SAMPLE_MAX_JOBS) return;          // cost cap — skip, never spend
+                var stitch;
+                try {
+                    await _dlmapFetchAll(jobs, ctrl.signal, function() {});
+                    if (ctrl.signal.aborted || _dlmapSession !== s) return;
+                    stitch = _dlmapStitch(mini, jobs);
+                } finally {
+                    _dlmapCleanupJobs(jobs);
+                }
+                var out = document.createElement('canvas');
+                out.width = Math.max(1, Math.round(span * scale));
+                out.height = Math.max(1, Math.round(span * scale));
+                var ctx = out.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, out.width, out.height);
+                ctx.drawImage(stitch, mini.left - mini.ox, mini.top - mini.oy, span, span,
+                              0, 0, out.width, out.height);
+                if (_dlmapSession !== s || s.phase !== 'preview') return;
+                s.sampleCanvas = out;
+                // Patch centre as a fraction of the TEMPLATE — the preview <img> shows
+                // the whole template, so these place the marker with percentage CSS.
+                var dx = DLMAP_MAP_LEFT + (areaW - rect.w * scale) / 2;
+                var dy = DLMAP_MAP_TOP + (areaH - rect.h * scale) / 2;
+                s.sampleFx = (dx + (left + span / 2 - rect.left) * scale) / DLMAP_TEMPLATE_W;
+                s.sampleFy = (dy + (top + span / 2 - rect.top) * scale) / DLMAP_TEMPLATE_H;
+                _dlmapShowSampleMarker(s);
+                document.getElementById('dlmap-quality-note').textContent =
+                    'Preview quality — press & hold the image to see the true sharpness of your download.';
+            } catch (e) {
+                // silent — the loupe is a bonus, never an error the user sees
+            } finally {
+                if (s.sampleCtrl === ctrl) s.sampleCtrl = null;
+            }
+        }
+
+        function _dlmapShowSampleMarker(s) {
+            var marker = document.getElementById('dlmap-sample-marker');
+            if (!marker) return;
+            if (s && s.phase === 'preview' && s.sampleCanvas) {
+                marker.style.left = (s.sampleFx * 100) + '%';
+                marker.style.top = (s.sampleFy * 100) + '%';
+                marker.style.display = '';
+            } else {
+                marker.style.display = 'none';
+            }
+        }
+
         function _dlmapShowDialog() {
             var s = _dlmapSession;
             if (!s) return;
@@ -11409,8 +11529,12 @@
             note.style.display = s.missing ? '' : 'none';
             if (s.missing) note.textContent = s.missing + ' tile(s) unavailable — shown as white areas';
             document.getElementById('dlmap-quality-note').textContent = s.phase === 'preview'
-                ? 'Preview quality — the downloaded file is rendered in full resolution.'
+                ? (s.sampleCanvas
+                    ? 'Preview quality — press & hold the image to see the true sharpness of your download.'
+                    : 'Preview quality — the downloaded file is rendered in full resolution.')
                 : 'Full resolution.';
+            if (_dlmapLoupeHide) _dlmapLoupeHide();
+            _dlmapShowSampleMarker(s);           // hides itself for the post-pay (full-res) dialog
             document.getElementById('dlmap-caption').value = s.caption || DLMAP_DEFAULT_CAPTION;
             document.getElementById('dlmap-scalebar-opt').checked = true;   // default ON each session
             var price = _dlmapPrice();
@@ -11602,6 +11726,7 @@
                                   missing: res.missing,
                                   credits: await creditsPromise };
                 _dlmapShowDialog();
+                _dlmapFetchClaritySample(_dlmapSession);   // fire-and-forget sharpness loupe
                 try { mmAnalytics.event('download_map_preview', { zoom: cz }); } catch (e) {}
             } catch (e) {
                 if (!ctrl.signal.aborted) _dlmapToast('Could not create map — try again');
@@ -11616,6 +11741,7 @@
             var s = _dlmapSession;
             if (!s || s.phase !== 'preview' || s.running) return;
             s.caption = document.getElementById('dlmap-caption').value.trim() || DLMAP_DEFAULT_CAPTION;
+            if (s.sampleCtrl) { try { s.sampleCtrl.abort(); } catch (e) {} }   // loupe sample still inflight
             document.getElementById('dlmap-preview-overlay').classList.remove('open');
             var ctrl = new AbortController();
             s.running = true;
@@ -11812,10 +11938,16 @@
             document.getElementById('dlmap-preview-overlay').classList.remove('open');
             var s = _dlmapSession;
             _dlmapSession = null;
+            if (_dlmapLoupeHide) _dlmapLoupeHide();
+            _dlmapShowSampleMarker(null);
+            var clip = document.getElementById('dlmap-loupe-clip');
+            if (clip) clip.textContent = '';
             if (s) {
+                if (s.sampleCtrl) { try { s.sampleCtrl.abort(); } catch (e) {} }
                 var url = s.previewUrl;
                 if (url) setTimeout(function() { try { URL.revokeObjectURL(url); } catch (e) {} }, 1500);
                 s.stitch = null; s.finalCanvas = null; s.blob = null; s.tmpl = null;   // free the big canvases
+                s.sampleCanvas = null;
             }
             document.getElementById('dlmap-preview-img').removeAttribute('src');
         }
