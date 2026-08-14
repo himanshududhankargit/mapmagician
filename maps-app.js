@@ -210,7 +210,11 @@
         //       included; they ride this constant.
         // 131 = staging build with the preview data off.
         // 132 = PROMOTION of that build to live: the "new regions" sheet ships.
-        var APP_VERSION = '132';
+        // 134 = cookie-write hardening (staging-verified as 133): session cookies
+        //       (no expires= — clock-skew immunity) + write-then-readback with a
+        //       visible "cookies blocked" banner instead of a silently blank map
+        //       storming 403s.
+        var APP_VERSION = '134';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -484,17 +488,44 @@
             }, Math.max(60000, refreshIn));
         }
 
+        // Shown when the browser refuses our cookie writes — tiles cannot work without
+        // cookies, so name the cause instead of leaving a silently blank map that
+        // hammers 403s (one such client sent 15k requests in 8 minutes, all wasted).
+        function showCookiesBlockedBanner() {
+            if (document.getElementById('mm-cookies-blocked')) return;
+            var b = document.createElement('div');
+            b.id = 'mm-cookies-blocked';
+            b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:100000;background:#b91c1c;color:#fff;padding:10px 16px;font:14px "Segoe UI",Roboto,Arial,sans-serif;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.35);';
+            b.textContent = 'Map tiles cannot load because your browser is blocking cookies. Please allow cookies for this site, then reload the page.';
+            document.body.appendChild(b);
+        }
+        function hideCookiesBlockedBanner() {
+            var b = document.getElementById('mm-cookies-blocked');
+            if (b) b.remove();
+        }
+
         function writeCfCookies(data) {
-            const expires = new Date(data.expiresAt).toUTCString();
-            document.cookie = `CloudFront-Policy=${data['CloudFront-Policy']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none; expires=${expires}`;
-            document.cookie = `CloudFront-Signature=${data['CloudFront-Signature']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none; expires=${expires}`;
-            document.cookie = `CloudFront-Key-Pair-Id=${data['CloudFront-Key-Pair-Id']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none; expires=${expires}`;
+            // Session cookies — deliberately NO expires= attribute. CloudFront enforces
+            // the real expiry from its OWN clock via the signed policy, so the attribute
+            // buys nothing and silently loses users: a device clock ahead of the server
+            // by more than the TTL makes the server-derived expires= already-past, and
+            // the browser drops the cookie at write time. Confirmed 2026-08-14: sessions
+            // 403ing on every tile from the very first request, some across 13 separate
+            // visits, while the backend issued cookies to them successfully each time.
+            document.cookie = `CloudFront-Policy=${data['CloudFront-Policy']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none`;
+            document.cookie = `CloudFront-Signature=${data['CloudFront-Signature']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none`;
+            document.cookie = `CloudFront-Key-Pair-Id=${data['CloudFront-Key-Pair-Id']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none`;
             if (data['mmp-token']) {
-                document.cookie = `mmp-token=${data['mmp-token']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none; expires=${expires}`;
+                document.cookie = `mmp-token=${data['mmp-token']}; domain=${COOKIE_DOMAIN}; path=/; secure; samesite=none`;
             }
             // Server tells us which productIds actually made it into the token, so callers
             // can assert the district they just paid for is really in there.
             _cfGrantedPids = Array.isArray(data.grantedPids) ? data.grantedPids : null;
+            // Read back what we just wrote. document.cookie is a SILENT no-op when the
+            // browser blocks cookies; without this check the map "unlocks" and every
+            // tile 403s forever. Key-Pair-Id is always set and the shortest of the four,
+            // so its presence is the cheapest proof the jar accepted the writes.
+            return document.cookie.indexOf('CloudFront-Key-Pair-Id=') !== -1;
         }
 
         // Issues a fresh CloudFront cookie + mmp-token pair. Resolves TRUE only when a new
@@ -540,7 +571,17 @@
                         tileHost: typeof TILE_HOST === 'string' ? TILE_HOST : ''
                     });
                     data = result.data;
-                    writeCfCookies(data);
+                    if (!writeCfCookies(data)) {
+                        // The browser refused the cookie write (blocked by a setting or
+                        // extension). Re-issuing cannot help, so don't burn the remaining
+                        // retries: name the cause and halt tile loading instead of letting
+                        // a blank map storm 403s.
+                        cfCookiesReady = false;
+                        showCookiesBlockedBanner();
+                        scheduleCfCookieRefresh(null); // re-check in 5 min in case they unblock
+                        return false;
+                    }
+                    hideCookiesBlockedBanner();
 
                     if (expectPid && Array.isArray(data.grantedPids)
                         && data.grantedPids.indexOf(expectPid) === -1
