@@ -208,7 +208,8 @@
         //       a throwaway '?probe=' key proves origin has the bytes and proves
         //       NOTHING about what a browser gets. +1 on EVERY push, lazy files
         //       included; they ride this constant.
-        var APP_VERSION = '130';
+        // 131 = preview data off; this is the build promoted to live as 132.
+        var APP_VERSION = '131';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -8880,7 +8881,8 @@
         }
 
         // ##################################################################
-        // 🛑 STAGING PREVIEW — SET false BEFORE PROMOTING THIS FILE TO maps-app.js.
+        // 🛑 PREVIEW — MUST STAY false. Only ever true while deliberately reviewing
+        //    the sheet on maps1, and turned back off before that build is promoted.
         //
         // Plants an announcement on EVERY load so the sheet can be reviewed without
         // waiting for a real publish, and shows it a second or so after the map
@@ -8902,7 +8904,7 @@
         //     localStorage.setItem('mm_nr_demo', 'off')      // real path
         //     localStorage.removeItem('mm_nr_demo')          // preview again
         // ##################################################################
-        const NR_DEMO_ON_LOAD = true;
+        const NR_DEMO_ON_LOAD = false;
 
         // Anything left pending from a previous session (the bump landed while the
         // tab was shut). One localStorage read decides whether the module is worth

@@ -195,7 +195,22 @@
         //       OverlayView on screen, never tiles, so the stitch never contained them and
         //       every download came out without them. Drawn in _dlmapComposeFinal under the
         //       annotations, honouring the layer toggle and MIN_ZOOM_FOR_GEOJSON.
-        var APP_VERSION = '128';
+        // 129 = "New regions" bottom sheet — port of the Android NewRegionsSheetController.
+        //       A published region used to appear in silence; now a d4/d2 version bump is
+        //       diffed against the previous localStorage copy and the additions are
+        //       announced, grouped by region, tap to fly there.
+        // 130 = new-regions sheet moved to the bottom-LEFT (the right is .fab-stack's)
+        //       and Dismiss now hides it completely.
+        //       🛑 THE REAL LESSON OF THIS BUILD: 129 was pushed THREE times without a
+        //       bump. maps-newregions.js is fetched as '...?v=' + APP_VERSION, so the
+        //       2nd and 3rd deploys landed at origin behind a cache key no browser
+        //       would request again — the fixes were live and invisible. Verifying with
+        //       a throwaway '?probe=' key proves origin has the bytes and proves
+        //       NOTHING about what a browser gets. +1 on EVERY push, lazy files
+        //       included; they ride this constant.
+        // 131 = staging build with the preview data off.
+        // 132 = PROMOTION of that build to live: the "new regions" sheet ships.
+        var APP_VERSION = '132';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -5780,6 +5795,10 @@
             // Initialize UI event listeners
             initUIEvents();
 
+            // "New regions" sheet — wires its own controls and shows anything left
+            // pending from a previous session. Silent when there is nothing to say.
+            initNewRegionsSheet();
+
             // Pre-fetch all pricing so purchase dialog opens instantly
             var pricingListenerRef = firebase.database().ref('appConfig/pricing');
             pricingListenerRef.on('value', function(snap) {
@@ -6409,6 +6428,10 @@
             window.goToLocation = goToLocation;
 
             function openSidebar() {
+                // The "new regions" sheet sits bottom-LEFT on desktop, so this drawer
+                // would land on top of it. Hidden, not dismissed — the announcement
+                // survives and returns on the next load.
+                nrHideSheet();
                 sidebarPanel.classList.add('open');
                 sidebarOverlay.classList.add('open');
             }
@@ -7707,6 +7730,9 @@
             const legendBtn = document.getElementById('btn-legend');
             function openLegendPanel() {
                 _legendOpen = true;
+                // Only one bottom sheet at a time, as on Android. Hidden, not
+                // dismissed — the announcement survives and returns on the next load.
+                nrHideSheet();
                 renderLegend();             // paint before the slide-in, not after
                 legendPanel.classList.add('open');
                 legendBtn.classList.add('active');
@@ -8775,6 +8801,140 @@
             return result;
         }
 
+        // =====================================================================
+        // "New regions" announcement — thin host half.
+        //
+        // A published region used to appear in complete silence: the layer file
+        // re-downloads, the polygons are simply there, and the only way to find one
+        // was to pan over it by chance. The feature that announces them is a port of
+        // the Android NewRegionsSheetController + LayerAdditionsStore, and it lives
+        // ENTIRELY in maps-newregions.js — diff, persistence, CSS, markup and sheet.
+        //
+        // LAZY, like Annotate. Nothing here parses at page start. The module is
+        // fetched only when there is genuinely something to announce, which is the
+        // rare case: either a diffed layer just refetched after a version bump and we
+        // still hold the copy that preceded it, or a previous session left an
+        // announcement in localStorage. A first-ever visit never loads it — there is
+        // no baseline to diff against, so nothing could be announced anyway.
+        //
+        // What HAS to stay in this file is the baseline stash: getCachedOrFetchLayer
+        // destroys the previous cache entry before the replacement lands, and that
+        // entry is the only record of what the browser had before the publish.
+        // =====================================================================
+
+        // Only the two layers the module actually diffs. d1/d3 are deliberately not
+        // diffed (one d1 entry is a map SHEET, not a region — Nagpur Metropolitan
+        // alone is thirty-odd of them), and a d1 baseline is ~2.6 MB held for nothing.
+        const NR_DIFFED_LAYERS = { layer_menu: 1, layer_village: 1 };
+        const NR_PENDING_KEY = 'mm_new_regions_pending';
+
+        // The previous published copy of a diffed layer, held only from the moment
+        // its cache entry is dropped until the replacement lands.
+        const _layerBaselines = {};
+
+        function _stashLayerBaseline(cacheKey, known) {
+            if (!NR_DIFFED_LAYERS[cacheKey]) return;
+            if (known !== undefined) { _layerBaselines[cacheKey] = known; return; }
+            try {
+                const raw = localStorage.getItem(cacheKey);
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.d) _layerBaselines[cacheKey] = parsed.d;
+            } catch (e) { /* corrupt cache: no baseline, so nothing is announced */ }
+        }
+
+        // ?v= rides the app version so a deploy invalidates it in lockstep with this
+        // file, exactly as loadAnnotations does.
+        let _nrLoading = null;
+        function loadNewRegions() {
+            if (window.mmNewRegions) return Promise.resolve(window.mmNewRegions);
+            if (_nrLoading) return _nrLoading;
+            _nrLoading = new Promise(function (resolve, reject) {
+                const sc = document.createElement('script');
+                sc.src = 'maps-newregions.js?v=' + APP_VERSION;
+                sc.onload = function () {
+                    if (window.mmNewRegions) resolve(window.mmNewRegions);
+                    else { _nrLoading = null; reject(new Error('newregions init failed')); }
+                };
+                sc.onerror = function () {
+                    _nrLoading = null; reject(new Error('newregions load failed'));
+                };
+                document.head.appendChild(sc);
+            });
+            return _nrLoading;
+        }
+
+        // Called from getCachedOrFetchLayer once a version-bumped layer has been
+        // refetched, with the copy this browser held beforehand.
+        function nrRunLayerDiff(cacheKey, previous, fresh) {
+            if (!previous || !fresh || !NR_DIFFED_LAYERS[cacheKey]) return;
+            loadNewRegions()
+                .then(function (nr) { nr.runLayerDiff(cacheKey, previous, fresh); })
+                // An announcement is a nicety; never let it break a layer load.
+                .catch(function (e) { console.warn('[newregions] unavailable:', e && e.message); });
+        }
+
+        // Only one bottom sheet at a time, as on Android. Hidden, not dismissed —
+        // the announcement survives and returns on the next load. A no-op until the
+        // module has loaded, which is correct: nothing is on screen to hide.
+        function nrHideSheet() {
+            if (window.mmNewRegions) window.mmNewRegions.hide();
+        }
+
+        // ##################################################################
+        // 🛑 PREVIEW — MUST STAY false. Only ever true while deliberately reviewing
+        //    the sheet on maps1, and turned back off before that build is promoted.
+        //
+        // Plants an announcement on EVERY load so the sheet can be reviewed without
+        // waiting for a real publish, and shows it a second or so after the map
+        // settles. Android carries the same hook (SHOW_DEMO_REGIONS) and warns that
+        // it ships if left on; the difference here is that it lives in the staging
+        // file, and mmNewRegions.demo() adds " · preview" to the subtitle while it is
+        // on, so a stray visitor to maps1.html cannot mistake planted regions for a
+        // real update.
+        //
+        // It writes ONLY to this browser's localStorage — no RTDB, no layer file, no
+        // purchase state. The coordinates are real, so tapping a row genuinely flies
+        // the camera and the whole flow can be checked end to end.
+        //
+        // With this false, the sheet behaves normally: silent unless a d4/d2 version
+        // bump actually added something, or a previous session left an announcement.
+        //
+        // To test the REAL path without a redeploy, switch the preview off in the
+        // console — otherwise the planted announcement races the genuine one:
+        //     localStorage.setItem('mm_nr_demo', 'off')      // real path
+        //     localStorage.removeItem('mm_nr_demo')          // preview again
+        // ##################################################################
+        const NR_DEMO_ON_LOAD = false;
+
+        // Anything left pending from a previous session (the bump landed while the
+        // tab was shut). One localStorage read decides whether the module is worth
+        // fetching at all. A diff that lands later in THIS session comes in through
+        // nrRunLayerDiff instead.
+        function initNewRegionsSheet() {
+            let demoOff = false;
+            try { demoOff = localStorage.getItem('mm_nr_demo') === 'off'; } catch (e) {}
+            if (NR_DEMO_ON_LOAD && !demoOff) {
+                // Wait for the map to settle first — the sheet is an announcement, not
+                // a splash, and racing it against the map's own first paint would make
+                // a preview look worse than the real thing ever does.
+                setTimeout(function () {
+                    loadNewRegions()
+                        .then(function (nr) { nr.demo(); })
+                        .catch(function (e) {
+                            console.warn('[newregions] unavailable:', e && e.message);
+                        });
+                }, 2500);
+                return;
+            }
+            let pending = null;
+            try { pending = localStorage.getItem(NR_PENDING_KEY); } catch (e) { return; }
+            if (!pending) return;
+            loadNewRegions()
+                .then(function (nr) { nr.scheduleReveal(); })
+                .catch(function (e) { console.warn('[newregions] unavailable:', e && e.message); });
+        }
+
         // --- Layer-registry cache with live version-stamp listener ---
         // Attaches .on('value') to appConfig/dataVersions on first call and keeps
         // the listener alive for the session. First callback resolves the ready
@@ -8803,6 +8963,9 @@
                     const allKeys = new Set([...Object.keys(prev), ...Object.keys(incoming)]);
                     allKeys.forEach(k => {
                         if (prev[k] !== incoming[k] && _layerFetchers[k]) {
+                            // Stash the copy we are about to drop — it is the baseline
+                            // the "new regions" diff needs, and removeItem destroys it.
+                            _stashLayerBaseline(_layerFetchers[k].cacheKey);
                             try { localStorage.removeItem(_layerFetchers[k].cacheKey); } catch (e) {}
                             _layerFetchers[k].refetch();
                         }
@@ -8837,6 +9000,10 @@
                     const normLive = liveVersion === undefined ? null : liveVersion;
                     const normCached = cached.v === undefined ? null : cached.v;
                     if (normLive !== normCached) {
+                        // Same reason as the listener above: keep the copy we are
+                        // dropping so the "new regions" diff has a baseline. Handed
+                        // the already-parsed object rather than re-reading the string.
+                        _stashLayerBaseline(cacheKey, cached.d);
                         try { localStorage.removeItem(cacheKey); } catch (e) {}
                         if (refetch) refetch();
                     }
@@ -8886,6 +9053,14 @@
                                     d: data
                                 }));
                             } catch (e) { /* quota */ }
+                            // Announce what this publish added, against the copy the
+                            // browser held before the bump. A cold load has no stashed
+                            // baseline, so a first visit is silent by construction.
+                            if (_layerBaselines[cacheKey]) {
+                                const previous = _layerBaselines[cacheKey];
+                                delete _layerBaselines[cacheKey];
+                                nrRunLayerDiff(cacheKey, previous, data);
+                            }
                         }
                         return data;
                     });
