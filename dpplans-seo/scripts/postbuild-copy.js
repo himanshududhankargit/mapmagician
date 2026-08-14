@@ -39,12 +39,23 @@ function copyIfExists(srcRel, destRel) {
 }
 
 copyIfExists('maps.html', 'maps.html');
-copyIfExists('maps-app.js', 'maps-app.js');
-// The Annotate feature, lazy-loaded by maps-app.js on first tap via a same-origin
-// relative URL. dpplans.com serves ONLY what this script copies, so without it the
-// button 404s and the tools never open — the map itself still works, which is
-// exactly the kind of half-broken this allowlist keeps producing.
-copyIfExists('maps-annotations.js', 'maps-annotations.js');
+
+// EVERY maps*.js: the app JS and its LAZY feature modules — maps-annotations.js
+// (Annotate, fetched on first tap) and maps-newregions.js (the "new regions" sheet,
+// fetched when a layer publish has something to announce) — plus the maps1-* staging
+// equivalents.
+//
+// 🛑 A GLOB, NOT A LIST, ON PURPOSE. maps-app.js injects these at RUNTIME by name via
+// same-origin relative URLs, so a module missing from this allowlist 404s on
+// dpplans.com while the map itself keeps working — nothing fails until a user reaches
+// the feature, and the console blames a MIME type because Cloudflare Pages answers the
+// 404 with SPA fallback HTML. Naming files one by one has now produced that exact
+// half-broken state twice: Annotate, and the new-regions sheet on 2026-08-14. The
+// pattern covers whatever the next lazy file is called.
+fs.readdirSync(MM_ROOT)
+  .filter(f => /^maps\d*(-[a-z]+)?\.js$/.test(f))
+  .forEach(f => copyIfExists(f, f));
+
 copyIfExists('manifest.json', 'manifest.json');
 copyIfExists('sw.js', 'sw.js');
 copyIfExists('AssetsGIS', 'AssetsGIS');
@@ -61,11 +72,10 @@ copyIfExists('data/solapur_overlay.json', 'data/solapur_overlay.json');
 copyIfExists('index1.html', 'index.html');
 copyIfExists('index1.html', 'index1.html');
 
-// Staging slots: maps1.html, maps2.html, etc. — always test these on dpplans.com before promoting.
-// Also pick up their *-app.js and *-annotations.js companions.
+// Staging slots: maps1.html, maps2.html, etc. — always test these on dpplans.com before
+// promoting. Their .js companions are already covered by the maps*.js glob above.
 fs.readdirSync(MM_ROOT)
-  .filter(f => /^maps\d+\.html$/.test(f) || /^maps\d+-app\.js$/.test(f) ||
-               /^maps\d+-annotations\.js$/.test(f))
+  .filter(f => /^maps\d+\.html$/.test(f))
   .forEach(f => copyIfExists(f, f));
 
 // CNAME tells GitHub Pages / Cloudflare Pages which custom domain to bind. Cloudflare
