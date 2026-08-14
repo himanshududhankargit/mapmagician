@@ -199,7 +199,16 @@
         //       A published region used to appear in silence; now a d4/d2 version bump is
         //       diffed against the previous localStorage copy and the additions are
         //       announced, grouped by region, tap to fly there.
-        var APP_VERSION = '129';
+        // 130 = new-regions sheet moved to the bottom-LEFT (the right is .fab-stack's)
+        //       and Dismiss now hides it completely.
+        //       🛑 THE REAL LESSON OF THIS BUILD: 129 was pushed THREE times without a
+        //       bump. maps1-newregions.js is fetched as '...?v=' + APP_VERSION, so the
+        //       2nd and 3rd deploys landed at origin behind a cache key no browser
+        //       would request again — the fixes were live and invisible. Verifying with
+        //       a throwaway '?probe=' key proves origin has the bytes and proves
+        //       NOTHING about what a browser gets. +1 on EVERY push, lazy files
+        //       included; they ride this constant.
+        var APP_VERSION = '130';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
