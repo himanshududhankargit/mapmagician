@@ -6417,6 +6417,10 @@
             window.goToLocation = goToLocation;
 
             function openSidebar() {
+                // The "new regions" sheet sits bottom-LEFT on desktop, so this drawer
+                // would land on top of it. Hidden, not dismissed — the announcement
+                // survives and returns on the next load.
+                nrHideSheet();
                 sidebarPanel.classList.add('open');
                 sidebarOverlay.classList.add('open');
             }

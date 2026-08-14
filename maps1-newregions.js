@@ -440,8 +440,11 @@
         '.mmnr-sheet{position:fixed;left:0;right:0;bottom:0;z-index:2100;background:#fff;',
         'border-radius:20px 20px 0 0;box-shadow:0 -2px 14px rgba(0,0,0,.3);display:flex;',
         'flex-direction:column;max-height:55vh;max-height:55dvh;padding-bottom:12px;',
-        'transform:translateY(101%);transition:transform .28s ease;will-change:transform;',
-        'font-family:inherit}',
+        /* Hidden = fully off-screen, INCLUDING the upward box-shadow. A bare 101%
+           clears the box but not the ~16px of shadow cast above its top edge, which
+           reads as a grey strip stuck to the bottom of the window after Dismiss. */
+        'transform:translateY(calc(100% + 24px));transition:transform .28s ease;',
+        'will-change:transform;font-family:inherit}',
         '.mmnr-sheet.open{transform:translateY(0)}',
         /* Suppress the slide animation while a finger is dragging the sheet. */
         '.mmnr-sheet.dragging{transition:none}',
@@ -480,9 +483,16 @@
         '.mmnr-ename{flex:1;min-width:0;font-size:13px;color:#757575;',
         'white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
         '.mmnr-arrow{flex-shrink:0;width:18px;height:18px;opacity:.45}',
-        /* Not a drawer on desktop — just stop it spanning a 27" screen edge to edge. */
-        '@media(min-width:700px){.mmnr-sheet{left:auto;right:16px;width:380px;bottom:16px;',
-        'border-radius:16px;max-height:60vh;max-height:60dvh}',
+        /* Not a drawer on desktop — just stop it spanning a 27" screen edge to edge.
+           LEFT, not right: the FAB stack lives at right:8px and the sheet would sit
+           on top of it. Raised 60px so it clears the .bottom-bar (52px on desktop,
+           the same offset .fab-stack uses) instead of covering its controls.
+           🛑 The hidden transform must clear BOTH the sheet and that 60px offset —
+           a percentage alone leaves a strip of the header on screen after Dismiss,
+           because 101% of the sheet's own height is only a few px more than 100%. */
+        '@media(min-width:700px){.mmnr-sheet{right:auto;left:16px;width:380px;bottom:60px;',
+        'border-radius:16px;max-height:60vh;max-height:60dvh;',
+        'transform:translateY(calc(100% + 84px))}',
         '.mmnr-grab{display:none}.mmnr-head{padding-top:14px}}'
     ].join('');
 
