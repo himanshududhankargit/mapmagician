@@ -8883,6 +8883,11 @@
         //
         // With this false, the sheet behaves normally: silent unless a d4/d2 version
         // bump actually added something, or a previous session left an announcement.
+        //
+        // To test the REAL path without a redeploy, switch the preview off in the
+        // console — otherwise the planted announcement races the genuine one:
+        //     localStorage.setItem('mm_nr_demo', 'off')      // real path
+        //     localStorage.removeItem('mm_nr_demo')          // preview again
         // ##################################################################
         const NR_DEMO_ON_LOAD = true;
 
@@ -8891,7 +8896,9 @@
         // fetching at all. A diff that lands later in THIS session comes in through
         // nrRunLayerDiff instead.
         function initNewRegionsSheet() {
-            if (NR_DEMO_ON_LOAD) {
+            let demoOff = false;
+            try { demoOff = localStorage.getItem('mm_nr_demo') === 'off'; } catch (e) {}
+            if (NR_DEMO_ON_LOAD && !demoOff) {
                 // Wait for the map to settle first — the sheet is an announcement, not
                 // a splash, and racing it against the map's own first paint would make
                 // a preview look worse than the real thing ever does.
