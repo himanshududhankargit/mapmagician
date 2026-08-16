@@ -925,19 +925,62 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   },
 
   // Sources: AMC Ahmednagar/Ahilyanagar, Wikipedia Ahmednagar.
+  // The district + city were renamed Ahmednagar -> Ahilyanagar, but the SEO signal for the
+  // new name was carried only by body prose: shortName is "Ahmednagar" (build-regions
+  // splits "Ahmednagar / Ahilyanagar" on the slash), so the generic title/H1 never said
+  // "Ahilyanagar" and the page could not rank for it. The overrides below put BOTH names —
+  // and the 2026 plan year — into <title>, <h1>, description and the FAQPage JSON-LD.
+  // Coverage claims are checked against the live tile records (RTDB MahaGIS/oldDPPlanGIS +
+  // S3 MapMagicianTM/dpplans/Ahmednagar/), not assumed; see the FAQ answers below.
   'ahmednagar-dp-plan': {
+    pageTitle: 'Ahilyanagar (Ahmednagar) Development Plan 2026 — DP map & download',
+    description:
+      'View the Ahilyanagar (Ahmednagar) Development Plan 2026 online — the DP for the Ahilyanagar Municipal Corporation area, with Gaothan CTS survey sheets for the city core, Kedgaon and Nagapur. Interactive overlay on satellite imagery, also covering Jamkhed, Shirdi, Sangamner and Pathardi; download any part as a print-ready map sheet.',
+    keywords: [
+      'ahilyanagar development plan',
+      'ahilyanagar development plan 2026',
+      'ahmednagar development plan',
+      'ahmednagar dp plan',
+      'ahilyanagar municipal corporation development plan',
+      'ahilyanagar dp map online',
+      'ahilyanagar gaothan cts map',
+      'ahmednagar development plan map pdf download',
+      'ahmednagar city development plan 2026',
+    ],
     paragraphs: [
-      'The Ahmednagar (Ahilyanagar) Development Plan is administered by the Ahmednagar Municipal Corporation (now officially the Ahilyanagar Municipal Corporation following the renaming of the district). The Municipal Corporation was formed in 2003 under the Maharashtra Regional and Town Planning Act, 1966, succeeding the earlier Ahmednagar Municipal Council.',
-      'Ahmednagar sits in central Maharashtra at the junction of multiple regional connections — national highways linking Pune, Aurangabad, Manmad and Solapur — and the city is an important regional trading and educational centre. The Bhima river basin lies to the south, and the Pravara river / Bhandardara dam reservoir lies to the west. Industrial activity centres on the MIDC industrial areas at Nagar and Supa, and includes sugar processing, dairy and food-processing units.',
-      'The DP overlay on this page reflects the published municipal zoning, reservation and road-line boundaries georeferenced over satellite imagery, covering the AMC jurisdiction including the historic city core, defence-establishment lands (Ahmednagar is home to the Armoured Corps Centre & School of the Indian Army), and the expanding industrial peripheries along the Pune and Aurangabad highways.',
+      'The Ahilyanagar Development Plan — still widely searched as the Ahmednagar Development Plan — is administered by the Ahilyanagar Municipal Corporation, constituted in 2003 under the Maharashtra Regional and Town Planning Act, 1966 as the Ahmednagar Municipal Corporation and succeeding the earlier Ahmednagar Municipal Council. The district and its headquarters were renamed Ahilyanagar after Punyashlok Ahilyadevi Holkar, the Holkar queen born at Chondi in the district’s Jamkhed taluka. Both names remain in everyday use and refer to the same authority and the same plan.',
+      'This map now carries the Ahilyanagar Development Plan 2026 for the Municipal Corporation area, together with the Gaothan CTS (City Survey) sheets for the city core and for the Kedgaon and Nagapur gaothans — the cadastral sheets that show individual CTS plot boundaries rather than only zone colours, and which are readable down to street level. The earlier Ahmednagar DP sheets stay available on the older plan layer, so the previous plan can be compared against the 2026 one instead of being replaced by it.',
+      'Ahilyanagar sits in central Maharashtra at the junction of multiple regional connections — national highways linking Pune, Chhatrapati Sambhajinagar (Aurangabad), Manmad and Solapur — and the city is an important regional trading and educational centre. The Bhima river basin lies to the south, and the Pravara river / Bhandardara dam reservoir lies to the west. Industrial activity centres on the MIDC industrial areas at Nagar and Supa, and includes sugar processing, dairy and food-processing units.',
+      'The DP overlay reflects the published zoning, reservation and road-line boundaries georeferenced over satellite imagery, covering the Corporation jurisdiction including the historic city core, defence-establishment lands (Ahilyanagar is home to the Armoured Corps Centre & School of the Indian Army) and the expanding industrial peripheries along the Pune and Chhatrapati Sambhajinagar highways. Beyond the city, the Development Plans for Jamkhed, Shirdi, Sangamner and Pathardi are mapped on the same layer.',
     ],
     quickFacts: [
-      { label: 'Planning authority', value: 'Ahmednagar / Ahilyanagar Municipal Corporation' },
+      { label: 'Planning authority', value: 'Ahilyanagar (Ahmednagar) Municipal Corporation' },
+      { label: 'Latest plan on this map', value: 'Ahilyanagar Development Plan 2026' },
+      { label: 'Also mapped', value: 'Gaothan CTS sheets — city core, Kedgaon, Nagapur' },
+      { label: 'District renamed', value: 'Ahmednagar → Ahilyanagar, after Punyashlok Ahilyadevi Holkar' },
       { label: 'Corporation formed', value: '2003' },
       { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
+      { label: 'Other DP towns covered', value: 'Jamkhed, Shirdi, Sangamner, Pathardi' },
       { label: 'Notable institutional land', value: 'Armoured Corps Centre & School (Indian Army)' },
       { label: 'Major rivers', value: 'Bhima (south), Pravara / Bhandardara reservoir (west)' },
-      { label: 'Region', value: 'Central Maharashtra (Western Ghats edge)' },
+    ],
+    faqs: [
+      {
+        q: 'Is Ahilyanagar the same as Ahmednagar?',
+        a: 'Yes — they are the same city and the same district. Ahmednagar was renamed Ahilyanagar after Punyashlok Ahilyadevi Holkar, and the Ahmednagar Municipal Corporation is now the Ahilyanagar Municipal Corporation. There is one Development Plan, not two: this page covers it under either name, so searching for the Ahilyanagar DP or the Ahmednagar DP brings you to the same map.',
+      },
+      {
+        q: 'Which Ahilyanagar Development Plan does this map show?',
+        a: 'The map carries the Ahilyanagar Development Plan 2026 for the Municipal Corporation area, plus the Gaothan CTS (City Survey) sheets for the city core and for the Kedgaon and Nagapur gaothans. The earlier Ahmednagar DP sheets have not been removed — they remain on the older plan layer, so you can read the previous plan and the 2026 plan against the same satellite imagery.',
+      },
+      {
+        q: 'Which other towns in Ahilyanagar district are on the map?',
+        a: 'Besides Ahilyanagar city, the Development Plans for Jamkhed, Shirdi (the Sai Baba pilgrimage town, in Rahata taluka), Sangamner and Pathardi are mapped, along with the Ahmednagar I.T. Park area. Each opens from the search bar on the map or from the linked town pages on this page.',
+      },
+      {
+        q: 'What is the Gaothan CTS layer, and how is it different from the DP?',
+        a: 'The Development Plan shows what land may be used for — zones, reservations and proposed road lines. The Gaothan CTS (City Survey) sheets show the surveyed plot boundaries and CTS numbers inside the old settlement area. On this map the two sit over the same satellite imagery, so a plot can be located on the CTS sheet and then read against its DP zone.',
+      },
     ],
   },
 

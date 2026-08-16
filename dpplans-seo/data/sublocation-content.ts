@@ -508,6 +508,59 @@ export const SUBLOCATION_CONTENT: Record<string, SubLocationContent> = {
       'Use the search bar inside the full map to jump to a survey number or landmark in Kurduwadi, then turn on the DP overlay to confirm the designated zone before relying on it for a plot decision.',
     ],
   },
+
+  // --- Ahilyanagar (Ahmednagar) 2026 upload -------------------------------------------
+  // The menuGIS row behind this URL was renamed "Ahmednagar City (part)" -> "Ahilyanagar
+  // Municipal Corporation 2026"; the slug is pinned in build-regions.js so the indexed URL
+  // survives. These hand entries OVERRIDE the older machine-generated ones in
+  // sublocation-content.generated.ts (which stay in place, untouched) — the generated copy
+  // predates both the 2026 plan and the Gaothan CTS sheets.
+  'ahmednagar-dp-plan/ahmednagar-city': {
+    pageTitle: 'Ahilyanagar Municipal Corporation Development Plan 2026 — DP & CTS map',
+    description:
+      'Open the Ahilyanagar (Ahmednagar) Municipal Corporation Development Plan 2026 on satellite imagery, with the Gaothan CTS survey sheets for the city core, Kedgaon and Nagapur. Read the zone, reservation and road line for any plot in Ahilyanagar city.',
+    keywords: [
+      'ahilyanagar municipal corporation development plan',
+      'ahilyanagar development plan 2026',
+      'ahmednagar city development plan',
+      'ahilyanagar city dp map',
+      'ahilyanagar gaothan cts',
+      'ahmednagar municipal corporation land use map',
+      'ahilyanagar zoning map',
+    ],
+    intro:
+      'Ahilyanagar — the city and district formerly named Ahmednagar — is the headquarters of Ahilyanagar district, Maharashtra, and the seat of the Ahilyanagar Municipal Corporation. This page opens the Municipal Corporation’s Development Plan 2026 as an interactive overlay on satellite imagery, so you can search a survey number or landmark inside the city and read its designated zone, reservations and road lines.',
+    paragraphs: [
+      'Two layers cover the city here and they answer different questions. The Development Plan 2026 shows what land may be used for — the residential, commercial, industrial, public and green zones, the reservations, and the proposed and widened road lines across the Corporation area. The Gaothan CTS (City Survey) sheets show the surveyed plot boundaries and CTS numbers inside the old settlement, and extend to the Kedgaon and Nagapur gaothans; they are readable down to individual plots, which the DP colour zones alone are not.',
+      'The earlier Ahmednagar Development Plan sheets have not been withdrawn from the map. They remain on the older plan layer, which is what makes a before-and-after reading possible: locate a plot on the 2026 plan, then switch layers to see how the previous plan treated the same ground. Zones, reservations and road alignments can differ between the two, and a purchase or construction decision usually turns on the current sanctioned position — confirm it with the Ahilyanagar Municipal Corporation before relying on any reading taken from a map.',
+      'The Corporation area takes in the historic city core around the Ahmednagar Fort and Bhingar, the Savedi and Kedgaon growth areas, the Nagar MIDC belt, and the substantial defence lands of the Armoured Corps Centre & School. Search a landmark — the Corporation office, the fort, the railway station, a school or a market — to place yourself, then toggle the overlay to trace the boundary you need against the ground.',
+    ],
+  },
+
+  // Jamkhed DP is new in the 2026 upload (its own tile pyramid under
+  // MapMagicianTM/dpplans/Ahmednagar/). Chondi, the birthplace of Punyashlok Ahilyadevi
+  // Holkar — the queen the district is renamed after — is in this taluka, which is a real
+  // and verifiable hook rather than filler.
+  'ahmednagar-dp-plan/jamkhed': {
+    pageTitle: 'Jamkhed Development Plan map — DP zones & land use, Ahilyanagar district',
+    description:
+      'View the Jamkhed Development Plan online — the DP for the Jamkhed Municipal Council area in Ahilyanagar (Ahmednagar) district, Maharashtra, as an interactive overlay on satellite imagery showing zones, reservations and road lines.',
+    keywords: [
+      'jamkhed development plan',
+      'jamkhed dp map',
+      'jamkhed municipal council',
+      'jamkhed ahilyanagar',
+      'jamkhed ahmednagar dp plan',
+      'jamkhed land use map',
+      'jamkhed zoning map',
+    ],
+    intro:
+      'Jamkhed is a town and taluka headquarters in the south-east of Ahilyanagar (Ahmednagar) district, Maharashtra, administered by the Jamkhed Municipal Council. This page opens the Jamkhed Development Plan as an interactive overlay on satellite imagery, so you can search a survey number or landmark in the town and read its designated zone, reservations and road lines.',
+    paragraphs: [
+      'Jamkhed taluka contains Chondi, the birthplace of Punyashlok Ahilyadevi Holkar — the Holkar queen after whom Ahmednagar district was renamed Ahilyanagar. The town is also widely known in public-health circles as the home of the Comprehensive Rural Health Project, founded in 1970, whose village-health-worker model has been studied and replicated well beyond Maharashtra.',
+      'To use the map: search a survey number, or a landmark such as the Municipal Council office, the bus stand, a school or a market, to place yourself in the town. Then toggle the Development Plan overlay to read the land-use zone — residential, commercial, industrial, agricultural or reserved public use — along with road reservations and widening lines. Confirm the current sanctioned position with the Jamkhed Municipal Council before relying on a zone for a plot decision.',
+    ],
+  },
 };
 
 /**

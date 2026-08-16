@@ -50,8 +50,16 @@ const DISPLAY_NAME_ALIASES = {
 
 // Canonical overrides for specific messy sub-location names whose raw villagesJSON value
 // would otherwise produce a long/misspelled display name + URL slug (e.g. composite
-// "A/B, Tal: X" municipal-corporation rows). Matched against the raw name; sets BOTH the
-// display name and the slug. Keep this list tiny and specific.
+// "A/B, Tal: X" municipal-corporation rows). Matched against the raw name; `name` sets
+// BOTH the display name and the slug. Keep this list tiny and specific.
+//
+// `slug` (optional) PINS the URL independently of `name`. Use it when menuGIS RENAMES a
+// row that already has a curated, indexed page: the slug is derived from the row name, so
+// a rename silently moves the URL and the old one 404s while its curated entry in
+// sublocation-content.ts goes orphan (noindex + dropped from the sitemap). Pinning keeps
+// the indexed URL and its link equity while the visible H1/title still follow `name`.
+// A pinned row still consumes its NATURAL slug's dedupe counter, so sibling rows keep the
+// -2/-3 suffixes they already have indexed.
 const LOCATION_ALIASES = [
   { test: /kalyan.*dombi.*muncipal/i, name: 'Kalyan-Dombivli' },
   { test: /buvanagiri|bhuvanagiri|bhongir/i, name: 'Bhongir' },
@@ -65,10 +73,21 @@ const LOCATION_ALIASES = [
   // These are curated, high-search SEO pages (see sublocation-content.ts).
   { test: /^kharadi\b/i, name: 'Kharadi' },
   { test: /^katraj\b/i, name: 'Katraj' },
+  // --- Pinned slugs: menuGIS renamed these rows, all three had curated indexed pages ---
+  // "Ahmednagar City (part)" -> "Ahilyanagar Municipal Corporation 2026" (2026 DP upload).
+  // Keep /ahmednagar-dp-plan/ahmednagar-city/ and surface the new district name in the H1.
+  { test: /^ahilyanagar municipal corporation/i, name: 'Ahilyanagar (Ahmednagar) City', slug: 'ahmednagar-city' },
+  // "Paithan" -> "Paithan Tal : Aurangabad". Matched narrowly: were the row ever renamed
+  // back to a bare "Paithan" it would slug to `paithan` on its own anyway.
+  { test: /^paithan\s+tal\b/i, name: 'Paithan', slug: 'paithan' },
+  // The bare "Umarga" row was dropped; the M Cl row is the same town.
+  { test: /^umarga\s*\(m\s*cl\)/i, name: 'Umarga', slug: 'umarga' },
+  // New in the 2026 Ahilyanagar upload — alias only to keep the URL short (no page yet).
+  { test: /^jamkhed\b/i, name: 'Jamkhed' },
 ];
 function locationAlias(rawName) {
   const s = String(rawName || '');
-  for (const a of LOCATION_ALIASES) if (a.test.test(s)) return a.name;
+  for (const a of LOCATION_ALIASES) if (a.test.test(s)) return a;
   return null;
 }
 
@@ -190,16 +209,30 @@ function cleanLocationDisplayName(raw) {
 function attachVillageSlugs(region) {
   const regionShortSlug = slugify(region.shortName);
   const seen = new Map(); // baseSlug -> count
+  const taken = new Set(); // every slug already emitted in this region
   for (const v of region.villages) {
     const alias = locationAlias(v.name);
-    v.displayName = alias || cleanLocationDisplayName(v.name);
-    const cleaned = alias || (String(v.name).replace(/\([^)]*\)/g, '').trim() || v.name);
+    v.displayName = (alias && alias.name) || cleanLocationDisplayName(v.name);
+    // A pinned alias (one carrying `slug`) must NOT change the natural slug the row would
+    // otherwise get — that natural slug is what drives the dedupe counter, and shifting it
+    // would renumber the row's siblings and 404 their URLs too.
+    const natural = String(v.name).replace(/\([^)]*\)/g, '').trim() || v.name;
+    const cleaned = alias && !alias.slug ? alias.name : natural;
     const base = slugify(cleaned);
     if (!base) { v.slug = ''; v.skipPage = true; continue; }
     if (base === regionShortSlug) { v.slug = base; v.skipPage = true; continue; }
     const count = (seen.get(base) || 0) + 1;
     seen.set(base, count);
-    v.slug = count === 1 ? base : `${base}-${count}`;
+    const naturalSlug = count === 1 ? base : `${base}-${count}`;
+    // A pinned slug is only honoured while it is still free, and the natural slug is then
+    // re-checked too: either can collide if menuGIS grows a row that claims the other's
+    // name. Two villages sharing a slug is a duplicate generateStaticParams entry, which
+    // breaks the build, so the loser falls through to the next free -N suffix.
+    const pinned = alias && alias.slug;
+    let slug = pinned && !taken.has(pinned) ? pinned : naturalSlug;
+    for (let n = count; taken.has(slug); n++) slug = `${base}-${n + 1}`;
+    v.slug = slug;
+    taken.add(slug);
     v.skipPage = false;
   }
 }
