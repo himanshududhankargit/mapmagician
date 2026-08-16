@@ -212,7 +212,7 @@
         // 133 = cookie-write hardening: session cookies (no expires= — clock-skew
         //       immunity) + write-then-readback with a visible "cookies blocked"
         //       banner instead of a silently blank map storming 403s.
-        var APP_VERSION = '133';
+        var APP_VERSION = '135';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -550,6 +550,30 @@
             return _cfCookieInFlight;
         }
 
+        // Device descriptor sent with every cookie issuance so the admin panel can
+        // show WHERE a customer signs in from (Admin Panel -> device chip on the card).
+        // Deliberately minimal: the server already parses browser + OS out of the real
+        // User-Agent header, which the browser sends anyway. What it CANNOT derive is a
+        // stable identity for this browser — without one, every 3h refresh would look
+        // like a brand-new device. mm_session_id is exactly that id and already exists
+        // for single-session enforcement, so reuse it rather than minting a second one.
+        function deviceDescriptor() {
+            try {
+                var d = { id: getDeviceSessionId() };
+                if (window.screen && screen.width) {
+                    d.screen = screen.width + 'x' + screen.height;
+                }
+                try { d.tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+                // Nothing else is worth sending. In particular do NOT send
+                // navigator.userAgentData.platform as `os`: the server prefers a
+                // client-declared value, and UA-CH gives a bare "Windows" where the
+                // UA string yields "Windows 10/11" — sending it makes the label worse.
+                return d;
+            } catch (e) {
+                return {};
+            }
+        }
+
         async function _fetchCloudFrontCookiesOnce(expectPid) {
             // Start layer data fetch immediately — it only needs auth, not cookies
             fetchLayerData();
@@ -566,7 +590,8 @@
                     // Origin header, which some browsers omit — and the wrong host yields a
                     // signed policy that CloudFront rejects for EVERY tile, free ones included.
                     const result = await getCloudFrontCookies({
-                        tileHost: typeof TILE_HOST === 'string' ? TILE_HOST : ''
+                        tileHost: typeof TILE_HOST === 'string' ? TILE_HOST : '',
+                        device: deviceDescriptor()
                     });
                     data = result.data;
                     if (!writeCfCookies(data)) {
