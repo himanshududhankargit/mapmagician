@@ -37,6 +37,10 @@ export const MUNICIPAL_CORPORATIONS: Record<string, MunicipalCorporation> = {
   'latur-region-dp-plan': { name: 'Latur City Municipal Corporation' },
   'ahmednagar-dp-plan': { name: 'Ahilyanagar (Ahmednagar) Municipal Corporation' },
   'aurangabad-dp-plan': { name: 'Chhatrapati Sambhaji Nagar (Aurangabad) Municipal Corporation' },
+  // The Palghar region's principal plan is VVCMC's (productPurchaseID `vasaivirar`); the
+  // region also reaches beyond the corporation, which the "covers the … area" FAQ wording
+  // already accommodates.
+  'palghar-dp-plan': { name: 'Vasai-Virar City Municipal Corporation', abbr: 'VVCMC' },
 };
 
 /** Look up the municipal corporation for a region slug. Null for non-corporation regions. */

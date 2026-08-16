@@ -393,7 +393,24 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   },
 
   // Sources: Panvel Municipal Corporation, CIDCO, Wikipedia Panvel/Kharghar.
+  // Dual-name gap (same shape as Ahilyanagar): shortName is "Kharghar", so without these
+  // overrides the title/H1 never said "Panvel" — even though the plan IS the Panvel one
+  // (productPurchaseID `panveldevelopmentplan`; tile folders PanvelDevelopmentPlan,
+  // KhargharRaigadMaharashtra, KasheleGrowthCentre) and Panvel is the larger query.
   'kharghar-dp-plan': {
+    pageTitle: 'Panvel & Kharghar Development Plan — PMC DP map & download',
+    description:
+      'View the Panvel Municipal Corporation Development Plan online, covering Kharghar and the CIDCO nodes of Taloja, Kalamboli, Kamothe and New Panvel, plus the Kashele Growth Centre. Interactive DP overlay over satellite imagery — read the zone, reservations and road lines for any plot, and download it as a print-ready map sheet.',
+    keywords: [
+      'panvel development plan',
+      'panvel municipal corporation development plan',
+      'kharghar development plan',
+      'panvel dp map online',
+      'cidco kharghar plan',
+      'taloja kalamboli kamothe dp map',
+      'new panvel zoning map',
+      'panvel dp plan pdf download',
+    ],
     paragraphs: [
       'The Kharghar / Panvel Municipal Corporation Development Plan covers Kharghar and the surrounding CIDCO nodes within the larger Panvel Municipal Corporation jurisdiction. Panvel Municipal Corporation (PMC) was upgraded from a Municipal Council in 2016 and covers approximately 110 square kilometres across 29 revenue villages of Panvel taluka — including CIDCO’s planned nodes of Taloja, Kharghar, Kalamboli, Kamothe and New Panvel.',
       'Although Panvel Municipal Corporation is the principal civic body for the area, the City and Industrial Development Corporation of Maharashtra (CIDCO) continues as the planning and development authority specifically for the Kharghar, Taloje Pachnand, Owe, Navde and Pendhar nodes — pursuant to a Government Resolution issued at the time of PMC’s formation which stipulated that CIDCO will retain its planning role for these nodes until the development of each node is fully completed.',
@@ -410,7 +427,25 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   },
 
   // Sources: VVCMC sanctioned DP PDF, MoHUA appraisal, Wikipedia.
+  // Dual-name gap (same shape as Ahilyanagar): shortName is "Palghar", so the title/H1
+  // never said "Vasai-Virar" — the far larger query, and the one the region's own
+  // sourceLink was a search for. productPurchaseID is `vasaivirar`; the tile folders
+  // include VasaiVirarDevelopmentPlan2025 plus palgharDP and the Boisar, Dahanu, Kelwe,
+  // Mahim, Manor, Vada, Khanivali, Umroli-Kolgaon and Kanchad growth centres.
   'palghar-dp-plan': {
+    pageTitle: 'Vasai-Virar (Palghar) Development Plan 2025 — DP map & download',
+    description:
+      'View the Vasai-Virar City Municipal Corporation Development Plan 2025 online — covering Vasai, Virar, Nallasopara and Naigaon — together with the Palghar town DP and the Boisar, Dahanu, Kelwe, Mahim, Manor and Vada growth centres. Interactive DP overlay over satellite imagery, downloadable as a print-ready map sheet.',
+    keywords: [
+      'vasai virar development plan',
+      'vasai virar development plan 2025',
+      'vvcmc development plan',
+      'nallasopara development plan',
+      'virar dp map online',
+      'palghar development plan',
+      'boisar growth centre development plan',
+      'vasai virar dp plan pdf download',
+    ],
     paragraphs: [
       'The Palghar / Vasai-Virar Development Plan is administered by the Vasai-Virar City Municipal Corporation (VVCMC), the principal urban local body for the Vasai-Virar sub-region within Palghar district on the north-western edge of the Mumbai Metropolitan Region (MMR). The Government of Maharashtra appointed the City and Industrial Development Corporation (CIDCO) as the Special Planning Authority for the Vasai-Virar sub-region prior to VVCMC’s formation, and the Development Control Regulations for the sub-region took effect from 1 March 2004.',
       'The plan area covers the dense urban clusters of Vasai, Virar, Nallasopara and Naigaon along the Mumbai Western Railway suburban corridor, plus the surrounding villages of Vasai and Virar tehsils. The area sits between the Vasai Creek (separating it from Mira-Bhayandar) and the Tungareshwar Wildlife Sanctuary, with extensive salt-pan lands, mangrove forests and Coastal Regulation Zone (CRZ) areas along the creek and the western coastline.',
@@ -465,7 +500,24 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   },
 
   // Sources: SMC town-planning, court records (1977 sanction).
+  // Dual-name gap (same shape as Ahilyanagar): shortName is "Sangli", so the title/H1
+  // never said "Miraj" or "Kupwad" despite the corporation being SMKC. The 18 tile folders
+  // on productPurchaseID `sangalidistrictweekly` also cover Ashta, Islampur, Tasgaon, Vita
+  // and the Jath draft plan, none of which the page previously named.
   'sangli-dp-plan': {
+    pageTitle: 'Sangli-Miraj-Kupwad Development Plan — SMKC DP map & download',
+    description:
+      'View the Sangli, Miraj and Kupwad City Municipal Corporation (SMKC) Development Plan online, plus the town Development Plans for Islampur, Tasgaon, Vita and Ashta and the Jath draft plan. Interactive DP overlay over satellite imagery — read zones, reservations and road lines, and download a print-ready map sheet.',
+    keywords: [
+      'sangli development plan',
+      'sangli miraj kupwad development plan',
+      'smkc development plan',
+      'miraj development plan',
+      'kupwad dp map',
+      'islampur development plan',
+      'tasgaon vita development plan',
+      'sangli dp plan pdf download',
+    ],
     paragraphs: [
       'The Sangli / Sangli-Miraj Development Plan is administered by the Sangli, Miraj and Kupwad City Municipal Corporation (SMKC), which was constituted on 9 February 1998 by merging the erstwhile Sangli, Miraj and Kupwad municipal councils. The Development Plan for the original Sangli town was sanctioned by the State Government on 28 March 1977 and came into force on 1 June 1977 under the Maharashtra Regional and Town Planning Act, 1966.',
       'Sangli is a major agricultural-trade and educational centre in south-western Maharashtra, historically renowned as the principal turmeric-trading market of India — the Sangli turmeric APMC is one of the largest in the country — and as a centre for sugar processing, jaggery, grape and raisin trading. The Miraj sub-centre is a major rail junction on the Central Railway / South Central Railway interface and an important regional healthcare cluster.',
