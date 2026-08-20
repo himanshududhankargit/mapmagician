@@ -212,7 +212,14 @@
         // 133 = cookie-write hardening: session cookies (no expires= — clock-skew
         //       immunity) + write-then-readback with a visible "cookies blocked"
         //       banner instead of a silently blank map storming 403s.
-        var APP_VERSION = '135';
+        // 137 = a paid download survives the tab that bought it. The re-download entry
+        //       is now written when the PAYMENT clears rather than when the file saves,
+        //       and the list is seeded from the server (getPurchaseStatus.downloads), so
+        //       a render that dies — or a payment whose callback never fires — still
+        //       leaves a Get button. 6 of 37 paid downloads went silent in the 6 days to
+        //       2026-08-20 and every one was unrecoverable because the only record of the
+        //       purchase lived in the localStorage of the tab that died.
+        var APP_VERSION = '137';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -807,6 +814,9 @@
                         activePurchases.set(productId, { expiry: val, plan: '' });
                     }
                 });
+                // Re-download entries this browser never learned about. Costs nothing extra:
+                // the same call already ran, and the server bounds it to the newest 10.
+                _dlmapHistoryMergeServer(data.downloads);
                 refreshSidebarIfOpen();
                 // Evict cached tiles for districts the user no longer has access
                 // to (refunds, expiries). Free tiles and still-purchased districts
@@ -11065,10 +11075,16 @@
                 // just the raw productPurchaseID. The capture point rides with it for the
                 // same reason, one level finer: which plot, not just which city.
                 var cap = _dlmapCaptureGeo(s);
+                // The FRAMING rides along too (box height + fetch zoom). The capture point
+                // says where the sheet sat; these two say how big it was, and together they
+                // are everything needed to rebuild the file later. Sent at ORDER time on
+                // purpose: the server's copy must not depend on this tab still being alive
+                // after payment. 0 = not recorded (the server stores null, never a guess).
                 var resp = (await createDownloadOrder({
                     districtPid: s.districtPid || '',
                     districtName: s.districtName || '',
-                    lat: cap.lat, lng: cap.lng, zoom: cap.zoom
+                    lat: cap.lat, lng: cap.lng, zoom: cap.zoom,
+                    hCss: (s.geo && s.geo.hCss) || 0, gz: s.gz || 0
                 })).data || {};
                 var region = { districtPid: s.districtPid || '', districtName: s.districtName || '',
                                idToken: idToken,
@@ -12094,6 +12110,14 @@
             var s = _dlmapSession;
             if (!s || s.phase !== 'preview' || s.running) return;
             s.caption = document.getElementById('dlmap-caption').value.trim() || DLMAP_DEFAULT_CAPTION;
+            // Save the re-download entry HERE, before a single tile is fetched. The money is
+            // already gone by this line (paid, credit or free all funnel through it) and
+            // everything needed to rebuild the sheet is known. It used to be written only
+            // after the blob saved, which meant the safety net existed only for the
+            // downloads that never needed it: a tab killed mid-render left the customer
+            // with a charge and no way to retry. Called again after the save to pick up a
+            // caption edit — the second call updates, it does not duplicate.
+            _dlmapHistoryAdd(s);
             if (s.sampleCtrl) { try { s.sampleCtrl.abort(); } catch (e) {} }   // loupe sample still inflight
             document.getElementById('dlmap-preview-overlay').classList.remove('open');
             var ctrl = new AbortController();
@@ -12151,12 +12175,107 @@
                 if (isFinite(e) && e > Date.now()) expiry = e;
             }
             var list = _dlmapHistoryList();
-            list.unshift({ ts: Date.now(), geo: s.geo, gz: s.gz, caption: s.caption,
+            // Called twice per download by design (payment clears, then file saves). The
+            // second call UPDATES the entry rather than appending: a duplicate row would
+            // read as two purchases of the same sheet. Only the caption can change between
+            // the two — it is editable in the final dialog.
+            if (s.dlHistTs) {
+                for (var hi = 0; hi < list.length; hi++) {
+                    if (list[hi].ts === s.dlHistTs) { list[hi].caption = s.caption; break; }
+                }
+                _dlmapHistoryWrite(list);
+                _dlmapRenderHistory();
+                return;
+            }
+            s.dlHistTs = Date.now();
+            // The payment id is what lets the server-seeded copy of this same download
+            // recognise itself and stay out (see _dlmapHistoryMergeServer) — a local entry
+            // knows the caption and exact framing, so it must always win.
+            list.unshift({ ts: s.dlHistTs, geo: s.geo, gz: s.gz, caption: s.caption,
                            tmpl: s.tmplName, district: s.districtName || '',
-                           pid: s.districtPid || '', expiry: expiry });
+                           pid: s.districtPid || '',
+                           pay: (s.outcomeCtx && s.outcomeCtx.paymentId) || '',
+                           expiry: expiry });
             _dlmapHistoryWrite(list);
             _dlmapRenderHistory();
         }
+        // Fold the server's copy of a customer's paid downloads into the local list.
+        // The local list is this browser's localStorage and is written only by a session
+        // that got as far as paying HERE, so it is empty in exactly the cases that matter:
+        // a tab killed mid-render, a payment whose Razorpay callback never fired (the
+        // charge still lands — the webhook records it), a purchase made on another device,
+        // a cleared cache. Additive and idempotent: an entry already held locally wins,
+        // because it knows the caption and the exact framing the server's copy may not.
+        // A record with no capture point cannot be rebuilt, so it is skipped rather than
+        // shown as a button that fails.
+        function _dlmapHistoryMergeServer(rows) {
+            if (!Array.isArray(rows) || !rows.length) return;
+            var list = _dlmapHistoryList();
+            var seen = {};
+            list.forEach(function(r) { if (r.pay) seen[r.pay] = true; });
+            // Entries saved by a build BEFORE 137 carry no payment id, so the server's copy
+            // of that same download cannot be recognised by id and would land as a second
+            // row for one purchase. Match those by region + purchase time instead, and claim
+            // each local row only once — a customer who genuinely bought the same sheet
+            // twice in one sitting (it happens; that is what a failed download looks like)
+            // must keep both rows.
+            var claimed = {};
+            function alreadyLocal(r) {
+                for (var li = 0; li < list.length; li++) {
+                    var L = list[li];
+                    if (L.pay || claimed[li]) continue;
+                    if ((L.pid || '') !== (r.districtPid || '')) continue;
+                    if (Math.abs(L.ts - (Number(r.purchasedAt) || 0)) > 6e5) continue;   // 10 min
+                    claimed[li] = true;
+                    return true;
+                }
+                return false;
+            }
+            var added = 0;
+            rows.forEach(function(r) {
+                if (!r || !r.paymentId || seen[r.paymentId]) return;
+                if (alreadyLocal(r)) return;
+                if (typeof r.lat !== 'number' || typeof r.lng !== 'number' || !r.zoom) return;
+                var ts = Number(r.purchasedAt) || 0;
+                // Same 7-day window a locally-saved entry gets. Anything older has already
+                // aged out of the list and re-adding it would resurrect expired rows.
+                if (!ts || Date.now() - ts > 7 * 864e5) return;
+                list.push({ ts: ts,
+                            geo: { cz: r.zoom, hCss: r.hCss || 0, lat: r.lat, lng: r.lng },
+                            gz: r.gz || 0, caption: '', tmpl: '',
+                            district: r.districtName || '', pid: r.districtPid || '',
+                            pay: r.paymentId, expiry: ts + 7 * 864e5 });
+                added++;
+            });
+            if (!added) return;
+            list.sort(function(a, b) { return b.ts - a.ts; });
+            _dlmapHistoryWrite(list);
+            _dlmapRenderHistory();
+        }
+
+        // The fetch zoom a fresh capture at this framing would have chosen: dig up to 3
+        // zooms past the screen, then walk back down until the tile count and canvas area
+        // fit the same budget _dlmapOpenPreview enforces. Enumeration only — nothing is
+        // fetched. Returns 0 when there is nothing to render or the area will not fit, so
+        // a recovered entry can never quietly spend 700 tiles of egress on a blank sheet.
+        // Kept in step with the loop in _dlmapOpenPreview; if that budget changes, both move.
+        function _dlmapResolveGz(geo) {
+            var czInt = Math.round(geo.cz);
+            var gz = Math.min(czInt + 3, MAX_ZOOM_FOR_DP);
+            for (;;) {
+                var rect = _dlmapComputeCaptureRectFrom(gz, geo.cz, geo.hCss, geo.lat, geo.lng);
+                var canvasPx = (rect.tx1 - rect.tx0 + 1) * 256 * (rect.ty1 - rect.ty0 + 1) * 256;
+                var jobs = _dlmapEnumerateJobs(rect, _dlmapCollectSources(geo.cz, rect.llBounds));
+                if (!jobs.length) return 0;
+                var baseJobs = _dlmapBasemapJobs(rect);
+                var fits = jobs.length + baseJobs.length <= DLMAP_MAX_TILE_FETCHES
+                           && canvasPx <= DLMAP_MAX_CANVAS_PX;
+                if (fits) return gz;
+                if (gz <= czInt) return 0;
+                gz--;
+            }
+        }
+
         function _dlmapEscape(t) {
             return String(t == null ? '' : t).replace(/[&<>"']/g, function(c) {
                 return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -12213,14 +12332,29 @@
             }
             var closeBtn = document.getElementById('settings-panel-close');
             if (closeBtn) closeBtn.click();
+            // A server-seeded entry carries the capture point but not always the framing:
+            // hCss/gz are only recorded from build 137, so every download bought before it
+            // arrives here with neither. Fall back to what the original render would have
+            // used — the current map height, and the budgeted fetch zoom — rather than
+            // refusing to rebuild. Resolved BEFORE a session is opened so an early return
+            // cannot strand _dlmapSession in the running state.
+            var rGeo = rec.geo, rGz = rec.gz;
+            if (!rGeo.hCss) {
+                rGeo = { cz: rGeo.cz, hCss: document.getElementById('map').clientHeight,
+                         lat: rGeo.lat, lng: rGeo.lng };
+            }
+            if (!rGz) {
+                rGz = _dlmapResolveGz(rGeo);
+                if (!rGz) { _dlmapToast('Could not rebuild this map — try from the map instead'); return; }
+            }
             var ctrl = new AbortController();
             _dlmapSession = { running: true, abortCtrl: ctrl, phase: 'regen' };
             try {
-                var res = await _dlmapRender(rec.geo, rec.gz, ctrl, 'Regenerating map');
+                var res = await _dlmapRender(rGeo, rGz, ctrl, 'Regenerating map');
                 if (!res) { _dlmapSession = null; return; }
                 if (res.empty) { _dlmapToast('Nothing to render — check layer toggles'); _dlmapSession = null; return; }
                 var tmpl = await _dlmapLoadTemplate(rec.tmpl || 'template.jpg');
-                _dlmapSession = { running: false, phase: 'final', regen: true, geo: rec.geo, gz: rec.gz,
+                _dlmapSession = { running: false, phase: 'final', regen: true, geo: rGeo, gz: rGz,
                                   stitch: res.stitch, rect: res.rect, tmpl: tmpl, tmplName: rec.tmpl,
                                   districtName: rec.district || '', missing: res.missing,
                                   caption: rec.caption, pendingDownload: true };
