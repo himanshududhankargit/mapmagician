@@ -1,27 +1,33 @@
 /* ============================================================================
    demo-app.js — Map Magician "Demo Mode" (standalone)
    ----------------------------------------------------------------------------
-   APP_VERSION 139.
+   APP_VERSION 140.
 
    WHY THIS IS A SEPARATE PAGE, NOT A FLAG INSIDE maps-app.js
-   maps-app.js is ~700 KB and boots Firebase auth, Razorpay, the layer metadata
-   fetch (d1/d2/d3.bin, ~2.6 MB), a polygon Web Worker, annotations and the
-   purchase/paywall machinery. A demo has to be instant and must be *incapable*
-   of touching paid content. Both fall out of not loading any of it: this file
-   has no Firebase, no Razorpay, no layer fetch, no entitlement code. "Must not
-   load paid maps" is therefore structural here, not a rule that could regress.
+   maps-app.js is ~700 KB and boots Firebase Database + Functions, Razorpay, the
+   layer metadata fetch (d1/d2/d3.bin, ~2.6 MB), a polygon Web Worker,
+   annotations and the purchase/paywall machinery. A demo has to be instant and
+   must be *incapable* of touching paid content. Both fall out of not loading any
+   of it: this page pulls firebase-auth ONLY — no database, no functions, no
+   layer fetch, no entitlement code. "A demo can never show paid maps" is
+   therefore structural here, not a rule that could regress.
 
    THE TILES ARE PUBLIC BY DESIGN
    /demo/* is its own CloudFront cache behavior with TrustedKeyGroups DISABLED
    and no viewer-request function — so no signed cookie and no mmp-token is
-   needed, and the page works signed-out on both domains. Exposure is bounded
-   by construction: exactly one plan lives under that prefix. Every tile there
-   is watermarked (verified byte-identical to the MapMagicianTM/ source).
+   needed, and it serves on both domains. Exposure is bounded by construction:
+   exactly one plan lives under that prefix, and every tile there is watermarked
+   (verified byte-identical to the MapMagicianTM/ source).
+
+   🛑 THE SIGN-IN GATE IS LEAD CAPTURE, NOT PROTECTION. Because the tiles are
+   public, anyone who reads this file can fetch them directly without signing
+   in. The gate exists to put a name to a visitor, not to guard the pixels —
+   do not let it grow into something the tile security is assumed to rest on.
    ========================================================================== */
 (function () {
     'use strict';
 
-    var APP_VERSION = 139;
+    var APP_VERSION = 140;
 
     /* --- host: same rule as maps-app.js:2850, so this works on both domains --- */
     var ON_DPPLANS = /(^|\.)dpplans\.com$/i.test(location.hostname);
@@ -58,9 +64,20 @@
     var MIN_ZOOM = 11;   // strictBounds raises the effective floor to whatever fits
     var MAX_ZOOM = 18;   // pyramid stops here
 
+    var firebaseConfig = {
+        apiKey: "AIzaSyDUjHKQ3g2yz2o4ax61QS7dq5z0FV8k5Ss",
+        authDomain: "sodium-hour-256110.firebaseapp.com",
+        databaseURL: "https://sodium-hour-256110.firebaseio.com",
+        projectId: "sodium-hour-256110",
+        storageBucket: "sodium-hour-256110.appspot.com",
+        messagingSenderId: "427608700943",
+        appId: "1:427608700943:web:4b79666808054be5654b7a"
+    };
+
     var map = null;
     var toastTimer = null, hintTimer = null;
     var firstTileDrawn = false;
+    var mapsReady = false, signedIn = false, started = false;
 
     /* ======================================================================
        Canvas tile layer
@@ -144,9 +161,79 @@
         if (el) el.classList.toggle('show', !!show);
     }
 
-    /* ============================== init ================================== */
+    function showGate(show) {
+        var el = document.getElementById('demo-auth');
+        if (el) el.classList.toggle('show', !!show);
+    }
 
-    function initDemo() {
+    function authError(msg) {
+        var el = document.getElementById('demo-auth-err');
+        if (!el) return;
+        el.textContent = msg || '';
+        el.classList.toggle('show', !!msg);
+    }
+
+    /* ============================== auth ================================== */
+
+    function initAuth() {
+        // firebase-auth-compat is loaded WITHOUT database/functions — the demo
+        // reads nothing and writes nothing, it only needs an identity.
+        if (typeof firebase === 'undefined') {
+            // SDK blocked (offline, extension, corporate proxy). Failing closed
+            // here would strand the visitor on a dead gate for a page whose
+            // tiles are public anyway, so let them through.
+            signedIn = true;
+            showGate(false);
+            startIfReady();
+            return;
+        }
+        firebase.initializeApp(firebaseConfig);
+
+        var btn = document.getElementById('demo-signin');
+        var lbl = document.getElementById('demo-signin-label');
+        var provider = new firebase.auth.GoogleAuthProvider();
+
+        if (btn) btn.addEventListener('click', function () {
+            authError('');
+            btn.disabled = true;
+            if (lbl) lbl.textContent = 'Opening Google…';
+            // Popup, matching triggerGoogleSignIn() in maps-app.js:279 — works on
+            // every domain without per-domain OAuth redirect configuration.
+            firebase.auth().signInWithPopup(provider).catch(function (err) {
+                btn.disabled = false;
+                if (lbl) lbl.textContent = 'Continue with Google';
+                if (err && (err.code === 'auth/popup-closed-by-user' ||
+                            err.code === 'auth/cancelled-popup-request')) return;
+                authError('Sign-in could not be completed. Please try again.');
+            });
+        });
+
+        firebase.auth().onAuthStateChanged(function (user) {
+            // Anonymous does NOT count — maps.html signs visitors in anonymously
+            // to fetch CloudFront cookies, and this page shares that origin, so
+            // an anonymous session would otherwise walk straight past the gate.
+            if (user && !user.isAnonymous) {
+                signedIn = true;
+                showGate(false);
+                startIfReady();
+            } else {
+                signedIn = false;
+                showGate(true);
+            }
+        });
+    }
+
+    /* ============================== map =================================== */
+
+    function startIfReady() {
+        // Two independent async arrivals: the Maps JS API callback and the
+        // Firebase auth state. Whichever lands second builds the map.
+        if (started || !mapsReady || !signedIn) return;
+        started = true;
+        buildMap();
+    }
+
+    function buildMap() {
         var bounds = new google.maps.LatLngBounds(
             new google.maps.LatLng(BOUNDS.south, BOUNDS.west),
             new google.maps.LatLng(BOUNDS.north, BOUNDS.east)
@@ -208,16 +295,34 @@
         });
         map.addListener('zoom_changed', function () { clearTimeout(hintTimer); hint(false); });
 
-        // Safety net: never leave the spinner up if every tile 404s.
+        // Safety net: never leave the spinner up if every tile 404s. Started
+        // here, not at page load, or it would expire while the gate is still up.
         setTimeout(hideLoader, 6000);
+    }
 
-        var cta = document.getElementById('demo-cta');
-        if (cta) cta.addEventListener('click', function () {
-            location.href = 'maps.html?from=demo';
-        });
+    /* ============================== boot ================================== */
+
+    function initDemo() {          // Google Maps JS API callback
+        mapsReady = true;
+        startIfReady();
     }
 
     // The Maps API callback must be global. demo-app.js is deferred ahead of the
     // API script, so this is assigned before the callback can fire.
     window.initDemo = initDemo;
+
+    function boot() {
+        var cta = document.getElementById('demo-cta');
+        if (cta) cta.addEventListener('click', function () {
+            location.href = 'maps.html?from=demo';
+        });
+        showGate(true);            // gate is the default state until auth says otherwise
+        initAuth();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+    } else {
+        boot();
+    }
 })();
