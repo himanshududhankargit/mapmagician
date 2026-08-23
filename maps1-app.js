@@ -119,6 +119,11 @@
             if (desc) desc.textContent = 'Sign in with your Google account to explore the demo region.';
             const wl = document.getElementById('auth-dialog-weblabel');
             if (wl) wl.style.display = 'none';
+            // No "Not now". Everywhere else that button returns you to a usable map;
+            // in demo mode there is nothing to return TO, so a dismissible dialog
+            // would just strand the visitor on a locked, empty screen.
+            const cancel = document.getElementById('auth-dialog-cancel');
+            if (cancel) cancel.style.display = 'none';
             const ov = document.getElementById('auth-dialog-overlay');
             if (ov) ov.classList.add('open');
         }
@@ -365,7 +370,15 @@
         //       owned, pan-locked to its own bbox, Download hidden, sign-in
         //       required. The standalone demo-app.js from 139 is deleted: a second
         //       map implementation could only drift from this one.
-        var APP_VERSION = '140';
+        // 141 = demo mode no longer shows "No Map Data Available". With one region
+        //       and a pan lock, that dialog can only fire in a corner of the bbox
+        //       outside the plan polygon — and it offers "Browse Available Regions",
+        //       which is meaningless when there is exactly one.
+        //       Also makes the demo sign-in a REAL gate: an anonymous session (which
+        //       maps.html creates on every visit, per-origin) used to satisfy `user`
+        //       in onAuthStateChanged and walk the visitor straight in, and the
+        //       dialog's "Not now" made it dismissable anyway.
+        var APP_VERSION = '141';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -432,6 +445,19 @@
                 } else {
                     fetchCloudFrontCookies();
                 }
+                return;
+            }
+
+            // 🛑 DEMO MODE: a REAL account is required before anything renders.
+            // Checking `user` alone is not enough — maps.html signs every visitor
+            // in ANONYMOUSLY to fetch CloudFront cookies, and that session persists
+            // per-origin, so anyone who has opened the normal map arrives here
+            // already "signed in" and walks straight into the demo without ever
+            // being asked. Returning here also stops the layer/purchase/session
+            // machinery from running behind the dialog.
+            if (isDemoMode && (!user || user.isAnonymous)) {
+                currentUser = user;
+                _demoRequireLogin();
                 return;
             }
 
@@ -3635,6 +3661,10 @@
         }
 
         function showNoDataDialog() {
+            // Guarded at the source as well as at the caller above: this dialog offers
+            // "Browse Available Regions", which is meaningless when the whole point of
+            // the page is that there is exactly one region.
+            if (isDemoMode) return;
             const overlay = document.getElementById('zoom-restrict-overlay');
             const title = document.getElementById('zoom-restrict-title');
             const desc = document.getElementById('zoom-restrict-desc');
@@ -5607,6 +5637,17 @@
                 const z = map.getZoom();
                 const overlay = document.getElementById('zoom-restrict-overlay');
                 const district = findDistrictAtFocusOrCenter();
+
+                if (isDemoMode && z >= MAX_FREE_ZOOM && !district) {
+                    // Demo mode has exactly ONE region by construction and the camera is
+                    // already pan-locked to its bbox — so "no district here" can only mean
+                    // a corner of that bbox falling outside the plan's own (irregular)
+                    // polygon. A modal there is pure noise: the visitor has done nothing
+                    // wrong and there is no other region for them to browse to. Let them
+                    // zoom and see empty basemap, which is the honest answer.
+                    setMapMaxZoom(18);
+                    return;
+                }
 
                 if (z >= MAX_FREE_ZOOM && !district) {
                     // Check if we're in a village area — allow zoom for village purchase via markers
