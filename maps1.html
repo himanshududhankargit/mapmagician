@@ -1002,6 +1002,16 @@
            it renders a print sheet of the plan, which is the paid product itself. */
         body.demo-mode #btn-download-map { display:none !important; }
         body.demo-mode .pd-demo-btn { display:none; }
+        /* Demo coach tip. pointer-events:none for its whole life so it can never
+           intercept a tap on the slider it sits above. */
+        #demo-tip { position:absolute; bottom:64px; left:12px; max-width:min(300px,84vw); z-index:1001;
+            background:rgba(33,33,33,0.93); color:#fff; padding:10px 14px; border-radius:8px;
+            font-size:13px; line-height:1.45; box-shadow:0 4px 14px rgba(0,0,0,0.3);
+            pointer-events:none; opacity:0; transform:translateY(6px); display:none;
+            transition:opacity 0.35s, transform 0.35s; font-family:'Segoe UI',Roboto,Arial,sans-serif; }
+        #demo-tip.show { opacity:1; transform:translateY(0); }
+        #demo-tip::after { content:''; position:absolute; bottom:-5px; left:24px; width:11px; height:11px;
+            background:rgba(33,33,33,0.93); transform:rotate(45deg); border-radius:2px; }
         @media (max-width:430px) { .pd-demo-btn { padding:6px 10px; } .pd-demo-btn .pd-demo-long { display:none; } }
         .pd-header-icon { width:44px; height:44px; background:rgba(255,255,255,0.14); border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; }
         .pd-kicker { font-size:10px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase; opacity:0.75; margin-bottom:4px; }
@@ -1937,6 +1947,9 @@
         <button id="grace-renew-banner-btn" type="button" style="padding:5px 12px;font-size:12px;font-weight:600;border:none;background:#EF6C00;color:#fff;border-radius:4px;cursor:pointer;flex-shrink:0;">Renew</button>
         <button id="grace-renew-banner-dismiss" type="button" aria-label="Dismiss" style="background:none;border:none;color:#5D4037;font-size:18px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0;">&times;</button>
     </div>
+
+    <!-- Demo-mode coach tip (shown for ~3s on entry, then fades) -->
+    <div id="demo-tip">&#9788; Drag this slider to fade the plan and see the satellite image underneath.</div>
 
     <!-- Unified bottom bar -->
     <div class="bottom-bar" id="bottom-bar">
@@ -3045,7 +3058,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=141" defer></script>
+    <script src="maps1-app.js?v=142" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">

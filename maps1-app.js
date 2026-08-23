@@ -76,15 +76,26 @@
             const PAD = 0.04;
             const dLng = (DEMO_PLAN.east - DEMO_PLAN.west) * PAD;
             const dLat = (DEMO_PLAN.north - DEMO_PLAN.south) * PAD;
+            // 🛑 strictBounds is FALSE, and that is what makes pinch-zoom work.
+            // With strictBounds:true the whole VIEWPORT must fit inside the box. This
+            // plan is only ~7x10 km, so at anything below ~z13 the viewport is larger
+            // than the restriction and the constraint is unsatisfiable — Google then
+            // fights every zoom gesture, and two-finger zoom simply does nothing.
+            // strictBounds:false restricts the CENTRE instead, which cannot conflict
+            // with a zoom level, so gestures are free between minZoom and maxZoom.
+            // Panning is still locked to the region (the centre can never leave the
+            // box) and minZoom stops anyone zooming out to the rest of the country;
+            // the only thing given up is that a little surrounding area is visible at
+            // the edges, which is a fair price for a map that responds to your hands.
             map.setOptions({
                 restriction: {
                     latLngBounds: {
                         west:  DEMO_PLAN.west  - dLng, east:  DEMO_PLAN.east  + dLng,
                         south: DEMO_PLAN.south - dLat, north: DEMO_PLAN.north + dLat
                     },
-                    strictBounds: true
+                    strictBounds: false
                 },
-                minZoom: 11
+                minZoom: 12
             });
 
             // "You are pushing the wall." Testing whether the viewport TOUCHES the
@@ -92,6 +103,22 @@
             // the toast would fire forever. Watch instead for the centre being
             // FROZEN while drag events keep arriving: that only happens when Google
             // is actively refusing the movement.
+            // Coach tip for the opacity slider — the one control whose purpose is not
+            // self-evident from its icon. Shown once on entry, then gone. It is
+            // pointer-events:none for its whole life, so it can never intercept a tap
+            // on the slider it is describing, and it carries no close button: a
+            // dismiss affordance on a 3-second element is more friction than the
+            // element itself.
+            const _dTip = document.getElementById('demo-tip');
+            if (_dTip) {
+                _dTip.style.display = 'block';
+                setTimeout(() => _dTip.classList.add('show'), 700);
+                setTimeout(() => {
+                    _dTip.classList.remove('show');
+                    setTimeout(() => { _dTip.style.display = 'none'; }, 400);
+                }, 3700);
+            }
+
             let _dLastKey = null, _dStuck = 0, _dTimer = null;
             function _demoToast(msg) {
                 const t = document.getElementById('zoom-info-toast');
@@ -378,7 +405,11 @@
         //       maps.html creates on every visit, per-origin) used to satisfy `user`
         //       in onAuthStateChanged and walk the visitor straight in, and the
         //       dialog's "Not now" made it dismissable anyway.
-        var APP_VERSION = '141';
+        // 142 = demo: two-finger zoom fixed, and a 3-second coach tip for the opacity
+        //       slider. The zoom bug was strictBounds:true on a ~7x10 km box — below
+        //       ~z13 the viewport cannot fit inside the restriction, so Google fought
+        //       every pinch. Now centre-restricted with a minZoom floor instead.
+        var APP_VERSION = '142';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
