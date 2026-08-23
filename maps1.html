@@ -1002,6 +1002,22 @@
            it renders a print sheet of the plan, which is the paid product itself. */
         body.demo-mode #btn-download-map { display:none !important; }
         body.demo-mode .pd-demo-btn { display:none; }
+        /* Demo banner replaces the search field in the top row. Hidden by default so
+           the normal map is byte-for-byte unaffected until body.demo-mode is set. */
+        #demo-banner, #demo-exit { display:none; }
+        body.demo-mode #search-input { display:none; }
+        body.demo-mode #coord-btn-search { display:none; }
+        body.demo-mode #demo-banner { display:flex; flex:1; min-width:0; align-items:center; gap:8px; }
+        body.demo-mode #demo-exit { display:inline-flex; }
+        #demo-banner .dbn-pill { flex:none; background:#00796B; color:#fff; font-size:10px; font-weight:800;
+            letter-spacing:0.4px; padding:4px 9px; border-radius:12px; white-space:nowrap; }
+        #demo-banner .dbn-text { min-width:0; font-size:13px; font-weight:600; color:#00695C;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        #demo-exit { flex:none; align-items:center; height:34px; padding:0 13px; border:1px solid #B2DFDB;
+            border-radius:17px; background:#E0F2F1; color:#00695C; font-size:12.5px; font-weight:700;
+            cursor:pointer; white-space:nowrap; font-family:inherit; transition:background 0.15s; }
+        #demo-exit:hover { background:#B2DFDB; }
+        @media (max-width:560px) { #demo-exit { padding:0 10px; font-size:12px; } }
         /* Demo coach tip. pointer-events:none for its whole life so it can never
            intercept a tap on the slider it sits above. */
         #demo-tip { position:absolute; bottom:64px; left:12px; max-width:min(300px,84vw); z-index:1001;
@@ -1516,6 +1532,10 @@
     <!-- Top search row -->
     <div class="top-search-row">
         <input id="search-input" type="search" placeholder="Search Place..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <!-- Demo mode swaps the search field for a banner: there is exactly one
+             region, so a place search can only ever disappoint. -->
+        <div id="demo-banner"><span class="dbn-pill">&#9654; DEMO</span><span class="dbn-text">Alur Regional Plan &middot; Tal. Umarga</span></div>
+        <button id="demo-exit" type="button" title="Return to the full site">Exit Demo &rarr;</button>
         <select id="map-type" aria-label="Map type">
             <option value="hybrid">Hybrid</option>
             <option value="satellite">Satellite</option>
@@ -3058,7 +3078,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=142" defer></script>
+    <script src="maps1-app.js?v=143" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">

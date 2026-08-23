@@ -109,6 +109,12 @@
             // on the slider it is describing, and it carries no close button: a
             // dismiss affordance on a 3-second element is more friction than the
             // element itself.
+            // Way out. Dropping the query string returns to THIS build's normal map
+            // (maps1.html from staging, maps.html from live), so the exit can never
+            // bounce a tester from staging into production.
+            const _dExit = document.getElementById('demo-exit');
+            if (_dExit) _dExit.onclick = () => { location.href = location.pathname; };
+
             const _dTip = document.getElementById('demo-tip');
             if (_dTip) {
                 _dTip.style.display = 'block';
@@ -409,7 +415,11 @@
         //       slider. The zoom bug was strictBounds:true on a ~7x10 km box — below
         //       ~z13 the viewport cannot fit inside the restriction, so Google fought
         //       every pinch. Now centre-restricted with a minZoom floor instead.
-        var APP_VERSION = '142';
+        // 143 = demo: the search field is replaced by a banner naming the region, and
+        //       an "Exit Demo" button returns to the normal map. Searching for a place
+        //       is meaningless when the whole page is one region, and until now there
+        //       was no way back out of demo mode short of editing the URL.
+        var APP_VERSION = '143';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
