@@ -202,24 +202,41 @@
         // 130 = new-regions sheet moved to the bottom-LEFT (the right is .fab-stack's)
         //       and Dismiss now hides it completely.
         //       🛑 THE REAL LESSON OF THIS BUILD: 129 was pushed THREE times without a
-        //       bump. maps1-newregions.js is fetched as '...?v=' + APP_VERSION, so the
+        //       bump. maps-newregions.js is fetched as '...?v=' + APP_VERSION, so the
         //       2nd and 3rd deploys landed at origin behind a cache key no browser
         //       would request again — the fixes were live and invisible. Verifying with
         //       a throwaway '?probe=' key proves origin has the bytes and proves
         //       NOTHING about what a browser gets. +1 on EVERY push, lazy files
         //       included; they ride this constant.
-        // 131 = preview data off; this is the build promoted to live as 132.
-        // 133 = cookie-write hardening: session cookies (no expires= — clock-skew
-        //       immunity) + write-then-readback with a visible "cookies blocked"
-        //       banner instead of a silently blank map storming 403s.
-        // 137 = a paid download survives the tab that bought it. The re-download entry
-        //       is now written when the PAYMENT clears rather than when the file saves,
-        //       and the list is seeded from the server (getPurchaseStatus.downloads), so
-        //       a render that dies — or a payment whose callback never fires — still
-        //       leaves a Get button. 6 of 37 paid downloads went silent in the 6 days to
-        //       2026-08-20 and every one was unrecoverable because the only record of the
-        //       purchase lived in the localStorage of the tab that died.
-        var APP_VERSION = '137';
+        // 131 = staging build with the preview data off.
+        // 132 = PROMOTION of that build to live: the "new regions" sheet ships.
+        // 134 = cookie-write hardening (staging-verified as 133): session cookies
+        //       (no expires= — clock-skew immunity) + write-then-readback with a
+        //       visible "cookies blocked" banner instead of a silently blank map
+        //       storming 403s.
+        // 136 = PROMOTION of staging 135: send a stable device id with the cookie
+        //       call, so the sign-in device row the backend records (GISUserDevices,
+        //       shown as a chip in the Android admin panel) is keyed per BROWSER
+        //       instead of per User-Agent. A UA key mis-counts twice — two browsers
+        //       sharing a UA collapse into one row, and a Chrome 151→152 update makes
+        //       one browser look like a second device. NOT 135: live takes
+        //       max(maps, maps1) + 1 on every push, promotions included.
+        // 138 = PROMOTION of staging 137: a paid download survives the tab that bought
+        //       it. The re-download entry is written when the PAYMENT clears rather than
+        //       when the file saves, and Settings -> Downloads is seeded from the server
+        //       (getPurchaseStatus.downloads, newest 10 within 7 days), so a render that
+        //       dies — or a payment whose Razorpay callback never fires — still leaves
+        //       a Get button. 6 of 37 paid downloads went silent in the 6 days to
+        //       2026-08-20 and every one was unrecoverable, because the only record of
+        //       the purchase lived in the localStorage of the tab that died. NOT 137:
+        //       live takes max(maps, maps1) + 1, promotions included.
+        // 139 = Demo Mode. A "DEMO MODE" pill (Claude Design 1b) in the unlock
+        //       modal header opens demo.html — a standalone page showing ONE free
+        //       watermarked plan (Alur, Tal. Umarga) from the public /demo/d1/
+        //       CloudFront behavior. Separate page on purpose: it loads no Firebase,
+        //       Razorpay or layer metadata, so it CANNOT reach paid tiles by any
+        //       code path, and it opens instantly instead of pulling 2.6 MB of d*.bin.
+        var APP_VERSION = '139';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -3332,6 +3349,13 @@
             // Red Mac-style close (X) in the header — same dismiss as "Not now"
             var _zrClose = document.getElementById('zoom-restrict-close');
             if (_zrClose) _zrClose.onclick = () => document.getElementById('zoom-restrict-cancel').click();
+
+            // "DEMO MODE" pill (Claude Design 1b) -> standalone demo page, new tab.
+            // Kept as its own page rather than a mode of this one: demo.html has no
+            // Firebase/Razorpay/layer fetch, so "a demo can never show paid maps" is
+            // structural rather than a rule that could regress later.
+            var _zrDemo = document.getElementById('zoom-restrict-demo');
+            if (_zrDemo) _zrDemo.onclick = () => window.open('demo.html', '_blank', 'noopener');
 
             document.getElementById('zoom-restrict-support').onclick = () => {
                 overlay.classList.remove('open');
@@ -8882,7 +8906,7 @@
         // re-downloads, the polygons are simply there, and the only way to find one
         // was to pan over it by chance. The feature that announces them is a port of
         // the Android NewRegionsSheetController + LayerAdditionsStore, and it lives
-        // ENTIRELY in maps1-newregions.js — diff, persistence, CSS, markup and sheet.
+        // ENTIRELY in maps-newregions.js — diff, persistence, CSS, markup and sheet.
         //
         // LAZY, like Annotate. Nothing here parses at page start. The module is
         // fetched only when there is genuinely something to announce, which is the

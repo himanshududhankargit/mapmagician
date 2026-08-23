@@ -78,6 +78,19 @@ fs.readdirSync(MM_ROOT)
   .filter(f => /^maps\d+\.html$/.test(f))
   .forEach(f => copyIfExists(f, f));
 
+// Demo Mode: demo.html + demo-app.js — a standalone page serving ONE free
+// watermarked plan from the public /demo/d1/ CloudFront behavior. It is entered
+// from the "DEMO MODE" pill in the unlock modal, which exists on BOTH domains,
+// so the page has to exist on both or the pill is a 404 on dpplans.com.
+//
+// 🛑 A GLOB, for the same reason as maps*.js above: these files match neither
+// existing pattern, and a demo page that 404s only on dpplans.com is exactly the
+// half-broken state this file has already been bitten by twice. The pattern
+// covers a future demo1.html staging slot and any lazy demo-*.js module.
+fs.readdirSync(MM_ROOT)
+  .filter(f => /^demo\d*(-[a-z]+)?\.(html|js)$/.test(f))
+  .forEach(f => copyIfExists(f, f));
+
 // CNAME tells GitHub Pages / Cloudflare Pages which custom domain to bind. Cloudflare
 // Pages also reads this and treats it as authoritative.
 fs.writeFileSync(path.join(OUT, 'CNAME'), 'dpplans.com\n');
