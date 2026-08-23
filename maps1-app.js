@@ -29,7 +29,7 @@
         const isDemoMode  = new URLSearchParams(window.location.search).get('demo') === '1';
         const DEMO_FOLDER = 'AlurOsmanabadRegionalPlanEarthTileQgisTM';
         const DEMO_PID    = 'demoalur';
-        const DEMO_VIEW   = { lat: 17.698973, lng: 76.418839, zoom: 14 };
+        const DEMO_VIEW   = { lat: 17.698973, lng: 76.418839, zoom: 13 };
         // Extent of the ACTUAL z18 tile pyramid, not the export's doc.kml (which
         // describes only the single z11 tile and is ~4x too large).
         const DEMO_PLAN   = { west: 76.385193, east: 76.452484, south: 17.654491, north: 17.743455 };
@@ -97,6 +97,20 @@
                 },
                 minZoom: 12
             });
+
+            // 🛑 Raise the zoom ceiling NOW, synchronously, not on the next idle.
+            // The map is constructed with maxZoom: MAX_FREE_ZOOM (14) because the
+            // paywall owns that cap, and it is only lifted from the zoom-check path
+            // that runs on idle. In demo mode the plan is "owned" from the first
+            // frame, so that window served no purpose — it just meant the map opened
+            // at, or near, its own ceiling and pinch-to-zoom-in did nothing at all
+            // until the user zoomed OUT far enough to trigger a check that raised it.
+            // Reported on both mobile and desktop; it reads as broken gesture support.
+            //
+            // Must go through setMapMaxZoom, not map.setOptions directly: the helper
+            // early-returns on _currentMaxZoom === z, so writing the option behind its
+            // back would leave that cache stale and make the next real call a no-op.
+            setMapMaxZoom(18);
 
             // "You are pushing the wall." Testing whether the viewport TOUCHES the
             // bounds is useless — at the minimum zoom that is permanently true and
@@ -425,7 +439,12 @@
         //       the moment they choose to walk away, which is the last chance to offer
         //       a look first. Outlined so it reads as an alternative to leaving rather
         //       than as a third thing competing with the two paid CTAs.
-        var APP_VERSION = '144';
+        // 145 = demo: zoom worked only after zooming out and back in. The map is built
+        //       with maxZoom MAX_FREE_ZOOM (14) and the demo opened at zoom 14 — i.e.
+        //       exactly at its own ceiling — so pinch-in was a no-op until the idle
+        //       zoom-check happened to raise the cap. Now raised synchronously in
+        //       _demoInitMap, and the demo opens at 13 so there is headroom regardless.
+        var APP_VERSION = '145';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
