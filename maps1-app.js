@@ -448,7 +448,13 @@
         //       Try Demo was pinned left and Not now stretched across the remaining
         //       width, so the two read as unrelated. Centred together they read as two
         //       options at a single decision, with Try Demo first in reading order.
-        var APP_VERSION = '146';
+        // 147 = demo tiles were cached and then immediately thrown away. Every folder
+        //       regex required a /dpplans/ segment, but demo tiles live at /demo/d1/,
+        //       so _tileFolderFromUrl returned '' and _computeAllowedTileFolders never
+        //       listed the demo folder — revokeTilesNotInFolderSet then deleted every
+        //       demo tile above z14 on each purchase-status refresh. Hence "tiles
+        //       aren't cached" and "tiles sometimes don't load when I zoom".
+        var APP_VERSION = '147';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -4172,8 +4178,14 @@
             } catch (e) {}
         }
 
+        // The alternation matters: demo-mode tiles live at /demo/d1/z/x/y.png, with no
+        // dpplans segment at all. Without it this returned '' for every demo tile, they
+        // were stored in IndexedDB under folder '', and revokeTilesNotInFolderSet then
+        // deleted every one of them above z14 on the next purchase-status refresh —
+        // which is why the demo appeared not to cache and tiles blinked out on zoom.
+        // /demo/d1/ and /demo/d1/17/x/y.png both yield 'd1', so put and revoke agree.
         function _tileFolderFromUrl(url) {
-            const m = url.match(/\/dpplans\/([^/]+)\//);
+            const m = url.match(/\/(?:dpplans|demo)\/([^/]+)\//);
             return m ? m[1] : '';
         }
 
@@ -4197,7 +4209,7 @@
                     const isFree = !pid;
                     const isLive = pid && typeof hasPurchase === 'function' && hasPurchase(pid);
                     if (!isFree && !isLive) continue;
-                    const m = (d.link || '').match(/\/dpplans\/([^/]+)\/?/);
+                    const m = (d.link || '').match(/\/(?:dpplans|demo)\/([^/]+)\/?/);
                     if (m) allowed.add(m[1]);
                     if (d.subSheets) {
                         for (let si = 0; si < d.subSheets.length; si++) {
@@ -4209,7 +4221,7 @@
                             // multi-sheet district from this set, so their paid tiles were
                             // evicted on each purchase refresh and the stale-token self-heal
                             // could never recognise them as owned.
-                            const sm = (sub.link || sub.urlPrefix || '').match(/\/dpplans\/([^/]+)\/?/);
+                            const sm = (sub.link || sub.urlPrefix || '').match(/\/(?:dpplans|demo)\/([^/]+)\/?/);
                             if (sm) allowed.add(sm[1]);
                         }
                     }
