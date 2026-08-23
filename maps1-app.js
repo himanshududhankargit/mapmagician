@@ -444,7 +444,11 @@
         //       exactly at its own ceiling — so pinch-in was a no-op until the idle
         //       zoom-check happened to raise the cap. Now raised synchronously in
         //       _demoInitMap, and the demo opens at 13 so there is headroom regardless.
-        var APP_VERSION = '145';
+        // 146 = "Try Demo" and "Not now" centred as a pair on one line. Previously
+        //       Try Demo was pinned left and Not now stretched across the remaining
+        //       width, so the two read as unrelated. Centred together they read as two
+        //       options at a single decision, with Try Demo first in reading order.
+        var APP_VERSION = '146';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

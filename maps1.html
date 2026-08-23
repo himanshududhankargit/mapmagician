@@ -999,8 +999,13 @@
            the visitor decides to walk away, so it is the last and best moment to offer
            a look before they do. Outlined, not solid — it must read as an alternative
            to leaving, never as competition for the two paid CTAs above it. */
-        .pd-dismiss-row { display:flex; align-items:center; gap:10px; padding:0 16px; margin-top:4px; }
-        .pd-dismiss-row .pd-cancel { width:auto; flex:1; margin-top:0; }
+        /* Both buttons centred as a PAIR on one line, rather than "Try Demo" pinned
+           left with "Not now" stretched across the rest. Centred, they read as two
+           options at one decision — and "Try Demo" comes first in reading order, so
+           the eye reaches it on the way to the dismiss rather than after it. */
+        .pd-dismiss-row { display:flex; align-items:center; justify-content:center;
+            gap:12px; padding:0 16px; margin-top:4px; }
+        .pd-dismiss-row .pd-cancel { width:auto; flex:none; margin-top:0; padding:10px 18px; }
         .pd-try-demo { flex:none; display:inline-flex; align-items:center; gap:6px; padding:10px 16px;
             border:1.5px solid #00796B; border-radius:20px; background:#fff; color:#00695C;
             font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;
@@ -1037,7 +1042,7 @@
         #demo-tip.show { opacity:1; transform:translateY(0); }
         #demo-tip::after { content:''; position:absolute; bottom:-5px; left:24px; width:11px; height:11px;
             background:rgba(33,33,33,0.93); transform:rotate(45deg); border-radius:2px; }
-        @media (max-width:430px) { .pd-dismiss-row { gap:8px; padding:0 12px; } .pd-try-demo { padding:10px 13px; font-size:12.5px; } }
+        @media (max-width:430px) { .pd-dismiss-row { gap:8px; padding:0 12px; } .pd-try-demo { padding:10px 14px; font-size:12.5px; } .pd-dismiss-row .pd-cancel { padding:10px 14px; } }
         .pd-header-icon { width:44px; height:44px; background:rgba(255,255,255,0.14); border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; }
         .pd-kicker { font-size:10px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase; opacity:0.75; margin-bottom:4px; }
         .pd-header .pd-title { margin:0; font-size:20px; color:#fff; font-weight:700; letter-spacing:-0.2px; line-height:1.3; word-break:break-word; }
@@ -3089,7 +3094,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=145" defer></script>
+    <script src="maps1-app.js?v=146" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
