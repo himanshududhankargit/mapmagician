@@ -419,7 +419,13 @@
         //       an "Exit Demo" button returns to the normal map. Searching for a place
         //       is meaningless when the whole page is one region, and until now there
         //       was no way back out of demo mode short of editing the URL.
-        var APP_VERSION = '143';
+        // 144 = "Try Demo" moved out of the unlock modal's header and down beside
+        //       "Not now". As a small pill in the top-left it was easy to miss, and it
+        //       sat next to nothing a visitor was deciding about; the dismiss row is
+        //       the moment they choose to walk away, which is the last chance to offer
+        //       a look first. Outlined so it reads as an alternative to leaving rather
+        //       than as a third thing competing with the two paid CTAs.
+        var APP_VERSION = '144';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
