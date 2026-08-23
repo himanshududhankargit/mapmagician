@@ -454,7 +454,14 @@
         //       listed the demo folder — revokeTilesNotInFolderSet then deleted every
         //       demo tile above z14 on each purchase-status refresh. Hence "tiles
         //       aren't cached" and "tiles sometimes don't load when I zoom".
-        var APP_VERSION = '147';
+        // 149 = "I paid, the map won't open, it works if I refresh." A failed layer
+        //       fetch was indistinguishable from a successful empty one: every caller
+        //       did `if (!data) { xDataLoaded = true; return; }` and never retried, so
+        //       one transient blip gave a whole session ZERO regions — no district
+        //       resolves, the purchase never matches, zoom stays pinned at 14. Now
+        //       retried up to 3x with backoff, with an honest banner if it truly fails,
+        //       and a throw in the handler body can no longer disarm the zoom gate.
+        var APP_VERSION = '149';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -9445,9 +9452,44 @@
             return p;
         }
 
+        // 🛑 A FAILED LAYER FETCH USED TO LOOK EXACTLY LIKE "THIS REGION HAS NO MAPS".
+        // getCachedOrFetchLayer catches its own errors and resolves to null, and every
+        // caller then did `if (!data) { xDataLoaded = true; return; }` — i.e. it recorded
+        // the layer as successfully loaded with ZERO regions, and never tried again.
+        //
+        // One transient blip (the RTDB dataVersions read, the .bin.gz, the .bin, a flaky
+        // mobile network) therefore produced a whole session with no regions at all:
+        // findDistrictAtCenter finds nothing, so a paying customer's own district doesn't
+        // resolve, the zoom stays pinned at MAX_FREE_ZOOM, and they get "No Map Data
+        // Available" — while the database, the purchase and the mmp-token are all correct.
+        // Reloading fixes it because the second fetch succeeds. That is precisely the
+        // "I paid, the map won't open, it works if I refresh" report.
+        //
+        // Only a COLD cache reaches here: getCachedOrFetchLayer returns a localStorage
+        // copy synchronously when it has one, so this costs returning users nothing.
+        const LAYER_FETCH_MAX_TRIES = 3;
+        const _layerFetchTries = { dp: 0, village: 0, oldDP: 0 };
+
+        function _retryLayerFetch(key, fn) {
+            if (++_layerFetchTries[key] >= LAYER_FETCH_MAX_TRIES) return false;
+            setTimeout(fn, 1200 * _layerFetchTries[key]);   // 1.2s, 2.4s
+            return true;
+        }
+
+        function _showLayerFailBanner() {
+            var el = document.getElementById('layer-fail-banner');
+            if (el) el.classList.add('show');
+        }
+
         function fetchDPLayerData() {
             getCachedOrFetchLayer('layer_dp', DP_URL_DATABASE_NAME, 'layer_dp', fetchDPLayerData).then(data => {
-                if (!data) { dpDataLoaded = true; return; }
+                if (!data) {
+                    // Retry before declaring the layer empty — see the note above.
+                    if (_retryLayerFetch('dp', fetchDPLayerData)) return;
+                    dpDataLoaded = true;          // give up: unblock the gate so the UI can speak
+                    _showLayerFailBanner();
+                    return;
+                }
                 dpLayerData = applyLayerData(data, "Development Plan", true);
                 dpTileStatus = Array(dpLayerData.length).fill(false);
                 stickyTile = null;
@@ -9461,19 +9503,39 @@
                     createVillageMarkers();
                 }
                 maybeRerunZoomCheck();
-            }).catch(error => console.error("Error fetching DP data:", error));
+            }).catch(error => {
+                // applyLayerData/parseKML throwing here would leave dpDataLoaded false,
+                // and BOTH the zoom_changed gate and maybeRerunZoomCheck() early-return
+                // on that flag — so the map would stay capped at MAX_FREE_ZOOM for the
+                // rest of the session with no paywall and no error shown. Never leave
+                // the gate permanently disarmed.
+                console.error("Error fetching DP data:", error);
+                dpDataLoaded = true;
+                _showLayerFailBanner();
+                maybeRerunZoomCheck();
+            });
         }
 
         function fetchVillageLayerData() {
             getCachedOrFetchLayer('layer_village', VILLAGE_URL_DATABASE_NAME, 'layer_village', fetchVillageLayerData).then(data => {
-                if (!data) { villageDataLoaded = true; return; }
+                if (!data) {
+                    if (_retryLayerFetch('village', fetchVillageLayerData)) return;
+                    villageDataLoaded = true;
+                    _showLayerFailBanner();
+                    return;
+                }
                 villageLayerData = applyLayerData(data, "Village Plan");
                 villageTileStatus = Array(villageLayerData.length).fill(false);
                 villageDataLoaded = true;
                 loadTilesBasedOnViewport();
                 if (isVillageLayerVisible && villageMarkers.size === 0) createVillageMarkers();
                 maybeRerunZoomCheck();
-            }).catch(error => console.error("Error fetching Village data:", error));
+            }).catch(error => {
+                console.error("Error fetching Village data:", error);
+                villageDataLoaded = true;
+                _showLayerFailBanner();
+                maybeRerunZoomCheck();
+            });
         }
 
         // After a layer fetcher completes, if both DP and village data are now
