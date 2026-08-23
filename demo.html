@@ -2,148 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Live Demo — Alur Regional Plan | Map Magician</title>
-    <meta name="description" content="Explore a real development plan sheet free — Alur, Tal. Umarga, Dist. Osmanabad. Zoom to survey-number detail.">
-    <!-- Demo is a sample of paid content: keep it out of the index so it never
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Demo — Map Magician</title>
+    <!-- Demo shows a sample of paid content: keep it out of the index so it never
          outranks the region pages that actually sell. -->
     <meta name="robots" content="noindex, follow">
     <link rel="icon" type="image/png" href="AssetsGIS/mapmagiciansmall.png">
-    <link rel="apple-touch-icon" href="AssetsGIS/mapmagiciansmall.png">
-    <link rel="preconnect" href="https://maps.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://tiles.mapmagician.in" crossorigin>
+    <link rel="canonical" href="https://www.mapmagician.in/maps.html">
+    <!--
+        This page is a REDIRECT, not an app.
+
+        Demo mode used to be a standalone page with its own map. It is now a flag
+        inside the real app (maps-app.js, `isDemoMode`) because the requirement is
+        "the actual site with only one region to explore" — same interface, same
+        opacity slider, legends, search and annotations, minus Download. A second
+        implementation could only ever be a worse copy of the first, and would
+        drift from it.
+
+        demo.html survives purely as a short, shareable URL for the CTA and for
+        marketing links. The "DEMO MODE" pill inside the unlock modal does NOT
+        come here: it opens location.pathname + '?demo=1', so it stays on
+        whichever build the visitor is already on (maps.html or maps1.html).
+
+        Staging equivalent: maps1.html?demo=1
+    -->
+    <meta http-equiv="refresh" content="0; url=maps.html?demo=1">
+    <script>location.replace('maps.html?demo=1');</script>
     <style>
-        * { box-sizing: border-box; }
-        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden;
-            font-family: "Segoe UI", system-ui, -apple-system, sans-serif; background: #eceff1; }
-        #map { position: absolute; inset: 0; }
-
-        /* ---- top bar ---- */
-        #demo-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 5;
-            display: flex; align-items: center; gap: 14px; padding: 10px 16px;
-            background: linear-gradient(135deg, #00796B, #004D40); color: #fff;
-            box-shadow: 0 2px 10px rgba(0,0,0,.25); }
-        #demo-bar .db-pill { display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 13px; border-radius: 20px; background: #fff; color: #00695C;
-            font-size: 11px; font-weight: 800; letter-spacing: .4px; flex: none; }
-        #demo-bar .db-text { min-width: 0; flex: 1; }
-        #demo-bar .db-title { font-size: 15px; font-weight: 700; line-height: 1.25;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        #demo-bar .db-sub { font-size: 12px; color: rgba(255,255,255,.78); margin-top: 1px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        #demo-cta { flex: none; padding: 10px 18px; border: none; border-radius: 8px;
-            background: #4CAF50; color: #fff; font-size: 14px; font-weight: 700;
-            cursor: pointer; white-space: nowrap; transition: background .15s, transform .1s; }
-        #demo-cta:hover { background: #429646; }
-        #demo-cta:active { transform: scale(.97); }
-
-        /* ---- hint + toast ---- */
-        #demo-hint { position: absolute; left: 50%; transform: translateX(-50%);
-            bottom: 26px; z-index: 5; padding: 9px 18px; border-radius: 20px;
-            background: rgba(0,0,0,.72); color: #fff; font-size: 13px; font-weight: 500;
-            pointer-events: none; opacity: 0; transition: opacity .3s; }
-        #demo-hint.show { opacity: 1; }
-        #demo-toast { position: absolute; left: 50%; transform: translateX(-50%) translateY(-8px);
-            top: 78px; z-index: 6; padding: 11px 20px; border-radius: 8px;
-            background: rgba(183,28,28,.94); color: #fff; font-size: 14px; font-weight: 600;
-            pointer-events: none; opacity: 0; transition: opacity .22s, transform .22s;
-            box-shadow: 0 4px 16px rgba(0,0,0,.3); }
-        #demo-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-        /* ---- loading ---- */
-        #demo-load { position: absolute; inset: 0; z-index: 8; display: flex;
-            align-items: center; justify-content: center; flex-direction: column; gap: 14px;
-            background: #eceff1; transition: opacity .4s; }
-        #demo-load.hide { opacity: 0; pointer-events: none; }
-        #demo-load .dl-spin { width: 38px; height: 38px; border: 3px solid #B2DFDB;
-            border-top-color: #00796B; border-radius: 50%; animation: dlspin .8s linear infinite; }
-        @keyframes dlspin { to { transform: rotate(360deg); } }
-        #demo-load .dl-text { font-size: 14px; color: #546E7A; font-weight: 600; }
-
-        /* ---- sign-in gate ---- */
-        #demo-auth { position: absolute; inset: 0; z-index: 10; display: none;
-            align-items: center; justify-content: center; padding: 20px;
-            background: linear-gradient(135deg, #00796B, #004D40); }
-        #demo-auth.show { display: flex; }
-        #demo-auth .da-card { width: 100%; max-width: 400px; background: #fff;
-            border-radius: 14px; padding: 32px 28px 26px; text-align: center;
-            box-shadow: 0 24px 60px rgba(0,0,0,.45); }
-        #demo-auth .da-logo { width: 60px; height: 60px; margin: 0 auto 16px; display: block; }
-        #demo-auth .da-pill { display: inline-flex; align-items: center; gap: 6px;
-            padding: 5px 12px; border-radius: 20px; background: #E0F2F1; color: #00695C;
-            font-size: 10px; font-weight: 800; letter-spacing: .5px; margin-bottom: 14px; }
-        #demo-auth .da-title { font-size: 21px; font-weight: 700; color: #1a1a1a;
-            line-height: 1.3; margin-bottom: 10px; }
-        #demo-auth .da-sub { font-size: 14px; color: #607D8B; line-height: 1.55; margin-bottom: 24px; }
-        #demo-auth .da-google { width: 100%; display: flex; align-items: center;
-            justify-content: center; gap: 11px; padding: 13px; border: 1px solid #dadce0;
-            border-radius: 8px; background: #fff; color: #3c4043; font-size: 15px;
-            font-weight: 600; cursor: pointer; transition: background .15s, box-shadow .15s; }
-        #demo-auth .da-google:hover { background: #f8f9fa; box-shadow: 0 1px 3px rgba(60,64,67,.3); }
-        #demo-auth .da-google:disabled { opacity: .6; cursor: default; }
-        #demo-auth .da-note { font-size: 12px; color: #90A4AE; line-height: 1.5; margin-top: 18px; }
-        #demo-auth .da-err { font-size: 13px; color: #C62828; margin-top: 14px; display: none; }
-        #demo-auth .da-err.show { display: block; }
-        #demo-auth .da-back { display: inline-block; margin-top: 16px; font-size: 13px;
-            color: #00796B; text-decoration: none; font-weight: 600; }
-        #demo-auth .da-back:hover { text-decoration: underline; }
-
-        @media (max-width: 560px) {
-            #demo-bar { gap: 10px; padding: 8px 12px; }
-            #demo-bar .db-pill { font-size: 10px; padding: 5px 10px; }
-            #demo-bar .db-pill .db-pill-long { display: none; }
-            #demo-bar .db-title { font-size: 13px; }
-            #demo-bar .db-sub { display: none; }
-            #demo-cta { padding: 9px 13px; font-size: 13px; }
-            #demo-toast { top: 66px; font-size: 13px; padding: 10px 16px; max-width: 90vw; text-align: center; }
-            #demo-auth .da-card { padding: 26px 22px 22px; }
-            #demo-auth .da-title { font-size: 19px; }
-        }
+        body { margin:0; height:100vh; display:flex; align-items:center; justify-content:center;
+            font-family:"Segoe UI", system-ui, -apple-system, sans-serif; background:#eceff1; color:#546E7A; }
+        a { color:#00796B; font-weight:600; }
     </style>
 </head>
 <body>
-    <div id="map"></div>
-
-    <div id="demo-bar">
-        <span class="db-pill">&#9654; DEMO<span class="db-pill-long"> MODE</span></span>
-        <div class="db-text">
-            <div class="db-title">Alur Regional Plan &mdash; free sample</div>
-            <div class="db-sub">Tal. Umarga, Dist. Osmanabad &middot; zoom in for survey numbers</div>
-        </div>
-        <button id="demo-cta" type="button">Unlock Full Access &rarr;</button>
-    </div>
-
-    <div id="demo-hint">Pinch or scroll to zoom in &mdash; detail sharpens to plot level</div>
-    <div id="demo-toast">Demo is restricted to this region only</div>
-
-    <div id="demo-load">
-        <div class="dl-spin"></div>
-        <div class="dl-text">Loading demo plan&hellip;</div>
-    </div>
-
-    <!-- Sign-in gate. Shown until a NON-anonymous Firebase user exists. -->
-    <div id="demo-auth">
-        <div class="da-card">
-            <img class="da-logo" src="AssetsGIS/mapmagiciansmall.png" alt="Map Magician">
-            <div class="da-pill">&#9654; DEMO MODE</div>
-            <div class="da-title">Sign in to explore the demo</div>
-            <div class="da-sub">
-                See a real development plan &mdash; Alur, Tal.&nbsp;Umarga &mdash; zoomed all the way
-                to plot and survey-number detail. Free, no payment required.
-            </div>
-            <button class="da-google" id="demo-signin" type="button">
-                <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#34A853" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#FBBC05" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-                <span id="demo-signin-label">Continue with Google</span>
-            </button>
-            <div class="da-err" id="demo-auth-err"></div>
-            <div class="da-note">We only use this to recognise you when you come back. No payment details.</div>
-            <a class="da-back" href="index.html">&larr; Back to Map Magician</a>
-        </div>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-auth-compat.js"></script>
-    <script src="demo-app.js?v=140" defer></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBBfEcHoR1yHBlnOvWKYLkr3C3ob6nb5hw&callback=initDemo&loading=async" defer></script>
+    <p>Opening the demo&hellip; <a href="maps.html?demo=1">Continue</a></p>
 </body>
 </html>

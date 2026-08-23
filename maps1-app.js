@@ -1,6 +1,128 @@
         // Global embed mode flag (checked before auth/session logic)
         const isEmbedMode = new URLSearchParams(window.location.search).get('embed') === '1';
 
+        /* ================= DEMO MODE ========================================
+           "The actual site, with only one region to explore."
+
+           A URL FLAG, not a forked page (mirroring isEmbedMode above). A fork of
+           this file would be ~700 KB of parallel code that has to be kept in step
+           with every future change here, and the first thing to drift silently
+           would be the paywall.
+
+           What the flag does:
+             - the DP layer is reduced to ONE record; village and old-DP are dropped
+             - that record's link is repointed at the public /demo/d1/ prefix, so no
+               purchase, no CloudFront entitlement and no mmp-token district are
+               involved at any point
+             - it is given a SYNTHETIC productPurchaseID. 🛑 The real record is
+               'osmanabaddistrict', which covers 41 folders including Tuljapur —
+               unlocking THAT would hand over the entire paid district. The
+               synthetic id is also unique, so _mergeByProductPurchaseID skips it
+               (counts.get(pid) === 1) and urlPrefix_ stays a plain concat of
+               tileBaseUrl + link rather than the merged-entry path, which sets
+               urlPrefix_ = '' and would serve no tiles at all.
+             - seeding activePurchases with that id makes all ~30
+               hasPurchase(district.productPurchaseID) call sites resolve true, so
+               full zoom and no paywall come for free with zero call-site edits.
+             - Download Map is hidden, and a real (non-anonymous) sign-in is required.
+        */
+        const isDemoMode  = new URLSearchParams(window.location.search).get('demo') === '1';
+        const DEMO_FOLDER = 'AlurOsmanabadRegionalPlanEarthTileQgisTM';
+        const DEMO_PID    = 'demoalur';
+        const DEMO_VIEW   = { lat: 17.698973, lng: 76.418839, zoom: 14 };
+        // Extent of the ACTUAL z18 tile pyramid, not the export's doc.kml (which
+        // describes only the single z11 tile and is ~4x too large).
+        const DEMO_PLAN   = { west: 76.385193, east: 76.452484, south: 17.654491, north: 17.743455 };
+        // Obfuscation, NOT security: the browser must request the URL, so it is
+        // always visible in DevTools. It buys only that the string is not greppable
+        // in source and the folder is not named after the region.
+        const DEMO_LINK   = '/' + atob('ZGVtbw==') + '/' + atob('ZDE=') + '/';
+
+        function _demoFilterLayer(data, label) {
+            if (label !== 'Development Plan') return {};      // no villages, no old DP
+            const out = {};
+            for (const k in data) {
+                if (!data.hasOwnProperty(k)) continue;
+                const it = data[k];
+                if (!it || !it.link || it.link.indexOf(DEMO_FOLDER) === -1) continue;
+                // The live record carries NO MinZoom/MaxZoom, so processLayerData
+                // would default it to 0-22 while the demo pyramid stops at 18 —
+                // the paywall-free zoom then runs to 21 over blank space. Pin the
+                // real extent so CanvasMapType returns an empty tile above it and
+                // checkOverlayZoomLimit can say so.
+                out[k] = Object.assign({}, it, {
+                    link: DEMO_LINK, productPurchaseID: DEMO_PID,
+                    MinZoom: 11, minZoom: 11, MaxZoom: 18, maxZoom: 18
+                });
+            }
+            return out;
+        }
+
+        // Far-future expiry: there is no purchase behind the demo, so nothing
+        // should ever expire it mid-session.
+        function _demoSeedPurchase() {
+            if (!isDemoMode) return;
+            activePurchases.set(DEMO_PID, { expiry: Date.now() + 31536000000, plan: 'demo', refunded: false });
+        }
+
+        function _demoInitMap() {
+            document.body.classList.add('demo-mode');
+            _demoSeedPurchase();
+
+            // Pan lock. strictBounds means the VIEWPORT itself can never leave the
+            // box, so there is no empty space to wander into and no camera bounce
+            // after the fact. Padded slightly so the plan's own boundary is visible
+            // rather than clipped flush against the viewport edge.
+            const PAD = 0.04;
+            const dLng = (DEMO_PLAN.east - DEMO_PLAN.west) * PAD;
+            const dLat = (DEMO_PLAN.north - DEMO_PLAN.south) * PAD;
+            map.setOptions({
+                restriction: {
+                    latLngBounds: {
+                        west:  DEMO_PLAN.west  - dLng, east:  DEMO_PLAN.east  + dLng,
+                        south: DEMO_PLAN.south - dLat, north: DEMO_PLAN.north + dLat
+                    },
+                    strictBounds: true
+                },
+                minZoom: 11
+            });
+
+            // "You are pushing the wall." Testing whether the viewport TOUCHES the
+            // bounds is useless — at the minimum zoom that is permanently true and
+            // the toast would fire forever. Watch instead for the centre being
+            // FROZEN while drag events keep arriving: that only happens when Google
+            // is actively refusing the movement.
+            let _dLastKey = null, _dStuck = 0, _dTimer = null;
+            function _demoToast(msg) {
+                const t = document.getElementById('zoom-info-toast');
+                const x = document.getElementById('zoom-info-toast-text');
+                if (!t || !x) return;
+                x.textContent = msg;
+                t.classList.add('show');
+                clearTimeout(_dTimer);
+                _dTimer = setTimeout(() => t.classList.remove('show'), 2600);
+            }
+            map.addListener('dragstart', () => { _dLastKey = null; _dStuck = 0; });
+            map.addListener('drag', () => {
+                const c = map.getCenter();
+                if (!c) return;
+                const k = c.lat().toFixed(7) + ',' + c.lng().toFixed(7);
+                if (k === _dLastKey) {
+                    if (++_dStuck === 3) _demoToast('Demo mode — only this region is available');
+                } else { _dStuck = 0; }
+                _dLastKey = k;
+            });
+        }
+
+        function _demoRequireLogin() {
+            const desc = document.getElementById('auth-dialog-desc');
+            if (desc) desc.textContent = 'Sign in with your Google account to explore the demo region.';
+            const wl = document.getElementById('auth-dialog-weblabel');
+            if (wl) wl.style.display = 'none';
+            const ov = document.getElementById('auth-dialog-overlay');
+            if (ov) ov.classList.add('open');
+        }
+
         // App version stamp — rendered into the Settings panel header so we can confirm at a
         // glance that the freshly-deployed JS (not a stale cached copy) is the one running.
         // Global build counter (like Android versionCode): +1 on EVERY push; only the file
@@ -236,7 +358,14 @@
         //       CloudFront behavior. Separate page on purpose: it loads no Firebase,
         //       Razorpay or layer metadata, so it CANNOT reach paid tiles by any
         //       code path, and it opens instantly instead of pulling 2.6 MB of d*.bin.
-        var APP_VERSION = '139';
+        // 140 = Demo Mode is now the REAL app behind a ?demo=1 flag, not a separate
+        //       page. Same interface, opacity slider, legends and annotations —
+        //       the DP layer is filtered to ONE record, repointed at the public
+        //       /demo/d1/ tiles, given a synthetic pid so the paywall sees it as
+        //       owned, pan-locked to its own bbox, Download hidden, sign-in
+        //       required. The standalone demo-app.js from 139 is deleted: a second
+        //       map implementation could only drift from this one.
+        var APP_VERSION = '140';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -455,6 +584,7 @@
                 profileBtn.style.color = '#1976D2';
                 profileBtn.title = 'Sign in';
                 activePurchases.clear();
+                _demoSeedPurchase();
                 activeSubscriptions.clear();
                 villagePurchases.clear();
                 cachedIdToken = null;
@@ -481,10 +611,17 @@
                 document.cookie = `CloudFront-Key-Pair-Id=; domain=${COOKIE_DOMAIN}; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
                 document.cookie = `mmp-token=; domain=${COOKIE_DOMAIN}; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 
-                // Sign in anonymously for free tile access
-                firebase.auth().signInAnonymously().catch(err => {
-                    console.error('Anonymous sign-in failed:', err);
-                });
+                // Demo mode asks for a real account instead. An anonymous session
+                // satisfies every signed-in check in this file, so signing in
+                // anonymously here would walk the visitor straight past the gate.
+                if (isDemoMode) {
+                    _demoRequireLogin();
+                } else {
+                    // Sign in anonymously for free tile access
+                    firebase.auth().signInAnonymously().catch(err => {
+                        console.error('Anonymous sign-in failed:', err);
+                    });
+                }
             }
         });
 
@@ -823,6 +960,7 @@
                 const getPurchaseStatus = functions.httpsCallable('getPurchaseStatus');
                 const { data } = await getPurchaseStatus();
                 activePurchases.clear();
+                _demoSeedPurchase();
                 Object.entries(data.purchases || {}).forEach(([productId, val]) => {
                     // Handle both old format (number) and new format ({expiry, plan})
                     if (typeof val === 'object' && val) {
@@ -3355,7 +3493,10 @@
             // Firebase/Razorpay/layer fetch, so "a demo can never show paid maps" is
             // structural rather than a rule that could regress later.
             var _zrDemo = document.getElementById('zoom-restrict-demo');
-            if (_zrDemo) _zrDemo.onclick = () => window.open('demo.html', '_blank', 'noopener');
+            // Self-referential on purpose: from maps1.html this opens maps1.html?demo=1
+            // and from maps.html it opens maps.html?demo=1, so staging can never
+            // hand a tester the live build (or the reverse) through this button.
+            if (_zrDemo) _zrDemo.onclick = () => window.open(location.pathname + '?demo=1', '_blank', 'noopener');
 
             document.getElementById('zoom-restrict-support').onclick = () => {
                 overlay.classList.remove('open');
@@ -4962,9 +5103,12 @@
                 }
             } catch (e) { /* localStorage unavailable or JSON parse failed — fall through */ }
 
-            const initLat = !isNaN(paramLat) ? paramLat : (!isNaN(savedLat) ? savedLat : 18.93742);
-            const initLng = !isNaN(paramLng) ? paramLng : (!isNaN(savedLng) ? savedLng : 72.82810);
-            const initZoom = !isNaN(paramZoom) ? paramZoom : (!isNaN(savedZoom) ? savedZoom : 13);
+            // Demo mode ignores the saved/param camera entirely — the whole page
+            // is one region, so restoring a previous position elsewhere would open
+            // on empty space inside the lock.
+            const initLat = isDemoMode ? DEMO_VIEW.lat : (!isNaN(paramLat) ? paramLat : (!isNaN(savedLat) ? savedLat : 18.93742));
+            const initLng = isDemoMode ? DEMO_VIEW.lng : (!isNaN(paramLng) ? paramLng : (!isNaN(savedLng) ? savedLng : 72.82810));
+            const initZoom = isDemoMode ? DEMO_VIEW.zoom : (!isNaN(paramZoom) ? paramZoom : (!isNaN(savedZoom) ? savedZoom : 13));
 
             if (isEmbedMode) {
                 document.body.classList.add('embed-mode');
@@ -4995,6 +5139,8 @@
                 clickableIcons: false,
                 maxZoom: MAX_FREE_ZOOM
             });
+
+            if (isDemoMode) _demoInitMap();
 
             // Safety: if tiles haven't initiated after 15s, unblock GeoJSON anyway
             setTimeout(function() {
@@ -8884,6 +9030,7 @@
         }
 
         function applyLayerData(data, label, shouldMerge) {
+            if (isDemoMode) data = _demoFilterLayer(data, label);
             const processed = processLayerData(data);
             // PERF (maps10 fix #5): the productPurchaseID merge only applies
             // to DP/oldDP layers. Villages have their own productPurchaseIDs
