@@ -71,9 +71,10 @@
                 <div style="background:#e8f5e9;padding:12px;border-radius:8px;border-left:3px solid #2E7D32;margin:0 0 14px 0;font-size:13px;line-height:1.5;color:#1b5e20;">
                     <span id="support-fix-text">&nbsp;</span>
                 </div>
+                <div id="support-fix-result" style="display:none;background:#fff8e1;padding:10px 12px;border-radius:8px;border-left:3px solid #f9a825;margin:0 0 14px 0;font-size:13px;line-height:1.5;color:#5d4037;"></div>
+                <button class="auth-dialog-btn" id="support-fix-close" style="display:none;width:100%;justify-content:center;margin-bottom:10px;background:#2E7D32;color:#fff;border:1px solid #2E7D32;font-weight:600;">Close &amp; view the map</button>
                 <button class="auth-dialog-btn" id="support-fix-refresh" style="width:100%;justify-content:center;margin-bottom:10px;">Refresh my access now</button>
                 <button class="auth-dialog-btn" id="support-fix-reload" style="width:100%;justify-content:center;margin-bottom:10px;background:#fff;color:#1a73e8;border:1px solid #dadce0;">Reload the page</button>
-                <div id="support-fix-result" style="display:none;background:#fff8e1;padding:10px 12px;border-radius:8px;border-left:3px solid #f9a825;margin:0 0 12px 0;font-size:13px;line-height:1.5;color:#5d4037;"></div>
                 <button class="auth-dialog-cancel" id="support-fix-proceed" style="display:none;">Still not working &mdash; contact support</button>
                 <button class="auth-dialog-cancel" id="support-fix-back">Back</button>
             </div>
@@ -381,6 +382,7 @@
             result.style.display = 'none';
             result.innerHTML = '';
             document.getElementById('support-fix-proceed').style.display = 'none';
+            document.getElementById('support-fix-close').style.display = 'none';
             const refreshBtn = document.getElementById('support-fix-refresh');
             refreshBtn.disabled = false;
             refreshBtn.textContent = 'Refresh my access now';
@@ -717,6 +719,16 @@
             location.reload();
         });
 
+        document.getElementById('support-fix-close').addEventListener('click', () => {
+            // Do NOT hand them back to the paywall they just came from: the refresh
+            // re-issued the edge token and checkAndReenableMap() may already have
+            // unlocked the map, so re-showing the zoom-restriction dialog would look
+            // like the fix failed. Same reason the send-success path clears these.
+            supportReturnToPaywall = false;
+            supportPaywallDistrict = null;
+            closeSupportForm();
+        });
+
         document.getElementById('support-fix-refresh').addEventListener('click', async () => {
             const sel = supportBillingSelection;
             if (!sel) return;
@@ -733,6 +745,11 @@
                 checkAndReenableMap();
                 result.innerHTML = 'Your access has been refreshed. Close this dialog and zoom in on <strong>'
                     + supportEsc(sel.name) + '</strong> again &mdash; the premium map should now load.';
+                // The success path needs a way OUT. Without this the only exits are
+                // "Back" (to the region picker) and "Still not working" — so a customer
+                // whose problem we just fixed is told to close a dialog that has no
+                // close button, and the likeliest next tap is the support email.
+                document.getElementById('support-fix-close').style.display = '';
             } catch (e) {
                 console.warn('Support access refresh failed:', e);
                 result.innerHTML = 'We could not complete the refresh (there may be a network problem). '

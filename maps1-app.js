@@ -461,7 +461,7 @@
         //       resolves, the purchase never matches, zoom stays pinned at 14. Now
         //       retried up to 3x with backoff, with an honest banner if it truly fails,
         //       and a throw in the handler body can no longer disarm the zoom gate.
-        var APP_VERSION = '151';
+        var APP_VERSION = '152';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
