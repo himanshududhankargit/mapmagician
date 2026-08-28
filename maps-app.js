@@ -467,7 +467,13 @@
         //       a failed layer fetch was recorded as a successful EMPTY one, so a single
         //       transient blip gave that session zero regions and the customer's own
         //       district never resolved.
-        var APP_VERSION = '150';
+        // 155 = PROMOTION of the support rework (154) to live. Contact Support now
+        //       re-reads entitlement from the server before deciding, offers the real
+        //       fix (purchase re-fetch + edge token re-issue + tile reload) to customers
+        //       whose pass IS live, and requires a payment screenshot from those with no
+        //       record. The whole dialog, markup included, moved to the LAZY
+        //       maps-support.js — so the initial payload SHRANK despite the new feature.
+        var APP_VERSION = '155';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -1236,34 +1242,21 @@
             }
         }
 
-        // --- Support form ---
-        let supportReturnToPaywall = false;
-        let supportPaywallDistrict = null;
-
-        // Guided support flow state
-        let supportFlowMode = 'other';            // 'billing' | 'other'
-        let supportBillingSelection = null;       // { pid, name } region the user claims to have paid for
-        let supportBillingNoRecord = false;       // true when no purchase record matched the selected region
-        let supportBillingRecordNote = '';        // human-readable record-check summary for the email
-        let supportConfusionOwnedName = '';       // confused-partner region the user actually owns
-        let supportConfusionOwnedPid = '';
-
+        // --- Region confusion helpers -------------------------------------
+        // These live in the APP, not in the lazy support module: the PAYWALL calls
+        // ownedConfusionPartner() when an unpaid user zooms past the free limit, long
+        // before support is ever opened. Moving them into the module made that call a
+        // ReferenceError, which swallowed showZoomRestrictionDialog() and meant NO
+        // paywall appeared at all. maps1-support.js reads them from the shared script
+        // scope, the same way it reads hasPurchase().
         // Regions that users routinely confuse with each other: distinct regions within the
         // same area where a pass for one does NOT unlock the other. Extend as more surface.
         const REGION_CONFUSION_GROUPS = [
             { area: 'Pune District', members: ['punedpplan', 'pmrda_plan'] },
         ];
-
-        function supportEsc(s) {
-            const d = document.createElement('div');
-            d.textContent = (s == null) ? '' : String(s);
-            return d.innerHTML;
-        }
-
         function normPid(pid) {
             return String(pid || '').toLowerCase().replace(/gst$/, '');
         }
-
         // Given a productPurchaseID, return { partners, area } from any confusion group it belongs to.
         function confusionPartners(pid) {
             const n = normPid(pid);
@@ -1278,7 +1271,6 @@
             });
             return { partners: out, area: area };
         }
-
         // User is viewing `accessedPid` (a region they do NOT own). If they own a
         // confused-partner region (e.g. own Pune while zooming into PMRDA), return
         // that owned partner's display info so we can surface the clearance dialog.
@@ -1299,362 +1291,49 @@
             return null;
         }
 
-        // Show exactly one step of the support dialog; hide the rest.
-        function supportShowSection(id) {
-            ['support-choice-section', 'support-billing-section', 'support-confusion-section',
-                'support-form-section', 'support-success-section'].forEach(function (s) {
-                const el = document.getElementById(s);
-                if (el) el.style.display = (s === id) ? '' : 'none';
-            });
-        }
-
-        // Deduped, name-sorted list of purchasable regions derived from menuData.
-        function getSupportRegionOptions() {
-            const seen = {};
-            const out = [];
-            (menuData || []).forEach(function (item) {
-                const pid = item.productPurchaseID;
-                if (!pid) return;
-                const key = pid.toLowerCase();
-                if (seen[key]) return;
-                seen[key] = true;
-                out.push({ pid: pid, name: item.district || item.state || pid });
-            });
-            out.sort(function (a, b) { return a.name.localeCompare(b.name); });
-            return out;
-        }
-
-        function renderSupportRegionList(filter) {
-            const listEl = document.getElementById('support-region-list');
-            if (!listEl) return;
-            let opts = getSupportRegionOptions();
-            const f = (filter || '').trim().toLowerCase();
-            if (f) opts = opts.filter(function (o) { return o.name.toLowerCase().indexOf(f) !== -1; });
-            listEl.innerHTML = '';
-            if (opts.length === 0) {
-                listEl.innerHTML = '<div style="padding:12px;font-size:13px;color:#888;text-align:center;">No matching region</div>';
-                return;
-            }
-            opts.forEach(function (o) {
-                const row = document.createElement('div');
-                row.textContent = o.name;
-                row.style.cssText = 'padding:9px 12px;font-size:13px;color:#333;cursor:pointer;border-bottom:1px solid #f2f2f2;';
-                if (supportBillingSelection && supportBillingSelection.pid === o.pid) {
-                    row.style.background = '#e8f0fe';
-                    row.style.fontWeight = '600';
-                }
-                row.addEventListener('click', function () {
-                    supportBillingSelection = { pid: o.pid, name: o.name };
-                    document.getElementById('support-billing-next').disabled = false;
-                    renderSupportRegionList(document.getElementById('support-region-search').value);
-                });
-                listEl.appendChild(row);
-            });
-        }
-
-        function resetSupportFlow() {
-            supportFlowMode = 'other';
-            supportBillingSelection = null;
-            supportBillingNoRecord = false;
-            supportBillingRecordNote = '';
-            supportConfusionOwnedName = '';
-            supportConfusionOwnedPid = '';
-            const search = document.getElementById('support-region-search');
-            if (search) search.value = '';
-            const nextBtn = document.getElementById('support-billing-next');
-            if (nextBtn) nextBtn.disabled = true;
-        }
-
-        // Enter the final free-text form step with region + an optional pre-filled message.
-        function showSupportFormStep(regionName, prefillMessage) {
-            document.getElementById('support-region').value = regionName || (findDistrictAtCenter()?.districtName || 'General');
-            document.getElementById('support-message').value = prefillMessage || '';
-            document.getElementById('support-send-btn').disabled = false;
-            document.getElementById('support-send-btn').textContent = 'Send Message';
-            supportShowSection('support-form-section');
-        }
-
-        function proceedBillingToForm(selName) {
-            const template = 'I purchased access to ' + selName + ' but the premium map is not unlocking when I zoom in. Please help.';
-            showSupportFormStep(selName, template);
-        }
-
-        function openSupportForm(district, returnToPaywall) {
-            if (!currentUser || currentUser.isAnonymous) {
-                pendingSupportOpen = { district: district, returnToPaywall: !!returnToPaywall };
-                document.getElementById('auth-dialog-desc').textContent = 'Please sign in to contact support.';
-                document.getElementById('auth-dialog-weblabel').style.display = 'none';
-                document.getElementById('auth-dialog-overlay').classList.add('open');
-                return;
-            }
-            supportReturnToPaywall = !!returnToPaywall;
-            supportPaywallDistrict = district;
-            document.getElementById('support-email').value = currentUser ? currentUser.email : '';
-            resetSupportFlow();
-            supportShowSection('support-choice-section');
-            document.getElementById('support-dialog-overlay').classList.add('open');
-        }
-
-        function closeSupportForm() {
-            document.getElementById('support-dialog-overlay').classList.remove('open');
-            if (supportReturnToPaywall && supportPaywallDistrict) {
-                showZoomRestrictionDialog(supportPaywallDistrict);
-            } else {
-                // Always restore map interaction when not re-showing the paywall. The
-                // send-success path clears supportReturnToPaywall, so the old
-                // "else if (supportReturnToPaywall)" branch was skipped after sending —
-                // leaving the map with scrollwheel/zoomControl/gestureHandling off
-                // (dead scroll-zoom + missing zoom buttons until reload).
-                enableMapInteraction();
-            }
-            supportReturnToPaywall = false;
-            supportPaywallDistrict = null;
-            resetSupportFlow();
-        }
-
-        document.getElementById('support-send-btn').addEventListener('click', async () => {
-            const msg = document.getElementById('support-message').value.trim();
-            if (!msg) { alert('Please enter a message.'); return; }
-            const btn = document.getElementById('support-send-btn');
-            btn.disabled = true;
-            btn.textContent = 'Sending...';
-
-            const district = findDistrictAtCenter();
-
-            function planLabelFor(plan) {
-                if (plan === 'subscription') return 'Subscription';
-                if (plan === 'professional') return 'Pro Pass (Android)';
-                if (plan === 'web') return 'Web Pass (7-day)';
-                if (plan === 'override') return 'Admin Override';
-                return '7-Day Pass';
-            }
-            const activeEntries = [];
-            activePurchases.forEach(function(val, pid) {
-                const districtMatch = findDistrictByPurchaseId(pid);
-                const entry = {
-                    productId: pid,
-                    name: districtMatch ? districtMatch.districtName : pid,
-                    plan: val.plan || '',
-                    planLabel: planLabelFor(val.plan),
-                    expiry: val.expiry || 0,
-                    refunded: !!val.refunded
+        // --- Support form (LAZY) ---------------------------------------------
+        // The whole dialog — guided billing flow, entitlement re-check, access
+        // refresh, screenshot attachment — lives in maps1-support.js and is fetched
+        // only when someone actually asks for support. It rides ?v=APP_VERSION like
+        // the other lazy modules, so a version bump invalidates it in lockstep.
+        //
+        // The anonymous check stays INSIDE the module with the rest of
+        // openSupportForm rather than being duplicated here: one function, one
+        // place. A signed-out tap costs one small fetch before the sign-in prompt.
+        var _supportLoading = null;
+        var _supportOpening = false;
+        function loadSupport() {
+            if (window.mmSupport) return Promise.resolve(window.mmSupport);
+            if (_supportLoading) return _supportLoading;
+            _supportLoading = new Promise(function (resolve, reject) {
+                var sc = document.createElement('script');
+                sc.src = 'maps-support.js?v=' + APP_VERSION;
+                sc.onload = function () {
+                    if (window.mmSupport) resolve(window.mmSupport);
+                    else { _supportLoading = null; reject(new Error('support init failed')); }
                 };
-                if (val.plan === 'subscription') {
-                    const sub = activeSubscriptions.get(pid);
-                    if (sub) {
-                        entry.status = sub.status || 'active';
-                        entry.currentPeriodStart = sub.currentPeriodStart || null;
-                        entry.currentPeriodEnd = sub.currentPeriodEnd || null;
-                    }
-                }
-                activeEntries.push(entry);
+                sc.onerror = function () { _supportLoading = null; reject(new Error('support load failed')); };
+                document.head.appendChild(sc);
             });
+            return _supportLoading;
+        }
 
-            const supportCenter = map ? map.getCenter() : null;
-
-            // Region the user is actually viewing right now (viewport center). Independent of
-            // regionPid, which the Billing flow overrides to the user's *claimed* region — so
-            // support can see "claims Pune, but actually on PMRDA".
-            const accessedRegionPid  = district ? (district.productPurchaseID || '') : '';
-            const accessedRegionName = district ? (district.districtName || district.district || '') : '';
-
-            // Classic "viewing a region you don't own while holding a pass for its confused
-            // partner" case (on PMRDA but owning a Pune pass). Reuse existing helpers.
-            let accessConfusion = null;
-            if (accessedRegionPid && !hasPurchase(accessedRegionPid)) {
-                const conf = confusionPartners(accessedRegionPid);
-                for (let i = 0; i < conf.partners.length; i++) {
-                    if (hasPurchase(conf.partners[i])) {
-                        const pm = findDistrictByPurchaseId(conf.partners[i]);
-                        accessConfusion = {
-                            accessedName: accessedRegionName || accessedRegionPid,
-                            accessedPid:  accessedRegionPid,
-                            ownedName:    pm ? pm.districtName : conf.partners[i],
-                            ownedPid:     conf.partners[i],
-                            area:         conf.area || 'area'
-                        };
-                        break;
-                    }
-                }
-            }
-
-            // For the Billing flow, attach the record-check context to the message and
-            // report the *selected* region (what the user is trying to access).
-            let fullMsg = msg;
-            let regionPidVal = district ? district.productPurchaseID : '';
-            if (supportFlowMode === 'billing' && supportBillingSelection) {
-                regionPidVal = supportBillingSelection.pid;
-                fullMsg += '\n\n----- Billing context (auto-attached) -----\n'
-                    + 'Problem type: Billing — paid but not working\n'
-                    + 'Selected region (trying to access): ' + supportBillingSelection.name + ' (' + supportBillingSelection.pid + ')\n'
-                    + (supportBillingRecordNote ? supportBillingRecordNote + '\n' : '')
-                    + (supportBillingNoRecord ? 'Flag: NO_RECORD_FOR_SELECTED_REGION\n' : '');
-            }
-
-            try {
-                const sendSupportRequest = functions.httpsCallable('sendSupportRequest');
-                await sendSupportRequest({
-                    message: fullMsg,
-                    senderName: (currentUser && currentUser.displayName) ? currentUser.displayName : '',
-                    region: document.getElementById('support-region').value,
-                    regionPid: regionPidVal,
-                    zoom: map ? map.getZoom() : 0,
-                    lat: supportCenter ? supportCenter.lat() : null,
-                    lng: supportCenter ? supportCenter.lng() : null,
-                    userAgent: navigator.userAgent,
-                    activeSubscriptions: activeEntries,
-                    accessedRegionName: accessedRegionName,
-                    accessedRegionPid:  accessedRegionPid,
-                    accessConfusion:    accessConfusion
-                });
-                document.getElementById('support-success-email').textContent = (currentUser && currentUser.email) ? currentUser.email : '';
-                document.getElementById('support-form-section').style.display = 'none';
-                document.getElementById('support-success-section').style.display = '';
-                supportReturnToPaywall = false;
-                supportPaywallDistrict = null;
-            } catch (e) {
-                btn.disabled = false;
-                btn.textContent = 'Send Message';
-                alert('Failed to send: ' + (e.message || 'Please try again.'));
-            }
-        });
-
-        document.getElementById('support-cancel-btn').addEventListener('click', () => {
-            closeSupportForm();
-        });
-
-        document.getElementById('support-success-close-btn').addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // Push a sacrificial history entry so the overlay-dismiss observer's
-            // history.back() pops this instead of navigating away from maps.html.
-            // Without this, a PWA/standalone launch or freshly-opened tab with no
-            // prior history treats back-from-dialog as "close the tab".
-            try { history.pushState({ mmDialog: 'support-close-shim' }, ''); } catch (_) {}
-            closeSupportForm();
-        });
-
-        // --- Guided support flow: choice / billing / confusion steps ---
-        document.getElementById('support-choice-cancel').addEventListener('click', () => {
-            closeSupportForm();
-        });
-
-        document.getElementById('support-choice-other').addEventListener('click', () => {
-            supportFlowMode = 'other';
-            supportBillingSelection = null;
-            supportBillingNoRecord = false;
-            supportBillingRecordNote = '';
-            const d = supportPaywallDistrict || findDistrictAtCenter();
-            showSupportFormStep(d ? (d.districtName || d.district) : null, '');
-        });
-
-        document.getElementById('support-choice-billing').addEventListener('click', () => {
-            supportFlowMode = 'billing';
-            supportBillingSelection = null;
-            document.getElementById('support-billing-next').disabled = true;
-            document.getElementById('support-region-search').value = '';
-            renderSupportRegionList('');
-            supportShowSection('support-billing-section');
-        });
-
-        document.getElementById('support-region-search').addEventListener('input', function () {
-            renderSupportRegionList(this.value);
-        });
-
-        document.getElementById('support-billing-back').addEventListener('click', () => {
-            supportShowSection('support-choice-section');
-        });
-
-        document.getElementById('support-billing-next').addEventListener('click', () => {
-            if (!supportBillingSelection) return;
-            const sel = supportBillingSelection;
-
-            // Confusion check (selection ↔ viewport): the region the user says they paid for
-            // differs from the region currently centered on the map, and the two are known
-            // confusables (selected Pune but viewing PMRDA, or vice versa). Catch this even
-            // when they own the selection — it's the exact mix-up behind the puzzling emails.
-            const vp = findDistrictAtCenter();
-            const vpPid = vp ? (vp.productPurchaseID || '') : '';
-            const vpName = vp ? (vp.districtName || '') : '';
-            const selPartners = confusionPartners(sel.pid);
-            if (vpPid && normPid(vpPid) !== normPid(sel.pid)
-                && selPartners.partners.map(normPid).indexOf(normPid(vpPid)) !== -1) {
-                const vArea = selPartners.area || 'area';
-                supportConfusionOwnedName = '';   // not an ownership-based confusion
-                supportConfusionOwnedPid  = '';
-                supportBillingNoRecord = false;
-                supportBillingRecordNote =
-                    'Record check: selected region ' + sel.name + ' (' + sel.pid + ') differs from the '
-                    + 'region the user is viewing on the map ' + vpName + ' (' + vpPid + '); these are '
-                    + 'confusables in the same ' + vArea + '. User confirmed they still want to email.';
-                document.getElementById('support-confusion-text').innerHTML =
-                    'You selected <strong>' + supportEsc(sel.name) + '</strong>, but the map is currently '
-                    + 'centered on <strong>' + supportEsc(vpName) + '</strong>. These are separate map '
-                    + 'regions within the same ' + supportEsc(vArea) + ', and a pass for one does not '
-                    + 'unlock the other.<br><br>Please verify which region you actually need — if you meant '
-                    + '<strong>' + supportEsc(vpName) + '</strong>, a separate pass or subscription is '
-                    + 'required for it.<br><br>Are you sure you would still like to contact support?';
-                supportShowSection('support-confusion-section');
-                return;
-            }
-
-            // Case 1: user genuinely owns the selected region → real technical issue.
-            if (hasPurchase(sel.pid)) {
-                supportBillingNoRecord = false;
-                supportBillingRecordNote = 'Record check: user HAS an active pass/subscription for the selected region ('
-                    + sel.name + ' / ' + sel.pid + '). Genuine access issue.';
-                proceedBillingToForm(sel.name);
-                return;
-            }
-
-            // Case 2: user owns a commonly-confused partner region instead → warn before emailing.
-            const confusion = confusionPartners(sel.pid);
-            let ownedPartnerPid = null;
-            for (let i = 0; i < confusion.partners.length; i++) {
-                if (hasPurchase(confusion.partners[i])) { ownedPartnerPid = confusion.partners[i]; break; }
-            }
-            if (ownedPartnerPid) {
-                const pm = findDistrictByPurchaseId(ownedPartnerPid);
-                const ownedName = pm ? pm.districtName : ownedPartnerPid;
-                const area = confusion.area || 'area';
-                supportConfusionOwnedName = ownedName;
-                supportConfusionOwnedPid = ownedPartnerPid;
-                document.getElementById('support-confusion-text').innerHTML =
-                    '<strong>' + supportEsc(sel.name) + '</strong> and <strong>' + supportEsc(ownedName)
-                    + '</strong> are separate map regions within the same ' + supportEsc(area)
-                    + '. Access to one region does not automatically include access to the other.<br><br>'
-                    + 'Our records show that your active pass is for <strong>' + supportEsc(ownedName)
-                    + '</strong>, while the region currently selected in the app is <strong>' + supportEsc(sel.name) + '</strong>.<br><br>'
-                    + 'Please verify whether you intended to open the <strong>' + supportEsc(sel.name)
-                    + '</strong> region. If so, a separate pass or subscription is required for that region.<br><br>'
-                    + 'Are you sure you would still like to contact support?';
-                supportShowSection('support-confusion-section');
-                return;
-            }
-
-            // Case 3: no record at all → let them email, but flag it for support.
-            supportBillingNoRecord = true;
-            supportBillingRecordNote = 'Record check: NO active purchase found for the selected region ('
-                + sel.name + ' / ' + sel.pid + ').';
-            proceedBillingToForm(sel.name);
-        });
-
-        document.getElementById('support-confusion-back').addEventListener('click', () => {
-            supportShowSection('support-billing-section');
-        });
-
-        document.getElementById('support-confusion-confirm').addEventListener('click', () => {
-            const sel = supportBillingSelection;
-            supportBillingNoRecord = false;
-            if (supportConfusionOwnedPid) {
-                // ownership-based confusion (Case 2): user owns a confused partner, not the selection.
-                supportBillingRecordNote = 'Record check: user does NOT own selected region (' + sel.name + ' / ' + sel.pid
-                    + '); user OWNS confused partner ' + supportConfusionOwnedName + ' (' + supportConfusionOwnedPid + '). '
-                    + 'User confirmed they still want to email.';
-            }
-            // else: viewport-mismatch confusion — supportBillingRecordNote already set at show time.
-            proceedBillingToForm(sel.name);
-        });
+        // Every support entry point still calls this, unchanged, from four places.
+        // Re-entrancy guard: while the module downloads a second tap must not queue
+        // a second open() and stack two copies of the dialog.
+        function openSupportForm(district, returnToPaywall) {
+            if (window.mmSupport) { window.mmSupport.open(district, returnToPaywall); return; }
+            if (_supportOpening) return;
+            _supportOpening = true;
+            loadSupport().then(function (m) {
+                _supportOpening = false;
+                m.open(district, returnToPaywall);
+            }).catch(function (e) {
+                _supportOpening = false;
+                console.error('support load failed:', e);
+                alert('Could not open the support form — please check your connection and try again.');
+            });
+        }
 
         // Placeholder -- set by initSidebar once sidebar is ready
         var refreshSidebarIfOpen = function() {};
