@@ -147,55 +147,10 @@
         let supportProofBytes = 0;
         let supportProofUrl = '';                 // object URL behind the thumbnail; must be revoked
 
-        // Regions that users routinely confuse with each other: distinct regions within the
-        // same area where a pass for one does NOT unlock the other. Extend as more surface.
-        const REGION_CONFUSION_GROUPS = [
-            { area: 'Pune District', members: ['punedpplan', 'pmrda_plan'] },
-        ];
-
         function supportEsc(s) {
             const d = document.createElement('div');
             d.textContent = (s == null) ? '' : String(s);
             return d.innerHTML;
-        }
-
-        function normPid(pid) {
-            return String(pid || '').toLowerCase().replace(/gst$/, '');
-        }
-
-        // Given a productPurchaseID, return { partners, area } from any confusion group it belongs to.
-        function confusionPartners(pid) {
-            const n = normPid(pid);
-            const out = [];
-            let area = '';
-            REGION_CONFUSION_GROUPS.forEach(function (group) {
-                const norm = group.members.map(normPid);
-                if (norm.indexOf(n) !== -1) {
-                    area = group.area || '';
-                    group.members.forEach(function (g, i) { if (norm[i] !== n) out.push(g); });
-                }
-            });
-            return { partners: out, area: area };
-        }
-
-        // User is viewing `accessedPid` (a region they do NOT own). If they own a
-        // confused-partner region (e.g. own Pune while zooming into PMRDA), return
-        // that owned partner's display info so we can surface the clearance dialog.
-        // Returns null when no owned partner applies.
-        function ownedConfusionPartner(accessedPid) {
-            if (!accessedPid || hasPurchase(accessedPid)) return null;
-            const conf = confusionPartners(accessedPid);
-            for (let i = 0; i < conf.partners.length; i++) {
-                if (hasPurchase(conf.partners[i])) {
-                    const pm = findDistrictByPurchaseId(conf.partners[i]);
-                    return {
-                        ownedPid:  conf.partners[i],
-                        ownedName: pm ? pm.districtName : conf.partners[i],
-                        area:      conf.area || ''
-                    };
-                }
-            }
-            return null;
         }
 
         // Show exactly one step of the support dialog; hide the rest.
