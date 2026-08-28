@@ -936,6 +936,11 @@
         .auth-dialog p { margin:0 0 28px; font-size:14px; color:#5f6368; line-height:1.6; }
         .auth-dialog-btn { display:inline-flex; align-items:center; gap:12px; padding:0 24px; height:44px; border:1px solid #dadce0; border-radius:22px; background:#fff; color:#3c4043; font-size:14px; font-weight:500; cursor:pointer; font-family:'Google Sans','Segoe UI',Roboto,Arial,sans-serif; transition:background 0.2s,box-shadow 0.2s; }
         .auth-dialog-btn:hover { background:#f7f8f8; box-shadow:0 1px 3px rgba(60,64,67,0.3); }
+        /* A disabled .auth-dialog-btn used to render identically to an enabled one, so
+           "Next" (region picker) and "Send Message" (mid-send) read as clickable-but-dead. */
+        .auth-dialog-btn:disabled, .auth-dialog-btn:disabled:hover { background:#f1f3f4; color:#9aa0a6; border-color:#e8eaed; cursor:not-allowed; box-shadow:none; }
+        .auth-dialog-btn.mm-primary { background:#1a73e8; color:#fff; border-color:#1a73e8; font-weight:600; }
+        .auth-dialog-btn.mm-primary:hover { background:#1765cc; box-shadow:0 1px 3px rgba(60,64,67,0.3); }
         .auth-dialog-cancel { display:block; margin:20px auto 0; background:none; border:none; color:#1a73e8; font-size:14px; font-weight:500; cursor:pointer; font-family:'Google Sans','Segoe UI',Roboto,Arial,sans-serif; }
         .auth-dialog-cancel:hover { color:#174ea6; background:rgba(26,115,232,0.04); border-radius:4px; padding:4px 8px; }
 
@@ -3035,7 +3040,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=152" defer></script>
+    <script src="maps1-app.js?v=153" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">

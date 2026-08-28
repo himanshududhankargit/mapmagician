@@ -87,17 +87,16 @@
                 <div style="background:#fff8e1;padding:10px 12px;border-radius:8px;border-left:3px solid #f9a825;margin:0 0 14px 0;font-size:12.5px;line-height:1.45;color:#5d4037;">
                     <strong>Note:</strong> Android &amp; Web are <strong>separate platforms</strong> &mdash; a subscription bought on the Android app does <strong>not</strong> work on web (and vice versa).
                 </div>
-                <p style="font-size:13px;line-height:1.5;color:#333;margin:0 0 12px 0;">If you did pay for this region on the website, please attach a screenshot of your payment receipt (Razorpay confirmation, bank/UPI message, or card statement) so we can trace it quickly.</p>
+                <p style="font-size:13px;line-height:1.5;color:#333;margin:0 0 12px 0;">If you did pay for this region on the website, <strong>attach a screenshot of your payment receipt</strong> &mdash; a Razorpay confirmation, bank/UPI message, or card statement. We need it to trace the payment, so it is required before you can continue.</p>
                 <input type="file" id="support-proof-file" accept="image/*" style="display:none;">
-                <button class="auth-dialog-btn" id="support-proof-pick" style="width:100%;justify-content:center;margin-bottom:10px;background:#fff;color:#1a73e8;border:1px solid #dadce0;">Attach payment screenshot</button>
+                <button class="auth-dialog-btn mm-primary" id="support-proof-pick" style="width:100%;justify-content:center;margin-bottom:10px;">Attach payment screenshot</button>
                 <div id="support-proof-preview" style="display:none;align-items:center;gap:10px;background:#f5f5f5;border-radius:8px;padding:8px 10px;margin-bottom:10px;">
                     <img id="support-proof-thumb" alt="Attached screenshot" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #ddd;flex:none;">
                     <span id="support-proof-meta" style="font-size:12px;color:#5f6368;flex:1;line-height:1.4;"></span>
                     <button type="button" id="support-proof-remove" style="background:none;border:none;color:#c62828;font-size:12px;cursor:pointer;padding:4px;flex:none;">Remove</button>
                 </div>
                 <div id="support-proof-error" style="display:none;font-size:12.5px;line-height:1.45;color:#c62828;margin:0 0 10px 0;"></div>
-                <button class="auth-dialog-btn" id="support-proof-next" style="width:100%;justify-content:center;margin-bottom:0;" disabled>Continue</button>
-                <button type="button" id="support-proof-skip" style="display:block;width:100%;background:none;border:none;color:#5f6368;font-size:12.5px;text-decoration:underline;cursor:pointer;padding:10px 0 0 0;">I can't attach a screenshot</button>
+                <button class="auth-dialog-btn mm-primary" id="support-proof-next" style="display:none;width:100%;justify-content:center;margin-bottom:0;" disabled>Continue</button>
                 <button class="auth-dialog-cancel" id="support-proof-back">Back</button>
             </div>
             <div id="support-form-section">
@@ -147,7 +146,6 @@
         let supportProofName = '';
         let supportProofBytes = 0;
         let supportProofUrl = '';                 // object URL behind the thumbnail; must be revoked
-        let supportProofDeclined = false;         // user said they cannot attach a screenshot
 
         // Regions that users routinely confuse with each other: distinct regions within the
         // same area where a pass for one does NOT unlock the other. Extend as more surface.
@@ -279,7 +277,6 @@
             supportProofName = '';
             supportProofBytes = 0;
             supportProofUrl = '';
-            supportProofDeclined = false;
             const fileEl = document.getElementById('support-proof-file');
             if (fileEl) fileEl.value = '';
             const prev = document.getElementById('support-proof-preview');
@@ -288,8 +285,22 @@
             if (thumb) thumb.removeAttribute('src');
             const err = document.getElementById('support-proof-error');
             if (err) { err.style.display = 'none'; err.textContent = ''; }
-            const nextEl = document.getElementById('support-proof-next');
-            if (nextEl) nextEl.disabled = true;
+            setProofContinue(false);
+        }
+
+        // Continue is HIDDEN, not merely disabled, until there is something to continue
+        // with. A disabled .auth-dialog-btn is styled identically to an enabled one, so
+        // the greyed-out state was invisible and the button read as clickable-but-broken.
+        // Visibility and the disabled flag are set together here so they cannot drift.
+        function setProofContinue(on) {
+            const el = document.getElementById('support-proof-next');
+            if (!el) return;
+            el.disabled = !on;
+            el.style.display = on ? '' : 'none';
+            // With Continue gone, "Attach payment screenshot" is the only call to action
+            // and should look like it; once a screenshot is in, Continue takes over.
+            const pick = document.getElementById('support-proof-pick');
+            if (pick) pick.classList.toggle('mm-primary', !on);
         }
 
         // Downscale + JPEG-compress a chosen screenshot entirely in the browser, so the bytes
@@ -804,7 +815,7 @@
                 document.getElementById('support-proof-meta').textContent =
                     'Screenshot attached — ' + Math.max(1, Math.round(out.bytes / 1024)) + ' KB';
                 document.getElementById('support-proof-preview').style.display = 'flex';
-                document.getElementById('support-proof-next').disabled = false;
+                setProofContinue(true);
             } catch (e) {
                 err.textContent = e.message || 'Could not attach that image.';
                 err.style.display = '';
@@ -819,26 +830,18 @@
             document.getElementById('support-proof-pick').textContent = 'Attach payment screenshot';
         });
 
-        // Escape hatch. A customer on a locked-down phone who genuinely cannot produce a
-        // screenshot must still be able to reach a human; the mail records that they said so.
-        document.getElementById('support-proof-skip').addEventListener('click', () => {
-            supportProofDeclined = true;
-            document.getElementById('support-proof-next').disabled = false;
-            const err = document.getElementById('support-proof-error');
-            err.style.color = '#5f6368';
-            err.textContent = 'No problem — you can continue without a screenshot. Please describe your payment (date, amount and how you paid) in the message.';
-            err.style.display = '';
-        });
-
         document.getElementById('support-proof-next').addEventListener('click', () => {
             const sel = supportBillingSelection;
             if (!sel) return;
+            // Proof is mandatory on this branch: no record + no receipt is a mail that
+            // always ends in "please send your payment screenshot" anyway, so the round
+            // trip is spent here instead. The button is hidden until a screenshot is in;
+            // this second check is what actually enforces it.
+            if (!supportProofB64) { setProofContinue(false); return; }
             supportBillingNoRecord = true;
             supportBillingRecordNote = 'Record check: NO active purchase found for the selected region ('
                 + sel.name + ' / ' + sel.pid + '). '
-                + (supportProofB64
-                    ? 'Customer attached a payment screenshot (see attachment).'
-                    : 'Customer stated they cannot attach a screenshot.');
+                + 'Customer attached a payment screenshot (see attachment).';
             proceedBillingToForm(sel.name);
         });
     window.mmSupport = { open: openSupportForm };
