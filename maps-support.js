@@ -1,4 +1,4 @@
-// maps-support.js (staging twin: maps1-support.js) — the Contact Support dialog (guided billing flow, entitlement
+// maps-support.js (staging twin: maps-support.js) — the Contact Support dialog (guided billing flow, entitlement
 // re-check, in-app access refresh, payment-screenshot attachment).
 //
 // LAZY-LOADED: the map app injects this script the first time a support entry point
@@ -258,57 +258,128 @@
             if (pick) pick.classList.toggle('mm-primary', !on);
         }
 
-        // Downscale + JPEG-compress a chosen screenshot entirely in the browser, so the bytes
-        // that reach the backend are small enough to ride out as a mail attachment. Nothing is
-        // uploaded to storage — see sendSupportRequest. Mirrors the toBlob('image/jpeg', q)
-        // pattern already used by the Download Map finalize step.
         const SUPPORT_IMG_MAX_EDGE = 1600;
         const SUPPORT_IMG_MAX_BYTES = 700 * 1024;
+        const SUPPORT_IMG_MAX_INPUT = 40 * 1024 * 1024;   // reject only the absurd
+
+        // Decode a picked file to something drawable, WITHOUT the base64 round trip.
+        // The old path did readAsDataURL(file) -> img.src = dataURL, which for a 12 MB
+        // phone photo meant a ~16 MB base64 string held alongside the decoded bitmap —
+        // ~30 MB of transient memory on a device that may only have a few hundred MB of
+        // headroom. A budget Android phone answers that by reloading the tab, and the
+        // customer just sees the attach silently fail.
+        //
+        // createImageBitmap decodes off the main thread and, with imageOrientation
+        // 'from-image', applies the EXIF rotation tag that every phone camera writes —
+        // otherwise a receipt photographed in portrait can arrive sideways on older
+        // Android WebViews, where drawImage does not honour EXIF on its own.
+        function supportDecodeImage(file) {
+            return new Promise(function (resolve, reject) {
+                if (typeof createImageBitmap === 'function') {
+                    let p = null;
+                    try {
+                        p = createImageBitmap(file, { imageOrientation: 'from-image' });
+                    } catch (e) {
+                        try { p = createImageBitmap(file); } catch (e2) { p = null; }
+                    }
+                    if (p && typeof p.then === 'function') {
+                        p.then(function (bmp) { resolve({ src: bmp, close: function () { try { bmp.close(); } catch (e) {} } }); },
+                               function () { fallback(); });
+                        return;
+                    }
+                }
+                fallback();
+
+                // Object-URL fallback: still no base64 copy. Used where
+                // createImageBitmap is absent (older Safari) or rejects the file type.
+                function fallback() {
+                    let url = '';
+                    try { url = URL.createObjectURL(file); }
+                    catch (e) { reject(new Error('Could not read that file.')); return; }
+                    const img = new Image();
+                    img.onload = function () {
+                        resolve({ src: img, close: function () { try { URL.revokeObjectURL(url); } catch (e) {} } });
+                    };
+                    img.onerror = function () {
+                        try { URL.revokeObjectURL(url); } catch (e) {}
+                        reject(new Error('That file could not be opened as an image. If it is an iPhone HEIC photo, take a screenshot of it and attach that instead.'));
+                    };
+                    img.src = url;
+                }
+            });
+        }
+
+        // canvas.toBlob is missing on old Safari; toDataURL is not. Without this the
+        // attach step would throw with no way forward — and the billing path no longer
+        // has a skip link, so that customer could not reach support at all.
+        function supportCanvasToBlob(canvas, quality) {
+            return new Promise(function (resolve) {
+                if (typeof canvas.toBlob === 'function') {
+                    canvas.toBlob(function (b) { resolve(b || null); }, 'image/jpeg', quality);
+                    return;
+                }
+                try {
+                    const durl = canvas.toDataURL('image/jpeg', quality);
+                    const bin = atob(durl.split(',')[1] || '');
+                    const buf = new Uint8Array(bin.length);
+                    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+                    resolve(new Blob([buf], { type: 'image/jpeg' }));
+                } catch (e) { resolve(null); }
+            });
+        }
+
+        // Downscale + JPEG-compress a chosen screenshot entirely in the browser, so a
+        // 12 MB phone photo becomes a ~200-500 KB attachment and the original never
+        // leaves the device. Nothing is uploaded to storage — see sendSupportRequest.
         function supportPrepareScreenshot(file) {
             return new Promise(function (resolve, reject) {
                 if (!file) { reject(new Error('No file was selected.')); return; }
-                if (!/^image\//.test(file.type || '')) {
+                if (file.type && !/^image\//.test(file.type)) {
                     reject(new Error('Please choose an image file (JPG or PNG).')); return;
                 }
-                if (file.size > 15 * 1024 * 1024) {
-                    reject(new Error('That image is over 15 MB. Please choose a smaller one.')); return;
+                if (file.size > SUPPORT_IMG_MAX_INPUT) {
+                    reject(new Error('That image is over 40 MB. Please choose a smaller one.')); return;
                 }
-                const fr = new FileReader();
-                fr.onerror = function () { reject(new Error('Could not read that file.')); };
-                fr.onload = function () {
-                    const img = new Image();
-                    img.onerror = function () { reject(new Error('That file is not a readable image.')); };
-                    img.onload = function () {
-                        const scale = Math.min(1, SUPPORT_IMG_MAX_EDGE / Math.max(img.width, img.height));
-                        const c = document.createElement('canvas');
-                        c.width = Math.max(1, Math.round(img.width * scale));
-                        c.height = Math.max(1, Math.round(img.height * scale));
-                        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-                        const qualities = [0.8, 0.65, 0.5, 0.38];
-                        (function step(qi) {
-                            if (qi >= qualities.length) {
-                                reject(new Error('Could not compress that screenshot small enough. Please crop it to just the receipt and try again.'));
-                                return;
-                            }
-                            c.toBlob(function (blob) {
-                                if (!blob) { reject(new Error('Could not process that image.')); return; }
-                                if (blob.size > SUPPORT_IMG_MAX_BYTES) { step(qi + 1); return; }
-                                const fr2 = new FileReader();
-                                fr2.onerror = function () { reject(new Error('Could not encode that image.')); };
-                                fr2.onload = function () {
-                                    resolve({
-                                        b64: String(fr2.result).split(',')[1] || '',
-                                        bytes: blob.size,
-                                        url: URL.createObjectURL(blob)
-                                    });
-                                };
-                                fr2.readAsDataURL(blob);
-                            }, 'image/jpeg', qualities[qi]);
-                        })(0);
-                    };
-                    img.src = fr.result;
-                };
-                fr.readAsDataURL(file);
+                supportDecodeImage(file).then(function (decoded) {
+                    const w = decoded.src.width, h = decoded.src.height;
+                    if (!w || !h) { decoded.close(); reject(new Error('That image could not be read.')); return; }
+                    const scale = Math.min(1, SUPPORT_IMG_MAX_EDGE / Math.max(w, h));
+                    const c = document.createElement('canvas');
+                    c.width = Math.max(1, Math.round(w * scale));
+                    c.height = Math.max(1, Math.round(h * scale));
+                    const ctx = c.getContext('2d');
+                    // White matte: a transparent PNG would otherwise flatten to black
+                    // and make the receipt unreadable.
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(0, 0, c.width, c.height);
+                    try { ctx.drawImage(decoded.src, 0, 0, c.width, c.height); }
+                    catch (e) { decoded.close(); reject(new Error('That image could not be processed.')); return; }
+                    decoded.close();   // free the full-size bitmap immediately
+
+                    const qualities = [0.8, 0.65, 0.5, 0.38];
+                    (function step(qi) {
+                        if (qi >= qualities.length) {
+                            reject(new Error('Could not compress that screenshot small enough. Please crop it to just the receipt and try again.'));
+                            return;
+                        }
+                        supportCanvasToBlob(c, qualities[qi]).then(function (blob) {
+                            if (!blob) { reject(new Error('Could not process that image.')); return; }
+                            if (blob.size > SUPPORT_IMG_MAX_BYTES && qi < qualities.length - 1) { step(qi + 1); return; }
+                            if (blob.size > SUPPORT_IMG_MAX_BYTES) { step(qualities.length); return; }
+                            const fr = new FileReader();
+                            fr.onerror = function () { reject(new Error('Could not encode that image.')); };
+                            fr.onload = function () {
+                                resolve({
+                                    b64: String(fr.result).split(',')[1] || '',
+                                    bytes: blob.size,
+                                    w: c.width, h: c.height,
+                                    url: URL.createObjectURL(blob)
+                                });
+                            };
+                            fr.readAsDataURL(blob);
+                        });
+                    })(0);
+                }, function (err) { reject(err); });
             });
         }
 
@@ -768,7 +839,8 @@
                 supportProofName = 'payment-screenshot.jpg';
                 document.getElementById('support-proof-thumb').src = out.url;
                 document.getElementById('support-proof-meta').textContent =
-                    'Screenshot attached — ' + Math.max(1, Math.round(out.bytes / 1024)) + ' KB';
+                    'Screenshot attached — ' + Math.max(1, Math.round(out.bytes / 1024)) + ' KB'
+                    + (out.w ? ' (' + out.w + '×' + out.h + ')' : '');
                 document.getElementById('support-proof-preview').style.display = 'flex';
                 setProofContinue(true);
             } catch (e) {
