@@ -503,7 +503,20 @@
         //       and layer fetches dropped cache:'no-store', which had disabled the HTTP
         //       cache entirely for users whose ~3.8 MB localStorage write fails on quota.
         //       Verified on a real phone on mobile data before promotion.
-        var APP_VERSION = '163';
+        // 166 = PROMOTION of 165. Two things. (a) The download progress now also
+        //       shows on the SPLASH, not just the bottom strip: the splash sits at
+        //       z-index 99999 and does not lift until ~1500ms after the CloudFront
+        //       cookie call plus a 500ms fade, so on anything faster than 3G the whole
+        //       d1.bin download starts AND finishes underneath it - confirmed on a real
+        //       phone on 4G, where everything worked but the bar was never seen.
+        //       (b) A download now records how many annotations were baked into it.
+        //       The Annotate tool has no export of its own (verified: no <a download>,
+        //       no toBlob, no share, no fetch anywhere in maps-annotations.js) - its
+        //       artwork reaches a customer ONLY through a paid Map Download, so this is
+        //       the only signal that says whether Annotate helps earn a sale. Rides the
+        //       existing logDownloadOutcome call; the Admin Panel's Downloads tab shows
+        //       it as an 'annotated · N' chip.
+        var APP_VERSION = '166';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -9645,6 +9658,25 @@
         // so returning users never see the strip.
         var _dpProgressShown = false;
         var _dpProgressHideTimer = null;
+        // Mirror the same progress onto the SPLASH, which is where the user is actually
+        // looking for most of a normal load: it sits at z-index 99999 and does not lift
+        // until ~2s after the CloudFront cookie call, so on anything faster than 3G the
+        // whole d1.bin download happens underneath it and the bottom strip is never seen.
+        // Silently no-ops once the splash is gone, and on maps.html builds that predate
+        // the markup.
+        function _splashProgress(label, pct) {
+            var screen = document.getElementById('app-loading-screen');
+            if (!screen || screen.style.display === 'none') return;
+            var status = document.getElementById('app-loading-status');
+            if (status && label) status.textContent = label;
+            var track = document.getElementById('splash-progress-track');
+            var bar = document.getElementById('splash-progress-bar');
+            if (!track || !bar) return;
+            if (pct == null) { track.style.display = 'none'; return; }
+            track.style.display = 'block';
+            bar.style.width = Math.max(2, Math.round(pct)) + '%';
+        }
+
         function _dpProgress(fraction) {
             var strip = document.getElementById('dp-progress-strip');
             var textEl = document.getElementById('dp-progress-text');
@@ -9673,23 +9705,28 @@
             if (fraction === -1) {
                 textEl.textContent = 'Region information didn’t load — retrying…';
                 barEl.classList.add('indeterminate');
+                _splashProgress('Region information didn’t load — retrying…', null);
                 return;
             }
             if (fraction === 1) {
                 barEl.classList.remove('indeterminate');
                 barEl.style.width = '100%';
                 textEl.textContent = 'Regions ready';
+                _splashProgress('Regions ready', 100);
                 hide(700);
                 return;
             }
             if (fraction === null || !isFinite(fraction)) {
                 textEl.textContent = 'Fetching region information…';
                 barEl.classList.add('indeterminate');
+                _splashProgress('Fetching region information…', null);
                 return;
             }
             barEl.classList.remove('indeterminate');
-            barEl.style.width = Math.max(2, Math.round(fraction * 100)) + '%';
-            textEl.textContent = 'Fetching region information… ' + Math.round(fraction * 100) + '%';
+            var pct = Math.round(fraction * 100);
+            barEl.style.width = Math.max(2, pct) + '%';
+            textEl.textContent = 'Fetching region information… ' + pct + '%';
+            _splashProgress('Fetching region information… ' + pct + '%', pct);
         }
 
         // "Fetching region data…" when the user pans before the DP layer has landed.
@@ -11661,6 +11698,11 @@
             if (typeof ctx.lat === 'number') {
                 payload.lat = ctx.lat; payload.lng = ctx.lng; payload.zoom = ctx.zoom;
             }
+            // Same rule for the annotation count: send it only when the compose actually
+            // ran and counted, so the server can keep "not reported" (null) distinct from
+            // "reported, and there were none" (0). A 'failed' report before the compose
+            // has no count and must not claim zero.
+            if (typeof s.annotations === 'number') payload.annotations = s.annotations;
             // The page is going away: the SDK's XHR would be killed mid-flight, so post
             // to the same callable endpoint with keepalive, which the browser is
             // required to let finish after unload. The token has to be the one cached
@@ -13025,6 +13067,17 @@
             procNote.style.display = 'flex';
             var caption = document.getElementById('dlmap-caption').value.trim() || DLMAP_DEFAULT_CAPTION;
             s.caption = caption;
+            // How many annotations are about to be baked into this sheet. Mirrors the
+            // exact guard _dlmapComposeFinal uses (`window.mmAnnotations && geo`), so
+            // the number reported is what actually got DRAWN, not what happens to be
+            // sitting in the annotation store. This is the only signal that says
+            // whether the Annotate tool contributed to a sale — Annotate has no export
+            // of its own, so its artwork reaches a user only through this download.
+            try {
+                s.annotations = (s.geo && window.mmAnnotations
+                    && typeof window.mmAnnotations.count === 'function')
+                    ? window.mmAnnotations.count() : 0;
+            } catch (e) { s.annotations = 0; }
             s.finalCanvas = _dlmapComposeFinal(s.tmpl, s.stitch, s.rect, caption, s.geo);
             s.finalCanvas.toBlob(function(blob) {
                 procNote.style.display = 'none';

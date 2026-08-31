@@ -1393,6 +1393,15 @@
             <div id="splash-brand-subtitle" style="font-size:13px;color:#888;margin-top:4px;font-family:'Segoe UI',Roboto,Arial,sans-serif;">Development Plan GIS</div>
             <div style="margin-top:24px;width:32px;height:32px;border:3px solid #e0e0e0;border-top-color:#00796B;border-radius:50%;animation:app-spin 0.8s linear infinite;"></div>
             <div id="app-loading-status" style="margin-top:14px;font-size:12px;color:#aaa;font-family:'Segoe UI',Roboto,Arial,sans-serif;">Loading maps...</div>
+            <!-- Determinate twin of #dp-progress-bar. The splash sits at z-index 99999 and
+                 does not lift until ~2s after the CloudFront cookie call, so on anything
+                 faster than 3G the whole d1.bin download happens UNDERNEATH it and the
+                 bottom strip is never seen. This is the surface the user is actually
+                 looking at during that window. Hidden until there is real progress to
+                 report, so a warm cache shows the spinner alone exactly as before. -->
+            <div id="splash-progress-track" style="display:none;margin-top:10px;width:150px;height:3px;border-radius:2px;background:#e0e0e0;overflow:hidden;">
+                <div id="splash-progress-bar" style="width:0%;height:100%;background:#00796B;border-radius:2px;transition:width 0.25s linear;"></div>
+            </div>
         </div>
     </div>
     <script>
@@ -3060,7 +3069,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps-app.js?v=163" defer></script>
+    <script src="maps-app.js?v=166" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
