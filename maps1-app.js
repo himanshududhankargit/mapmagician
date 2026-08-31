@@ -461,7 +461,7 @@
         //       resolves, the purchase never matches, zoom stays pinned at 14. Now
         //       retried up to 3x with backoff, with an honest banner if it truly fails,
         //       and a throw in the handler body can no longer disarm the zoom gate.
-        var APP_VERSION = '164';
+        var APP_VERSION = '165';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -11643,6 +11643,11 @@
             if (typeof ctx.lat === 'number') {
                 payload.lat = ctx.lat; payload.lng = ctx.lng; payload.zoom = ctx.zoom;
             }
+            // Same rule for the annotation count: send it only when the compose actually
+            // ran and counted, so the server can keep "not reported" (null) distinct from
+            // "reported, and there were none" (0). A 'failed' report before the compose
+            // has no count and must not claim zero.
+            if (typeof s.annotations === 'number') payload.annotations = s.annotations;
             // The page is going away: the SDK's XHR would be killed mid-flight, so post
             // to the same callable endpoint with keepalive, which the browser is
             // required to let finish after unload. The token has to be the one cached
@@ -13007,6 +13012,17 @@
             procNote.style.display = 'flex';
             var caption = document.getElementById('dlmap-caption').value.trim() || DLMAP_DEFAULT_CAPTION;
             s.caption = caption;
+            // How many annotations are about to be baked into this sheet. Mirrors the
+            // exact guard _dlmapComposeFinal uses (`window.mmAnnotations && geo`), so
+            // the number reported is what actually got DRAWN, not what happens to be
+            // sitting in the annotation store. This is the only signal that says
+            // whether the Annotate tool contributed to a sale — Annotate has no export
+            // of its own, so its artwork reaches a user only through this download.
+            try {
+                s.annotations = (s.geo && window.mmAnnotations
+                    && typeof window.mmAnnotations.count === 'function')
+                    ? window.mmAnnotations.count() : 0;
+            } catch (e) { s.annotations = 0; }
             s.finalCanvas = _dlmapComposeFinal(s.tmpl, s.stitch, s.rect, caption, s.geo);
             s.finalCanvas.toBlob(function(blob) {
                 procNote.style.display = 'none';
