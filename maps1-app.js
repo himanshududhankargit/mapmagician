@@ -461,7 +461,7 @@
         //       resolves, the purchase never matches, zoom stays pinned at 14. Now
         //       retried up to 3x with backoff, with an honest banner if it truly fails,
         //       and a throw in the handler body can no longer disarm the zoom gate.
-        var APP_VERSION = '160';
+        var APP_VERSION = '161';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -8964,6 +8964,9 @@
         const FAST_MAX_CHUNKS = 4;                 // per batch
         const FAST_MAX_RAW_BYTES = 400 * 1024;     // ~150 KB on the wire at ~38% gzip
         const FAST_VIEWPORT_PAD = 0.35;            // grow the box so a small pan doesn't refetch
+        // Last-seen layer_dp version, so the fast path can build its URLs without waiting
+        // on the RTDB dataVersions read (see the note in _fastBootstrap).
+        const FAST_VER_KEY = 'mm_fast_dp_ver';
         let _fastVParam = '0';
         let _fastToastTimer = null;
         let _fastToastLast = 0;
@@ -9174,27 +9177,49 @@
                     .catch(function () {});
             } catch (e) {}
 
+            // 🛑 Do NOT await loadDataVersions() here. Measured on a real cold load, that
+            // RTDB read cost 1.3 s (3.27 s -> 4.58 s) before a single layer byte was even
+            // requested — larger than the download it is guarding. It exists only to build
+            // a ?v= cache-buster, which this path does not need for correctness: the
+            // index and every chunk carry a content `sig` from ONE atomic commit, so any
+            // skew is detected and that region is skipped.
+            //
+            // So use the version we saw LAST time, kept in localStorage, and start
+            // immediately. Worst case after a publish the persisted version is stale, we
+            // fetch the previous generation of the index AND its chunks — consistent with
+            // each other, since they shared a commit — and render one-version-old polygons
+            // for the couple of seconds until the monolith (which does use the live
+            // version) replaces them. That is the same staleness the localStorage layer
+            // cache already tolerates.
+            try {
+                const cachedV = localStorage.getItem(FAST_VER_KEY);
+                if (cachedV) _fastVParam = encodeURIComponent(cachedV);
+            } catch (e) {}
+
+            // Refresh the stored version for NEXT load, off the critical path.
             loadDataVersions().then(function (versions) {
-                if (_fastDisabled || dpDataLoaded) return null;
                 const v = versions ? versions['layer_dp'] : null;
-                _fastVParam = encodeURIComponent(v == null ? '0' : String(v));
-                if (typeof AbortController === 'function') _fastAbort = new AbortController();
-                const opts = { cache: 'default' };
-                if (_fastAbort) opts.signal = _fastAbort.signal;
-                return fetch(LAYER_JSON_BASE + '/' + FAST_IDX_NAME + '.bin?v=' + _fastVParam, opts)
-                    .then(function (r) { if (!r.ok) throw new Error('idx ' + r.status); return r.json(); })
-                    .then(function (idx) {
-                        if (!idx || idx.v !== 1 || !idx.c) throw new Error('idx shape');
-                        if (_fastDisabled || dpDataLoaded) return;
-                        _fastIdx = idx;
-                        _fastEnsureViewportChunks();
-                    });
-            }).catch(function (e) {
-                _fastDisabled = true;
-                console.warn('[fast] disabled:', e && e.message);
-                // Nothing will paint the region now, so stop holding the monolith back.
-                _startDpMonolith('fast-failed');
-            });
+                try { localStorage.setItem(FAST_VER_KEY, v == null ? '0' : String(v)); } catch (e) {}
+            }).catch(function () {});
+
+            if (typeof AbortController === 'function') _fastAbort = new AbortController();
+            const opts = { cache: 'default' };
+            if (_fastAbort) opts.signal = _fastAbort.signal;
+            fetch(LAYER_JSON_BASE + '/' + FAST_IDX_NAME + '.bin?v=' + _fastVParam, opts)
+                .then(function (r) { if (!r.ok) throw new Error('idx ' + r.status); return r.json(); })
+                .then(function (idx) {
+                    if (!idx || idx.v !== 1 || !idx.c) throw new Error('idx shape');
+                    if (_fastDisabled || dpDataLoaded) return;
+                    _fastIdx = idx;
+                    _fastEnsureViewportChunks();
+                })
+                .catch(function (e) {
+                    if (e && e.name === 'AbortError') return;   // monolith won; not a failure
+                    _fastDisabled = true;
+                    console.warn('[fast] disabled:', e && e.message);
+                    // Nothing will paint the region now, so stop holding the monolith back.
+                    _startDpMonolith('fast-failed');
+                });
         }
 
         function applyLayerData(data, label, shouldMerge) {
