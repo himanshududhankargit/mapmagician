@@ -461,7 +461,7 @@
         //       resolves, the purchase never matches, zoom stays pinned at 14. Now
         //       retried up to 3x with backoff, with an honest banner if it truly fails,
         //       and a throw in the handler body can no longer disarm the zoom gate.
-        var APP_VERSION = '161';
+        var APP_VERSION = '162';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -9720,9 +9720,23 @@
                 // above, so drop the staged ones on the NEXT frame. Tearing down first
                 // would blink the region out and back in.
                 if (dpFastDataLoaded) {
-                    const _fastHandover = function () { try { _fastTeardown(); } catch (e) {} };
+                    // 🛑 rAF alone is not enough: it NEVER FIRES IN A BACKGROUND TAB.
+                    // A map opened via middle-click / "open in new tab", or one the user
+                    // switched away from mid-load, would never tear the staged layer down —
+                    // leaving its overlays on the map double-drawing every region the real
+                    // layer also draws, and leaking dpFastLayerData for the session.
+                    // Verified: in a hidden tab rAF did not fire within 1200 ms.
+                    // Race a timeout against it; _fastTeardown is idempotent, and in a
+                    // visible tab rAF wins at ~16 ms so the double-buffered handover
+                    // (real overlays pushed before staged ones are removed) is preserved.
+                    let _handoverDone = false;
+                    const _fastHandover = function () {
+                        if (_handoverDone) return;
+                        _handoverDone = true;
+                        try { _fastTeardown(); } catch (e) {}
+                    };
                     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(_fastHandover);
-                    else setTimeout(_fastHandover, 0);
+                    setTimeout(_fastHandover, 250);
                 }
                 // If village markers were created before DP data arrived, isInsideDPRegion
                 // returned false for every village and markers leaked into DP regions.
