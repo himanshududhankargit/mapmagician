@@ -461,7 +461,7 @@
         //       resolves, the purchase never matches, zoom stays pinned at 14. Now
         //       retried up to 3x with backoff, with an honest banner if it truly fails,
         //       and a throw in the handler body can no longer disarm the zoom gate.
-        var APP_VERSION = '159';
+        var APP_VERSION = '160';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -5251,6 +5251,14 @@
             let _lastClientX = 0, _lastClientY = 0, _cursorOverMap = false;
             let _hoverProjOverlay = null, _hoverRefreshRaf = 0;
 
+            // True only for a real pointing device. Touch screens and emulated mobile
+            // viewports report `(hover: none)`, and a cursor-following tooltip with no
+            // cursor has nowhere to go — see _showHoverTooltip.
+            function _hoverCapable() {
+                try {
+                    return !(window.matchMedia && window.matchMedia('(hover: none)').matches);
+                } catch (e) { return true; }
+            }
             function _ensureHoverTooltip() {
                 if (_hoverTooltipEl) return _hoverTooltipEl;
                 _hoverTooltipEl = document.createElement('div');
@@ -5289,6 +5297,12 @@
             // region transition, guarded by the pid check at each call site).
             function _showHoverTooltip(district, pid) {
                 _lastHoverPid = pid;
+                // 🛑 Touch devices have no cursor, so a "cursor-following" tooltip has
+                // nothing to follow: it was rendering at the CSS default left:0/top:0,
+                // i.e. pinned to the top-left corner over the search box, showing the
+                // region name a second time (the bottom bar already names it). Emulated
+                // mobile viewports hit this too. Desktop pointers are unaffected.
+                if (!_hoverCapable()) return;
                 const purchased = hasPurchase(pid);
                 const name = district.districtName || '';
                 const tip = _ensureHoverTooltip();
@@ -5325,6 +5339,10 @@
                 const pid = hit.district.productPurchaseID;
                 _cursorFocusPid = pid; // keep the zoom-ceiling logic in sync with the cursor
                 if (pid !== _lastHoverPid) _showHoverTooltip(hit.district, pid);
+                // This path has no mouse event, so nothing else would ever place the
+                // element: shown straight from its CSS default it lands at left:0/top:0,
+                // the top-left corner. Position it at the last known cursor pixel.
+                _positionHoverTooltip(_lastClientX, _lastClientY);
             }
             // The zoom-focus point: where a wheel / double-click zoom is anchored. Google
             // pins scroll & dblclick zoom under the cursor, so the live cursor latLng IS the
@@ -5456,6 +5474,11 @@
                 // Don't make any access decision until layer data is loaded —
                 // otherwise a cold reload at a saved premium zoom flashes the
                 // "No Map Data Available" dialog while MahaGIS.json is still landing.
+                // If the monolith is still being deferred behind the fast path, the user
+                // reaching for zoom is exactly the signal to stop deferring: entitlement
+                // cannot be judged without it, and a paying customer must never sit at
+                // the free ceiling waiting on an optimisation.
+                if (!dpDataLoaded) _startDpMonolith('zoom-intent');
                 if (!dpDataLoaded || !villageDataLoaded) return;
                 const z = map.getZoom();
                 const overlay = document.getElementById('zoom-restrict-overlay');
@@ -8396,7 +8419,9 @@
                         if (!oldDPDataLoaded) fetchOldDPLayerData();
                         else loadTilesBasedOnViewport();
                     } else {
-                        if (!dpDataLoaded) fetchDPLayerData();
+                        // Route through _startDpMonolith so this respects (and cancels)
+                        // the deferral rather than racing the ceiling timer.
+                        if (!dpDataLoaded) _startDpMonolith('old-maps-toggle');
                         else loadTilesBasedOnViewport();
                     }
                 }
@@ -8870,13 +8895,41 @@
             } catch (e) { /* localStorage full or unavailable */ }
         }
 
+        // --- Deferred monolith ------------------------------------------------------
+        // Once the staged fast path can paint the visible region from a ~16 KB chunk,
+        // d1.bin is no longer on the critical path — and on a slow connection those two
+        // fetches were COMPETING for the same pipe, so the 1.05 MB actively delayed the
+        // 26 KB that makes the map usable. Hold it back until the fast path has painted,
+        // or a hard ceiling, whichever comes first.
+        //
+        // 🛑 It is only ever DEFERRED, never skipped. dpDataLoaded gates the zoom
+        // paywall, the download export and tile-folder eviction, so the monolith must
+        // always arrive: the ceiling below, and _startDpMonolith('zoom') from the
+        // paywall gate, are what guarantee a paying customer is never left waiting on it.
+        const DP_MONOLITH_CEILING_MS = 2500;
+        let _monolithStarted = false;
+        function _startDpMonolith(reason) {
+            if (_monolithStarted || !isDPLayerVisible) return;
+            _monolithStarted = true;
+            try { console.log('[fast] monolith start:', reason); } catch (e) {}
+            fetchDPLayerData();
+        }
+
         function fetchLayerData() {
             if (layerDataFetched) return;
             layerDataFetched = true;
-            // Staged fast path, started in the same tick as the monolith below. It is
-            // an accelerator only — it never gates, delays or replaces fetchDPLayerData.
+            // Staged fast path. It is an accelerator only — it never gates or replaces
+            // the monolith, it just earns it a couple of seconds of quiet.
             try { _fastBootstrap(); } catch (e) { _fastDisabled = true; }
-            if (isDPLayerVisible) fetchDPLayerData();
+            if (isDPLayerVisible) {
+                if (_fastDisabled) {
+                    // No fast path (kill switch, demo, warm cache, or it already failed):
+                    // nothing else will paint, so there is nothing to defer for.
+                    _startDpMonolith('no-fast-path');
+                } else {
+                    setTimeout(function () { _startDpMonolith('ceiling'); }, DP_MONOLITH_CEILING_MS);
+                }
+            }
             // Always fetch old DP to check availability (shows button if data exists)
             fetchOldDPLayerData();
             // Load oldDPPlanGIS region list to check button visibility
@@ -9044,6 +9097,9 @@
             dpFastTileStatus = Array(dpFastLayerData.length).fill(false);
             dpFastDataLoaded = true;
             loadTilesBasedOnViewport();
+            // The visible region is now drawn, so the pipe is free: release the monolith.
+            // Deferring past this point would only delay the paywall arming.
+            _startDpMonolith('fast-painted');
         }
 
         // Called once the real d1.bin has landed and been applied.
@@ -9136,6 +9192,8 @@
             }).catch(function (e) {
                 _fastDisabled = true;
                 console.warn('[fast] disabled:', e && e.message);
+                // Nothing will paint the region now, so stop holding the monolith back.
+                _startDpMonolith('fast-failed');
             });
         }
 
