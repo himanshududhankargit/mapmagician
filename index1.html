@@ -848,7 +848,15 @@ html, body {
   }
 
   function fetchMenuFresh(onDone) {
-    fetch(MENU_URL, { cache: 'force-cache' })
+    // 'default', not 'force-cache'. This function IS the revalidate half of the
+    // cache-first/revalidate-in-background pattern above, and 'force-cache' returns the
+    // stored response regardless of age — so once a copy was in the HTTP cache, a
+    // menuGIS republish could never reach the splash. There is no ?v= here to bust it
+    // either (the splash deliberately avoids the RTDB dataVersions read), so the HTTP
+    // cache was the only freshness mechanism and force-cache switched it off.
+    // 'default' honours the CDN's max-age=14400: still a free disk hit within 4h, which
+    // is what the TBT argument above actually needs, but republishes now land.
+    fetch(MENU_URL, { cache: 'default' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (json) {
         if (!json) { if (onDone) onDone(false); return; }
