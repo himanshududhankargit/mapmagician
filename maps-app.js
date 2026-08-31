@@ -473,7 +473,22 @@
         //       whose pass IS live, and requires a payment screenshot from those with no
         //       record. The whole dialog, markup included, moved to the LAZY
         //       maps-support.js — so the initial payload SHRANK despite the new feature.
-        var APP_VERSION = '155';
+        // 158 = BACKPORT (not a full promotion) of two guards from staging 157; the
+        //       progress strip and pan toast in 157 stay on maps1 until they are proven.
+        //       Overlays were being added to the map TWICE and the copy could never be
+        //       removed. loadTileOverlay pushed a cached overlay unconditionally, and
+        //       unloadTileOverlay removes with indexOf() — first occurrence only. The
+        //       guard against that is dpTileStatus, but a layer refetch reallocates it
+        //       all-false while dpOverlays still holds the live overlays, so the unload
+        //       branch is skipped and every visible overlay is pushed again. The trigger
+        //       is ordinary: the appConfig/dataVersions listener calls refetch() on EVERY
+        //       layer publish, so each publish doubled the overlay stack for every open
+        //       map, and a second publish tripled it — until the user reloaded.
+        //       Confirmed on live 155 in the console: onMap 2 -> 4, unique 2.
+        //       Also guards the worker result handler on results.X.length ===
+        //       XLayerData.length: decisions[] is indexed positionally, so a result
+        //       computed against a replaced array addresses the wrong records.
+        var APP_VERSION = '158';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -4832,12 +4847,21 @@
             // CANCEL stale results: if user has zoomed/panned since, discard
             if (generation !== currentGeneration) return;
 
+            // `decisions` is indexed POSITIONALLY into the layer array, so a result
+            // computed against a previous array is not merely stale — it addresses the
+            // wrong records. The generation counter already covers pan/zoom, but a layer
+            // array can also be REPLACED underneath an in-flight compute (a publish
+            // refetch). A length mismatch is the cheap structural proof that the two no
+            // longer correspond; drop the result and let the next
+            // loadTilesBasedOnViewport() recompute against the current array.
+            const fits = (arr, layer) => Array.isArray(arr) && arr.length === layer.length;
+
             // Analytics: track DP-district visibility (the primary product context)
-            if (results.dp) _mmTrackDistrictVisibility(results.dp, dpLayerData);
+            if (fits(results.dp, dpLayerData)) _mmTrackDistrictVisibility(results.dp, dpLayerData);
 
             // Apply decisions for each layer
-            if (results.dp) applyTileDecisions(results.dp, dpLayerData, dpTileStatus, dpOverlays, "dp");
-            if (results.village) {
+            if (fits(results.dp, dpLayerData)) applyTileDecisions(results.dp, dpLayerData, dpTileStatus, dpOverlays, "dp");
+            if (fits(results.village, villageLayerData)) {
                 // Only load village tiles for purchased villages
                 var filteredVillage = results.village.map(function(show, i) {
                     if (!show) return false;
@@ -4846,7 +4870,7 @@
                 });
                 applyTileDecisions(filteredVillage, villageLayerData, villageTileStatus, villageOverlays, "village");
             }
-            if (results.oldDP) applyTileDecisions(results.oldDP, oldDPLayerData, oldDPTileStatus, oldDPOverlays, "oldDP");
+            if (fits(results.oldDP, oldDPLayerData)) applyTileDecisions(results.oldDP, oldDPLayerData, oldDPTileStatus, oldDPOverlays, "oldDP");
         };
 
         function applyTileDecisions(decisions, layerData, tileStatus, overlayMap, layerType) {
@@ -12487,7 +12511,19 @@
 
                     // Re-add cached overlay to map (browser HTTP cache avoids re-downloading tiles)
                     cachedOverlay.setOpacity(currentOpacity);
-                    map.overlayMapTypes.push(cachedOverlay);
+                    // 🛑 Guard against pushing the SAME overlay twice. unloadTileOverlay
+                    // removes by indexOf(), which only ever finds the FIRST occurrence — so a
+                    // duplicate is permanently unremovable and keeps painting tiles forever.
+                    // The gap this closes: a mid-session publish fires the dataVersions
+                    // listener -> refetch() -> fetchDPLayerData assigns a fresh dpTileStatus
+                    // of all-false while dpOverlays still holds live overlays. The unload
+                    // branch in applyTileDecisions needs tileStatus[i] true, so nothing
+                    // unloads, and every visible overlay gets pushed a second time.
+                    // Reproduced on live 155: onMap 2 -> 4 with unique staying 2.
+                    const liveOverlays = map.overlayMapTypes.getArray();
+                    if (liveOverlays.indexOf(cachedOverlay) === -1) {
+                        map.overlayMapTypes.push(cachedOverlay);
+                    }
                     overlayMap.set(layerDef.id, cachedOverlay);
 
                     return cachedOverlay;
