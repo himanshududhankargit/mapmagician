@@ -461,7 +461,7 @@
         //       resolves, the purchase never matches, zoom stays pinned at 14. Now
         //       retried up to 3x with backoff, with an honest banner if it truly fails,
         //       and a throw in the handler body can no longer disarm the zoom gate.
-        var APP_VERSION = '162';
+        var APP_VERSION = '164';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -9603,6 +9603,25 @@
         // so returning users never see the strip.
         var _dpProgressShown = false;
         var _dpProgressHideTimer = null;
+        // Mirror the same progress onto the SPLASH, which is where the user is actually
+        // looking for most of a normal load: it sits at z-index 99999 and does not lift
+        // until ~2s after the CloudFront cookie call, so on anything faster than 3G the
+        // whole d1.bin download happens underneath it and the bottom strip is never seen.
+        // Silently no-ops once the splash is gone, and on maps.html builds that predate
+        // the markup.
+        function _splashProgress(label, pct) {
+            var screen = document.getElementById('app-loading-screen');
+            if (!screen || screen.style.display === 'none') return;
+            var status = document.getElementById('app-loading-status');
+            if (status && label) status.textContent = label;
+            var track = document.getElementById('splash-progress-track');
+            var bar = document.getElementById('splash-progress-bar');
+            if (!track || !bar) return;
+            if (pct == null) { track.style.display = 'none'; return; }
+            track.style.display = 'block';
+            bar.style.width = Math.max(2, Math.round(pct)) + '%';
+        }
+
         function _dpProgress(fraction) {
             var strip = document.getElementById('dp-progress-strip');
             var textEl = document.getElementById('dp-progress-text');
@@ -9631,23 +9650,28 @@
             if (fraction === -1) {
                 textEl.textContent = 'Region information didn’t load — retrying…';
                 barEl.classList.add('indeterminate');
+                _splashProgress('Region information didn’t load — retrying…', null);
                 return;
             }
             if (fraction === 1) {
                 barEl.classList.remove('indeterminate');
                 barEl.style.width = '100%';
                 textEl.textContent = 'Regions ready';
+                _splashProgress('Regions ready', 100);
                 hide(700);
                 return;
             }
             if (fraction === null || !isFinite(fraction)) {
                 textEl.textContent = 'Fetching region information…';
                 barEl.classList.add('indeterminate');
+                _splashProgress('Fetching region information…', null);
                 return;
             }
             barEl.classList.remove('indeterminate');
-            barEl.style.width = Math.max(2, Math.round(fraction * 100)) + '%';
-            textEl.textContent = 'Fetching region information… ' + Math.round(fraction * 100) + '%';
+            var pct = Math.round(fraction * 100);
+            barEl.style.width = Math.max(2, pct) + '%';
+            textEl.textContent = 'Fetching region information… ' + pct + '%';
+            _splashProgress('Fetching region information… ' + pct + '%', pct);
         }
 
         // "Fetching region data…" when the user pans before the DP layer has landed.
