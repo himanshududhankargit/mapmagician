@@ -1116,6 +1116,14 @@
         .zoom-info-toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:#ef6c00; color:#fff; padding:12px 20px; border-radius:8px; font-size:13px; font-weight:500; box-shadow:0 4px 12px rgba(0,0,0,0.25); z-index:4000; opacity:0; transition:opacity 0.3s,transform 0.3s; pointer-events:none; font-family:'Segoe UI',Roboto,Arial,sans-serif; display:flex; align-items:center; gap:8px; max-width:92vw; }
         .zoom-info-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
+        /* Layer-download progress strip — markup is #dp-progress-strip further down.
+           The indeterminate variant is used on the plain-.bin fallback, where the transfer
+           size cannot be known (Cloudflare gzips it on the wire, so Content-Length is the
+           compressed size while the body reader yields the inflated one). Better an honest
+           sweep than a bar that reads 263%. */
+        @keyframes dp-progress-sweep { 0% { left:-40%; } 100% { left:100%; } }
+        #dp-progress-bar.indeterminate { width:40% !important; animation:dp-progress-sweep 1.1s ease-in-out infinite; transition:none; }
+
         /* First-visit disclaimer */
         .disclaimer-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:20000; display:flex; align-items:center; justify-content:center; padding:16px; box-sizing:border-box; }
         .disclaimer-box { background:#fff; border-radius:14px; max-width:540px; width:100%; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.3); }
@@ -1990,6 +1998,19 @@
         <span style="line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">&#9888;&#65039; <strong id="grace-renew-banner-region">Subscription</strong> renewal failed</span>
         <button id="grace-renew-banner-btn" type="button" style="padding:5px 12px;font-size:12px;font-weight:600;border:none;background:#EF6C00;color:#fff;border-radius:4px;cursor:pointer;flex-shrink:0;">Renew</button>
         <button id="grace-renew-banner-dismiss" type="button" aria-label="Dismiss" style="background:none;border:none;color:#5D4037;font-size:18px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0;">&times;</button>
+    </div>
+
+    <!-- Layer-download progress. The splash is dismissed on the CloudFront cookie
+         round-trip, NOT on layer data, so the map is revealed while d1 (1.02 MB gz) is
+         still arriving — DP overlays cannot paint and the zoom paywall stays disarmed
+         until it lands. On a slow connection that reads as an empty, broken map. This
+         strip makes the wait legible. Positioned exactly like #grace-renew-banner:
+         floats centred above #bottom-bar, whose height it reads at show time. -->
+    <div id="dp-progress-strip" style="display:none;position:absolute;left:50%;transform:translateX(-50%);background:rgba(38,50,56,0.92);border-radius:8px;padding:8px 14px;align-items:center;gap:10px;z-index:999;font-family:'Segoe UI',Roboto,Arial,sans-serif;font-size:12.5px;color:#fff;box-sizing:border-box;max-width:92vw;box-shadow:0 2px 8px rgba(0,0,0,0.25);pointer-events:none;opacity:0;transition:opacity 0.25s;">
+        <span id="dp-progress-text" style="line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">Fetching region information&hellip;</span>
+        <span id="dp-progress-track" style="position:relative;display:block;width:74px;height:4px;border-radius:2px;background:rgba(255,255,255,0.25);overflow:hidden;flex-shrink:0;">
+            <span id="dp-progress-bar" style="position:absolute;left:0;top:0;bottom:0;width:0%;background:#4FC3F7;border-radius:2px;transition:width 0.25s linear;"></span>
+        </span>
     </div>
 
     <!-- Demo-mode coach tip (shown for ~3s on entry, then fades) -->
@@ -3040,7 +3061,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=156" defer></script>
+    <script src="maps1-app.js?v=157" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">

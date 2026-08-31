@@ -461,7 +461,7 @@
         //       resolves, the purchase never matches, zoom stays pinned at 14. Now
         //       retried up to 3x with backoff, with an honest banner if it truly fails,
         //       and a throw in the handler body can no longer disarm the zoom gate.
-        var APP_VERSION = '156';
+        var APP_VERSION = '157';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -4820,12 +4820,21 @@
             // CANCEL stale results: if user has zoomed/panned since, discard
             if (generation !== currentGeneration) return;
 
+            // `decisions` is indexed POSITIONALLY into the layer array, so a result
+            // computed against a previous array is not merely stale — it addresses the
+            // wrong records. The generation counter already covers pan/zoom, but a layer
+            // array can also be REPLACED underneath an in-flight compute (a publish
+            // refetch, or the staged fast-path handoff). A length mismatch is the cheap
+            // structural proof that the two no longer correspond; drop the result and let
+            // the next loadTilesBasedOnViewport() recompute against the current array.
+            const fits = (arr, layer) => Array.isArray(arr) && arr.length === layer.length;
+
             // Analytics: track DP-district visibility (the primary product context)
-            if (results.dp) _mmTrackDistrictVisibility(results.dp, dpLayerData);
+            if (fits(results.dp, dpLayerData)) _mmTrackDistrictVisibility(results.dp, dpLayerData);
 
             // Apply decisions for each layer
-            if (results.dp) applyTileDecisions(results.dp, dpLayerData, dpTileStatus, dpOverlays, "dp");
-            if (results.village) {
+            if (fits(results.dp, dpLayerData)) applyTileDecisions(results.dp, dpLayerData, dpTileStatus, dpOverlays, "dp");
+            if (fits(results.village, villageLayerData)) {
                 // Only load village tiles for purchased villages
                 var filteredVillage = results.village.map(function(show, i) {
                     if (!show) return false;
@@ -4834,7 +4843,7 @@
                 });
                 applyTileDecisions(filteredVillage, villageLayerData, villageTileStatus, villageOverlays, "village");
             }
-            if (results.oldDP) applyTileDecisions(results.oldDP, oldDPLayerData, oldDPTileStatus, oldDPOverlays, "oldDP");
+            if (fits(results.oldDP, oldDPLayerData)) applyTileDecisions(results.oldDP, oldDPLayerData, oldDPTileStatus, oldDPOverlays, "oldDP");
         };
 
         function applyTileDecisions(decisions, layerData, tileStatus, overlayMap, layerType) {
@@ -5125,6 +5134,8 @@
                     }, 2000);
                 } catch (e) {}
                 debouncedLoadTiles();
+                // Tell the user a blank area is still downloading, not uncovered.
+                _maybeToastRegionLoading(z);
                 // Update region subscription status in bottom bar
                 updateRegionStatus();
                 // Show/hide old maps button based on current region
@@ -9032,7 +9043,11 @@
         // cached indefinitely until the admin bumps the version in Firebase console
         // (which the live listener above will detect and auto-refetch) or hits the
         // manual Refresh button.
-        function getCachedOrFetchLayer(cacheKey, dbPath, versionKey, refetch) {
+        // `onProgress(fraction, readBytes, totalBytes)` is OPTIONAL and is only ever passed
+        // by the DP layer (d1 — 1.02 MB gz, two thirds of the cold payload and the only one
+        // worth drawing a bar for). fraction is null when the transfer size cannot be known,
+        // meaning "show an indeterminate strip". Called with 1 exactly once on success.
+        function getCachedOrFetchLayer(cacheKey, dbPath, versionKey, refetch, onProgress) {
             if (refetch) _layerFetchers[versionKey] = { cacheKey: cacheKey, refetch: refetch };
 
             // Synchronous cache read — return stale data instantly, verify in background.
@@ -9069,23 +9084,61 @@
                 const baseUrl = LAYER_JSON_BASE + '/' + dbPath + '.bin';
                 const gzUrl = baseUrl + '.gz?v=' + vParam;
                 const plainUrl = baseUrl + '?v=' + vParam;
-                // Prefer the gzipped twin (~2.6x smaller cold payload — JSON
-                // with polygon coords gzips to ~38%) and gunzip via
-                // DecompressionStream. On any failure (no support, 404 on the
-                // .gz twin, decode error) fall back to the canonical .bin —
-                // keeps old browsers and partial-publish states working.
-                const fetchPlain = () => fetch(plainUrl, { cache: 'no-store' })
+
+                // The ?v= above already guarantees freshness — a version bump mints a NEW
+                // URL — so `no-store` bought nothing and cost us the browser cache entirely.
+                // That is expensive on iOS/Safari, where d1+d2+d3+d4 (~3.8 MB of JSON)
+                // exceeds the 5 MB localStorage quota: the setItem below fails silently (see
+                // its `catch (e) { /* quota */ }`), so those users re-download the full
+                // 1.35 MB on EVERY load with no cache of any kind to fall back on.
+                // The service worker is network-first, so this cannot serve stale data while
+                // online — it only makes a repeat load cheap.
+                const CACHE_MODE = 'default';
+
+                // Byte-accurate progress, with COMPRESSED bytes on both sides of the ratio:
+                // Content-Length reports the compressed size, and the .gz path counts r.body
+                // BEFORE gunzipping, so numerator and denominator agree.
+                // 🛑 The plain .bin path cannot be measured this way. Cloudflare serves it
+                // with Content-Encoding: gzip and the browser inflates it transparently, so
+                // the body reader yields ~2.84 MB against a ~1.08 MB Content-Length — a
+                // "263%" bar. That path reports indeterminate (null) instead of lying.
+                const useProgress = typeof onProgress === 'function' && typeof TransformStream === 'function';
+                const report = (f, r, t) => { try { onProgress(f, r, t); } catch (e) {} };
+                const countBytes = (res) => {
+                    let total = parseInt(res.headers.get('content-length') || '', 10);
+                    if (!(total > 0)) total = 0;
+                    let read = 0;
+                    return res.body.pipeThrough(new TransformStream({
+                        transform(chunk, controller) {
+                            read += chunk.byteLength;
+                            // Never report 1 here — completion is signalled only once the
+                            // JSON has actually parsed, so the strip cannot sit at 100%
+                            // while the main thread is still busy.
+                            report(total ? Math.min(0.999, read / total) : null, read, total);
+                            controller.enqueue(chunk);
+                        }
+                    }));
+                };
+
+                // Prefer the gzipped twin and gunzip via DecompressionStream. Besides the
+                // marginal byte saving, this path is what makes an honest progress bar
+                // possible at all (see above). On any failure (no support, 404 on the .gz
+                // twin, decode error) fall back to the canonical .bin — keeps old browsers
+                // and partial-publish states working.
+                const fetchPlain = () => fetch(plainUrl, { cache: CACHE_MODE })
                     .then(r => {
                         if (!r.ok) throw new Error('layer fetch ' + dbPath + ' -> ' + r.status);
+                        if (useProgress) report(null, 0, 0);   // indeterminate
                         return r.json();
                     });
                 const canGunzip = typeof DecompressionStream !== 'undefined';
                 const fetchData = canGunzip
-                    ? fetch(gzUrl, { cache: 'no-store' })
+                    ? fetch(gzUrl, { cache: CACHE_MODE })
                         .then(r => {
                             if (!r.ok) throw new Error('gz ' + r.status);
                             if (!r.body) throw new Error('gz no-body');
-                            return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).json();
+                            const body = useProgress ? countBytes(r) : r.body;
+                            return new Response(body.pipeThrough(new DecompressionStream('gzip'))).json();
                         })
                         .catch(err => {
                             console.warn('[layer] gz fallback for', dbPath, err && err.message);
@@ -9094,6 +9147,9 @@
                     : fetchPlain();
                 return fetchData
                     .then(data => {
+                        // Completion is reported only now — after the bytes are in AND the
+                        // JSON has parsed — so 100% means "usable", not "downloaded".
+                        if (useProgress) report(1, 0, 0);
                         if (data) {
                             try {
                                 localStorage.setItem(cacheKey, JSON.stringify({
@@ -9115,6 +9171,10 @@
             })
             .catch(err => {
                 console.error('[layer] fetch failed for', dbPath, err);
+                // -1 means "this attempt failed". The caller decides what to show: a retry
+                // is usually already queued (see _retryLayerFetch below), so the strip
+                // should say so rather than vanish as if the data had arrived.
+                if (typeof onProgress === 'function') { try { onProgress(-1, 0, 0); } catch (e) {} }
                 return null;
             })
             .then(result => {
@@ -9154,13 +9214,112 @@
             if (el) el.classList.add('show');
         }
 
+        // ---- DP layer download progress strip -------------------------------------
+        // Driven by getCachedOrFetchLayer's onProgress callback. Contract:
+        //   0..0.999  determinate, show the percentage
+        //   null      indeterminate (transfer size unknowable — plain .bin fallback)
+        //   1         done: hold briefly at 100% so the bar doesn't just vanish, then hide
+        //   -1        this attempt failed; a retry may already be queued
+        // A warm localStorage cache resolves synchronously and never calls this at all,
+        // so returning users never see the strip.
+        var _dpProgressShown = false;
+        var _dpProgressHideTimer = null;
+        function _dpProgress(fraction) {
+            var strip = document.getElementById('dp-progress-strip');
+            var textEl = document.getElementById('dp-progress-text');
+            var barEl = document.getElementById('dp-progress-bar');
+            if (!strip || !textEl || !barEl) return;
+
+            if (!_dpProgressShown) {
+                _dpProgressShown = true;
+                var bb = document.getElementById('bottom-bar');
+                // Same 8px float above the bottom bar as #grace-renew-banner.
+                strip.style.bottom = ((bb ? bb.offsetHeight : 56) + 8) + 'px';
+                strip.style.display = 'flex';
+                // Next frame, so the opacity transition actually runs instead of the
+                // element appearing already-opaque.
+                requestAnimationFrame(function () { strip.style.opacity = '1'; });
+            }
+
+            var hide = function (delay) {
+                clearTimeout(_dpProgressHideTimer);
+                _dpProgressHideTimer = setTimeout(function () {
+                    strip.style.opacity = '0';
+                    setTimeout(function () { strip.style.display = 'none'; }, 300);
+                }, delay);
+            };
+
+            if (fraction === -1) {
+                textEl.textContent = 'Region information didn’t load — retrying…';
+                barEl.classList.add('indeterminate');
+                return;
+            }
+            if (fraction === 1) {
+                barEl.classList.remove('indeterminate');
+                barEl.style.width = '100%';
+                textEl.textContent = 'Regions ready';
+                hide(700);
+                return;
+            }
+            if (fraction === null || !isFinite(fraction)) {
+                textEl.textContent = 'Fetching region information…';
+                barEl.classList.add('indeterminate');
+                return;
+            }
+            barEl.classList.remove('indeterminate');
+            barEl.style.width = Math.max(2, Math.round(fraction * 100)) + '%';
+            textEl.textContent = 'Fetching region information… ' + Math.round(fraction * 100) + '%';
+        }
+
+        // "Fetching region data…" when the user pans before the DP layer has landed.
+        // Without this, a region that simply hasn't downloaded yet is indistinguishable
+        // from one we don't cover — the map is just empty either way.
+        // Phase 1 has no per-region knowledge (the layer is either in or it isn't), so
+        // this fires only on a genuine user move: never on the first idle, where
+        // #dp-progress-strip is already saying the same thing.
+        var _regionToastLast = 0;
+        var _regionToastSeenIdle = false;
+        function _maybeToastRegionLoading(zoom) {
+            var firstIdle = !_regionToastSeenIdle;
+            _regionToastSeenIdle = true;
+            if (firstIdle) return;                              // initial settle, not a pan
+            if (dpDataLoaded) return;                           // everything is present
+            if (zoom < MIN_ZOOM_FOR_DP) return;                 // no DP overlay expected here
+            var now = Date.now();
+            if (now - _regionToastLast < 8000) return;          // don't nag on every pan
+            _regionToastLast = now;
+            _dlmapToast('Fetching region data…');
+        }
+
+        // How long after page start does the DP layer actually become usable? Recorded
+        // now, BEFORE the staged fast path exists, so the staged version has a real
+        // monolith-only control to be measured against rather than a remembered figure.
+        // `cold` separates the case that matters — a first visit paying the full 1.02 MB —
+        // from a warm localStorage hit, which resolves synchronously and is ~0 ms.
+        var _dpReadyReported = false;
+        var _dpWasCold = false;
+        function _reportDpReady(ok) {
+            if (_dpReadyReported) return;
+            _dpReadyReported = true;
+            try {
+                mmAnalytics.event('dp_data_ready', {
+                    ms: Math.round(performance.now()),
+                    ok: ok ? 1 : 0,
+                    cold: _dpWasCold ? 1 : 0,
+                    records: (dpLayerData && dpLayerData.length) || 0
+                });
+            } catch (e) {}
+        }
+
         function fetchDPLayerData() {
-            getCachedOrFetchLayer('layer_dp', DP_URL_DATABASE_NAME, 'layer_dp', fetchDPLayerData).then(data => {
+            try { _dpWasCold = !localStorage.getItem('layer_dp'); } catch (e) { _dpWasCold = true; }
+            getCachedOrFetchLayer('layer_dp', DP_URL_DATABASE_NAME, 'layer_dp', fetchDPLayerData, _dpProgress).then(data => {
                 if (!data) {
                     // Retry before declaring the layer empty — see the note above.
                     if (_retryLayerFetch('dp', fetchDPLayerData)) return;
                     dpDataLoaded = true;          // give up: unblock the gate so the UI can speak
                     _showLayerFailBanner();
+                    _reportDpReady(false);
                     return;
                 }
                 dpLayerData = applyLayerData(data, "Development Plan", true);
@@ -9168,6 +9327,7 @@
                 stickyTile = null;
                 stickyDistrict = null;
                 dpDataLoaded = true;
+                _reportDpReady(true);
                 loadTilesBasedOnViewport();
                 // If village markers were created before DP data arrived, isInsideDPRegion
                 // returned false for every village and markers leaked into DP regions.
@@ -9185,6 +9345,7 @@
                 console.error("Error fetching DP data:", error);
                 dpDataLoaded = true;
                 _showLayerFailBanner();
+                _reportDpReady(false);
                 maybeRerunZoomCheck();
             });
         }
@@ -12475,7 +12636,18 @@
 
                     // Re-add cached overlay to map (browser HTTP cache avoids re-downloading tiles)
                     cachedOverlay.setOpacity(currentOpacity);
-                    map.overlayMapTypes.push(cachedOverlay);
+                    // 🛑 Guard against pushing the SAME overlay twice. unloadTileOverlay
+                    // removes by indexOf(), which only ever finds the FIRST occurrence — so a
+                    // duplicate is permanently unremovable and keeps painting tiles forever.
+                    // The gap this closes: a mid-session publish fires the dataVersions
+                    // listener -> refetch() -> fetchDPLayerData assigns a fresh dpTileStatus
+                    // of all-false while dpOverlays still holds live overlays. The unload
+                    // branch in applyTileDecisions needs tileStatus[i] true, so nothing
+                    // unloads, and every visible overlay gets pushed a second time.
+                    const liveOverlays = map.overlayMapTypes.getArray();
+                    if (liveOverlays.indexOf(cachedOverlay) === -1) {
+                        map.overlayMapTypes.push(cachedOverlay);
+                    }
                     overlayMap.set(layerDef.id, cachedOverlay);
 
                     return cachedOverlay;
