@@ -461,7 +461,7 @@
         //       resolves, the purchase never matches, zoom stays pinned at 14. Now
         //       retried up to 3x with backoff, with an honest banner if it truly fails,
         //       and a throw in the handler body can no longer disarm the zoom gate.
-        var APP_VERSION = '157';
+        var APP_VERSION = '159';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -3682,12 +3682,42 @@
         let villageOverlays = new Map();
         let oldDPOverlays = new Map();
 
+        // ---- STAGED LAYER LOADING: the `dpFast` layer ------------------------------
+        // d1.bin is 1.02 MB gz and nothing DP can paint until all of it lands, but the
+        // opening Mumbai viewport intersects only 2 of its 536 records. So a ~6.6 KB
+        // routing index plus those 2 region chunks (~26 KB) is fetched first and drawn
+        // as its OWN layer type, while the full d1.bin keeps downloading in parallel
+        // exactly as before. When it lands it takes over and dpFast is torn down.
+        //
+        // 🛑 dpFast is a SEPARATE layer type, never a partial dpLayerData. That is not
+        // stylistic: considerLayer requires dpDataLoaded to render, so partial data in
+        // dpLayerData would either paint nothing (flag false) or arm the paywall, the
+        // download export and the tile-cache eviction against an incomplete layer
+        // (flag true). There is no safe setting of that flag. Keeping it separate makes
+        // cache poisoning, false paywall locks and blank paid exports structurally
+        // impossible rather than merely avoided — dpLayerData/dpDataLoaded are never
+        // touched here, and tileCache keys are namespaced `dpFast_` so no id can collide.
+        //
+        // Chunks are whole REGIONS (one productPurchaseID each), never part of one:
+        // _mergeByProductPurchaseID folds per-pid, so a whole-pid subset merges
+        // field-for-field identically to the full file. A split region would produce a
+        // too-small union bbox and read as absent.
+        let dpFastLayerData = [];
+        let dpFastTileStatus = [];
+        let dpFastOverlays = new Map();
+        let dpFastDataLoaded = false;
+        let _fastIdx = null;                 // parsed d1-idx.bin, or null if unavailable
+        const _fastLoadedChunks = new Map(); // pid → raw record object
+        const _fastInFlight = new Set();     // pids currently being fetched
+        let _fastAbort = null;               // aborts every chunk fetch when d1.bin lands
+        let _fastDisabled = false;           // set by a kill switch or any failure
+
         // PERF (maps9): tile-cancellation glue. Iterates every CanvasMapType
         // currently on the map and aborts every Image fetch belonging to a
         // zoom level that isn't `currentZoom`.
         let _mmLastSeenZoom = -1;
         function _mmCancelStaleZoomTiles(currentZoom) {
-            const all = [dpOverlays, villageOverlays, oldDPOverlays];
+            const all = [dpOverlays, villageOverlays, oldDPOverlays, dpFastOverlays];
             for (let i = 0; i < all.length; i++) {
                 const m = all[i];
                 if (!m || typeof m.forEach !== 'function') continue;
@@ -3878,7 +3908,15 @@
             const layers = [
                 typeof dpLayerData === 'undefined' ? [] : dpLayerData,
                 typeof villageLayerData === 'undefined' ? [] : villageLayerData,
-                typeof oldDPLayerData === 'undefined' ? [] : oldDPLayerData
+                typeof oldDPLayerData === 'undefined' ? [] : oldDPLayerData,
+                // The staged fast-path layer MUST be listed. This set decides which
+                // cached tile folders survive revokeTilesNotInFolderSet, so a folder
+                // missing from it has its cached z>14 tiles DELETED — tiles the user
+                // paid for. Including dpFast can only ADD folders, so eviction removes
+                // less and the stale-token self-heal recognises more; it is strictly
+                // safer, never looser. Without it, a 403 on a fast-path tile in the
+                // first seconds of a cold load could not self-heal.
+                typeof dpFastLayerData === 'undefined' ? [] : dpFastLayerData
             ];
             for (let li = 0; li < layers.length; li++) {
                 const arr = layers[li] || [];
@@ -4775,13 +4813,17 @@
         // layerCache. Identity comparison — a cache-version refetch assigns a
         // fresh array to dpLayerData/villageLayerData/oldDPLayerData, which
         // triggers an automatic resend on the next loadTilesBasedOnViewport.
-        const _workerSentRefs = { dp: null, village: null, oldDP: null };
+        const _workerSentRefs = { dp: null, village: null, oldDP: null, dpFast: null };
 
         // Zoom limits per layer type
         const ZOOM_LIMITS = {
             dp: [MIN_ZOOM_FOR_DP, MAX_ZOOM_FOR_DP],
             village: [MIN_ZOOM_FOR_VILLAGEMAP, MAX_ZOOM_FOR_VILLAGEMAP],
-            oldDP: [MIN_ZOOM_FOR_OLD_DP, MAX_ZOOM_FOR_OLD_DP]
+            oldDP: [MIN_ZOOM_FOR_OLD_DP, MAX_ZOOM_FOR_OLD_DP],
+            // dpFast draws the same records as dp, so it must obey the same range —
+            // a different one would make the staged copy appear at zooms the real
+            // layer never renders at, which would then blink out at the handover.
+            dpFast: [MIN_ZOOM_FOR_DP, MAX_ZOOM_FOR_DP]
         };
 
         // Analytics: track how long each DP district has been continuously visible.
@@ -4844,6 +4886,10 @@
                 applyTileDecisions(filteredVillage, villageLayerData, villageTileStatus, villageOverlays, "village");
             }
             if (fits(results.oldDP, oldDPLayerData)) applyTileDecisions(results.oldDP, oldDPLayerData, oldDPTileStatus, oldDPOverlays, "oldDP");
+            // Staged fast path. Deliberately NOT passed to _mmTrackDistrictVisibility:
+            // the same district is about to be drawn again by the real `dp` layer, and
+            // counting both would double every district_viewed event.
+            if (fits(results.dpFast, dpFastLayerData)) applyTileDecisions(results.dpFast, dpFastLayerData, dpFastTileStatus, dpFastOverlays, "dpFast");
         };
 
         function applyTileDecisions(decisions, layerData, tileStatus, overlayMap, layerType) {
@@ -5134,6 +5180,10 @@
                     }, 2000);
                 } catch (e) {}
                 debouncedLoadTiles();
+                // Pull in any region the new viewport needs but hasn't got yet, and
+                // re-render as soon as it lands (no second pan required). No-op once
+                // the monolith has arrived.
+                try { _fastEnsureViewportChunks(); } catch (e) {}
                 // Tell the user a blank area is still downloading, not uncovered.
                 _maybeToastRegionLoading(z);
                 // Update region subscription status in bottom bar
@@ -8823,6 +8873,9 @@
         function fetchLayerData() {
             if (layerDataFetched) return;
             layerDataFetched = true;
+            // Staged fast path, started in the same tick as the monolith below. It is
+            // an accelerator only — it never gates, delays or replaces fetchDPLayerData.
+            try { _fastBootstrap(); } catch (e) { _fastDisabled = true; }
             if (isDPLayerVisible) fetchDPLayerData();
             // Always fetch old DP to check availability (shows button if data exists)
             fetchOldDPLayerData();
@@ -8841,6 +8894,249 @@
             } else {
                 setTimeout(deferVillage, 500);
             }
+        }
+
+        // ================= STAGED LAYER LOADING — the fast path ==================
+        // Fetch a ~6.6 KB routing index, pick the regions overlapping the opening
+        // viewport, fetch only those chunks, and draw them as `dpFast` while the full
+        // d1.bin keeps downloading untouched in parallel.
+        //
+        // 🛑 SAFETY CONTRACT: every step here fails SILENTLY into today's behaviour.
+        // The monolith fetch is already in flight and is never gated on any of this,
+        // so a missing index, a 404 chunk, a signature mismatch or a thrown parse all
+        // just set _fastDisabled and leave the app behaving exactly as it does now.
+        // Nothing below may ever touch dpLayerData, dpDataLoaded, or localStorage.
+        const FAST_IDX_NAME = 'd1-idx';
+        const FAST_CHUNK_DIR = 'd1';
+        const FAST_MAX_CHUNKS = 4;                 // per batch
+        const FAST_MAX_RAW_BYTES = 400 * 1024;     // ~150 KB on the wire at ~38% gzip
+        const FAST_VIEWPORT_PAD = 0.35;            // grow the box so a small pan doesn't refetch
+        let _fastVParam = '0';
+        let _fastToastTimer = null;
+        let _fastToastLast = 0;
+
+        // Mirrors initMap's camera priority (URL params → saved position → the Mumbai
+        // default at 18.93742/72.82810 z13), because the Maps API callback may not have
+        // fired yet when this runs and we still need to know what the user will see.
+        function _fastInitialCamera() {
+            try {
+                const p = new URLSearchParams(window.location.search);
+                const la = parseFloat(p.get('lat')), ln = parseFloat(p.get('lng')), z = parseInt(p.get('zoom'), 10);
+                if (!isNaN(la) && !isNaN(ln)) return { lat: la, lng: ln, zoom: isNaN(z) ? 13 : z };
+            } catch (e) {}
+            try {
+                const sv = JSON.parse(localStorage.getItem('mm_lastMapPosition_v1') || 'null');
+                if (sv && !isNaN(sv.lat) && !isNaN(sv.lng)) return { lat: sv.lat, lng: sv.lng, zoom: sv.zoom || 13 };
+            } catch (e) {}
+            return { lat: 18.93742, lng: 72.82810, zoom: 13 };
+        }
+
+        // Padded {s,w,n,e} for the current view. Prefers the live map; falls back to a
+        // Mercator estimate from the camera above when the map isn't built yet.
+        function _fastViewportBox() {
+            try {
+                if (map && typeof map.getBounds === 'function') {
+                    const b = map.getBounds();
+                    if (b) {
+                        const ne = b.getNorthEast(), sw = b.getSouthWest();
+                        let s = sw.lat(), n = ne.lat(), w = sw.lng(), e = ne.lng();
+                        const pLat = (n - s) * FAST_VIEWPORT_PAD, pLng = (e - w) * FAST_VIEWPORT_PAD;
+                        return { s: s - pLat, n: n + pLat, w: w - pLng, e: e + pLng, zoom: map.getZoom() };
+                    }
+                }
+            } catch (e) {}
+            const cam = _fastInitialCamera();
+            const worldPx = 256 * Math.pow(2, cam.zoom);
+            const degPerPx = 360 / worldPx;
+            const wPx = Math.max(320, window.innerWidth || 412);
+            const hPx = Math.max(320, window.innerHeight || 780);
+            const halfLng = (wPx / 2) * degPerPx * (1 + FAST_VIEWPORT_PAD);
+            const halfLat = (hPx / 2) * degPerPx * Math.cos(cam.lat * Math.PI / 180) * (1 + FAST_VIEWPORT_PAD);
+            return { s: cam.lat - halfLat, n: cam.lat + halfLat, w: cam.lng - halfLng, e: cam.lng + halfLng, zoom: cam.zoom };
+        }
+
+        // Regions whose bboxes intersect the box, largest overlap first, capped by
+        // count and bytes so a zoomed-out view can't pull the whole dataset in pieces
+        // (which would be slower than just waiting for the monolith).
+        function _fastPickRegions(box) {
+            if (!_fastIdx || !_fastIdx.c) return [];
+            const scored = [];
+            for (const pid in _fastIdx.c) {
+                const meta = _fastIdx.c[pid];
+                if (!meta || !meta.b || !meta.b.length) continue;
+                let best = 0;
+                for (let i = 0; i < meta.b.length; i++) {
+                    const b = meta.b[i];             // [south, west, north, east]
+                    if (b[2] < box.s || b[0] > box.n || b[3] < box.w || b[1] > box.e) continue;
+                    const ov = (Math.min(b[2], box.n) - Math.max(b[0], box.s))
+                             * (Math.min(b[3], box.e) - Math.max(b[1], box.w));
+                    if (ov > best) best = ov;
+                }
+                if (best > 0) scored.push({ pid: pid, ov: best, n: meta.n || 0 });
+            }
+            scored.sort(function (a, b) { return b.ov - a.ov; });
+            const out = [];
+            let bytes = 0;
+            for (const s of scored) {
+                if (out.length >= FAST_MAX_CHUNKS) break;
+                if (out.length && bytes + s.n > FAST_MAX_RAW_BYTES) break;
+                out.push(s.pid);
+                bytes += s.n;
+            }
+            return out;
+        }
+
+        function _fastToastPending() {
+            if (_fastToastTimer) return;
+            // 400 ms delay, cancelled the moment the fetch resolves — a chunk that
+            // arrives quickly should produce no toast at all, or it flashes on every pan.
+            _fastToastTimer = setTimeout(function () {
+                _fastToastTimer = null;
+                const now = Date.now();
+                if (now - _fastToastLast < 8000) return;
+                _fastToastLast = now;
+                _dlmapToast('Fetching region data…');
+            }, 400);
+        }
+        function _fastToastCancel() {
+            if (_fastToastTimer) { clearTimeout(_fastToastTimer); _fastToastTimer = null; }
+        }
+
+        // Remove every dpFast overlay and free its cache namespace.
+        function _fastDropOverlays() {
+            try {
+                const ids = [];
+                dpFastOverlays.forEach(function (ov, id) { ids.push(id); });
+                for (const id of ids) unloadTileOverlay(id, dpFastOverlays);
+            } catch (e) {}
+            dpFastOverlays.clear();
+            dpFastTileStatus = [];
+            // Purge the dpFast_ tileCache namespace. Without this, every dpFast
+            // CanvasMapType and its layerDef (full polygons) is retained for the life
+            // of the session, which also pins the _subIndexMeta WeakMap entries.
+            try {
+                const stale = [];
+                tileCache.forEach(function (v, k) { if (String(k).indexOf('dpFast_') === 0) stale.push(k); });
+                for (const k of stale) tileCache.delete(k);
+            } catch (e) {}
+            _workerSentRefs.dpFast = null;
+        }
+
+        // Rebuild from scratch on every batch — never grow in place. considerLayer
+        // resends to the worker only when the ARRAY IDENTITY changes, and
+        // applyTileDecisions indexes decisions positionally, so an in-place push would
+        // desynchronise both. Rebuilding a handful of regions is cheap and the tiles
+        // are already cached, so there is nothing to gain from being clever here.
+        function _fastRebuild() {
+            _fastDropOverlays();
+            const merged = {};
+            let any = false;
+            _fastLoadedChunks.forEach(function (recs) {
+                for (const k in recs) { merged[k] = recs[k]; any = true; }
+            });
+            if (!any) { dpFastLayerData = []; dpFastDataLoaded = false; return; }
+            try {
+                dpFastLayerData = applyLayerData(merged, "Development Plan", true);
+            } catch (e) {
+                console.warn('[fast] rebuild failed:', e && e.message);
+                _fastDisabled = true; dpFastLayerData = []; dpFastDataLoaded = false; return;
+            }
+            dpFastTileStatus = Array(dpFastLayerData.length).fill(false);
+            dpFastDataLoaded = true;
+            loadTilesBasedOnViewport();
+        }
+
+        // Called once the real d1.bin has landed and been applied.
+        function _fastTeardown() {
+            if (_fastAbort) { try { _fastAbort.abort(); } catch (e) {} _fastAbort = null; }
+            _fastToastCancel();
+            // Clear the flag FIRST so considerLayer stops including dpFast immediately.
+            dpFastDataLoaded = false;
+            _fastDropOverlays();
+            dpFastLayerData = [];
+            _fastLoadedChunks.clear();
+            _fastInFlight.clear();
+        }
+
+        function _fastFetchRegions(pids) {
+            if (!pids.length || _fastDisabled || dpDataLoaded) return;
+            for (const p of pids) _fastInFlight.add(p);
+            _fastToastPending();
+            const opts = { cache: 'default' };
+            if (_fastAbort) opts.signal = _fastAbort.signal;
+            Promise.all(pids.map(function (pid) {
+                const url = LAYER_JSON_BASE + '/' + FAST_CHUNK_DIR + '/' + pid + '.bin?v=' + _fastVParam;
+                return fetch(url, opts)
+                    .then(function (r) { if (!r.ok) throw new Error(pid + ' ' + r.status); return r.json(); })
+                    .then(function (j) {
+                        // The signature is the whole consistency mechanism: index and
+                        // chunks ride one atomic commit, so a mismatch means the CDN
+                        // served a stale copy of one of them. Skip that region — the
+                        // monolith already carries it — rather than drawing stale data.
+                        const want = _fastIdx && _fastIdx.c[pid] && _fastIdx.c[pid].s;
+                        if (!j || !j.d || (want && j.s !== want)) throw new Error(pid + ' sig');
+                        _fastLoadedChunks.set(pid, j.d);
+                    })
+                    .catch(function (e) {
+                        if (!(e && e.name === 'AbortError')) console.warn('[fast] chunk skipped:', e && e.message);
+                    })
+                    .then(function () { _fastInFlight.delete(pid); });
+            })).then(function () {
+                _fastToastCancel();
+                if (_fastDisabled || dpDataLoaded) return;   // monolith won the race
+                if (_fastLoadedChunks.size) _fastRebuild();
+            });
+        }
+
+        // Fetch whatever the current viewport needs and hasn't got. Safe to call on
+        // every idle: it is a no-op once the monolith has landed.
+        function _fastEnsureViewportChunks() {
+            if (_fastDisabled || dpDataLoaded || !_fastIdx) return;
+            const box = _fastViewportBox();
+            if (!box || box.zoom < MIN_ZOOM_FOR_DP) return;
+            const want = _fastPickRegions(box);
+            const missing = want.filter(function (p) {
+                return !_fastLoadedChunks.has(p) && !_fastInFlight.has(p);
+            });
+            if (missing.length) _fastFetchRegions(missing);
+        }
+
+        function _fastBootstrap() {
+            try {
+                if (new URLSearchParams(window.location.search).get('fast') === '0') { _fastDisabled = true; return; }
+            } catch (e) {}
+            if (typeof isDemoMode !== 'undefined' && isDemoMode) { _fastDisabled = true; return; }
+            // A warm localStorage cache makes getCachedOrFetchLayer resolve synchronously,
+            // so the monolith is already in hand and this would be pure wasted egress.
+            try { if (localStorage.getItem('layer_dp')) { _fastDisabled = true; return; } } catch (e) {}
+
+            // Remote kill switch, read in PARALLEL so it never delays first paint.
+            // appConfig/features/fastLayer === false disables without a deploy.
+            try {
+                firebase.database().ref('appConfig/features/fastLayer').once('value')
+                    .then(function (s) { if (s.val() === false) { _fastDisabled = true; _fastTeardown(); } })
+                    .catch(function () {});
+            } catch (e) {}
+
+            loadDataVersions().then(function (versions) {
+                if (_fastDisabled || dpDataLoaded) return null;
+                const v = versions ? versions['layer_dp'] : null;
+                _fastVParam = encodeURIComponent(v == null ? '0' : String(v));
+                if (typeof AbortController === 'function') _fastAbort = new AbortController();
+                const opts = { cache: 'default' };
+                if (_fastAbort) opts.signal = _fastAbort.signal;
+                return fetch(LAYER_JSON_BASE + '/' + FAST_IDX_NAME + '.bin?v=' + _fastVParam, opts)
+                    .then(function (r) { if (!r.ok) throw new Error('idx ' + r.status); return r.json(); })
+                    .then(function (idx) {
+                        if (!idx || idx.v !== 1 || !idx.c) throw new Error('idx shape');
+                        if (_fastDisabled || dpDataLoaded) return;
+                        _fastIdx = idx;
+                        _fastEnsureViewportChunks();
+                    });
+            }).catch(function (e) {
+                _fastDisabled = true;
+                console.warn('[fast] disabled:', e && e.message);
+            });
         }
 
         function applyLayerData(data, label, shouldMerge) {
@@ -9284,6 +9580,10 @@
             _regionToastSeenIdle = true;
             if (firstIdle) return;                              // initial settle, not a pan
             if (dpDataLoaded) return;                           // everything is present
+            // When the fast path is running it owns this message, and its version is
+            // region-accurate: it speaks only when the panned-to region genuinely
+            // isn't loaded, instead of on every pan during the download.
+            if (_fastIdx && !_fastDisabled) return;
             if (zoom < MIN_ZOOM_FOR_DP) return;                 // no DP overlay expected here
             var now = Date.now();
             if (now - _regionToastLast < 8000) return;          // don't nag on every pan
@@ -9320,6 +9620,10 @@
                     dpDataLoaded = true;          // give up: unblock the gate so the UI can speak
                     _showLayerFailBanner();
                     _reportDpReady(false);
+                    // The monolith gave up, so nothing will ever replace the staged
+                    // overlays. Drop them rather than leaving a partial map that looks
+                    // complete — the fail banner is now the honest state.
+                    try { _fastTeardown(); } catch (e) {}
                     return;
                 }
                 dpLayerData = applyLayerData(data, "Development Plan", true);
@@ -9329,6 +9633,14 @@
                 dpDataLoaded = true;
                 _reportDpReady(true);
                 loadTilesBasedOnViewport();
+                // Hand over double-buffered: the real dp overlays were just pushed
+                // above, so drop the staged ones on the NEXT frame. Tearing down first
+                // would blink the region out and back in.
+                if (dpFastDataLoaded) {
+                    const _fastHandover = function () { try { _fastTeardown(); } catch (e) {} };
+                    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(_fastHandover);
+                    else setTimeout(_fastHandover, 0);
+                }
                 // If village markers were created before DP data arrived, isInsideDPRegion
                 // returned false for every village and markers leaked into DP regions.
                 // Re-create now that dpLayerData is populated so the filter applies.
@@ -9346,6 +9658,8 @@
                 dpDataLoaded = true;
                 _showLayerFailBanner();
                 _reportDpReady(false);
+                // Same reason as the !data branch: nothing will replace these now.
+                try { _fastTeardown(); } catch (e) {}
                 maybeRerunZoomCheck();
             });
         }
@@ -10493,6 +10807,10 @@
 
             // DP: show new OR old, never both (controlled by isShowingOldMaps toggle)
             considerLayer('dp', dpLayerData, dpDataLoaded, isDPLayerVisible && !isShowingOldMaps, zl.dp);
+            // Staged fast path — the `&& !dpDataLoaded` is what makes the handover
+            // automatic and race-free: the instant the real layer lands, dpFast drops
+            // out of activeTypes on the very next compute with no explicit coordination.
+            considerLayer('dpFast', dpFastLayerData, dpFastDataLoaded && !dpDataLoaded, isDPLayerVisible && !isShowingOldMaps, zl.dpFast);
             considerLayer('oldDP', oldDPLayerData, oldDPDataLoaded, isDPLayerVisible && isShowingOldMaps, zl.oldDP);
             considerLayer('village', villageLayerData, villageDataLoaded, isVillageLayerVisible, zl.village);
 
