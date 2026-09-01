@@ -696,10 +696,11 @@
         /* ---- Sharpness loupe: press-and-hold true-detail magnifier ---- */
         #dlmap-preview-wrap { position:relative; }
         #dlmap-preview-wrap img { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
-        #dlmap-sample-hint { position:absolute; left:50%; bottom:10px; transform:translateX(-50%); z-index:3;
-                             background:rgba(33,33,33,0.72); color:#fff; font-size:11px; font-weight:600;
+        /* Above the preview, not on it — an overlay pill hid part of the sheet. */
+        #dlmap-sample-hint { display:block; width:max-content; max-width:100%; margin:0 auto 8px;
+                             background:#E0F2F1; color:#00695C; font-size:11px; font-weight:600;
                              padding:5px 10px; border-radius:999px; white-space:nowrap;
-                             box-shadow:0 1px 4px rgba(0,0,0,0.3); pointer-events:none; }
+                             pointer-events:none; }
         #dlmap-loupe { position:absolute; display:none; width:240px; height:240px; max-width:86%;
                        transform:translate(-50%,-50%); z-index:4; border-radius:12px; overflow:hidden;
                        border:2px solid #fff; box-shadow:0 4px 18px rgba(0,0,0,0.45); background:#fff;
@@ -1810,12 +1811,13 @@
             </div>
             <div class="dlmapd-grid">
                 <div class="dlmapd-left">
+                    <!-- Hint sits ABOVE the preview: as an overlay it covered the sheet. -->
+                    <div id="dlmap-sample-hint" style="display:none;">&#128269; Press &amp; hold to check sharpness</div>
                     <div class="dlmapd-previewbox">
                         <!-- Wrapper shrink-wraps the img so the loupe/marker can be placed
                              with percentage coords of the SHEET even when the box scrolls. -->
                         <div id="dlmap-preview-wrap">
                             <img id="dlmap-preview-img" alt="Preview of the map sheet">
-                            <div id="dlmap-sample-hint" style="display:none;">&#128269; Press &amp; hold to check sharpness</div>
                             <div id="dlmap-loupe">
                                 <canvas id="dlmap-loupe-canvas" width="236" height="236"></canvas>
                                 <div id="dlmap-loupe-label">Actual sharpness of your download</div>
@@ -3070,7 +3072,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=165" defer></script>
+    <script src="maps1-app.js?v=167" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
