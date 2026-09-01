@@ -516,7 +516,14 @@
         //       the only signal that says whether Annotate helps earn a sale. Rides the
         //       existing logDownloadOutcome call; the Admin Panel's Downloads tab shows
         //       it as an 'annotated · N' chip.
-        var APP_VERSION = '166';
+        // 168 = PORT of the download-dialog sharpness hint from staging 167. The
+        //       "Press & hold to check sharpness" pill was position:absolute inside
+        //       #dlmap-preview-wrap, so it sat ON the map sheet and hid a strip of it
+        //       exactly where a customer is trying to judge the thing they are about
+        //       to pay for. It now sits above the preview box as a static teal chip.
+        //       HTML/CSS only — this file is unchanged apart from the stamp, so live
+        //       is NOT inheriting staging's number: max(166, 167) + 1.
+        var APP_VERSION = '168';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
