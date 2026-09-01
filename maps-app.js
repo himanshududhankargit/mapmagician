@@ -523,7 +523,19 @@
         //       to pay for. It now sits above the preview box as a static teal chip.
         //       HTML/CSS only — this file is unchanged apart from the stamp, so live
         //       is NOT inheriting staging's number: max(166, 167) + 1.
-        var APP_VERSION = '168';
+        // 170 = PROMOTION of the missing-tile fix (staging 169) to live. NOT 169:
+        //       live takes max(168, 169) + 1. loadTileWithCache returned null for
+        //       every non-200, and both call sites read null as "retry as a plain
+        //       <img>" — so a 404 was requested TWICE. Measured 2026-08-27/29/31:
+        //       404s were 46-50% of all CloudFront traffic and browsers asked for
+        //       ~72k distinct missing tiles ~398k times a day (5.55x each, the
+        //       per-URL histogram piled onto EVEN counts). Successful tiles on the
+        //       same path repeat 1.09x because a 200 is cached in IndexedDB.
+        //       A TILE_ABSENT sentinel now separates "server says it is not there"
+        //       from "the fetch failed", plus an in-memory negative cache. The
+        //       403/stale-cookie path is untouched — a negative cache there would
+        //       survive a purchase and lock a paying customer out.
+        var APP_VERSION = '170';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -4041,12 +4053,39 @@
             return fetchCloudFrontCookies();
         }
 
-        // Returns a blob URL for the tile (cached or freshly fetched), or null
-        // on any failure. Caller uses null as the signal to fall back to a
-        // direct img.src = url assignment (pre-cache behavior). Each call
-        // attempts independently — a transient failure does not disable the
-        // cache for future tiles.
+        // Returned when the SERVER has definitively answered 404 — the tile does
+        // not exist. Distinct from null, which means "the fetch path failed, a
+        // plain <img> retry is still worth it". Callers MUST test for this BEFORE
+        // the truthy `if (blobUrl)` branch: it is an object, so reaching that
+        // branch would assign img.src = [object Object] and fire a request at our
+        // own origin for every missing tile.
+        //
+        // WHY (2026-09-01, AWS bill): every miss used to cost TWO CloudFront
+        // requests — the fetch() below 404s, returns null, and the caller then
+        // re-requests the identical URL via img.src. Measured over 2026-08-31:
+        // browsers made 445,013 requests for 76,369 distinct missing tiles (5.8x
+        // each, and the per-URL histogram is dominated by EVEN counts — the
+        // signature of the double request). 404s were 49.4% of all CloudFront
+        // traffic. Successful tiles on the same code path repeat only 1.09x,
+        // because a 200 lands in IndexedDB and is served as a blob.
+        const TILE_ABSENT = Object.freeze({ absent: true });
+
+        // Missing tiles are re-requested every time the user pans back over them,
+        // so remember them. Deliberately IN MEMORY ONLY, never persisted: a region
+        // whose tiles reach S3 *after* its RTDB link goes live would otherwise stay
+        // dark for that user long after the tiles arrived (the Kanchad failure
+        // mode). A page reload clears it. Capped so a long panning session cannot
+        // grow it without bound.
+        const _absentTiles = new Set();
+        const ABSENT_TILES_MAX = 20000;
+
+        // Returns a blob URL for the tile (cached or freshly fetched), TILE_ABSENT
+        // if the server says it does not exist, or null on any other failure.
+        // Caller uses null as the signal to fall back to a direct img.src = url
+        // assignment (pre-cache behavior). Each call attempts independently — a
+        // transient failure does not disable the cache for future tiles.
         async function loadTileWithCache(url, zoom) {
+            if (_absentTiles.has(url)) return TILE_ABSENT;
             const cached = await getTileFromDB(url);
             if (cached && cached.blob) {
                 try { return URL.createObjectURL(cached.blob); }
@@ -4057,6 +4096,15 @@
                 if (resp.status === 403 && zoom > 14) {
                     const healed = await healStaleTokenFor(url);
                     if (healed) resp = await fetch(url, { credentials: 'include' });
+                }
+                // 404 is the server's final answer — re-requesting it is pure cost.
+                // 403 deliberately still falls through to `return null` and the
+                // img.src retry below: that is the paywall/stale-cookie path, and a
+                // negative cache there would survive a purchase and lock a paying
+                // customer out.
+                if (resp.status === 404) {
+                    if (_absentTiles.size < ABSENT_TILES_MAX) _absentTiles.add(url);
+                    return TILE_ABSENT;
                 }
                 if (resp.status !== 200) return null;
                 const blob = await resp.blob();
@@ -11373,6 +11421,11 @@
                         };
                         var subUrl = sub.urlPrefix + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
                         loadTileWithCache(subUrl, zoom).then(function(blobUrl) {
+                            // MUST precede the truthy test — see TILE_ABSENT.
+                            if (blobUrl === TILE_ABSENT) {
+                                if (img.onerror) img.onerror();
+                                return;
+                            }
                             if (blobUrl) {
                                 var origOnload = img.onload;
                                 var origOnerror = img.onerror;
@@ -11474,6 +11527,11 @@
             };
             var tileUrl = this.urlPrefix_ + zoom + '/' + tileCoord.x + '/' + tileCoord.y + '.png';
             loadTileWithCache(tileUrl, zoom).then(function(blobUrl) {
+                // MUST precede the truthy test — see TILE_ABSENT.
+                if (blobUrl === TILE_ABSENT) {
+                    if (img.onerror) img.onerror();
+                    return;
+                }
                 if (blobUrl) {
                     var origOnload = img.onload;
                     var origOnerror = img.onerror;
