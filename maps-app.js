@@ -535,7 +535,23 @@
         //       from "the fetch failed", plus an in-memory negative cache. The
         //       403/stale-cookie path is untouched — a negative cache there would
         //       survive a purchase and lock a paying customer out.
-        var APP_VERSION = '170';
+        // 173 = PROMOTION of the adaptive tile cache + new-regions FAB fix (172). NOT 172:
+        //       live takes max(170, 172) + 1. (a) The IndexedDB tile cap was a flat 500 MB,
+        //       almost exactly ONE heavy day — the busiest genuine customer measured
+        //       409 MB on 09 Sep — so the cap was reached, eviction trimmed to 400 MB,
+        //       and revisiting an area viewed an hour earlier re-downloaded it. The cap is
+        //       now a 1 GB CEILING sized down at runtime to half of
+        //       navigator.storage.estimate().quota, because the real limit is per-device
+        //       (Chrome ~60% of disk, Firefox ~2 GB, iOS Safari ~1 GB). Half, not all: the
+        //       geojson DB, SW caches and localStorage share that budget. Also fixes
+        //       _tileCacheBytes being incremented BEFORE the IDB transaction committed —
+        //       a rejected write (quota) inflated the counter, which at a 1 GB cap would
+        //       evict real tiles chasing bytes that were never stored.
+        //       (b) The unlock FAB (z-index 2500) rendered ON TOP of the new-regions sheet
+        //       (2100). Hidden via body.mmnr-open while the sheet is up, mirroring the
+        //       existing body.dlmap-capturing rule rather than lowering the FAB out of the
+        //       dialog band. Both verified on maps1 (172) before promotion.
+        var APP_VERSION = '173';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -3848,8 +3864,19 @@
         // back to a direct img.src assignment — same behavior as pre-cache.
         const TILE_DB_NAME = 'mapmagician_tiles';
         const TILE_DB_VERSION = 1;
-        const TILE_CACHE_MAX_BYTES = 500 * 1024 * 1024;
-        const TILE_CACHE_EVICT_TO = 400 * 1024 * 1024;
+        // A FIXED cap is the wrong shape: the real ceiling is the browser's per-origin quota,
+        // which is per-device and wildly different -- Chrome allows up to ~60% of total disk,
+        // Firefox roughly 2 GB per site, and iOS Safari around 1 GB with 7-day eviction of
+        // storage for sites that are not installed. So these are a CEILING, sized down at
+        // runtime by _sizeTileCache() to whatever this device actually permits.
+        //
+        // HALF the quota, not all of it: mapmagician_geojson, the service-worker caches and
+        // localStorage share the same budget, and filling it with tiles would start evicting
+        // those instead -- trading a tile re-download for a layer re-download, which is worse.
+        let TILE_CACHE_MAX_BYTES = 1024 * 1024 * 1024;   // ceiling, lowered per device below
+        let TILE_CACHE_EVICT_TO = 820 * 1024 * 1024;     // ~80% of the cap, as before
+        const TILE_CACHE_FLOOR = 100 * 1024 * 1024;      // never shrink below this
+        let _tileCacheSized = false;
         let _tileDBPromise = null;
         let _tileCacheBytes = 0;
         let _tileCacheBytesInitialized = false;
@@ -3873,6 +3900,31 @@
                 throw err;
             });
             return _tileDBPromise;
+        }
+
+        /**
+         * Ask the browser what it will actually store, once per session, and size the cache to
+         * half of it. Everything here is best-effort: a browser without navigator.storage (or one
+         * that reports no quota) simply keeps the 1 GB ceiling, which is the previous behaviour.
+         *
+         * Deliberately NOT calling navigator.storage.persist(): it prompts the user in some
+         * browsers, and a permission dialog on map load is a worse trade than an evictable cache.
+         */
+        async function _sizeTileCache() {
+            if (_tileCacheSized) return;
+            _tileCacheSized = true;
+            try {
+                if (!navigator.storage || !navigator.storage.estimate) return;
+                const est = await navigator.storage.estimate();
+                if (!est || !est.quota) return;
+                const half = Math.floor(est.quota * 0.5);
+                TILE_CACHE_MAX_BYTES = Math.max(TILE_CACHE_FLOOR,
+                    Math.min(TILE_CACHE_MAX_BYTES, half));
+                TILE_CACHE_EVICT_TO = Math.floor(TILE_CACHE_MAX_BYTES * 0.8);
+                console.log('[tiles] cache cap ' + Math.round(TILE_CACHE_MAX_BYTES / 1048576) +
+                    ' MB (browser quota ' + Math.round(est.quota / 1048576) + ' MB, in use ' +
+                    Math.round((est.usage || 0) / 1048576) + ' MB)');
+            } catch (e) { /* keep the ceiling */ }
         }
 
         async function _initTileCacheBytes() {
@@ -3907,15 +3959,22 @@
 
         async function putTileInDB(record) {
             try {
+                await _sizeTileCache();
                 await _initTileCacheBytes();
                 const db = await openTileDB();
                 const tx = db.transaction(['tiles'], 'readwrite');
                 tx.objectStore('tiles').put(record);
-                _tileCacheBytes += record.size;
                 await new Promise(function(resolve, reject) {
                     tx.oncomplete = resolve;
                     tx.onerror = function() { reject(tx.error); };
                 });
+                // Count the bytes only once the write has actually COMMITTED. Incrementing
+                // before the await meant a rejected write (QuotaExceededError, which the
+                // catch below swallows) still inflated the counter. At a 1 GB cap on a
+                // browser whose real quota is smaller, that drift would push the counter
+                // past the cap and evict genuinely-cached tiles to chase bytes that were
+                // never stored.
+                _tileCacheBytes += record.size;
                 if (_tileCacheBytes > TILE_CACHE_MAX_BYTES) _evictOldestTiles();
             } catch (e) { /* opportunistic — swallow */ }
         }
