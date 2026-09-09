@@ -7,7 +7,6 @@
       "namespace": "android_app",
       "package_name": "com.himanshu.gis",
       "sha256_cert_fingerprints": [
-        "REPLACE_WITH_PLAY_APP_SIGNING_SHA256",
         "49:56:2B:FF:D8:F4:ED:11:9F:F0:2B:5D:46:C5:8A:D8:9E:EF:2F:CF:0C:70:AB:F3:44:8F:53:B7:D1:65:29:C8"
       ]
     }
