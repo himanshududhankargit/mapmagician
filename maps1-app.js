@@ -461,7 +461,7 @@
         //       resolves, the purchase never matches, zoom stays pinned at 14. Now
         //       retried up to 3x with backoff, with an honest banner if it truly fails,
         //       and a throw in the handler body can no longer disarm the zoom gate.
-        var APP_VERSION = '169';
+        var APP_VERSION = '171';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -3774,8 +3774,26 @@
         // back to a direct img.src assignment — same behavior as pre-cache.
         const TILE_DB_NAME = 'mapmagician_tiles';
         const TILE_DB_VERSION = 1;
-        const TILE_CACHE_MAX_BYTES = 500 * 1024 * 1024;
-        const TILE_CACHE_EVICT_TO = 400 * 1024 * 1024;
+        // 1 GB (was 500 MB until 2026-09-09). 500 MB was almost exactly ONE heavy day:
+        // measured 09 Sep, the busiest genuine customer pulled 409 MB, so the cap was being
+        // reached and eviction then trimmed to 400 MB -- meaning a user who revisited an area
+        // they had viewed an hour earlier re-downloaded it. That thrash inflates BOTH their
+        // bandwidth and their request count, and it is self-amplifying on exactly the users
+        // who cost the most to serve. Tiles are keyed by full URL and a plan revision ships
+        // under a NEW folder name, so a larger cache cannot serve a stale revision.
+        // A FIXED cap is the wrong shape: the real ceiling is the browser's per-origin quota,
+        // which is per-device and wildly different -- Chrome allows up to ~60% of total disk,
+        // Firefox roughly 2 GB per site, and iOS Safari around 1 GB with 7-day eviction of
+        // storage for sites that are not installed. So these are a CEILING, sized down at
+        // runtime by _sizeTileCache() to whatever this device actually permits.
+        //
+        // HALF the quota, not all of it: mapmagician_geojson, the service-worker caches and
+        // localStorage share the same budget, and filling it with tiles would start evicting
+        // those instead -- trading a tile re-download for a layer re-download, which is worse.
+        let TILE_CACHE_MAX_BYTES = 1024 * 1024 * 1024;   // ceiling, lowered per device below
+        let TILE_CACHE_EVICT_TO = 820 * 1024 * 1024;     // ~80% of the cap, as before
+        const TILE_CACHE_FLOOR = 100 * 1024 * 1024;      // never shrink below this
+        let _tileCacheSized = false;
         let _tileDBPromise = null;
         let _tileCacheBytes = 0;
         let _tileCacheBytesInitialized = false;
@@ -3799,6 +3817,31 @@
                 throw err;
             });
             return _tileDBPromise;
+        }
+
+        /**
+         * Ask the browser what it will actually store, once per session, and size the cache to
+         * half of it. Everything here is best-effort: a browser without navigator.storage (or one
+         * that reports no quota) simply keeps the 1 GB ceiling, which is the previous behaviour.
+         *
+         * Deliberately NOT calling navigator.storage.persist(): it prompts the user in some
+         * browsers, and a permission dialog on map load is a worse trade than an evictable cache.
+         */
+        async function _sizeTileCache() {
+            if (_tileCacheSized) return;
+            _tileCacheSized = true;
+            try {
+                if (!navigator.storage || !navigator.storage.estimate) return;
+                const est = await navigator.storage.estimate();
+                if (!est || !est.quota) return;
+                const half = Math.floor(est.quota * 0.5);
+                TILE_CACHE_MAX_BYTES = Math.max(TILE_CACHE_FLOOR,
+                    Math.min(TILE_CACHE_MAX_BYTES, half));
+                TILE_CACHE_EVICT_TO = Math.floor(TILE_CACHE_MAX_BYTES * 0.8);
+                console.log('[tiles] cache cap ' + Math.round(TILE_CACHE_MAX_BYTES / 1048576) +
+                    ' MB (browser quota ' + Math.round(est.quota / 1048576) + ' MB, in use ' +
+                    Math.round((est.usage || 0) / 1048576) + ' MB)');
+            } catch (e) { /* keep the ceiling */ }
         }
 
         async function _initTileCacheBytes() {
@@ -3833,15 +3876,22 @@
 
         async function putTileInDB(record) {
             try {
+                await _sizeTileCache();
                 await _initTileCacheBytes();
                 const db = await openTileDB();
                 const tx = db.transaction(['tiles'], 'readwrite');
                 tx.objectStore('tiles').put(record);
-                _tileCacheBytes += record.size;
                 await new Promise(function(resolve, reject) {
                     tx.oncomplete = resolve;
                     tx.onerror = function() { reject(tx.error); };
                 });
+                // Count the bytes only once the write has actually COMMITTED. Incrementing
+                // before the await meant a rejected write (QuotaExceededError, which the
+                // catch below swallows) still inflated the counter. At a 1 GB cap on a
+                // browser whose real quota is smaller, that drift would push the counter
+                // past the cap and evict genuinely-cached tiles to chase bytes that were
+                // never stored.
+                _tileCacheBytes += record.size;
                 if (_tileCacheBytes > TILE_CACHE_MAX_BYTES) _evictOldestTiles();
             } catch (e) { /* opportunistic — swallow */ }
         }
