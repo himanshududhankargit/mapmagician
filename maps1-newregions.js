@@ -445,6 +445,12 @@
            reads as a grey strip stuck to the bottom of the window after Dismiss. */
         'transform:translateY(calc(100% + 24px));transition:transform .28s ease;',
         'will-change:transform;font-family:inherit}',
+        /* The unlock / sign-in FAB is fixed at z-index 2500 -- above this sheet's 2100 --
+           so it lands ON TOP of the region list (seen 2026-09-09). Hide it while the sheet
+           is up, mirroring the existing body.dlmap-capturing rule. Deliberately not fixed
+           by lowering the FAB: 2500 is the dialog band and dropping it would put the FAB
+           under other UI that is meant to sit above it. */
+        'body.mmnr-open #floating-signin-btn{display:none!important}',
         '.mmnr-sheet.open{transform:translateY(0)}',
         /* Suppress the slide animation while a finger is dragging the sheet. */
         '.mmnr-sheet.dragging{transition:none}',
@@ -583,8 +589,15 @@
         return els;
     }
 
+    // Single owner of the body flag, so the sheet can never be dismissed while leaving the
+    // FAB hidden (which would look like the unlock button had vanished for good).
+    function setSheetOpen(open) {
+        try { document.body.classList.toggle('mmnr-open', !!open); } catch (e) {}
+    }
+
     function hide() {
         if (els) els.sheet.classList.remove('open');
+        setSheetOpen(false);
     }
 
     // Hides the sheet AND marks the announcement seen, so this publish is never
@@ -628,6 +641,7 @@
         e.progress.style.display = '';
         e.sheet.classList.remove('collapsed');
         e.sheet.classList.add('open');
+        setSheetOpen(true);
 
         e.fill.style.transition = 'none';
         e.fill.style.width = '0%';
@@ -746,6 +760,7 @@
         e.progress.style.display = 'none';
         e.body.hidden = false;
         e.sheet.classList.add('open');
+        setSheetOpen(true);
 
         // Seen: keep it on screen, but never announce this publish again.
         clear();
