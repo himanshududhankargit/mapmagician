@@ -10,5 +10,17 @@
         "CA:B6:E3:B9:EF:8A:C1:F5:BD:BC:41:99:3B:82:11:B0:15:0A:3C:FC:3B:6D:E8:0A:6F:80:95:D3:AF:3F:43:75"
       ]
     }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.himanshu.overlayr",
+      "sha256_cert_fingerprints": [
+        "A7:14:F8:AD:0B:5D:0F:7E:0E:18:A5:9C:81:70:13:28:62:84:60:E4:BA:FF:6F:A1:84:57:84:50:42:6A:DB:CC"
+      ]
+    }
   }
 ]
