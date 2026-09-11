@@ -92,7 +92,31 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
     ],
   },
 
+  // The three Greater Mumbai pages had no pageTitle, so they ran the generic template —
+  // "Mumbai Western Suburbs Development Plan Map — view online & download" with the
+  // description artefact "1 sub-locations indexed" — and none of them said "DP 2034" or
+  // "MCGM" in the title even though the prose is entirely about DP 2034. GSC 2026-09-11:
+  // "mumbai dp" 458 impr, "dp plan mumbai" 338, "mumbai dp plan 2034 pdf free download"
+  // 309, "mumbai dp 2034 map" 143 — all at position ~8 with ~2% CTR. The head term now
+  // has its own hub at /mumbai-dp-2034/ (app/mumbai-dp-2034/page.tsx) and each part
+  // carries "DP 2034 — MCGM" so the section pages can rank for their own suburb term.
   'mumbai-western-suburbs-dp-plan': {
+    pageTitle: 'Mumbai Western Suburbs DP 2034 — MCGM Development Plan map online',
+    description:
+      'Mumbai Western Suburbs DP 2034 map online — the MCGM (BMC) Development Plan 2034 for Bandra to Dahisar over satellite imagery: land-use zone, reservations and road lines for any plot across wards H/W, K/E, K/W, P/N, P/S, R/N, R/C and R/S.',
+    keywords: [
+      'mumbai western suburbs dp 2034',
+      'mumbai dp 2034',
+      'mumbai dp plan',
+      'dp 2034 mumbai map',
+      'mcgm development plan 2034',
+      'bmc dp 2034',
+      'andheri dp 2034',
+      'borivali dp plan',
+      'bandra dp 2034',
+      'mumbai western suburbs development plan',
+      'mumbai dp 2034 map online',
+    ],
     paragraphs: [
       'The Mumbai Western Suburbs Development Plan is part of the Greater Mumbai DP 2034, the master plan for all 24 wards of Mumbai prepared by the Municipal Corporation of Greater Mumbai (MCGM). The State Government accorded sanction to the DP 2034 (with modifications) by notification dated 8 May 2018; the plan remains in force until 2034 and is implemented alongside the Development Control and Promotion Regulations (DCPR) 2034.',
       'The Western Suburbs cover the area from Bandra in the south to Dahisar in the north, encompassing wards H/W, K/E, K/W, P/N, P/S, R/N, R/C and R/S. The spine of the suburbs is the Western Express Highway (WEH) — an 8-to-10-lane arterial running approximately 25.3 km from Bandra to Mira Road via Andheri, Jogeshwari, Goregaon, Malad and Borivali — connecting directly to the Chhatrapati Shivaji Maharaj International Airport. Major east-west connectors carried in the plan include the Jogeshwari-Vikhroli Link Road (JVLR) and the Santa Cruz-Chembur Link Road (SCLR).',
@@ -109,6 +133,22 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   },
 
   'mumbai-eastern-suburbs-dp-plan': {
+    pageTitle: 'Mumbai Eastern Suburbs DP 2034 — MCGM Development Plan map online',
+    description:
+      'Mumbai Eastern Suburbs DP 2034 map online — the MCGM (BMC) Development Plan 2034 for Sion to Mulund via Kurla, Ghatkopar, Vikhroli and Bhandup over satellite imagery: land-use zone, reservations and road lines for any plot along the Eastern Express Highway corridor.',
+    keywords: [
+      'mumbai eastern suburbs dp 2034',
+      'mumbai dp 2034',
+      'mumbai dp plan',
+      'dp 2034 mumbai map',
+      'mcgm development plan 2034',
+      'bmc dp 2034',
+      'ghatkopar dp 2034',
+      'mulund dp plan',
+      'kurla dp 2034',
+      'mumbai eastern suburbs development plan',
+      'mumbai dp 2034 map online',
+    ],
     paragraphs: [
       'The Mumbai Eastern Suburbs Development Plan is part of the Greater Mumbai DP 2034, sanctioned by the Maharashtra State Government on 8 May 2018 and prepared by the Municipal Corporation of Greater Mumbai (MCGM). The Eastern Suburbs cover the corridor from Sion northwards through Kurla, Ghatkopar, Vikhroli, Bhandup and Mulund, spanning major wards L, N and S.',
       'The principal spine of the Eastern Suburbs is the Eastern Express Highway (EEH) — a six-lane arterial running approximately 23.55 km from Chhatrapati Shivaji Maharaj Terminus to Thane, connecting onward to National Highway 3 towards Nashik and Agra. The Eastern Freeway provides an additional grade-separated link from the Island City. Critical east-west connectors include the Jogeshwari-Vikhroli Link Road (JVLR) and the Santa Cruz-Chembur Link Road (SCLR) tying the suburbs across to the Western Suburbs.',
@@ -125,6 +165,22 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   },
 
   'mumbai-internal-island-city-dp-plan': {
+    pageTitle: 'Mumbai Island City DP 2034 — MCGM Development Plan map online',
+    description:
+      'Mumbai Island City DP 2034 map online — the MCGM (BMC) Development Plan 2034 for Colaba to Mahim and Sion (wards A to G/South) over satellite imagery: land-use zone, heritage and reservation overlays and road lines for any plot in South Mumbai.',
+    keywords: [
+      'mumbai island city dp 2034',
+      'south mumbai dp 2034',
+      'mumbai dp 2034',
+      'mumbai dp plan',
+      'dp 2034 mumbai map',
+      'mcgm development plan 2034',
+      'bmc dp 2034',
+      'dadar dp 2034',
+      'worli dp plan',
+      'lower parel dp 2034',
+      'mumbai dp 2034 map online',
+    ],
     paragraphs: [
       'The Mumbai Internal Island City Development Plan is the core component of the Greater Mumbai DP 2034, sanctioned by the Maharashtra State Government on 8 May 2018 and prepared by the Municipal Corporation of Greater Mumbai (MCGM). The Island City covers wards A through G/South — Mumbai’s historic southern peninsula — and is governed by the Development Control and Promotion Regulations (DCPR) 2034 valid till the year 2034.',
       'The Island City stretches from Colaba in the south to Mahim and Sion in the north, encompassing historic precincts of Fort, Marine Drive, Worli, Dadar, Mahim and Mazgaon. The two principal arterials beginning from the city core are the Western Express Highway (which starts near Mahim Creek) and the Eastern Express Highway (which originates near CSMT). The Eastern Freeway, an elevated six-lane corridor, provides a high-speed exit from the southern peninsula to the Eastern Suburbs.',
@@ -173,7 +229,30 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
     ],
   },
 
+  // GSC 2026-09-11 (3 mo): 10,372 impressions at position 5.65 but 6.45% CTR, and the
+  // head query "nashik dp plan" (833 impr, pos 5.2) converted at 2.4% — the site's average
+  // at that position is ~9.7%. Cause: no pageTitle, so the page ran the generic template
+  // ("Nashik Development Plan Map — view online & download") with the template description
+  // "29 sub-locations indexed, covering Maharashtra". People type "nashik dp plan" /
+  // "dp plan nashik" / "nmc … nashik development plan"; the title now says exactly that.
   'nashik-dp-plan': {
+    pageTitle: 'Nashik DP Plan — NMC Development Plan map online & download',
+    description:
+      'Nashik DP plan map online — the Nashik Municipal Corporation (NMC) Revised Development Plan, sanctioned 2017-18, over satellite imagery: land-use zone, reservations and road lines for any plot in Nashik city, with links to the official DP PDF sheets.',
+    keywords: [
+      'nashik dp plan',
+      'dp plan nashik',
+      'nashik development plan',
+      'nmc nashik development plan',
+      'nashik dp plan map',
+      'nashik dp plan download',
+      'nashik city development plan',
+      'nashik dp',
+      'nmc dp plan',
+      'nashik zoning map',
+      'नाशिक डीपी प्लॅन',
+      'नाशिक विकास आराखडा',
+    ],
     paragraphs: [
       'The Nashik Development Plan is administered by the Nashik Municipal Corporation (NMC), which was constituted on 7 November 1982 under the Maharashtra Regional and Town Planning Act, 1966. The original Development Plan for NMC’s jurisdiction was sanctioned by the Maharashtra State Government in two parts — partly in 1993 and the remainder in 1994. A Revised Sanctioned Development Plan along with the Development Control and Promotion Regulations was sanctioned partly in 2017 and the remaining part in 2018.',
       "Nashik's industrial growth is anchored by three principal MIDC industrial estates — Satpur, Ambad and Sinnar — with additional industrial activity at Malegaon and Igatpuri elsewhere in the district. The Satpur and Ambad estates host engineering, pharmaceutical, automotive, sugar, textile, chemical and food-processing units, with main carriageway widths of 45 m and internal roads of 20-25 m.",
@@ -198,9 +277,16 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
     // keeping the layman phrase "Nagpur Development Plan" for searchers who don't know the
     // acronym. Note: the bare query "nmrda" is dominated by the authority's own site; the
     // winnable, high-intent terms are nmrda development plan / map / village map / dp plan.
-    pageTitle: 'NMRDA Development Plan 2012-2032 — Nagpur Metropolitan Region & Nagpur Development Plan map online',
+    // GSC 2026-09-11 (3 mo): 36,617 impressions at position 4.75 but only 8.1% CTR — the
+    // site's own pages at that position get 15-17%. The previous 108-char title was cut
+    // off in the SERP before "map" ever appeared, and nobody searches "2012-2032"; the
+    // queries are "nmrda nagpur" (512 impr, 0.8% CTR), "nmrda nagpur map pdf",
+    // "nagpur dp plan pdf download" (655). Title now leads with the words people type;
+    // description trimmed to SERP length (the 565-char one was truncated mid-sentence).
+    // Marathi stays in keywords + prose — a 4th sentence of a description is never shown.
+    pageTitle: 'NMRDA Nagpur DP Plan Map — Nagpur Development Plan online & download',
     description:
-      'View the NMRDA Development Plan (Nagpur Metropolitan Region Development Authority, 2012-2032) online — the statutory Nagpur Development Plan prepared by the Nagpur Improvement Trust (NIT) and administered by NMRDA, covering ~3,567 sq km and 721 villages across 9 tehsils of Nagpur district. Interactive DP overlay over satellite imagery: read the land-use zone, reservations and road lines for any plot, survey number or locality, including the MIHAN and Butibori MIDC growth areas. नागपूर महानगर प्रदेश विकास प्राधिकरण (एनएमआरडीए) विकास आराखडा ऑनलाइन नकाशावर पाहा.',
+      'NMRDA Nagpur DP plan map online — the Nagpur Metropolitan Region Development Plan (NIT/NMRDA, 2012-2032) village by village over satellite imagery: land-use zone, reservations and road lines for any plot, plus a print-ready map sheet of any area.',
     keywords: [
       'nmrda',
       'nmrda development plan',
@@ -268,22 +354,35 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   // ===========================================================================
 
   // Sources: pmrda.gov.in, Wikipedia PMRDA.
+  // GSC 2026-09-11 (3 mo): the site's LARGEST-impression page (49,177) at 6.0% CTR,
+  // position 6.7. Of its top-20 queries, 8 say "pdf download" / "village map" / "2026"
+  // ("pmrda dp plan pdf download" 1,752 impr, "pmrda village map pdf free download" 799,
+  // "pmrda dp plan 2026 pdf download" 612, "pmrda dp plan 2026" 508) and the old title
+  // carried none of those words. Title now front-loads "PMRDA DP Plan" + "village map";
+  // description cut from 520 chars (truncated in the SERP) to one that fits. "2026" is
+  // deliberately NOT in the title — the layer is the 2021 draft and the FAQ below says so
+  // plainly rather than baiting the year. No "PDF" anywhere: we ship a map sheet, not
+  // the authority's PDF (same honesty rule as components/DownloadSheet.tsx).
   'pmrda-development-plan': {
-    pageTitle: 'PMRDA Development Plan 2021 — Pune Metropolitan Region DP map online',
+    pageTitle: 'PMRDA DP Plan & Village Map — Pune Metropolitan Region Development Plan online',
     description:
-      'View the PMRDA (Pune Metropolitan Region Development Authority) Draft Development Plan 2021 online — the metropolitan-region DP covering ~6,052 sq km and 814 villages outside the PMC and PCMC limits. Interactive overlay on satellite imagery: read the land-use zone, reservations and DP remark for any plot along the Hinjewadi IT corridor, Mumbai-Pune Expressway and Pune-Nashik / Pune-Solapur corridors. Distinct from the Pune (PMC) city Development Plan. पीएमआरडीए (पुणे महानगर प्रदेश) विकास आराखडा ऑनलाइन नकाशावर पाहा.',
+      'PMRDA DP plan map online — the Pune Metropolitan Region Draft Development Plan 2021, village by village over satellite imagery: land-use zone, reservations and road lines for all 814 villages outside PMC and PCMC limits, with a print-ready map sheet of any area.',
     keywords: [
       'pmrda dp plan',
       'pmrda development plan',
       'pmrda map',
       'pmrda area map',
       'pmrda village map',
+      'pmrda village map download',
       'pmrda dp',
       'pmrda nakasha',
       'pmrda dp plan pdf download',
       'pmrda dp plan map',
       'pmrda map download',
       'pmrda dp plan 2021',
+      'pmrda dp plan 2026',
+      'pmrda zone plan',
+      'pmrda dp plan 23 villages',
       'pune metropolitan region development plan',
       'pmrda draft development plan',
       'pmrda dp map online',
@@ -292,6 +391,16 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'पीएमआरडीए नकाशा',
       'पीएमआरडीए विकास आराखडा',
       'पीएमआरडीए डीपी प्लॅन',
+    ],
+    faqs: [
+      {
+        q: 'Which PMRDA Development Plan does this page show — is there a newer 2025 or 2026 plan?',
+        a: 'The layer on this page is the PMRDA Draft Development Plan 2021 as published by the Pune Metropolitan Region Development Authority — the most recent complete village-wise DP for the metropolitan region that we host. PMRDA revises and re-notifies its plan through the statutory objections process; if a fresh draft is notified, this page is updated to match. For the current statutory position of any plot, confirm with PMRDA (pmrda.gov.in) before relying on a zone.',
+      },
+      {
+        q: 'Can I get the PMRDA village map for one village?',
+        a: 'Yes — the plan is easiest to read village by village. Open any of the 814 PMRDA villages from the list on this page (or search the village or survey number on the full map) and the DP overlay shows that village’s land-use zone, reservations, road lines and Town Planning Scheme boundaries over satellite imagery. Any area can also be saved as a print-ready map sheet from the map.',
+      },
     ],
     paragraphs: [
       'The Pune Metropolitan Region Development Authority (PMRDA) Development Plan is administered by PMRDA, established by the Government of Maharashtra in 2015 under the Maharashtra Regional and Town Planning Act, 1966. It is the metropolitan-region Development Plan for the Pune fringe outside the core city, and is distinct from the Pune Municipal Corporation (PMC) Development Plan that covers only Pune city limits. PMRDA has jurisdiction over approximately 7,246 square kilometres, and the Draft Development Plan 2021 covers approximately 6,052 sq km across 814 villages spanning 9 talukas of Pune district.',

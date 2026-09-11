@@ -40,6 +40,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: 'weekly' as const,
     priority: 0.8,
   };
+  const mumbaiHub = {
+    url: SITE.origin + '/mumbai-dp-2034/',
+    lastModified,
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  };
   const downloadHub = {
     url: SITE.origin + '/download-development-plan-map/',
     lastModified,
@@ -63,5 +69,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     }));
-  return [home, regionsBrowser, downloadHub, msrdcHub, pcmcHub, kdmcHub, ...regionPages, ...subLocationPages];
+  return [home, regionsBrowser, downloadHub, msrdcHub, pcmcHub, kdmcHub, mumbaiHub, ...regionPages, ...subLocationPages];
 }

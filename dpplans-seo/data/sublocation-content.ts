@@ -563,6 +563,38 @@ export const SUBLOCATION_CONTENT: Record<string, SubLocationContent> = {
   },
 };
 
+export type SubLocationLink = { label: string; href: string };
+
+/**
+ * "See also" links rendered on a sub-location page, keyed like SUBLOCATION_CONTENT.
+ *
+ * Kept as a SEPARATE map rather than a field on SubLocationContent so a page whose
+ * content lives in the machine-generated file (e.g. thane-dp-plan/dombivali) can get a
+ * link without copying its entry here — the lookup below is whole-entry precedence, and
+ * four keys already exist in both maps, so a field-level merge would silently change
+ * those pages. Use this to route a sub-location's searchers to the hand-authored hub
+ * that owns the head term (GSC 2026-09-11: the PCMC sub-location page's description
+ * promised "the dedicated PCMC Development Plan page" but carried no link to it, and
+ * the hub had ZERO impressions in 3 months; "kalyan dp plan" landed on the Dombivali
+ * page at 2.0% CTR while the Kalyan hub converts at 13.4%).
+ */
+export const SUBLOCATION_LINKS: Record<string, SubLocationLink[]> = {
+  'pune-dp-plan/pimpri-chinchwad-municipal-corporation': [
+    { label: 'PCMC Development Plan 2025 (Draft) — full plan overview, key facts and FAQs', href: '/pcmc-development-plan/' },
+    { label: 'Pune (PMC) Development Plan — the adjoining city', href: '/pune-dp-plan/' },
+  ],
+  'thane-dp-plan/dombivali': [
+    { label: 'Kalyan DP Plan — the KDMC (Kalyan-Dombivli) Development Plan page', href: '/kalyan-dombivli-development-plan/' },
+  ],
+  'thane-dp-plan/kalyan-dombivli': [
+    { label: 'Kalyan DP Plan — the KDMC (Kalyan-Dombivli) Development Plan page', href: '/kalyan-dombivli-development-plan/' },
+  ],
+};
+
+export function subLocationLinks(regionSlug: string, locSlug: string): SubLocationLink[] {
+  return SUBLOCATION_LINKS[`${regionSlug}/${locSlug}`] ?? [];
+}
+
 /**
  * Look up SEO override content by region + village slug. Null when none is curated.
  * Hand-curated SUBLOCATION_CONTENT wins over the machine-generated map.

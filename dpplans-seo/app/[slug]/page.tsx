@@ -15,6 +15,14 @@ import { DownloadSheet, downloadFaqs } from '@/components/DownloadSheet';
 
 type Props = { params: { slug: string } };
 
+// The three regions that together make up the Greater Mumbai (MCGM) DP 2034. Each gets a
+// side-card up to the hand-authored hub at /mumbai-dp-2034/, which owns the head term.
+const MUMBAI_DP_2034_PARTS = [
+  'mumbai-internal-island-city-dp-plan',
+  'mumbai-western-suburbs-dp-plan',
+  'mumbai-eastern-suburbs-dp-plan',
+];
+
 export function generateStaticParams() {
   return allRegions().map(r => ({ slug: r.slug }));
 }
@@ -408,6 +416,19 @@ export default function RegionPage({ params }: Props) {
               </p>
               <Link className="btn btn-white btn-block" href="/msrdc-development-plan/">
                 All MSRDC Development Plans →
+              </Link>
+            </div>
+          )}
+
+          {MUMBAI_DP_2034_PARTS.includes(region.slug) && (
+            <div className="side-card">
+              <h3>Greater Mumbai DP 2034</h3>
+              <p className="aux">
+                This is one of the three parts of the MCGM (BMC) Development Plan 2034 — Island City, Western
+                Suburbs and Eastern Suburbs. See the whole plan and all three sections on one page.
+              </p>
+              <Link className="btn btn-white btn-block" href="/mumbai-dp-2034/">
+                Mumbai DP 2034 →
               </Link>
             </div>
           )}

@@ -22,7 +22,13 @@ import { MapEmbed } from '@/components/MapEmbed';
 const PAGE_URL = `${SITE.origin}/kalyan-dombivli-development-plan/`;
 const SUBPAGE_URL = '/thane-dp-plan/kalyan-dombivli/';
 
-const TITLE = 'Kalyan-Dombivli (KDMC) Development Plan — DP map online';
+// GSC 2026-09-11 (3 mo): "kalyan dp plan" had 1,209 impressions at position 4.1 and a 2.0%
+// CTR — the worst of any high-volume query on the site. This hub converts at 13.4% but only
+// drew 2,093 impressions; the page Google was showing for "kalyan …" was the Thane
+// sub-location /thane-dp-plan/dombivali/ (6,174 impr, 5.0%), whose title reads "Dombivali …
+// Kalyan taluka". So the title now LEADS with the head term "Kalyan DP Plan", and both Thane
+// sub-location pages (dombivali, kalyan-dombivli) link here via SUBLOCATION_LINKS.
+const TITLE = 'Kalyan DP Plan — KDMC (Kalyan-Dombivli) Development Plan map online';
 const DESCRIPTION =
   'View the Kalyan-Dombivli Municipal Corporation (KDMC) Development Plan online. Interactive DP overlay on satellite imagery — read the proposed land-use zone, reservations and road lines for any plot across Kalyan, Dombivli, Titwala, Ambivli, Vithalwadi and Thakurli, Thane district.';
 
@@ -134,7 +140,7 @@ export default function KdmcHubPage() {
           <div className="top-row">
             <div className="icon-large"><span aria-hidden="true">▦</span></div>
             <div>
-              <h1>Kalyan-Dombivli (KDMC) Development Plan — DP map online</h1>
+              <h1>{TITLE}</h1>
               <p className="summary">
                 Interactive Development Plan viewer for the <strong>Kalyan-Dombivli Municipal Corporation
                 (KDMC)</strong>, Thane district. The DP overlay aligns with satellite imagery so you can read the

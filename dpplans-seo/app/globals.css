@@ -450,6 +450,11 @@ button { font: inherit; cursor: pointer; }
 .pd-ms-btn { color: #0078D4; border-color: #B3D7F2; }
 .pd-ms-btn:hover { background: #E8F4FD; }
 
+/* "See also" hub links inside a sub-location's About card (data/sublocation-content.ts SUBLOCATION_LINKS) */
+.see-also { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 6px; }
+.see-also li { padding: 10px 14px; background: #fff; border: 1px solid var(--border); border-radius: 10px; font-size: 15px; }
+.see-also a { font-weight: 500; }
+
 /* Sub-locations list (main-column card) */
 .sublocations .aux-text { color: var(--text-light); font-size: 14.5px; margin-bottom: 16px; }
 .sublocation-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }

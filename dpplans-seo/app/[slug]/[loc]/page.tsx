@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { allSubLocationPaths, subLocationByPath, nearestSisters } from '@/lib/regions';
-import { subLocationContent, isCuratedSubLocation } from '@/data/sublocation-content';
+import { subLocationContent, subLocationLinks, isCuratedSubLocation } from '@/data/sublocation-content';
 import { SITE } from '@/lib/site';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Faq } from '@/components/Faq';
@@ -70,6 +70,7 @@ export default function SubLocationPage({ params }: Props) {
   const { region, village } = hit;
   const vname = village.displayName || village.name;
   const seo = subLocationContent(region.slug, village.slug!);
+  const seeAlso = subLocationLinks(region.slug, village.slug!);
   const heading = seo?.pageTitle ?? `${vname} Development Plan map — ${region.shortName} district`;
   const url = `${SITE.origin}/${region.slug}/${village.slug}/`;
   const mapUrl = `${SITE.fullMap}?lat=${village.lat}&lng=${village.lng}&zoom=13`;
@@ -214,6 +215,15 @@ export default function SubLocationPage({ params }: Props) {
             {seo?.paragraphs?.map((p, i) => (
               <p key={`seo-${i}`}>{p}</p>
             ))}
+            {seeAlso.length > 0 && (
+              <ul className="see-also">
+                {seeAlso.map(l => (
+                  <li key={l.href}>
+                    <Link href={l.href}>{l.label} →</Link>
+                  </li>
+                ))}
+              </ul>
+            )}
             <p>
               {vname} sits at coordinates <strong>{village.lat.toFixed(4)}°N, {village.lng.toFixed(4)}°E</strong>
               {distancePhrase ? `, ${distancePhrase}` : ''}. It is indexed inside the {region.displayName}{' '}
