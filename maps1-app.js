@@ -461,7 +461,12 @@
         //       resolves, the purchase never matches, zoom stays pinned at 14. Now
         //       retried up to 3x with backoff, with an honest banner if it truly fails,
         //       and a throw in the handler body can no longer disarm the zoom gate.
-        var APP_VERSION = '172';
+        // 174 = "No Map Data Available": Try Demo did nothing and the X would not close
+        //       it. Both handlers were wired inside showZoomRestrictionDialog only, so a
+        //       session whose first dialog was the no-data variant (zoom in over an area
+        //       with no plan) had never attached them; only "Not now" worked. The two
+        //       wirings now live in wireZoomRestrictShared(), called by both variants.
+        var APP_VERSION = '174';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -3266,19 +3271,7 @@
                 google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
             };
 
-            // Red Mac-style close (X) in the header — same dismiss as "Not now"
-            var _zrClose = document.getElementById('zoom-restrict-close');
-            if (_zrClose) _zrClose.onclick = () => document.getElementById('zoom-restrict-cancel').click();
-
-            // "DEMO MODE" pill (Claude Design 1b) -> standalone demo page, new tab.
-            // Kept as its own page rather than a mode of this one: demo.html has no
-            // Firebase/Razorpay/layer fetch, so "a demo can never show paid maps" is
-            // structural rather than a rule that could regress later.
-            var _zrDemo = document.getElementById('zoom-restrict-demo');
-            // Self-referential on purpose: from maps1.html this opens maps1.html?demo=1
-            // and from maps.html it opens maps.html?demo=1, so staging can never
-            // hand a tester the live build (or the reverse) through this button.
-            if (_zrDemo) _zrDemo.onclick = () => window.open(location.pathname + '?demo=1', '_blank', 'noopener');
+            wireZoomRestrictShared();
 
             document.getElementById('zoom-restrict-support').onclick = () => {
                 overlay.classList.remove('open');
@@ -3416,11 +3409,33 @@
             overlay.classList.add('open');
         }
 
+        // Wired by BOTH variants of the zoom-restrict overlay: the purchase dialog
+        // (showZoomRestrictionDialog) and "No Map Data Available" (showNoDataDialog).
+        // Until 174 this lived inside showZoomRestrictionDialog only, so a session whose
+        // FIRST dialog was the no-data one had a dead Try Demo and a dead X — neither
+        // button had ever been given a handler, and "Not now" was the only way out.
+        // Idempotent: plain onclick assignment, safe to call on every show.
+        function wireZoomRestrictShared() {
+            // Red Mac-style close (X) in the header — same dismiss as "Not now". Looked
+            // up by id at click time on purpose: showNoDataDialog swaps the cancel
+            // button for a clone that keeps the id.
+            var _zrClose = document.getElementById('zoom-restrict-close');
+            if (_zrClose) _zrClose.onclick = () => document.getElementById('zoom-restrict-cancel').click();
+
+            // "Try Demo" pill (Claude Design 1b) -> this page in demo mode, new tab.
+            // Self-referential on purpose: from maps1.html this opens maps1.html?demo=1
+            // and from maps.html it opens maps.html?demo=1, so staging can never
+            // hand a tester the live build (or the reverse) through this button.
+            var _zrDemo = document.getElementById('zoom-restrict-demo');
+            if (_zrDemo) _zrDemo.onclick = () => window.open(location.pathname + '?demo=1', '_blank', 'noopener');
+        }
+
         function showNoDataDialog() {
             // Guarded at the source as well as at the caller above: this dialog offers
             // "Browse Available Regions", which is meaningless when the whole point of
             // the page is that there is exactly one region.
             if (isDemoMode) return;
+            wireZoomRestrictShared();
             const overlay = document.getElementById('zoom-restrict-overlay');
             const title = document.getElementById('zoom-restrict-title');
             const desc = document.getElementById('zoom-restrict-desc');
