@@ -556,7 +556,21 @@
         //       showZoomRestrictionDialog only, so a session whose first dialog was the
         //       no-data variant (zoom in over an area with no plan) had never attached
         //       them; only "Not now" worked. Now wireZoomRestrictShared(), called by both.
-        var APP_VERSION = '175';
+        // 181 = PROMOTION of the zoom-ceiling work (176-180) to live. A blank MinZoom/
+        //       MaxZoom defaulted to 0-22, so the map dispatched z19-22 over pyramids that
+        //       stop at 18 - 9,109 guaranteed 404s a day, 99% of them browsers, and blank
+        //       space where the user expected detail. Blank now means the PUBLISHED 11-18
+        //       range, and the ceiling is enforced inside setMapMaxZoom itself, because the
+        //       zoom_changed handlers re-assert a blanket 21 on every tick and overrode any
+        //       cap set anywhere else - that was the overshoot-then-snap-back. The ceiling
+        //       comes from the SHEET under the cursor, never the merged district max:
+        //       districtsolapur merges to 20 because of one Mangalwedha sheet, which is why
+        //       Solapur outer could pass 18.
+        //       A folder deeper than 18 MUST carry MaxZoom in its record or it is clipped.
+        //       Survey of 2026-09-20: 31 records still need MaxZoom (Alandi Corporation 21,
+        //       Paithan inner 20, Sangli Gaothan 21...) and 10 need MinZoom (three
+        //       PMRDA/Satara folders start at 8). 882 of 924 blanks are genuinely 11-18.
+        var APP_VERSION = '181';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -2118,7 +2132,30 @@
         // continuous wheel/pinch zoom. Each setOptions triggers a sync map state
         // recompile, so calling it 30x per gesture with the same value causes jank.
         let _currentMaxZoom = null;
-        function setMapMaxZoom(z) {
+        // The cap the entitlement/paywall paths asked for (21 when a plan is in view,
+        // MAX_FREE_ZOOM otherwise), remembered so the overlay clamp in
+        // checkOverlayZoomLimit can lower it over a shallow pyramid and hand it straight
+        // back when the user leaves. fromOverlay = "this is the clamp talking", which must
+        // never overwrite what the entitlement path wants.
+        let _entitlementMaxZoom = null;
+        // Set by initMap once the layer helpers exist: returns the deepest tile zoom that
+        // exists under the cursor (else under the centre), or -1 when nothing is known yet.
+        let _tileCeilingFn = null;
+        let _lastCursorPoint = null;
+        function setMapMaxZoom(z, fromOverlay) {
+            if (!fromOverlay) {
+                _entitlementMaxZoom = z;
+                // 🛑 THE TILE CEILING IS ENFORCED HERE, not at the call sites. The
+                // zoom_changed handlers re-assert a blanket 21 on EVERY tick ("let the
+                // owned-region zoom through"), which overrode any cap applied elsewhere and
+                // produced the overshoot-then-snap-back. Capping centrally means no call
+                // site can raise the camera above tiles that exist. This only ever LOWERS z,
+                // so the paywall ceilings (14) and the demo ceiling (18) are untouched.
+                if (_tileCeilingFn) {
+                    const t = _tileCeilingFn();
+                    if (typeof t === 'number' && t >= 0 && t < z) z = t;
+                }
+            }
             if (_currentMaxZoom === z) return;
             _currentMaxZoom = z;
             map.setOptions({ maxZoom: z });
@@ -2954,12 +2991,17 @@
                 if (!pointInPolygon(point, entry.polygon)) return { inside: false, area: Infinity };
                 var bb = entry.bbox;
                 var area = bb ? (bb.maxLat - bb.minLat) * (bb.maxLng - bb.minLng) : Infinity;
-                return { inside: true, area: area };
+                return { inside: true, area: area,
+                         maxZoom: (typeof entry.maxZoom === 'number') ? entry.maxZoom : null };
             }
             // Merged: walk sub-sheets, find the smallest one whose REAL
             // polygon contains the point. The merged rectangle is ignored.
             if (!entry.subSheets) return { inside: false, area: Infinity };
             var bestArea = Infinity;
+            // maxZoom of the SMALLEST sub-sheet containing the point. A merged district
+            // keeps the deepest sheet's maxZoom at the top level (districtsolapur = 20,
+            // from MangalwedhaDraft2025), which is the whole district, not this spot.
+            var bestMax = null;
             for (var i = 0; i < entry.subSheets.length; i++) {
                 var sub = entry.subSheets[i];
                 if (!sub.polygon) continue;
@@ -2968,9 +3010,12 @@
                            point.lng < sb.minLng || point.lng > sb.maxLng)) continue;
                 if (!pointInPolygon(point, sub.polygon)) continue;
                 var sba = sb ? (sb.maxLat - sb.minLat) * (sb.maxLng - sb.minLng) : Infinity;
-                if (sba < bestArea) bestArea = sba;
+                if (sba < bestArea) {
+                    bestArea = sba;
+                    bestMax = (typeof sub.maxZoom === 'number') ? sub.maxZoom : null;
+                }
             }
-            return { inside: bestArea !== Infinity, area: bestArea };
+            return { inside: bestArea !== Infinity, area: bestArea, maxZoom: bestMax };
         }
 
         // Phase 1: returns an array of candidate indices into `layerArray`
@@ -3879,6 +3924,13 @@
         // back to a direct img.src assignment — same behavior as pre-cache.
         const TILE_DB_NAME = 'mapmagician_tiles';
         const TILE_DB_VERSION = 1;
+        // 1 GB (was 500 MB until 2026-09-09). 500 MB was almost exactly ONE heavy day:
+        // measured 09 Sep, the busiest genuine customer pulled 409 MB, so the cap was being
+        // reached and eviction then trimmed to 400 MB -- meaning a user who revisited an area
+        // they had viewed an hour earlier re-downloaded it. That thrash inflates BOTH their
+        // bandwidth and their request count, and it is self-amplifying on exactly the users
+        // who cost the most to serve. Tiles are keyed by full URL and a plan revision ships
+        // under a NEW folder name, so a larger cache cannot serve a stale revision.
         // A FIXED cap is the wrong shape: the real ceiling is the browser's per-origin quota,
         // which is per-device and wildly different -- Chrome allows up to ~60% of total disk,
         // Firefox roughly 2 GB per site, and iOS Safari around 1 GB with 7-day eviction of
@@ -5470,6 +5522,11 @@
                 if (!e || !map) return;
                 if (!e.latLng) { _clearHover(); return; }
                 const point = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+                // Keep the zoom ceiling on the sheet under the CURSOR, before any gesture
+                // starts — a wheel-zoom zooms toward the cursor, so that is the point that
+                // decides the ceiling. setMapMaxZoom re-reads this on every later call.
+                _lastCursorPoint = point;
+                if (!zoomBypassActive && !mapInteractionDisabled) _applyTileZoomCap(point);
                 const hit = findDpEntryAtPoint(point);
                 if (!hit) { _clearHover(); return; }
                 const pid = hit.district.productPurchaseID;
@@ -5786,41 +5843,63 @@
                 clearTimeout(_zoomToastTimer);
                 _zoomToastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
             }
-            function checkOverlayZoomLimit(z, centerLatLng) {
-                if (zoomBypassActive || mapInteractionDisabled) return;
-                if (!centerLatLng) return;
-                const centerPoint = { lat: centerLatLng.lat(), lng: centerLatLng.lng() };
-                let overlayMax = -1;
+            // Deepest tile zoom that actually EXISTS at a point, across every visible layer.
+            // -1 when no layer covers it. For a merged district this reports the SHEET under
+            // the point (see _checkLayerEntryAtPoint), never the district-wide maximum —
+            // districtsolapur merges to 20 because of one Mangalwedha sheet.
+            function _tileMaxZoomAtPoint(point) {
+                let best = -1;
                 const sources = [];
                 if (isDPLayerVisible && !isShowingOldMaps && typeof dpLayerData !== 'undefined' && dpLayerData.length) sources.push(dpLayerData);
                 if (isShowingOldMaps && typeof oldDPLayerData !== 'undefined' && oldDPLayerData.length) sources.push(oldDPLayerData);
                 if (isVillageLayerVisible && typeof villageLayerData !== 'undefined' && villageLayerData.length) sources.push(villageLayerData);
                 for (const arr of sources) {
-                    for (const ov of arr) {
+                    const idxs = (typeof _candidateIndicesAtPoint === 'function') ? _candidateIndicesAtPoint(arr, point) : null;
+                    const n = idxs ? idxs.length : arr.length;
+                    for (let k = 0; k < n; k++) {
+                        const ov = arr[idxs ? idxs[k] : k];
+                        if (!ov) continue;
                         const bb = ov.bbox;
                         if (!bb) continue;
-                        // Cheap outer-bbox reject (works for merged + un-merged)
-                        if (centerPoint.lat < bb.minLat || centerPoint.lat > bb.maxLat ||
-                            centerPoint.lng < bb.minLng || centerPoint.lng > bb.maxLng) continue;
-                        // PERF (maps10 fix #2): for merged entries this walks
-                        // sub-sheet polygons rather than the merged rectangle
-                        // so PMRDA's wide bbox doesn't falsely cover Pune-only
-                        // points.
-                        var ovCheck = _checkLayerEntryAtPoint(ov, centerPoint);
+                        if (point.lat < bb.minLat || point.lat > bb.maxLat ||
+                            point.lng < bb.minLng || point.lng > bb.maxLng) continue;
+                        const ovCheck = _checkLayerEntryAtPoint(ov, point);
                         if (!ovCheck.inside) continue;
-                        const m = (typeof ov.maxZoom === 'number') ? ov.maxZoom : 22;
-                        if (m > overlayMax) overlayMax = m;
+                        const m = (typeof ovCheck.maxZoom === 'number') ? ovCheck.maxZoom
+                                : (typeof ov.maxZoom === 'number') ? ov.maxZoom : 18;
+                        if (m > best) best = m;
                     }
                 }
-                if (overlayMax < 0) { _lastZoomToastMax = null; return; }  // no overlay here — existing handlers cover it
-                if (z > overlayMax) {
-                    if (_lastZoomToastMax !== overlayMax) {
-                        showZoomMaxToast(z, overlayMax);
-                        _lastZoomToastMax = overlayMax;
-                    }
-                } else {
-                    _lastZoomToastMax = null;
+                return best;
+            }
+
+            // Hold Google's own maxZoom at the deepest tile that exists under `point`, so a
+            // wheel or pinch simply STOPS there.
+            // 🛑 Applying this on `idle` alone is what made the map overshoot to 19 and snap
+            // back to 18: idle fires AFTER the gesture. The cap has to be in place BEFORE it,
+            // which is why the hover handler calls this on every cursor move (a wheel-zoom
+            // zooms toward the cursor, so the cursor is the point that matters).
+            function _applyTileZoomCap(point) {
+                const base = (_entitlementMaxZoom === null) ? 21 : _entitlementMaxZoom;
+                let m = point ? _tileMaxZoomAtPoint(point) : -1;
+                if (m < 0 && map) {   // nothing under the cursor — fall back to the centre
+                    const c = map.getCenter();
+                    if (c) m = _tileMaxZoomAtPoint({ lat: c.lat(), lng: c.lng() });
                 }
+                setMapMaxZoom(m < 0 ? base : Math.min(base, m), true);
+            }
+            // Hand the ceiling to setMapMaxZoom, which lives in the outer scope.
+            _tileCeilingFn = function() {
+                let p = _lastCursorPoint;
+                if (!p && map) { const c = map.getCenter(); if (c) p = { lat: c.lat(), lng: c.lng() }; }
+                return p ? _tileMaxZoomAtPoint(p) : -1;
+            };
+            // Centre-based pass, kept for touch (no mousemove) and for programmatic moves.
+            function checkOverlayZoomLimit(z, centerLatLng) {
+                if (zoomBypassActive || mapInteractionDisabled) return;
+                if (!centerLatLng) return;
+                _lastZoomToastMax = null;
+                _applyTileZoomCap({ lat: centerLatLng.lat(), lng: centerLatLng.lng() });
             }
 
             // Projection helper for converting LatLng to screen pixels (magnifier)
@@ -10812,8 +10891,18 @@
                                 polygon: polygon,
                                 holes: holes,
                                 bbox: computeBBox(polygon),
-                                minZoom: parseInt(item.MinZoom || item.minZoom) || 0,
-                                maxZoom: parseInt(item.MaxZoom || item.maxZoom) || 22,
+                                // Tiles are published over 11-18 by default, and a pyramid that
+                                // goes deeper says so in MaxZoom. Defaulting a blank record to
+                                // 0-22 is what let the worker dispatch z19-22 over pyramids that
+                                // stop at 18 — 9,109 guaranteed 404s a day, 99% of them browsers
+                                // (measured 2026-09-19), plus a blank screen where the user
+                                // expected detail.
+                                // 🛑 A folder deeper than 18 MUST carry MaxZoom in its record or
+                                // this default clips it. Blank-but-deeper on 2026-09-20:
+                                // Paithan inner 20 / outer 19, AlandiCorporation 21, Chakan 19,
+                                // Sheet1PuneOuterDP 19 — fill those before promoting.
+                                minZoom: parseInt(item.MinZoom || item.minZoom) || 11,
+                                maxZoom: parseInt(item.MaxZoom || item.maxZoom) || 18,
                                 zIndex: parseFloat(item.ZIndex || item.zIndex) || 0,
                                 productPurchaseID: item.productPurchaseID || '',
                                 villageName: item.VillageName || '',
