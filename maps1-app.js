@@ -466,7 +466,7 @@
         //       session whose first dialog was the no-data variant (zoom in over an area
         //       with no plan) had never attached them; only "Not now" worked. The two
         //       wirings now live in wireZoomRestrictShared(), called by both variants.
-        var APP_VERSION = '174';
+        var APP_VERSION = '176';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -2028,7 +2028,14 @@
         // continuous wheel/pinch zoom. Each setOptions triggers a sync map state
         // recompile, so calling it 30x per gesture with the same value causes jank.
         let _currentMaxZoom = null;
-        function setMapMaxZoom(z) {
+        // The cap the entitlement/paywall paths asked for (21 when a plan is in view,
+        // MAX_FREE_ZOOM otherwise), remembered so the overlay clamp in
+        // checkOverlayZoomLimit can lower it over a shallow pyramid and hand it straight
+        // back when the user leaves. fromOverlay = "this is the clamp talking", which must
+        // never overwrite what the entitlement path wants.
+        let _entitlementMaxZoom = null;
+        function setMapMaxZoom(z, fromOverlay) {
+            if (!fromOverlay) _entitlementMaxZoom = z;
             if (_currentMaxZoom === z) return;
             _currentMaxZoom = z;
             map.setOptions({ maxZoom: z });
@@ -5729,7 +5736,17 @@
                         if (m > overlayMax) overlayMax = m;
                     }
                 }
-                if (overlayMax < 0) { _lastZoomToastMax = null; return; }  // no overlay here — existing handlers cover it
+                // Stop the camera at the deepest tile that actually exists here rather than
+                // the blanket 21. Google Maps pulls the view back when maxZoom drops below the
+                // current zoom, so the user lands on the last real tile instead of on blank
+                // space. This runs on `idle`, so it re-evaluates on pan as well as on zoom.
+                const _base = (_entitlementMaxZoom === null) ? 21 : _entitlementMaxZoom;
+                if (overlayMax < 0) {
+                    _lastZoomToastMax = null;
+                    setMapMaxZoom(_base, true);   // off every overlay — give their own cap back
+                    return;
+                }
+                setMapMaxZoom(Math.min(_base, overlayMax), true);
                 if (z > overlayMax) {
                     if (_lastZoomToastMax !== overlayMax) {
                         showZoomMaxToast(z, overlayMax);
@@ -10729,8 +10746,18 @@
                                 polygon: polygon,
                                 holes: holes,
                                 bbox: computeBBox(polygon),
-                                minZoom: parseInt(item.MinZoom || item.minZoom) || 0,
-                                maxZoom: parseInt(item.MaxZoom || item.maxZoom) || 22,
+                                // Tiles are published over 11-18 by default, and a pyramid that
+                                // goes deeper says so in MaxZoom. Defaulting a blank record to
+                                // 0-22 is what let the worker dispatch z19-22 over pyramids that
+                                // stop at 18 — 9,109 guaranteed 404s a day, 99% of them browsers
+                                // (measured 2026-09-19), plus a blank screen where the user
+                                // expected detail.
+                                // 🛑 A folder deeper than 18 MUST carry MaxZoom in its record or
+                                // this default clips it. Blank-but-deeper on 2026-09-20:
+                                // Paithan inner 20 / outer 19, AlandiCorporation 21, Chakan 19,
+                                // Sheet1PuneOuterDP 19 — fill those before promoting.
+                                minZoom: parseInt(item.MinZoom || item.minZoom) || 11,
+                                maxZoom: parseInt(item.MaxZoom || item.maxZoom) || 18,
                                 zIndex: parseFloat(item.ZIndex || item.zIndex) || 0,
                                 productPurchaseID: item.productPurchaseID || '',
                                 villageName: item.VillageName || '',
