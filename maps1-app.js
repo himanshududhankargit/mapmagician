@@ -466,7 +466,7 @@
         //       session whose first dialog was the no-data variant (zoom in over an area
         //       with no plan) had never attached them; only "Not now" worked. The two
         //       wirings now live in wireZoomRestrictShared(), called by both variants.
-        var APP_VERSION = '179';
+        var APP_VERSION = '180';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -2034,8 +2034,24 @@
         // back when the user leaves. fromOverlay = "this is the clamp talking", which must
         // never overwrite what the entitlement path wants.
         let _entitlementMaxZoom = null;
+        // Set by initMap once the layer helpers exist: returns the deepest tile zoom that
+        // exists under the cursor (else under the centre), or -1 when nothing is known yet.
+        let _tileCeilingFn = null;
+        let _lastCursorPoint = null;
         function setMapMaxZoom(z, fromOverlay) {
-            if (!fromOverlay) _entitlementMaxZoom = z;
+            if (!fromOverlay) {
+                _entitlementMaxZoom = z;
+                // 🛑 THE TILE CEILING IS ENFORCED HERE, not at the call sites. The
+                // zoom_changed handlers re-assert a blanket 21 on EVERY tick ("let the
+                // owned-region zoom through"), which overrode any cap applied elsewhere and
+                // produced the overshoot-then-snap-back. Capping centrally means no call
+                // site can raise the camera above tiles that exist. This only ever LOWERS z,
+                // so the paywall ceilings (14) and the demo ceiling (18) are untouched.
+                if (_tileCeilingFn) {
+                    const t = _tileCeilingFn();
+                    if (typeof t === 'number' && t >= 0 && t < z) z = t;
+                }
+            }
             if (_currentMaxZoom === z) return;
             _currentMaxZoom = z;
             map.setOptions({ maxZoom: z });
@@ -5403,7 +5419,9 @@
                 if (!e.latLng) { _clearHover(); return; }
                 const point = { lat: e.latLng.lat(), lng: e.latLng.lng() };
                 // Keep the zoom ceiling on the sheet under the CURSOR, before any gesture
-                // starts — this is what turns the old overshoot-and-snap-back into a lock.
+                // starts — a wheel-zoom zooms toward the cursor, so that is the point that
+                // decides the ceiling. setMapMaxZoom re-reads this on every later call.
+                _lastCursorPoint = point;
                 if (!zoomBypassActive && !mapInteractionDisabled) _applyTileZoomCap(point);
                 const hit = findDpEntryAtPoint(point);
                 if (!hit) { _clearHover(); return; }
@@ -5766,6 +5784,12 @@
                 }
                 setMapMaxZoom(m < 0 ? base : Math.min(base, m), true);
             }
+            // Hand the ceiling to setMapMaxZoom, which lives in the outer scope.
+            _tileCeilingFn = function() {
+                let p = _lastCursorPoint;
+                if (!p && map) { const c = map.getCenter(); if (c) p = { lat: c.lat(), lng: c.lng() }; }
+                return p ? _tileMaxZoomAtPoint(p) : -1;
+            };
             // Centre-based pass, kept for touch (no mousemove) and for programmatic moves.
             function checkOverlayZoomLimit(z, centerLatLng) {
                 if (zoomBypassActive || mapInteractionDisabled) return;
