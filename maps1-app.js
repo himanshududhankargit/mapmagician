@@ -466,7 +466,7 @@
         //       session whose first dialog was the no-data variant (zoom in over an area
         //       with no plan) had never attached them; only "Not now" worked. The two
         //       wirings now live in wireZoomRestrictShared(), called by both variants.
-        var APP_VERSION = '178';
+        var APP_VERSION = '179';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -5402,6 +5402,9 @@
                 if (!e || !map) return;
                 if (!e.latLng) { _clearHover(); return; }
                 const point = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+                // Keep the zoom ceiling on the sheet under the CURSOR, before any gesture
+                // starts — this is what turns the old overshoot-and-snap-back into a lock.
+                if (!zoomBypassActive && !mapInteractionDisabled) _applyTileZoomCap(point);
                 const hit = findDpEntryAtPoint(point);
                 if (!hit) { _clearHover(); return; }
                 const pid = hit.district.productPurchaseID;
@@ -5718,52 +5721,57 @@
                 clearTimeout(_zoomToastTimer);
                 _zoomToastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
             }
-            function checkOverlayZoomLimit(z, centerLatLng) {
-                if (zoomBypassActive || mapInteractionDisabled) return;
-                if (!centerLatLng) return;
-                const centerPoint = { lat: centerLatLng.lat(), lng: centerLatLng.lng() };
-                let overlayMax = -1;
+            // Deepest tile zoom that actually EXISTS at a point, across every visible layer.
+            // -1 when no layer covers it. For a merged district this reports the SHEET under
+            // the point (see _checkLayerEntryAtPoint), never the district-wide maximum —
+            // districtsolapur merges to 20 because of one Mangalwedha sheet.
+            function _tileMaxZoomAtPoint(point) {
+                let best = -1;
                 const sources = [];
                 if (isDPLayerVisible && !isShowingOldMaps && typeof dpLayerData !== 'undefined' && dpLayerData.length) sources.push(dpLayerData);
                 if (isShowingOldMaps && typeof oldDPLayerData !== 'undefined' && oldDPLayerData.length) sources.push(oldDPLayerData);
                 if (isVillageLayerVisible && typeof villageLayerData !== 'undefined' && villageLayerData.length) sources.push(villageLayerData);
                 for (const arr of sources) {
-                    for (const ov of arr) {
+                    const idxs = (typeof _candidateIndicesAtPoint === 'function') ? _candidateIndicesAtPoint(arr, point) : null;
+                    const n = idxs ? idxs.length : arr.length;
+                    for (let k = 0; k < n; k++) {
+                        const ov = arr[idxs ? idxs[k] : k];
+                        if (!ov) continue;
                         const bb = ov.bbox;
                         if (!bb) continue;
-                        // Cheap outer-bbox reject (works for merged + un-merged)
-                        if (centerPoint.lat < bb.minLat || centerPoint.lat > bb.maxLat ||
-                            centerPoint.lng < bb.minLng || centerPoint.lng > bb.maxLng) continue;
-                        // PERF (maps10 fix #2): for merged entries this walks
-                        // sub-sheet polygons rather than the merged rectangle
-                        // so PMRDA's wide bbox doesn't falsely cover Pune-only
-                        // points.
-                        var ovCheck = _checkLayerEntryAtPoint(ov, centerPoint);
+                        if (point.lat < bb.minLat || point.lat > bb.maxLat ||
+                            point.lng < bb.minLng || point.lng > bb.maxLng) continue;
+                        const ovCheck = _checkLayerEntryAtPoint(ov, point);
                         if (!ovCheck.inside) continue;
-                        // ov.maxZoom on a merged district is the DEEPEST sheet in it, so
-                        // reading it here let the camera run to 20 over Solapur sheets that
-                        // stop at 18. Use the sheet actually under the centre; fall back to
-                        // the published 11-18 range rather than to 22.
-                        var m = (typeof ovCheck.maxZoom === 'number') ? ovCheck.maxZoom
-                              : (typeof ov.maxZoom === 'number') ? ov.maxZoom : 18;
-                        if (m > overlayMax) overlayMax = m;
+                        const m = (typeof ovCheck.maxZoom === 'number') ? ovCheck.maxZoom
+                                : (typeof ov.maxZoom === 'number') ? ov.maxZoom : 18;
+                        if (m > best) best = m;
                     }
                 }
-                // Stop the camera at the deepest tile that actually exists here rather than
-                // the blanket 21. Google Maps pulls the view back when maxZoom drops below the
-                // current zoom, so the user lands on the last real tile instead of on blank
-                // space. This runs on `idle`, so it re-evaluates on pan as well as on zoom.
-                const _base = (_entitlementMaxZoom === null) ? 21 : _entitlementMaxZoom;
-                if (overlayMax < 0) {
-                    _lastZoomToastMax = null;
-                    setMapMaxZoom(_base, true);   // off every overlay — give their own cap back
-                    return;
+                return best;
+            }
+
+            // Hold Google's own maxZoom at the deepest tile that exists under `point`, so a
+            // wheel or pinch simply STOPS there.
+            // 🛑 Applying this on `idle` alone is what made the map overshoot to 19 and snap
+            // back to 18: idle fires AFTER the gesture. The cap has to be in place BEFORE it,
+            // which is why the hover handler calls this on every cursor move (a wheel-zoom
+            // zooms toward the cursor, so the cursor is the point that matters).
+            function _applyTileZoomCap(point) {
+                const base = (_entitlementMaxZoom === null) ? 21 : _entitlementMaxZoom;
+                let m = point ? _tileMaxZoomAtPoint(point) : -1;
+                if (m < 0 && map) {   // nothing under the cursor — fall back to the centre
+                    const c = map.getCenter();
+                    if (c) m = _tileMaxZoomAtPoint({ lat: c.lat(), lng: c.lng() });
                 }
-                setMapMaxZoom(Math.min(_base, overlayMax), true);
-                // No toast. The clamp above stops the camera at the deepest real tile, so
-                // the user never reaches a zoom worth explaining (owner call, 2026-09-20).
-                // showZoomMaxToast is left defined in case the message is ever wanted back.
+                setMapMaxZoom(m < 0 ? base : Math.min(base, m), true);
+            }
+            // Centre-based pass, kept for touch (no mousemove) and for programmatic moves.
+            function checkOverlayZoomLimit(z, centerLatLng) {
+                if (zoomBypassActive || mapInteractionDisabled) return;
+                if (!centerLatLng) return;
                 _lastZoomToastMax = null;
+                _applyTileZoomCap({ lat: centerLatLng.lat(), lng: centerLatLng.lng() });
             }
 
             // Projection helper for converting LatLng to screen pixels (magnifier)
