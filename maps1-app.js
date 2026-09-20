@@ -466,7 +466,7 @@
         //       session whose first dialog was the no-data variant (zoom in over an area
         //       with no plan) had never attached them; only "Not now" worked. The two
         //       wirings now live in wireZoomRestrictShared(), called by both variants.
-        var APP_VERSION = '176';
+        var APP_VERSION = '177';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -5747,14 +5747,10 @@
                     return;
                 }
                 setMapMaxZoom(Math.min(_base, overlayMax), true);
-                if (z > overlayMax) {
-                    if (_lastZoomToastMax !== overlayMax) {
-                        showZoomMaxToast(z, overlayMax);
-                        _lastZoomToastMax = overlayMax;
-                    }
-                } else {
-                    _lastZoomToastMax = null;
-                }
+                // No toast. The clamp above stops the camera at the deepest real tile, so
+                // the user never reaches a zoom worth explaining (owner call, 2026-09-20).
+                // showZoomMaxToast is left defined in case the message is ever wanted back.
+                _lastZoomToastMax = null;
             }
 
             // Projection helper for converting LatLng to screen pixels (magnifier)
