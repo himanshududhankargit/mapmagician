@@ -466,7 +466,7 @@
         //       session whose first dialog was the no-data variant (zoom in over an area
         //       with no plan) had never attached them; only "Not now" worked. The two
         //       wirings now live in wireZoomRestrictShared(), called by both variants.
-        var APP_VERSION = '177';
+        var APP_VERSION = '178';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -2871,12 +2871,17 @@
                 if (!pointInPolygon(point, entry.polygon)) return { inside: false, area: Infinity };
                 var bb = entry.bbox;
                 var area = bb ? (bb.maxLat - bb.minLat) * (bb.maxLng - bb.minLng) : Infinity;
-                return { inside: true, area: area };
+                return { inside: true, area: area,
+                         maxZoom: (typeof entry.maxZoom === 'number') ? entry.maxZoom : null };
             }
             // Merged: walk sub-sheets, find the smallest one whose REAL
             // polygon contains the point. The merged rectangle is ignored.
             if (!entry.subSheets) return { inside: false, area: Infinity };
             var bestArea = Infinity;
+            // maxZoom of the SMALLEST sub-sheet containing the point. A merged district
+            // keeps the deepest sheet's maxZoom at the top level (districtsolapur = 20,
+            // from MangalwedhaDraft2025), which is the whole district, not this spot.
+            var bestMax = null;
             for (var i = 0; i < entry.subSheets.length; i++) {
                 var sub = entry.subSheets[i];
                 if (!sub.polygon) continue;
@@ -2885,9 +2890,12 @@
                            point.lng < sb.minLng || point.lng > sb.maxLng)) continue;
                 if (!pointInPolygon(point, sub.polygon)) continue;
                 var sba = sb ? (sb.maxLat - sb.minLat) * (sb.maxLng - sb.minLng) : Infinity;
-                if (sba < bestArea) bestArea = sba;
+                if (sba < bestArea) {
+                    bestArea = sba;
+                    bestMax = (typeof sub.maxZoom === 'number') ? sub.maxZoom : null;
+                }
             }
-            return { inside: bestArea !== Infinity, area: bestArea };
+            return { inside: bestArea !== Infinity, area: bestArea, maxZoom: bestMax };
         }
 
         // Phase 1: returns an array of candidate indices into `layerArray`
@@ -5732,7 +5740,12 @@
                         // points.
                         var ovCheck = _checkLayerEntryAtPoint(ov, centerPoint);
                         if (!ovCheck.inside) continue;
-                        const m = (typeof ov.maxZoom === 'number') ? ov.maxZoom : 22;
+                        // ov.maxZoom on a merged district is the DEEPEST sheet in it, so
+                        // reading it here let the camera run to 20 over Solapur sheets that
+                        // stop at 18. Use the sheet actually under the centre; fall back to
+                        // the published 11-18 range rather than to 22.
+                        var m = (typeof ovCheck.maxZoom === 'number') ? ovCheck.maxZoom
+                              : (typeof ov.maxZoom === 'number') ? ov.maxZoom : 18;
                         if (m > overlayMax) overlayMax = m;
                     }
                 }
