@@ -214,7 +214,7 @@
         //       reappears on every tap unless the box is ticked (it was suppressed after one
         //       showing per page load regardless, which made the checkbox do nothing).
         // 071 = Annotate feature (Android annotations/ package port): text / markers /
-        //       areas / roads in a LAZY-LOADED maps1-annotations.js (fetched on first
+        //       areas / roads in a LAZY-LOADED maps-annotations.js (fetched on first
         //       Annotate tap — zero start-time cost), with capture-viewfinder
         //       ground-overlay stand-ins and annotation drawing on the export stitch.
         // 072 = Annotate desktop polish (dialogs dock LEFT over a click-through
@@ -461,12 +461,116 @@
         //       resolves, the purchase never matches, zoom stays pinned at 14. Now
         //       retried up to 3x with backoff, with an honest banner if it truly fails,
         //       and a throw in the handler body can no longer disarm the zoom gate.
-        // 174 = "No Map Data Available": Try Demo did nothing and the X would not close
-        //       it. Both handlers were wired inside showZoomRestrictionDialog only, so a
-        //       session whose first dialog was the no-data variant (zoom in over an area
-        //       with no plan) had never attached them; only "Not now" worked. The two
-        //       wirings now live in wireZoomRestrictShared(), called by both variants.
-        var APP_VERSION = '180';
+        // 150 = PROMOTION of the layer-fetch retry (149) to live. NOT 149: live takes
+        //       max(maps, maps1) + 1, promotions included. This is the fix for the
+        //       recurring "I paid, the map won't open, it works if I refresh" tickets:
+        //       a failed layer fetch was recorded as a successful EMPTY one, so a single
+        //       transient blip gave that session zero regions and the customer's own
+        //       district never resolved.
+        // 155 = PROMOTION of the support rework (154) to live. Contact Support now
+        //       re-reads entitlement from the server before deciding, offers the real
+        //       fix (purchase re-fetch + edge token re-issue + tile reload) to customers
+        //       whose pass IS live, and requires a payment screenshot from those with no
+        //       record. The whole dialog, markup included, moved to the LAZY
+        //       maps-support.js — so the initial payload SHRANK despite the new feature.
+        // 158 = BACKPORT (not a full promotion) of two guards from staging 157; the
+        //       progress strip and pan toast in 157 stay on maps1 until they are proven.
+        //       Overlays were being added to the map TWICE and the copy could never be
+        //       removed. loadTileOverlay pushed a cached overlay unconditionally, and
+        //       unloadTileOverlay removes with indexOf() — first occurrence only. The
+        //       guard against that is dpTileStatus, but a layer refetch reallocates it
+        //       all-false while dpOverlays still holds the live overlays, so the unload
+        //       branch is skipped and every visible overlay is pushed again. The trigger
+        //       is ordinary: the appConfig/dataVersions listener calls refetch() on EVERY
+        //       layer publish, so each publish doubled the overlay stack for every open
+        //       map, and a second publish tripled it — until the user reloaded.
+        //       Confirmed on live 155 in the console: onMap 2 -> 4, unique 2.
+        //       Also guards the worker result handler on results.X.length ===
+        //       XLayerData.length: decisions[] is indexed positionally, so a result
+        //       computed against a replaced array addresses the wrong records.
+        // 163 = PROMOTION of staged layer loading (162) to live. The map no longer
+        //       waits for all of d1.bin before it can draw anything: a ~6.6 KB index
+        //       names every region's bounding boxes, the viewport picks the ones it
+        //       needs, and only those per-region chunks are fetched (~26 KB for the
+        //       opening view against 1,078 KB). The full d1.bin still downloads in the
+        //       background and takes over the moment it lands, so every entitlement,
+        //       export and eviction path still sees a COMPLETE layer — dpFast is its own
+        //       layer type and never touches dpLayerData/dpDataLoaded.
+        //       Also: the fast path no longer waits on the RTDB dataVersions read, which
+        //       was costing 1.41s before a single layer byte was requested (measured
+        //       4581ms -> 3169ms); a bottom progress strip reports the real byte
+        //       percentage of the d1.bin stream; a toast names a region still arriving;
+        //       and layer fetches dropped cache:'no-store', which had disabled the HTTP
+        //       cache entirely for users whose ~3.8 MB localStorage write fails on quota.
+        //       Verified on a real phone on mobile data before promotion.
+        // 166 = PROMOTION of 165. Two things. (a) The download progress now also
+        //       shows on the SPLASH, not just the bottom strip: the splash sits at
+        //       z-index 99999 and does not lift until ~1500ms after the CloudFront
+        //       cookie call plus a 500ms fade, so on anything faster than 3G the whole
+        //       d1.bin download starts AND finishes underneath it - confirmed on a real
+        //       phone on 4G, where everything worked but the bar was never seen.
+        //       (b) A download now records how many annotations were baked into it.
+        //       The Annotate tool has no export of its own (verified: no <a download>,
+        //       no toBlob, no share, no fetch anywhere in maps-annotations.js) - its
+        //       artwork reaches a customer ONLY through a paid Map Download, so this is
+        //       the only signal that says whether Annotate helps earn a sale. Rides the
+        //       existing logDownloadOutcome call; the Admin Panel's Downloads tab shows
+        //       it as an 'annotated · N' chip.
+        // 168 = PORT of the download-dialog sharpness hint from staging 167. The
+        //       "Press & hold to check sharpness" pill was position:absolute inside
+        //       #dlmap-preview-wrap, so it sat ON the map sheet and hid a strip of it
+        //       exactly where a customer is trying to judge the thing they are about
+        //       to pay for. It now sits above the preview box as a static teal chip.
+        //       HTML/CSS only — this file is unchanged apart from the stamp, so live
+        //       is NOT inheriting staging's number: max(166, 167) + 1.
+        // 170 = PROMOTION of the missing-tile fix (staging 169) to live. NOT 169:
+        //       live takes max(168, 169) + 1. loadTileWithCache returned null for
+        //       every non-200, and both call sites read null as "retry as a plain
+        //       <img>" — so a 404 was requested TWICE. Measured 2026-08-27/29/31:
+        //       404s were 46-50% of all CloudFront traffic and browsers asked for
+        //       ~72k distinct missing tiles ~398k times a day (5.55x each, the
+        //       per-URL histogram piled onto EVEN counts). Successful tiles on the
+        //       same path repeat 1.09x because a 200 is cached in IndexedDB.
+        //       A TILE_ABSENT sentinel now separates "server says it is not there"
+        //       from "the fetch failed", plus an in-memory negative cache. The
+        //       403/stale-cookie path is untouched — a negative cache there would
+        //       survive a purchase and lock a paying customer out.
+        // 173 = PROMOTION of the adaptive tile cache + new-regions FAB fix (172). NOT 172:
+        //       live takes max(170, 172) + 1. (a) The IndexedDB tile cap was a flat 500 MB,
+        //       almost exactly ONE heavy day — the busiest genuine customer measured
+        //       409 MB on 09 Sep — so the cap was reached, eviction trimmed to 400 MB,
+        //       and revisiting an area viewed an hour earlier re-downloaded it. The cap is
+        //       now a 1 GB CEILING sized down at runtime to half of
+        //       navigator.storage.estimate().quota, because the real limit is per-device
+        //       (Chrome ~60% of disk, Firefox ~2 GB, iOS Safari ~1 GB). Half, not all: the
+        //       geojson DB, SW caches and localStorage share that budget. Also fixes
+        //       _tileCacheBytes being incremented BEFORE the IDB transaction committed —
+        //       a rejected write (quota) inflated the counter, which at a 1 GB cap would
+        //       evict real tiles chasing bytes that were never stored.
+        //       (b) The unlock FAB (z-index 2500) rendered ON TOP of the new-regions sheet
+        //       (2100). Hidden via body.mmnr-open while the sheet is up, mirroring the
+        //       existing body.dlmap-capturing rule rather than lowering the FAB out of the
+        //       dialog band. Both verified on maps1 (172) before promotion.
+        // 175 = PROMOTION of 174 to live. "No Map Data Available": Try Demo did nothing
+        //       and the X would not close it. Both handlers were wired inside
+        //       showZoomRestrictionDialog only, so a session whose first dialog was the
+        //       no-data variant (zoom in over an area with no plan) had never attached
+        //       them; only "Not now" worked. Now wireZoomRestrictShared(), called by both.
+        // 181 = PROMOTION of the zoom-ceiling work (176-180) to live. A blank MinZoom/
+        //       MaxZoom defaulted to 0-22, so the map dispatched z19-22 over pyramids that
+        //       stop at 18 - 9,109 guaranteed 404s a day, 99% of them browsers, and blank
+        //       space where the user expected detail. Blank now means the PUBLISHED 11-18
+        //       range, and the ceiling is enforced inside setMapMaxZoom itself, because the
+        //       zoom_changed handlers re-assert a blanket 21 on every tick and overrode any
+        //       cap set anywhere else - that was the overshoot-then-snap-back. The ceiling
+        //       comes from the SHEET under the cursor, never the merged district max:
+        //       districtsolapur merges to 20 because of one Mangalwedha sheet, which is why
+        //       Solapur outer could pass 18.
+        //       A folder deeper than 18 MUST carry MaxZoom in its record or it is clipped.
+        //       Survey of 2026-09-20: 31 records still need MaxZoom (Alandi Corporation 21,
+        //       Paithan inner 20, Sangli Gaothan 21...) and 10 need MinZoom (three
+        //       PMRDA/Satara folders start at 8). 882 of 924 blanks are genuinely 11-18.
+        var APP_VERSION = '182';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -1240,7 +1344,7 @@
         // ownedConfusionPartner() when an unpaid user zooms past the free limit, long
         // before support is ever opened. Moving them into the module made that call a
         // ReferenceError, which swallowed showZoomRestrictionDialog() and meant NO
-        // paywall appeared at all. maps1-support.js reads them from the shared script
+        // paywall appeared at all. maps-support.js reads them from the shared script
         // scope, the same way it reads hasPurchase().
         // Regions that users routinely confuse with each other: distinct regions within the
         // same area where a pass for one does NOT unlock the other. Extend as more surface.
@@ -1286,7 +1390,7 @@
 
         // --- Support form (LAZY) ---------------------------------------------
         // The whole dialog — guided billing flow, entitlement re-check, access
-        // refresh, screenshot attachment — lives in maps1-support.js and is fetched
+        // refresh, screenshot attachment — lives in maps-support.js and is fetched
         // only when someone actually asks for support. It rides ?v=APP_VERSION like
         // the other lazy modules, so a version bump invalidates it in lockstep.
         //
@@ -1300,7 +1404,7 @@
             if (_supportLoading) return _supportLoading;
             _supportLoading = new Promise(function (resolve, reject) {
                 var sc = document.createElement('script');
-                sc.src = 'maps1-support.js?v=' + APP_VERSION;
+                sc.src = 'maps-support.js?v=' + APP_VERSION;
                 sc.onload = function () {
                     if (window.mmSupport) resolve(window.mmSupport);
                     else { _supportLoading = null; reject(new Error('support init failed')); }
@@ -8129,7 +8233,7 @@
             }
             _dlmapHoldZoom('dlmap-zoom-in', 1);
             _dlmapHoldZoom('dlmap-zoom-out', -1);
-            // Annotate — the whole feature lives in maps1-annotations.js, fetched on
+            // Annotate — the whole feature lives in maps-annotations.js, fetched on
             // the FIRST tap only (lazy: start time is untouched). ?v= rides the app
             // version so a deploy invalidates it in lockstep with this file.
             var _annLoading = null;
@@ -9448,7 +9552,7 @@
             if (_nrLoading) return _nrLoading;
             _nrLoading = new Promise(function (resolve, reject) {
                 const sc = document.createElement('script');
-                sc.src = 'maps1-newregions.js?v=' + APP_VERSION;
+                sc.src = 'maps-newregions.js?v=' + APP_VERSION;
                 sc.onload = function () {
                     if (window.mmNewRegions) resolve(window.mmNewRegions);
                     else { _nrLoading = null; reject(new Error('newregions init failed')); }

@@ -2159,11 +2159,10 @@
         </div>
     </div>
 
-    <!-- Support form dialog -->
     <!-- Support form dialog. The overlay SHELL stays here on purpose: the
          [data-dismiss] observer runs querySelectorAll once at DOMContentLoaded,
          so an overlay injected later would lose Android back-button handling.
-         Its ~100 lines of contents are injected by maps1-support.js on first use. -->
+         Its ~100 lines of contents are injected by maps-support.js on first use. -->
     <div class="auth-dialog-overlay" id="support-dialog-overlay" data-dismiss="support-cancel-btn" style="z-index:4000;">
         <div class="auth-dialog" id="support-dialog-body" style="max-width:400px;text-align:left;"></div>
     </div>
@@ -3072,7 +3071,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=180" defer></script>
+    <script src="maps1-app.js?v=182" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
