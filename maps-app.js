@@ -570,7 +570,7 @@
         //       Survey of 2026-09-20: 31 records still need MaxZoom (Alandi Corporation 21,
         //       Paithan inner 20, Sangli Gaothan 21...) and 10 need MinZoom (three
         //       PMRDA/Satara folders start at 8). 882 of 924 blanks are genuinely 11-18.
-        var APP_VERSION = '181';
+        var APP_VERSION = '192';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -616,8 +616,13 @@
         });
 
         // Trigger sign-in via Firebase popup (works on all domains without extra OAuth config)
+        // True only between the user starting a sign-in and the auth listener seeing it.
+        // A session RESTORED on page load never sets it — see the account overlay below.
+        var _userSignInInProgress = false;
         function triggerGoogleSignIn() {
+            _userSignInInProgress = true;
             firebase.auth().signInWithPopup(googleProvider).catch(err => {
+                _userSignInInProgress = false;
                 console.error('Login failed:', err);
                 if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
                     alert('Sign-in could not be completed. Please try again.');
@@ -637,6 +642,7 @@
                 } else {
                     fetchCloudFrontCookies();
                 }
+                if (user) _setEntitlementsKnown(); // embed has no purchase logic to wait for
                 return;
             }
 
@@ -728,11 +734,19 @@
                     fetchPurchaseHistory();
                 });
 
-                // Show loading while fetching purchase data
+                // Modal "Loading your account..." while purchases load — but only when the
+                // user just signed in, or something is waiting to resume on the result (a
+                // purchase or support form started before login). A session restored on a
+                // page reload used to get it too: a ~1 s modal over a map that was already
+                // usable. The startup paywall re-check waits on _entitlementsKnown instead.
                 const authLoadingOverlay = document.getElementById('payment-loading-overlay');
-                document.getElementById('payment-loading-text').textContent = 'Loading your account...';
-                document.getElementById('payment-loading-sub').textContent = user.email || '';
-                authLoadingOverlay.classList.add('open');
+                const showAccountLoading = _userSignInInProgress || !!pendingPurchase || !!pendingSupportOpen;
+                _userSignInInProgress = false;
+                if (showAccountLoading) {
+                    document.getElementById('payment-loading-text').textContent = 'Loading your account...';
+                    document.getElementById('payment-loading-sub').textContent = user.email || '';
+                    authLoadingOverlay.classList.add('open');
+                }
 
                 // Fire-and-forget: delete this user's expired purchases server-side.
                 // Bounded to the caller's own emailKey; runs once per session.
@@ -747,6 +761,7 @@
                 fetchSubscriptionStatus(); // load subscription metadata
                 fetchPurchaseHistory(); // load purchase history for sidebar
                 fetchPurchaseStatus(true).then(function() {
+                    _setEntitlementsKnown();
                     authLoadingOverlay.classList.remove('open');
                     // Reset overlay text for future payment use
                     document.getElementById('payment-loading-text').textContent = 'Preparing your payment...';
@@ -771,6 +786,7 @@
                         openSupportForm(ps.district, ps.returnToPaywall);
                     }
                 }).catch(function() {
+                    _setEntitlementsKnown();
                     authLoadingOverlay.classList.remove('open');
                     document.getElementById('payment-loading-text').textContent = 'Preparing your payment...';
                     document.getElementById('payment-loading-sub').textContent = '7-Day Pass';
@@ -793,6 +809,7 @@
                     mmAnalytics.clarityTag('auth', 'anonymous');
                 } catch (e) {}
                 fetchCloudFrontCookies();
+                _setEntitlementsKnown(); // anonymous web visitors hold no purchases
             } else {
                 profileBtn.classList.remove('signed-in');
                 profileSvg.style.display = '';
@@ -824,6 +841,7 @@
 
                 // Clear CloudFront cookies on sign-out
                 cfCookiesReady = false;
+                try { localStorage.removeItem(CF_META_KEY); } catch (e) {}
                 document.cookie = `CloudFront-Policy=; domain=${COOKIE_DOMAIN}; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
                 document.cookie = `CloudFront-Signature=; domain=${COOKIE_DOMAIN}; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
                 document.cookie = `CloudFront-Key-Pair-Id=; domain=${COOKIE_DOMAIN}; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
@@ -902,7 +920,248 @@
             // browser blocks cookies; without this check the map "unlocks" and every
             // tile 403s forever. Key-Pair-Id is always set and the shortest of the four,
             // so its presence is the cheapest proof the jar accepted the writes.
-            return document.cookie.indexOf('CloudFront-Key-Pair-Id=') !== -1;
+            const ok = document.cookie.indexOf('CloudFront-Key-Pair-Id=') !== -1;
+            // Remember WHEN these were written, by the device's own clock, so the next
+            // page load can reuse them (see _tryReuseCfCookies). Deliberately not the
+            // server's expiresAt: a device clock that disagrees with the server's is the
+            // exact failure the no-expires= note above describes.
+            _cfWrittenAtMem = ok ? Date.now() : 0;   // expiry tracking works without storage
+            try {
+                if (ok) localStorage.setItem(CF_META_KEY, JSON.stringify({ at: _cfWrittenAtMem, pids: _cfGrantedPids }));
+                else localStorage.removeItem(CF_META_KEY);
+            } catch (e) { /* storage blocked: reuse simply never happens */ }
+            return ok;
+        }
+
+        // ── Fast start: reuse the cookies already in the jar ─────────────────────────
+        // Every page load used to wait for getCloudFrontCookies (p50 ~1.0 s, p90 ~2.0 s,
+        // measured 2026-09-23) before requesting a single tile, even when the cookies
+        // from the previous load were still valid. They are session cookies, so they
+        // survive a reload for as long as the browser session lives.
+        //
+        // This changes NOTHING about access: the browser attaches whatever is in the jar
+        // to every tile request anyway, and the edge (signed policy + mmp-token) decides.
+        // Reuse only moves the first tile request earlier. The normal issuance still runs
+        // on every load, in the background, and replaces the cookies when it lands.
+        const CF_META_KEY = 'mm_cf_meta';
+        const CF_REUSE_MAX_AGE_MS = 2 * 3600000;   // well inside the ~3 h token lifetime
+        let _cfReusedPids;                          // undefined = this load did not reuse
+
+        // Splash timing. It used to lift a FIXED 1.5 s after tiles unlocked, then fade for
+        // 0.5 s — sized for when unlocking itself came late. With cookie reuse, tiles
+        // unlock ~0.3 s into a reload, so that fixed wait became most of the visible load.
+        // Now: lift once the basemap has drawn, plus a short grace so the first plan tiles
+        // (requested ~0.15 s after unlock) land under it rather than popping in after.
+        // SPLASH_MAX_WAIT_MS keeps the old 1.5 s as a ceiling if tilesloaded never fires.
+        const SPLASH_PLAN_GRACE_MS = 250;
+        const SPLASH_MAX_WAIT_MS = 1500;
+        var _basemapDrawn = false;
+        var _splashLifting = false;
+
+        function _liftSplash() {
+            if (_splashLifting) return;
+            _splashLifting = true;
+            setTimeout(function() {
+                var ls = document.getElementById('app-loading-screen');
+                if (!ls || ls.style.display === 'none') {
+                    // Skipped up front by the inline check in the HTML: the disclaimer
+                    // still belongs at this moment, when the map is actually drawn.
+                    if (window.__splashSkipped && typeof window._showDisclaimer === 'function') window._showDisclaimer();
+                    return;
+                }
+                ls.style.transition = 'opacity 0.3s ease';
+                ls.style.opacity = '0';
+                setTimeout(function() {
+                    // display:none instead of remove() — keeps splash banner
+                    // as the LCP candidate so PageSpeed reports LCP at first
+                    // paint (~1.4s) rather than at element-removal time (~7s).
+                    ls.style.display = 'none';
+                    ls.style.pointerEvents = 'none';
+                    if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
+                }, 300);
+            }, SPLASH_PLAN_GRACE_MS);
+        }
+
+        function _markCfReady() {
+            if (cfCookiesReady) return;
+            cfCookiesReady = true;
+            // Layer data already fetching in parallel — now cookies are set, trigger tile load
+            loadTilesBasedOnViewport();
+            if (_basemapDrawn) _liftSplash();
+            else setTimeout(_liftSplash, SPLASH_MAX_WAIT_MS);
+        }
+
+        function _tryReuseCfCookies() {
+            if (cfCookiesReady || isDemoMode) return false;
+            try {
+                const jar = document.cookie;
+                if (jar.indexOf('CloudFront-Key-Pair-Id=') === -1
+                    || jar.indexOf('CloudFront-Policy=') === -1
+                    || jar.indexOf('CloudFront-Signature=') === -1) return false;
+                const meta = JSON.parse(localStorage.getItem(CF_META_KEY) || 'null');
+                if (!meta || typeof meta.at !== 'number') return false;
+                const age = Date.now() - meta.at;
+                // A negative age means the clock moved backwards since the write; trust nothing.
+                if (age < 0 || age > CF_REUSE_MAX_AGE_MS) return false;
+                _cfReusedPids = Array.isArray(meta.pids) ? meta.pids : null;
+                _cfGrantedPids = _cfReusedPids;
+                _cfWrittenAtMem = meta.at;
+            } catch (e) {
+                return false;
+            }
+            _markCfReady();
+            return true;
+        }
+
+        // ── Pre-auth cookies: first visits no longer wait for sign-in ────────────────
+        // With nothing in the jar to reuse, tiles used to wait for three calls IN SERIES:
+        // anonymous sign-up (~1.0 s) -> the SDK's account lookup (~0.8 s) -> issuance
+        // (~0.5 s). getCloudFrontCookies now also answers an unauthenticated
+        // {preauth: true} call with the three policy cookies — exactly what any anonymous
+        // visitor is given today, and NO mmp-token, so zoom >= 15 stays gated at the edge.
+        // It is sent the moment this script runs, in parallel with sign-in.
+        //
+        // The signed-in issuance always has the last word: if it has already written, the
+        // pre-auth answer is dropped; if it lands later it overwrites, and because this is
+        // treated like a reuse (_cfReusedPids = []), _afterReusedCookiesRefreshed rebuilds
+        // the DP overlays when the real token grants districts.
+        const CF_FUNCTION_URL = 'https://asia-south1-sodium-hour-256110.cloudfunctions.net/getCloudFrontCookies';
+        let _cfAuthedWritten = false;   // set once a signed-in issuance has written the jar
+
+        function _cfReusableNow() {
+            try {
+                const jar = document.cookie;
+                if (jar.indexOf('CloudFront-Key-Pair-Id=') === -1 || jar.indexOf('CloudFront-Policy=') === -1
+                    || jar.indexOf('CloudFront-Signature=') === -1) return false;
+                const meta = JSON.parse(localStorage.getItem(CF_META_KEY) || 'null');
+                const age = meta && typeof meta.at === 'number' ? Date.now() - meta.at : -1;
+                return age >= 0 && age <= CF_REUSE_MAX_AGE_MS;
+            } catch (e) { return false; }
+        }
+
+        (function _startPreauthCookies() {
+            if (isDemoMode) return;             // demo must not load anything before a real sign-in
+            if (_cfReusableNow()) return;       // initMap will reuse the jar instead
+            let body;
+            try {
+                body = JSON.stringify({ data: { preauth: true, tileHost: typeof TILE_HOST === 'string' ? TILE_HOST : '' } });
+            } catch (e) { return; }
+            fetch(CF_FUNCTION_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body })
+                .then(function(r) { return r.ok ? r.json() : null; })
+                .then(function(j) {
+                    const d = j && j.result;
+                    if (!d || d.preauth !== true) return;
+                    if (cfCookiesReady || _cfAuthedWritten) return;   // the real issuance won the race
+                    if (!writeCfCookies(d)) return;                   // cookies blocked: normal path shows the banner
+                    _cfReusedPids = [];
+                    _markCfReady();
+                })
+                .catch(function() { /* no pre-auth = today's behaviour */ });
+        })();
+
+        // The background issuance after a reuse landed. If the fresh token grants a
+        // different district set, DP overlays may be holding tiles fetched under the old
+        // one (blank 403s for a district just bought, or real tiles for one that lapsed),
+        // so tear them down exactly as syncEdgeToEntitlements does. Either way re-run the
+        // viewport pass: the auth listener clears village overlays on its way through.
+        function _afterReusedCookiesRefreshed() {
+            if (_cfReusedPids === undefined) return;
+            const before = _cfReusedPids;
+            _cfReusedPids = undefined;
+            const norm = function(a) { return Array.isArray(a) ? a.slice().sort().join('|') : '?'; };
+            if (norm(before) !== norm(_cfGrantedPids)) {
+                clearAllLayersOfType(dpOverlays);
+                dpTileStatus = Array(dpLayerData.length).fill(false);
+            }
+            loadTilesBasedOnViewport();
+        }
+
+        // ── Expiry: never let the page sit on dead cookies ───────────────────────────
+        // The CloudFront policy and the mmp-token both expire 3 h after issuance, and an
+        // expired policy is refused for EVERY tile, free zooms included. Two things made
+        // that reachable, and cookie reuse widens it:
+        //  - scheduleCfCookieRefresh is a setTimeout keyed to the SERVER's expiresAt. Timers
+        //    stall while a laptop or phone sleeps, so a tab that sleeps past the 3 h mark
+        //    wakes on dead cookies with the refresh still pending.
+        //  - healStaleTokenFor only answers 403s at zoom > 14 on owned folders. A 403 on a
+        //    free tile was never healed at all — the map just went blank.
+        // So: track age by the DEVICE clock from the moment we wrote the cookies, and check
+        // it on a cheap 1-minute tick (which fires promptly after wake), on tab return, on
+        // reconnect and on a back/forward-cache restore. Checking is local and free; only a
+        // cookie that is actually due costs one getCloudFrontCookies call.
+        const CF_TTL_MS = 3 * 3600000;            // lifetime set by getCloudFrontCookies
+        const CF_REFRESH_AHEAD_MS = 15 * 60000;   // renew this long before it lapses
+        const CF_EXPIRED_RETRY_MS = 5 * 60000;    // back-off after a failed renewal
+        var _cfWrittenAtMem = 0;                  // device-clock write time of the jar's cookies
+        var _cfEnsureNotBefore = 0;
+
+        function _cfWrittenAt() {
+            let at = _cfWrittenAtMem;
+            try {
+                // Another tab may have renewed the shared jar since; its write time is newer.
+                const m = JSON.parse(localStorage.getItem(CF_META_KEY) || 'null');
+                if (m && typeof m.at === 'number' && m.at > at) at = m.at;
+            } catch (e) {}
+            return at;
+        }
+
+        // Tile layers may be holding blanks fetched with the dead cookies. 403s are never
+        // cached (IndexedDB stores only 200s; _absentTiles only 404s), so dropping the
+        // overlays and re-running the viewport pass re-requests exactly those tiles.
+        function _rebuildTileOverlays() {
+            clearAllLayersOfType(dpOverlays);
+            dpTileStatus = Array(dpLayerData.length).fill(false);
+            clearAllLayersOfType(oldDPOverlays);
+            oldDPTileStatus = Array(oldDPLayerData.length).fill(false);
+            clearAllLayersOfType(villageOverlays);
+            villageTileStatus = Array(villageLayerData.length).fill(false);
+            loadTilesBasedOnViewport();
+        }
+
+        function _ensureFreshCfCookies() {
+            if (!cfCookiesReady || _cfCookieInFlight) return;
+            if (Date.now() < _cfEnsureNotBefore) return;
+            const at = _cfWrittenAt();
+            if (!at) return;
+            const age = Date.now() - at;
+            // age < 0: the device clock moved backwards since the write — trust nothing.
+            if (age >= 0 && age < CF_TTL_MS - CF_REFRESH_AHEAD_MS) return;
+            const expired = age < 0 || age >= CF_TTL_MS;
+            fetchCloudFrontCookies().then(function(ok) {
+                if (!ok) { _cfEnsureNotBefore = Date.now() + CF_EXPIRED_RETRY_MS; return; }
+                if (expired) _rebuildTileOverlays();
+            });
+        }
+
+        setInterval(_ensureFreshCfCookies, 60000);
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') _ensureFreshCfCookies();
+        });
+        window.addEventListener('online', _ensureFreshCfCookies);
+        window.addEventListener('pageshow', function(e) { if (e.persisted) _ensureFreshCfCookies(); });
+
+        // Backstop for anything the clock cannot see (cookies dropped by the browser, a
+        // clock changed by hand): a 403 at zoom <= 14 is NEVER the paywall — free tiles are
+        // served to any valid cookie — so it can only mean the cookies are bad. Same
+        // budget discipline as healStaleTokenFor: this must never approach per-tile.
+        const COOKIE_HEAL_COOLDOWN_MS = 60000;
+        const COOKIE_HEAL_MAX_PER_SESSION = 5;
+        let _cookieHealLastAt = 0;
+        let _cookieHealCount = 0;
+        function healExpiredCookies() {
+            if (!cfCookiesReady) return Promise.resolve(false);   // not issued yet: nothing to heal
+            if (_cfCookieInFlight) return _cfCookieInFlight;       // ride a renewal already running
+            if (_cookieHealCount >= COOKIE_HEAL_MAX_PER_SESSION) return Promise.resolve(false);
+            if (Date.now() - _cookieHealLastAt < COOKIE_HEAL_COOLDOWN_MS) return Promise.resolve(false);
+            _cookieHealLastAt = Date.now();
+            _cookieHealCount++;
+            console.warn('403 on a free-zoom tile — CloudFront cookies look expired, renewing');
+            return fetchCloudFrontCookies().then(function(ok) {
+                // Tiles that already failed before this renewal are blank, not queued —
+                // re-request them. Deferred so the tile that triggered us retries first.
+                if (ok) setTimeout(_rebuildTileOverlays, 0);
+                return ok;
+            });
         }
 
         // Issues a fresh CloudFront cookie + mmp-token pair. Resolves TRUE only when a new
@@ -957,7 +1216,9 @@
             // Start layer data fetch immediately — it only needs auth, not cookies
             fetchLayerData();
             var als = document.getElementById('app-loading-status');
-            if (als) als.textContent = 'Connecting to tile server...';
+            // Not after a cookie reuse: tiles are already loading, and this call is only
+            // a background refresh — the splash must not claim we are still connecting.
+            if (als && !cfCookiesReady) als.textContent = 'Connecting to tile server...';
 
             const RETRY_DELAYS_MS = [0, 1000, 3000, 8000];
             let data = null;
@@ -984,6 +1245,7 @@
                         return false;
                     }
                     hideCookiesBlockedBanner();
+                    _cfAuthedWritten = true;   // a late pre-auth answer must not overwrite this
 
                     if (expectPid && Array.isArray(data.grantedPids)
                         && data.grantedPids.indexOf(expectPid) === -1
@@ -1007,26 +1269,8 @@
             scheduleCfCookieRefresh(data ? data.expiresAt : null);
             if (!data) return false;
 
-            if (!cfCookiesReady) {
-                cfCookiesReady = true;
-                // Layer data already fetching in parallel — now cookies are set, trigger tile load
-                loadTilesBasedOnViewport();
-                // Dismiss loading screen after layer data triggers first tile load
-                setTimeout(function() {
-                    var ls = document.getElementById('app-loading-screen');
-                    if (ls) {
-                        ls.style.opacity = '0';
-                        setTimeout(function() {
-                            // display:none instead of remove() — keeps splash banner
-                            // as the LCP candidate so PageSpeed reports LCP at first
-                            // paint (~1.4s) rather than at element-removal time (~7s).
-                            ls.style.display = 'none';
-                            ls.style.pointerEvents = 'none';
-                            if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
-                        }, 500);
-                    }
-                }, 1500);
-            }
+            if (!cfCookiesReady) _markCfReady();
+            else _afterReusedCookiesRefreshed();
             return true;
         }
 
@@ -4210,8 +4454,106 @@
         // Caller uses null as the signal to fall back to a direct img.src = url
         // assignment (pre-cache behavior). Each call attempts independently — a
         // transient failure does not disable the cache for future tiles.
+        // ── Tile coverage index ──────────────────────────────────────────────────────
+        // Built by scripts/build-coverage.py from real S3 listings: for each tile folder,
+        // a bitmap of which squares of a z13 grid hold tiles (dilated one square).
+        // ~20% of tile requests were 404s on the empty corners of irregular plans; the
+        // polygon test cannot see those because the polygon covers them. With this, the
+        // map never asks. Every tile the index names as absent was CHECKED against a real
+        // day of CloudFront logs: zero served tiles would have been hidden.
+        //
+        // 🛑 FAIL-OPEN, like the builder. Anything the index does not positively say is
+        // absent is requested exactly as before: index not loaded yet, fetch failed,
+        // folder not in it (new uploads), zoom below the index zoom, or the file older
+        // than COVERAGE_MAX_AGE_MS (a pyramid re-uploaded with a larger extent must not
+        // stay hidden forever — regenerate the index before it expires).
+        const COVERAGE_URL = LAYER_JSON_BASE.replace(/\/database$/, '/coverage') + '/cov.json.gz';
+        const COVERAGE_MAX_AGE_MS = 35 * 24 * 3600000;
+        const COVERAGE_TILE_RE = /\/(?:[^/]+\/)?dpplans\/(.+)\/(\d+)\/(\d+)\/(\d+)\.png(?:[?#]|$)/;
+        let _coverage = null;   // { folders: { key: {z,x,y,w,h,b} } }, b decoded lazily
+
+        (function _loadCoverage() {
+            try {
+                if (new URLSearchParams(location.search).get('cov') === '0') return;   // kill switch for testing
+                if (typeof DecompressionStream === 'undefined') return;
+            } catch (e) { return; }
+            fetch(COVERAGE_URL, { cache: 'default' })
+                .then(function(r) {
+                    if (!r.ok || !r.body) return null;
+                    return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).json();
+                })
+                .then(function(doc) {
+                    if (!doc || doc.v !== 2 || !doc.folders || !doc.generatedAt || !(doc.exactMax > 0)) return;
+                    const age = Date.now() - Date.parse(doc.generatedAt);
+                    if (!(age >= 0 && age < COVERAGE_MAX_AGE_MS)) return;   // stale: ask for everything
+                    _coverage = doc;
+                })
+                .catch(function() { /* no index = today's behaviour */ });
+        })();
+
+        function _coverageSaysAbsent(url) {
+            if (!_coverage) return false;
+            const m = COVERAGE_TILE_RE.exec(url);
+            if (!m) return false;
+            const e = _coverage.folders[m[1]];
+            if (!e) return false;
+            // 🛑 Mirrors absent() in the builder EXACTLY — that is the function the zero-false-
+            // block check was run against. Change one, change both, and re-run the check.
+            let z = +m[2], x = +m[3], y = +m[4];
+            if (z < e.zmin || z > e.zmax) return true;    // outside the pyramid's zoom range
+            const xm = _coverage.exactMax;
+            if (z > xm) { const s = z - xm; x = x >> s; y = y >> s; z = xm; }   // judge by ancestor
+            const g = e.zs[z];
+            if (!g) return true;                           // no tiles at this zoom at all
+            if (x < g.x || x >= g.x + g.w || y < g.y || y >= g.y + g.h) return true;
+            if (!g._bits) {
+                try {
+                    const raw = atob(g.b);
+                    const bits = new Uint8Array(raw.length);
+                    for (let i = 0; i < raw.length; i++) bits[i] = raw.charCodeAt(i);
+                    g._bits = bits;
+                } catch (err) { _coverage.folders[m[1]] = undefined; return false; }   // corrupt entry: ask
+            }
+            const i = (y - g.y) * g.w + (x - g.x);
+            return !((g._bits[i >> 3] >> (i & 7)) & 1);
+        }
+
+        // Trust, but verify: 1 in COVERAGE_PROBE_EVERY tiles the index calls absent is fetched
+        // anyway. If one of those exists, the index is stale for that folder (tiles added to
+        // an existing pyramid after it was built) — stop trusting it for that folder at once.
+        // Costs ~3% of the saving; turns a stale index from "region dark until the next
+        // rebuild" into "one extra request, then self-healed".
+        const COVERAGE_PROBE_EVERY = 32;
+        let _coverageProbeN = 0;
+
         async function loadTileWithCache(url, zoom) {
             if (_absentTiles.has(url)) return TILE_ABSENT;
+            let covProbe = false;
+            if (_coverageSaysAbsent(url)) {
+                if (++_coverageProbeN % COVERAGE_PROBE_EVERY !== 0) return TILE_ABSENT;
+                covProbe = true;
+            }
+            if (covProbe) {
+                // Probe outside the cache path so its answer is only used for the verdict.
+                try {
+                    const r = await fetch(url, { credentials: 'include' });
+                    if (r.status === 200 || r.status === 403) {
+                        // 200: the tile exists. 403: it may exist behind the paywall — either
+                        // way the index cannot be shown to be right, so drop it for this folder.
+                        const m = COVERAGE_TILE_RE.exec(url);
+                        if (m && _coverage) {
+                            _coverage.folders[m[1]] = undefined;
+                            console.warn('coverage index stale for "' + m[1] + '" — ignoring it for this folder');
+                        }
+                        if (r.status === 200) {
+                            const blob = await r.blob();
+                            return URL.createObjectURL(blob);
+                        }
+                        return null;
+                    }
+                } catch (e) { /* network: keep the index's verdict */ }
+                return TILE_ABSENT;
+            }
             const cached = await getTileFromDB(url);
             if (cached && cached.blob) {
                 try { return URL.createObjectURL(cached.blob); }
@@ -4219,8 +4561,10 @@
             }
             try {
                 let resp = await fetch(url, { credentials: 'include' });
-                if (resp.status === 403 && zoom > 14) {
-                    const healed = await healStaleTokenFor(url);
+                if (resp.status === 403) {
+                    // zoom > 14: possibly a stale mmp-token on an owned district.
+                    // zoom <= 14: free tiles, so only an expired/missing cookie can 403.
+                    const healed = zoom > 14 ? await healStaleTokenFor(url) : await healExpiredCookies();
                     if (healed) resp = await fetch(url, { credentials: 'include' });
                 }
                 // 404 is the server's final answer — re-requesting it is pure cost.
@@ -5222,6 +5566,12 @@
                 clickableIcons: false,
                 maxZoom: MAX_FREE_ZOOM
             });
+            // The splash lifts on this (see _liftSplash). It is one-shot and fires only
+            // once, so record it: tiles may be unlocked before OR after the basemap draws.
+            google.maps.event.addListenerOnce(map, 'tilesloaded', function() {
+                _basemapDrawn = true;
+                if (cfCookiesReady) _liftSplash();
+            });
 
             if (isDemoMode) _demoInitMap();
 
@@ -6219,8 +6569,21 @@
                 if (bl) bl.textContent = '\u2713 Lower ' + unit + 'ly cost';
             });
 
-            // Layer data loading deferred until CloudFront cookies are ready
-            // (prevents tile overlays from being created before cookies exist)
+            // Start layer data NOW rather than after sign-in + cookie issuance, which cost
+            // ~2 s on a cold load (measured 2026-09-23). It used to be deferred "so tile
+            // overlays are not created before cookies exist" — that guarantee does not
+            // depend on the deferral: overlays are only ever created from
+            // loadTilesBasedOnViewport(), which returns early until cfCookiesReady, and
+            // the layer files plus appConfig/dataVersions are public reads.
+            // Demo mode keeps the old order: it must not load anything until a real
+            // sign-in, and its auth branch returns before issuing cookies.
+            if (!isDemoMode) {
+                fetchLayerData();
+                _tryReuseCfCookies();
+                // Pre-auth cookies may have landed before the map existed, in which case
+                // _markCfReady's tile pass returned early on !map. Run it now.
+                if (cfCookiesReady) loadTilesBasedOnViewport();
+            }
 
             // Load sidebar navigation from Firebase. The sidebar is hidden until the
             // user opens it, so its Firebase fetch + DOM build can wait — we yield it
@@ -10074,7 +10437,20 @@
         // loaded AND the user is already at a premium zoom from a restored
         // position, re-dispatch zoom_changed so the listener can correctly
         // decide whether to show the access dialog or unlock tiles.
+        // Layer data now starts at initMap, before sign-in resolves (see the note there),
+        // so it can land before this visitor's purchases are known. Judging a restored
+        // premium zoom at that moment would clamp a paying customer to 14 and flash the
+        // paywall until getPurchaseStatus answered. Hold the startup re-check until the
+        // auth listener says entitlements are known, and let it re-run it then.
+        var _entitlementsKnown = false;
+        function _setEntitlementsKnown() {
+            if (_entitlementsKnown) return;
+            _entitlementsKnown = true;
+            maybeRerunZoomCheck();
+        }
+
         function maybeRerunZoomCheck() {
+            if (!_entitlementsKnown) return;
             if (!dpDataLoaded || !villageDataLoaded) return;
             if (!map) return;
             try {

@@ -1,18 +1,18 @@
 // Service worker — caches app shell so the installed PWA opens offline
 // instead of showing "This site can't be reached".
-const SW_VERSION = 'v25-2026-09-23-page-swr';
+const SW_VERSION = 'v26-2026-09-23-live-page-swr';
 const CACHE_NAME = 'mm-shell-' + SW_VERSION;
 
 // Map pages served cache-first (stale-while-revalidate). Every load used to wait on
 // the network for the HTML — 193-625 ms from India, because Cloudflare answers from
 // London and does not cache HTML (measured 2026-09-23). A cached copy answers in a
 // few ms; the fresh one is fetched in the background for the NEXT load.
-// STAGING ONLY for now: add '/maps.html' (and its JS below) when promoting.
-const SWR_PAGES = ['/maps1.html'];
+// Live + staging. A new map page needs its path here AND its app JS in PINNED_JS.
+const SWR_PAGES = ['/maps.html', '/maps1.html'];
 // The page's own versioned app JS is pinned cache-first per ?v=, so a page served
 // from cache always runs the JS it was built with. Without this, stale HTML asking
 // for maps1-app.js?v=OLD could get the NEW file from origin (which ignores ?v=).
-const PINNED_JS = ['/maps1-app.js'];
+const PINNED_JS = ['/maps-app.js', '/maps1-app.js'];
 // Never serve a page older than this from cache — beyond it, go to the network.
 const SWR_MAX_AGE_MS = 24 * 3600000;
 const CACHED_AT = 'sw-cached-at';

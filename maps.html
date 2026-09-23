@@ -1406,6 +1406,28 @@
         </div>
     </div>
     <script>
+    // Returning visitor with reusable tile cookies: never paint the splash. Mirrors
+    // _tryReuseCfCookies() in the app JS (same key, same 2 h window), which unlocks
+    // tiles ~0.3 s in, so the splash would only be covering a map that is already
+    // drawing. First visits, demo links and anything unexpected keep the splash.
+    (function(){
+        try {
+            if (new URLSearchParams(location.search).get('demo') === '1') return;
+            var jar = document.cookie;
+            if (jar.indexOf('CloudFront-Key-Pair-Id=') < 0 || jar.indexOf('CloudFront-Policy=') < 0
+                || jar.indexOf('CloudFront-Signature=') < 0) return;
+            var m = JSON.parse(localStorage.getItem('mm_cf_meta') || 'null');
+            var age = m && typeof m.at === 'number' ? Date.now() - m.at : -1;
+            if (age < 0 || age > 2 * 3600000) return;
+            var ls = document.getElementById('app-loading-screen');
+            if (!ls) return;
+            ls.style.display = 'none';
+            ls.style.pointerEvents = 'none';
+            window.__splashSkipped = true;   // _liftSplash still shows the disclaimer
+        } catch (e) { /* storage blocked etc.: keep the splash */ }
+    })();
+    </script>
+    <script>
     (function(){
         if (location.hostname.endsWith('dpplans.com')) {
             var t = document.getElementById('splash-brand-title');
@@ -2168,7 +2190,11 @@
     </div>
 
     <!-- First-visit disclaimer dialog (blocks app until accepted; skipped in embed mode) -->
-    <div class="disclaimer-overlay" id="disclaimer-overlay">
+    <!-- Starts HIDDEN: it used to paint visible, get hidden at idle, then shown again by
+         _showDisclaimer. The splash hid that flicker; since the splash is skipped on a
+         reload that can reuse tile cookies, it was on screen. showDisclaimer() clears the
+         inline style, so the CSS display:flex applies when it is actually shown. -->
+    <div class="disclaimer-overlay" id="disclaimer-overlay" style="display:none">
         <div class="disclaimer-box">
             <div class="disclaimer-title">IMPORTANT DISCLAIMER</div>
             <div class="disclaimer-body">
@@ -2686,15 +2712,35 @@
             // Hide initially — show on first map interaction
             overlay.style.display = 'none';
             var disclaimerShown = false;
+            // "I Agree" is remembered for 30 days, keyed to a fingerprint of the
+            // disclaimer's own wording: edit the text and everyone sees it again at
+            // once, with no version number to remember to bump. Storage blocked =
+            // shown every load, exactly as before.
+            var DISCLAIMER_KEY = 'mm_disclaimer_ok';
+            var DISCLAIMER_TTL_MS = 30 * 24 * 3600000;
+            var disclaimerSig = (function(s) {
+                var h = 0;
+                for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+                return String(h);
+            })((overlay.textContent || '').replace(/\s+/g, ' ').trim());
+            function disclaimerAccepted() {
+                try {
+                    var r = JSON.parse(localStorage.getItem(DISCLAIMER_KEY) || 'null');
+                    return !!r && r.sig === disclaimerSig && typeof r.at === 'number'
+                        && Date.now() - r.at >= 0 && Date.now() - r.at < DISCLAIMER_TTL_MS;
+                } catch (e) { return false; }
+            }
             function showDisclaimer() {
                 if (disclaimerShown) return;
                 disclaimerShown = true;
+                if (disclaimerAccepted()) return;
                 overlay.style.display = '';
             }
             // Trigger on first pan or zoom
             window._showDisclaimer = showDisclaimer;
             document.getElementById('disclaimer-agree').addEventListener('click', function() {
                 overlay.style.display = 'none';
+                try { localStorage.setItem(DISCLAIMER_KEY, JSON.stringify({ sig: disclaimerSig, at: Date.now() })); } catch (e) {}
             });
             document.getElementById('disclaimer-disagree').addEventListener('click', function() {
                 window.location.href = 'https://www.mapmagician.in';
@@ -3071,7 +3117,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps-app.js?v=181" defer></script>
+    <script src="maps-app.js?v=192" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
