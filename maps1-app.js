@@ -570,7 +570,7 @@
         //       Survey of 2026-09-20: 31 records still need MaxZoom (Alandi Corporation 21,
         //       Paithan inner 20, Sangli Gaothan 21...) and 10 need MinZoom (three
         //       PMRDA/Satara folders start at 8). 882 of 924 blanks are genuinely 11-18.
-        var APP_VERSION = '186';
+        var APP_VERSION = '187';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -616,8 +616,13 @@
         });
 
         // Trigger sign-in via Firebase popup (works on all domains without extra OAuth config)
+        // True only between the user starting a sign-in and the auth listener seeing it.
+        // A session RESTORED on page load never sets it — see the account overlay below.
+        var _userSignInInProgress = false;
         function triggerGoogleSignIn() {
+            _userSignInInProgress = true;
             firebase.auth().signInWithPopup(googleProvider).catch(err => {
+                _userSignInInProgress = false;
                 console.error('Login failed:', err);
                 if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
                     alert('Sign-in could not be completed. Please try again.');
@@ -729,11 +734,19 @@
                     fetchPurchaseHistory();
                 });
 
-                // Show loading while fetching purchase data
+                // Modal "Loading your account..." while purchases load — but only when the
+                // user just signed in, or something is waiting to resume on the result (a
+                // purchase or support form started before login). A session restored on a
+                // page reload used to get it too: a ~1 s modal over a map that was already
+                // usable. The startup paywall re-check waits on _entitlementsKnown instead.
                 const authLoadingOverlay = document.getElementById('payment-loading-overlay');
-                document.getElementById('payment-loading-text').textContent = 'Loading your account...';
-                document.getElementById('payment-loading-sub').textContent = user.email || '';
-                authLoadingOverlay.classList.add('open');
+                const showAccountLoading = _userSignInInProgress || !!pendingPurchase || !!pendingSupportOpen;
+                _userSignInInProgress = false;
+                if (showAccountLoading) {
+                    document.getElementById('payment-loading-text').textContent = 'Loading your account...';
+                    document.getElementById('payment-loading-sub').textContent = user.email || '';
+                    authLoadingOverlay.classList.add('open');
+                }
 
                 // Fire-and-forget: delete this user's expired purchases server-side.
                 // Bounded to the caller's own emailKey; runs once per session.
