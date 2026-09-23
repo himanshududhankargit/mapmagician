@@ -570,7 +570,7 @@
         //       Survey of 2026-09-20: 31 records still need MaxZoom (Alandi Corporation 21,
         //       Paithan inner 20, Sangli Gaothan 21...) and 10 need MinZoom (three
         //       PMRDA/Satara folders start at 8). 882 of 924 blanks are genuinely 11-18.
-        var APP_VERSION = '184';
+        var APP_VERSION = '185';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -912,8 +912,9 @@
             // page load can reuse them (see _tryReuseCfCookies). Deliberately not the
             // server's expiresAt: a device clock that disagrees with the server's is the
             // exact failure the no-expires= note above describes.
+            _cfWrittenAtMem = ok ? Date.now() : 0;   // expiry tracking works without storage
             try {
-                if (ok) localStorage.setItem(CF_META_KEY, JSON.stringify({ at: Date.now(), pids: _cfGrantedPids }));
+                if (ok) localStorage.setItem(CF_META_KEY, JSON.stringify({ at: _cfWrittenAtMem, pids: _cfGrantedPids }));
                 else localStorage.removeItem(CF_META_KEY);
             } catch (e) { /* storage blocked: reuse simply never happens */ }
             return ok;
@@ -986,6 +987,7 @@
                 if (age < 0 || age > CF_REUSE_MAX_AGE_MS) return false;
                 _cfReusedPids = Array.isArray(meta.pids) ? meta.pids : null;
                 _cfGrantedPids = _cfReusedPids;
+                _cfWrittenAtMem = meta.at;
             } catch (e) {
                 return false;
             }
@@ -1008,6 +1010,94 @@
                 dpTileStatus = Array(dpLayerData.length).fill(false);
             }
             loadTilesBasedOnViewport();
+        }
+
+        // ── Expiry: never let the page sit on dead cookies ───────────────────────────
+        // The CloudFront policy and the mmp-token both expire 3 h after issuance, and an
+        // expired policy is refused for EVERY tile, free zooms included. Two things made
+        // that reachable, and cookie reuse widens it:
+        //  - scheduleCfCookieRefresh is a setTimeout keyed to the SERVER's expiresAt. Timers
+        //    stall while a laptop or phone sleeps, so a tab that sleeps past the 3 h mark
+        //    wakes on dead cookies with the refresh still pending.
+        //  - healStaleTokenFor only answers 403s at zoom > 14 on owned folders. A 403 on a
+        //    free tile was never healed at all — the map just went blank.
+        // So: track age by the DEVICE clock from the moment we wrote the cookies, and check
+        // it on a cheap 1-minute tick (which fires promptly after wake), on tab return, on
+        // reconnect and on a back/forward-cache restore. Checking is local and free; only a
+        // cookie that is actually due costs one getCloudFrontCookies call.
+        const CF_TTL_MS = 3 * 3600000;            // lifetime set by getCloudFrontCookies
+        const CF_REFRESH_AHEAD_MS = 15 * 60000;   // renew this long before it lapses
+        const CF_EXPIRED_RETRY_MS = 5 * 60000;    // back-off after a failed renewal
+        var _cfWrittenAtMem = 0;                  // device-clock write time of the jar's cookies
+        var _cfEnsureNotBefore = 0;
+
+        function _cfWrittenAt() {
+            let at = _cfWrittenAtMem;
+            try {
+                // Another tab may have renewed the shared jar since; its write time is newer.
+                const m = JSON.parse(localStorage.getItem(CF_META_KEY) || 'null');
+                if (m && typeof m.at === 'number' && m.at > at) at = m.at;
+            } catch (e) {}
+            return at;
+        }
+
+        // Tile layers may be holding blanks fetched with the dead cookies. 403s are never
+        // cached (IndexedDB stores only 200s; _absentTiles only 404s), so dropping the
+        // overlays and re-running the viewport pass re-requests exactly those tiles.
+        function _rebuildTileOverlays() {
+            clearAllLayersOfType(dpOverlays);
+            dpTileStatus = Array(dpLayerData.length).fill(false);
+            clearAllLayersOfType(oldDPOverlays);
+            oldDPTileStatus = Array(oldDPLayerData.length).fill(false);
+            clearAllLayersOfType(villageOverlays);
+            villageTileStatus = Array(villageLayerData.length).fill(false);
+            loadTilesBasedOnViewport();
+        }
+
+        function _ensureFreshCfCookies() {
+            if (!cfCookiesReady || _cfCookieInFlight) return;
+            if (Date.now() < _cfEnsureNotBefore) return;
+            const at = _cfWrittenAt();
+            if (!at) return;
+            const age = Date.now() - at;
+            // age < 0: the device clock moved backwards since the write — trust nothing.
+            if (age >= 0 && age < CF_TTL_MS - CF_REFRESH_AHEAD_MS) return;
+            const expired = age < 0 || age >= CF_TTL_MS;
+            fetchCloudFrontCookies().then(function(ok) {
+                if (!ok) { _cfEnsureNotBefore = Date.now() + CF_EXPIRED_RETRY_MS; return; }
+                if (expired) _rebuildTileOverlays();
+            });
+        }
+
+        setInterval(_ensureFreshCfCookies, 60000);
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') _ensureFreshCfCookies();
+        });
+        window.addEventListener('online', _ensureFreshCfCookies);
+        window.addEventListener('pageshow', function(e) { if (e.persisted) _ensureFreshCfCookies(); });
+
+        // Backstop for anything the clock cannot see (cookies dropped by the browser, a
+        // clock changed by hand): a 403 at zoom <= 14 is NEVER the paywall — free tiles are
+        // served to any valid cookie — so it can only mean the cookies are bad. Same
+        // budget discipline as healStaleTokenFor: this must never approach per-tile.
+        const COOKIE_HEAL_COOLDOWN_MS = 60000;
+        const COOKIE_HEAL_MAX_PER_SESSION = 5;
+        let _cookieHealLastAt = 0;
+        let _cookieHealCount = 0;
+        function healExpiredCookies() {
+            if (!cfCookiesReady) return Promise.resolve(false);   // not issued yet: nothing to heal
+            if (_cfCookieInFlight) return _cfCookieInFlight;       // ride a renewal already running
+            if (_cookieHealCount >= COOKIE_HEAL_MAX_PER_SESSION) return Promise.resolve(false);
+            if (Date.now() - _cookieHealLastAt < COOKIE_HEAL_COOLDOWN_MS) return Promise.resolve(false);
+            _cookieHealLastAt = Date.now();
+            _cookieHealCount++;
+            console.warn('403 on a free-zoom tile — CloudFront cookies look expired, renewing');
+            return fetchCloudFrontCookies().then(function(ok) {
+                // Tiles that already failed before this renewal are blank, not queued —
+                // re-request them. Deferred so the tile that triggered us retries first.
+                if (ok) setTimeout(_rebuildTileOverlays, 0);
+                return ok;
+            });
         }
 
         // Issues a fresh CloudFront cookie + mmp-token pair. Resolves TRUE only when a new
@@ -4308,8 +4398,10 @@
             }
             try {
                 let resp = await fetch(url, { credentials: 'include' });
-                if (resp.status === 403 && zoom > 14) {
-                    const healed = await healStaleTokenFor(url);
+                if (resp.status === 403) {
+                    // zoom > 14: possibly a stale mmp-token on an owned district.
+                    // zoom <= 14: free tiles, so only an expired/missing cookie can 403.
+                    const healed = zoom > 14 ? await healStaleTokenFor(url) : await healExpiredCookies();
                     if (healed) resp = await fetch(url, { credentials: 'include' });
                 }
                 // 404 is the server's final answer — re-requesting it is pure cost.
