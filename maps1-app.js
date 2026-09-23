@@ -570,7 +570,7 @@
         //       Survey of 2026-09-20: 31 records still need MaxZoom (Alandi Corporation 21,
         //       Paithan inner 20, Sangli Gaothan 21...) and 10 need MinZoom (three
         //       PMRDA/Satara folders start at 8). 882 of 924 blanks are genuinely 11-18.
-        var APP_VERSION = '193';
+        var APP_VERSION = '194';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
