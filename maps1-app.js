@@ -570,7 +570,7 @@
         //       Survey of 2026-09-20: 31 records still need MaxZoom (Alandi Corporation 21,
         //       Paithan inner 20, Sangli Gaothan 21...) and 10 need MinZoom (three
         //       PMRDA/Satara folders start at 8). 882 of 924 blanks are genuinely 11-18.
-        var APP_VERSION = '183';
+        var APP_VERSION = '184';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -933,26 +933,43 @@
         const CF_REUSE_MAX_AGE_MS = 2 * 3600000;   // well inside the ~3 h token lifetime
         let _cfReusedPids;                          // undefined = this load did not reuse
 
+        // Splash timing. It used to lift a FIXED 1.5 s after tiles unlocked, then fade for
+        // 0.5 s — sized for when unlocking itself came late. With cookie reuse, tiles
+        // unlock ~0.3 s into a reload, so that fixed wait became most of the visible load.
+        // Now: lift once the basemap has drawn, plus a short grace so the first plan tiles
+        // (requested ~0.15 s after unlock) land under it rather than popping in after.
+        // SPLASH_MAX_WAIT_MS keeps the old 1.5 s as a ceiling if tilesloaded never fires.
+        const SPLASH_PLAN_GRACE_MS = 250;
+        const SPLASH_MAX_WAIT_MS = 1500;
+        var _basemapDrawn = false;
+        var _splashLifting = false;
+
+        function _liftSplash() {
+            if (_splashLifting) return;
+            _splashLifting = true;
+            setTimeout(function() {
+                var ls = document.getElementById('app-loading-screen');
+                if (!ls || ls.style.display === 'none') return;
+                ls.style.transition = 'opacity 0.3s ease';
+                ls.style.opacity = '0';
+                setTimeout(function() {
+                    // display:none instead of remove() — keeps splash banner
+                    // as the LCP candidate so PageSpeed reports LCP at first
+                    // paint (~1.4s) rather than at element-removal time (~7s).
+                    ls.style.display = 'none';
+                    ls.style.pointerEvents = 'none';
+                    if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
+                }, 300);
+            }, SPLASH_PLAN_GRACE_MS);
+        }
+
         function _markCfReady() {
             if (cfCookiesReady) return;
             cfCookiesReady = true;
             // Layer data already fetching in parallel — now cookies are set, trigger tile load
             loadTilesBasedOnViewport();
-            // Dismiss loading screen after layer data triggers first tile load
-            setTimeout(function() {
-                var ls = document.getElementById('app-loading-screen');
-                if (ls) {
-                    ls.style.opacity = '0';
-                    setTimeout(function() {
-                        // display:none instead of remove() — keeps splash banner
-                        // as the LCP candidate so PageSpeed reports LCP at first
-                        // paint (~1.4s) rather than at element-removal time (~7s).
-                        ls.style.display = 'none';
-                        ls.style.pointerEvents = 'none';
-                        if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
-                    }, 500);
-                }
-            }, 1500);
+            if (_basemapDrawn) _liftSplash();
+            else setTimeout(_liftSplash, SPLASH_MAX_WAIT_MS);
         }
 
         function _tryReuseCfCookies() {
@@ -1045,7 +1062,9 @@
             // Start layer data fetch immediately — it only needs auth, not cookies
             fetchLayerData();
             var als = document.getElementById('app-loading-status');
-            if (als) als.textContent = 'Connecting to tile server...';
+            // Not after a cookie reuse: tiles are already loading, and this call is only
+            // a background refresh — the splash must not claim we are still connecting.
+            if (als && !cfCookiesReady) als.textContent = 'Connecting to tile server...';
 
             const RETRY_DELAYS_MS = [0, 1000, 3000, 8000];
             let data = null;
@@ -5291,6 +5310,12 @@
                 // place clicks, and it's a documented pan-jank source on low-end Android.
                 clickableIcons: false,
                 maxZoom: MAX_FREE_ZOOM
+            });
+            // The splash lifts on this (see _liftSplash). It is one-shot and fires only
+            // once, so record it: tiles may be unlocked before OR after the basemap draws.
+            google.maps.event.addListenerOnce(map, 'tilesloaded', function() {
+                _basemapDrawn = true;
+                if (cfCookiesReady) _liftSplash();
             });
 
             if (isDemoMode) _demoInitMap();
