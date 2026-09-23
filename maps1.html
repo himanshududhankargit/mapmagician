@@ -1406,6 +1406,28 @@
         </div>
     </div>
     <script>
+    // Returning visitor with reusable tile cookies: never paint the splash. Mirrors
+    // _tryReuseCfCookies() in the app JS (same key, same 2 h window), which unlocks
+    // tiles ~0.3 s in, so the splash would only be covering a map that is already
+    // drawing. First visits, demo links and anything unexpected keep the splash.
+    (function(){
+        try {
+            if (new URLSearchParams(location.search).get('demo') === '1') return;
+            var jar = document.cookie;
+            if (jar.indexOf('CloudFront-Key-Pair-Id=') < 0 || jar.indexOf('CloudFront-Policy=') < 0
+                || jar.indexOf('CloudFront-Signature=') < 0) return;
+            var m = JSON.parse(localStorage.getItem('mm_cf_meta') || 'null');
+            var age = m && typeof m.at === 'number' ? Date.now() - m.at : -1;
+            if (age < 0 || age > 2 * 3600000) return;
+            var ls = document.getElementById('app-loading-screen');
+            if (!ls) return;
+            ls.style.display = 'none';
+            ls.style.pointerEvents = 'none';
+            window.__splashSkipped = true;   // _liftSplash still shows the disclaimer
+        } catch (e) { /* storage blocked etc.: keep the splash */ }
+    })();
+    </script>
+    <script>
     (function(){
         if (location.hostname.endsWith('dpplans.com')) {
             var t = document.getElementById('splash-brand-title');
@@ -3071,7 +3093,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=185" defer></script>
+    <script src="maps1-app.js?v=186" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
