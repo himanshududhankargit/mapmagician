@@ -570,7 +570,7 @@
         //       Survey of 2026-09-20: 31 records still need MaxZoom (Alandi Corporation 21,
         //       Paithan inner 20, Sangli Gaothan 21...) and 10 need MinZoom (three
         //       PMRDA/Satara folders start at 8). 882 of 924 blanks are genuinely 11-18.
-        var APP_VERSION = '189';
+        var APP_VERSION = '190';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -4407,8 +4407,106 @@
         // Caller uses null as the signal to fall back to a direct img.src = url
         // assignment (pre-cache behavior). Each call attempts independently — a
         // transient failure does not disable the cache for future tiles.
+        // ── Tile coverage index ──────────────────────────────────────────────────────
+        // Built by scripts/build-coverage.py from real S3 listings: for each tile folder,
+        // a bitmap of which squares of a z13 grid hold tiles (dilated one square).
+        // ~20% of tile requests were 404s on the empty corners of irregular plans; the
+        // polygon test cannot see those because the polygon covers them. With this, the
+        // map never asks. Every tile the index names as absent was CHECKED against a real
+        // day of CloudFront logs: zero served tiles would have been hidden.
+        //
+        // 🛑 FAIL-OPEN, like the builder. Anything the index does not positively say is
+        // absent is requested exactly as before: index not loaded yet, fetch failed,
+        // folder not in it (new uploads), zoom below the index zoom, or the file older
+        // than COVERAGE_MAX_AGE_MS (a pyramid re-uploaded with a larger extent must not
+        // stay hidden forever — regenerate the index before it expires).
+        const COVERAGE_URL = LAYER_JSON_BASE.replace(/\/database$/, '/coverage') + '/cov.json.gz';
+        const COVERAGE_MAX_AGE_MS = 35 * 24 * 3600000;
+        const COVERAGE_TILE_RE = /\/(?:[^/]+\/)?dpplans\/(.+)\/(\d+)\/(\d+)\/(\d+)\.png(?:[?#]|$)/;
+        let _coverage = null;   // { folders: { key: {z,x,y,w,h,b} } }, b decoded lazily
+
+        (function _loadCoverage() {
+            try {
+                if (new URLSearchParams(location.search).get('cov') === '0') return;   // kill switch for testing
+                if (typeof DecompressionStream === 'undefined') return;
+            } catch (e) { return; }
+            fetch(COVERAGE_URL, { cache: 'default' })
+                .then(function(r) {
+                    if (!r.ok || !r.body) return null;
+                    return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).json();
+                })
+                .then(function(doc) {
+                    if (!doc || doc.v !== 2 || !doc.folders || !doc.generatedAt || !(doc.exactMax > 0)) return;
+                    const age = Date.now() - Date.parse(doc.generatedAt);
+                    if (!(age >= 0 && age < COVERAGE_MAX_AGE_MS)) return;   // stale: ask for everything
+                    _coverage = doc;
+                })
+                .catch(function() { /* no index = today's behaviour */ });
+        })();
+
+        function _coverageSaysAbsent(url) {
+            if (!_coverage) return false;
+            const m = COVERAGE_TILE_RE.exec(url);
+            if (!m) return false;
+            const e = _coverage.folders[m[1]];
+            if (!e) return false;
+            // 🛑 Mirrors absent() in the builder EXACTLY — that is the function the zero-false-
+            // block check was run against. Change one, change both, and re-run the check.
+            let z = +m[2], x = +m[3], y = +m[4];
+            if (z < e.zmin || z > e.zmax) return true;    // outside the pyramid's zoom range
+            const xm = _coverage.exactMax;
+            if (z > xm) { const s = z - xm; x = x >> s; y = y >> s; z = xm; }   // judge by ancestor
+            const g = e.zs[z];
+            if (!g) return true;                           // no tiles at this zoom at all
+            if (x < g.x || x >= g.x + g.w || y < g.y || y >= g.y + g.h) return true;
+            if (!g._bits) {
+                try {
+                    const raw = atob(g.b);
+                    const bits = new Uint8Array(raw.length);
+                    for (let i = 0; i < raw.length; i++) bits[i] = raw.charCodeAt(i);
+                    g._bits = bits;
+                } catch (err) { _coverage.folders[m[1]] = undefined; return false; }   // corrupt entry: ask
+            }
+            const i = (y - g.y) * g.w + (x - g.x);
+            return !((g._bits[i >> 3] >> (i & 7)) & 1);
+        }
+
+        // Trust, but verify: 1 in COVERAGE_PROBE_EVERY tiles the index calls absent is fetched
+        // anyway. If one of those exists, the index is stale for that folder (tiles added to
+        // an existing pyramid after it was built) — stop trusting it for that folder at once.
+        // Costs ~3% of the saving; turns a stale index from "region dark until the next
+        // rebuild" into "one extra request, then self-healed".
+        const COVERAGE_PROBE_EVERY = 32;
+        let _coverageProbeN = 0;
+
         async function loadTileWithCache(url, zoom) {
             if (_absentTiles.has(url)) return TILE_ABSENT;
+            let covProbe = false;
+            if (_coverageSaysAbsent(url)) {
+                if (++_coverageProbeN % COVERAGE_PROBE_EVERY !== 0) return TILE_ABSENT;
+                covProbe = true;
+            }
+            if (covProbe) {
+                // Probe outside the cache path so its answer is only used for the verdict.
+                try {
+                    const r = await fetch(url, { credentials: 'include' });
+                    if (r.status === 200 || r.status === 403) {
+                        // 200: the tile exists. 403: it may exist behind the paywall — either
+                        // way the index cannot be shown to be right, so drop it for this folder.
+                        const m = COVERAGE_TILE_RE.exec(url);
+                        if (m && _coverage) {
+                            _coverage.folders[m[1]] = undefined;
+                            console.warn('coverage index stale for "' + m[1] + '" — ignoring it for this folder');
+                        }
+                        if (r.status === 200) {
+                            const blob = await r.blob();
+                            return URL.createObjectURL(blob);
+                        }
+                        return null;
+                    }
+                } catch (e) { /* network: keep the index's verdict */ }
+                return TILE_ABSENT;
+            }
             const cached = await getTileFromDB(url);
             if (cached && cached.blob) {
                 try { return URL.createObjectURL(cached.blob); }
