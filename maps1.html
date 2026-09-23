@@ -2190,7 +2190,11 @@
     </div>
 
     <!-- First-visit disclaimer dialog (blocks app until accepted; skipped in embed mode) -->
-    <div class="disclaimer-overlay" id="disclaimer-overlay">
+    <!-- Starts HIDDEN: it used to paint visible, get hidden at idle, then shown again by
+         _showDisclaimer. The splash hid that flicker; since the splash is skipped on a
+         reload that can reuse tile cookies, it was on screen. showDisclaimer() clears the
+         inline style, so the CSS display:flex applies when it is actually shown. -->
+    <div class="disclaimer-overlay" id="disclaimer-overlay" style="display:none">
         <div class="disclaimer-box">
             <div class="disclaimer-title">IMPORTANT DISCLAIMER</div>
             <div class="disclaimer-body">
@@ -3093,7 +3097,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=187" defer></script>
+    <script src="maps1-app.js?v=188" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
