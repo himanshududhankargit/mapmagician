@@ -1,7 +1,21 @@
 // Service worker — caches app shell so the installed PWA opens offline
 // instead of showing "This site can't be reached".
-const SW_VERSION = 'v24-2026-07-21-hero-swr';
+const SW_VERSION = 'v25-2026-09-23-page-swr';
 const CACHE_NAME = 'mm-shell-' + SW_VERSION;
+
+// Map pages served cache-first (stale-while-revalidate). Every load used to wait on
+// the network for the HTML — 193-625 ms from India, because Cloudflare answers from
+// London and does not cache HTML (measured 2026-09-23). A cached copy answers in a
+// few ms; the fresh one is fetched in the background for the NEXT load.
+// STAGING ONLY for now: add '/maps.html' (and its JS below) when promoting.
+const SWR_PAGES = ['/maps1.html'];
+// The page's own versioned app JS is pinned cache-first per ?v=, so a page served
+// from cache always runs the JS it was built with. Without this, stale HTML asking
+// for maps1-app.js?v=OLD could get the NEW file from origin (which ignores ?v=).
+const PINNED_JS = ['/maps1-app.js'];
+// Never serve a page older than this from cache — beyond it, go to the network.
+const SWR_MAX_AGE_MS = 24 * 3600000;
+const CACHED_AT = 'sw-cached-at';
 
 // Region-icon cache: cross-origin PNGs from CloudFront used by the splash
 // (index1.html) and maps.html region browser. Versioned independently of
@@ -114,6 +128,64 @@ self.addEventListener('fetch', (e) => {
                 }).catch(() => null);
                 if (cached) return cached;
                 return refresh.then(r => r || new Response('', { status: 504, statusText: 'hero offline' }));
+            })
+        );
+        return;
+    }
+
+    // Map pages: serve the cached copy instantly, refresh it in the background.
+    // Keyed by PATH, not full URL: deep links (?lat=&lng=&zoom=, ?embed=1, ?demo=1)
+    // all get the same HTML, and the page reads its own query string.
+    if (e.request.mode === 'navigate' && url.origin === self.location.origin &&
+        SWR_PAGES.indexOf(url.pathname) !== -1) {
+        const key = url.origin + url.pathname;
+        e.respondWith(
+            caches.open(CACHE_NAME).then(async cache => {
+                const refresh = fetch(e.request, { cache: 'no-store' }).then(async resp => {
+                    // Only a clean same-origin 200 may become the cached page — never a
+                    // redirect, an error page, or an opaque response.
+                    if (resp && resp.ok && resp.type === 'basic' && !resp.redirected) {
+                        const body = await resp.clone().blob();
+                        const headers = new Headers(resp.headers);
+                        headers.set(CACHED_AT, String(Date.now()));
+                        await cache.put(key, new Response(body, { status: 200, headers: headers }));
+                    }
+                    return resp;
+                }).catch(() => null);
+                const cached = await cache.match(key);
+                const at = cached ? Number(cached.headers.get(CACHED_AT)) : 0;
+                if (cached && at && Date.now() - at < SWR_MAX_AGE_MS) {
+                    e.waitUntil(refresh);
+                    return cached;
+                }
+                const fresh = await refresh;
+                if (fresh) return fresh;
+                return cached || (await caches.match('/maps.html')) || Response.error();
+            })
+        );
+        return;
+    }
+
+    // The pinned app JS: cache-first per exact URL (?v= included). The version string
+    // is bumped on every deploy, so a given ?v= URL never needs to change. Older
+    // versions of the same file are pruned so the cache holds at most two.
+    if (url.origin === self.location.origin && PINNED_JS.indexOf(url.pathname) !== -1 &&
+        url.searchParams.has('v')) {
+        e.respondWith(
+            caches.open(CACHE_NAME).then(async cache => {
+                const cached = await cache.match(e.request);
+                if (cached) return cached;
+                const resp = await fetch(e.request);
+                if (resp && resp.ok && resp.type === 'basic') {
+                    await cache.put(e.request, resp.clone());
+                    // Keep this version and at most one previous (a page served from
+                    // cache may still be one version behind).
+                    const same = (await cache.keys()).filter(r => new URL(r.url).pathname === url.pathname);
+                    const stale = same.filter(r => r.url !== e.request.url);
+                    stale.sort((a, b) => Number(new URL(b.url).searchParams.get('v')) - Number(new URL(a.url).searchParams.get('v')));
+                    await Promise.all(stale.slice(1).map(r => cache.delete(r)));
+                }
+                return resp;
             })
         );
         return;
