@@ -570,7 +570,7 @@
         //       Survey of 2026-09-20: 31 records still need MaxZoom (Alandi Corporation 21,
         //       Paithan inner 20, Sangli Gaothan 21...) and 10 need MinZoom (three
         //       PMRDA/Satara folders start at 8). 882 of 924 blanks are genuinely 11-18.
-        var APP_VERSION = '182';
+        var APP_VERSION = '183';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -637,6 +637,7 @@
                 } else {
                     fetchCloudFrontCookies();
                 }
+                if (user) _setEntitlementsKnown(); // embed has no purchase logic to wait for
                 return;
             }
 
@@ -747,6 +748,7 @@
                 fetchSubscriptionStatus(); // load subscription metadata
                 fetchPurchaseHistory(); // load purchase history for sidebar
                 fetchPurchaseStatus(true).then(function() {
+                    _setEntitlementsKnown();
                     authLoadingOverlay.classList.remove('open');
                     // Reset overlay text for future payment use
                     document.getElementById('payment-loading-text').textContent = 'Preparing your payment...';
@@ -771,6 +773,7 @@
                         openSupportForm(ps.district, ps.returnToPaywall);
                     }
                 }).catch(function() {
+                    _setEntitlementsKnown();
                     authLoadingOverlay.classList.remove('open');
                     document.getElementById('payment-loading-text').textContent = 'Preparing your payment...';
                     document.getElementById('payment-loading-sub').textContent = '7-Day Pass';
@@ -793,6 +796,7 @@
                     mmAnalytics.clarityTag('auth', 'anonymous');
                 } catch (e) {}
                 fetchCloudFrontCookies();
+                _setEntitlementsKnown(); // anonymous web visitors hold no purchases
             } else {
                 profileBtn.classList.remove('signed-in');
                 profileSvg.style.display = '';
@@ -824,6 +828,7 @@
 
                 // Clear CloudFront cookies on sign-out
                 cfCookiesReady = false;
+                try { localStorage.removeItem(CF_META_KEY); } catch (e) {}
                 document.cookie = `CloudFront-Policy=; domain=${COOKIE_DOMAIN}; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
                 document.cookie = `CloudFront-Signature=; domain=${COOKIE_DOMAIN}; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
                 document.cookie = `CloudFront-Key-Pair-Id=; domain=${COOKIE_DOMAIN}; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
@@ -902,7 +907,90 @@
             // browser blocks cookies; without this check the map "unlocks" and every
             // tile 403s forever. Key-Pair-Id is always set and the shortest of the four,
             // so its presence is the cheapest proof the jar accepted the writes.
-            return document.cookie.indexOf('CloudFront-Key-Pair-Id=') !== -1;
+            const ok = document.cookie.indexOf('CloudFront-Key-Pair-Id=') !== -1;
+            // Remember WHEN these were written, by the device's own clock, so the next
+            // page load can reuse them (see _tryReuseCfCookies). Deliberately not the
+            // server's expiresAt: a device clock that disagrees with the server's is the
+            // exact failure the no-expires= note above describes.
+            try {
+                if (ok) localStorage.setItem(CF_META_KEY, JSON.stringify({ at: Date.now(), pids: _cfGrantedPids }));
+                else localStorage.removeItem(CF_META_KEY);
+            } catch (e) { /* storage blocked: reuse simply never happens */ }
+            return ok;
+        }
+
+        // ── Fast start: reuse the cookies already in the jar ─────────────────────────
+        // Every page load used to wait for getCloudFrontCookies (p50 ~1.0 s, p90 ~2.0 s,
+        // measured 2026-09-23) before requesting a single tile, even when the cookies
+        // from the previous load were still valid. They are session cookies, so they
+        // survive a reload for as long as the browser session lives.
+        //
+        // This changes NOTHING about access: the browser attaches whatever is in the jar
+        // to every tile request anyway, and the edge (signed policy + mmp-token) decides.
+        // Reuse only moves the first tile request earlier. The normal issuance still runs
+        // on every load, in the background, and replaces the cookies when it lands.
+        const CF_META_KEY = 'mm_cf_meta';
+        const CF_REUSE_MAX_AGE_MS = 2 * 3600000;   // well inside the ~3 h token lifetime
+        let _cfReusedPids;                          // undefined = this load did not reuse
+
+        function _markCfReady() {
+            if (cfCookiesReady) return;
+            cfCookiesReady = true;
+            // Layer data already fetching in parallel — now cookies are set, trigger tile load
+            loadTilesBasedOnViewport();
+            // Dismiss loading screen after layer data triggers first tile load
+            setTimeout(function() {
+                var ls = document.getElementById('app-loading-screen');
+                if (ls) {
+                    ls.style.opacity = '0';
+                    setTimeout(function() {
+                        // display:none instead of remove() — keeps splash banner
+                        // as the LCP candidate so PageSpeed reports LCP at first
+                        // paint (~1.4s) rather than at element-removal time (~7s).
+                        ls.style.display = 'none';
+                        ls.style.pointerEvents = 'none';
+                        if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
+                    }, 500);
+                }
+            }, 1500);
+        }
+
+        function _tryReuseCfCookies() {
+            if (cfCookiesReady || isDemoMode) return false;
+            try {
+                const jar = document.cookie;
+                if (jar.indexOf('CloudFront-Key-Pair-Id=') === -1
+                    || jar.indexOf('CloudFront-Policy=') === -1
+                    || jar.indexOf('CloudFront-Signature=') === -1) return false;
+                const meta = JSON.parse(localStorage.getItem(CF_META_KEY) || 'null');
+                if (!meta || typeof meta.at !== 'number') return false;
+                const age = Date.now() - meta.at;
+                // A negative age means the clock moved backwards since the write; trust nothing.
+                if (age < 0 || age > CF_REUSE_MAX_AGE_MS) return false;
+                _cfReusedPids = Array.isArray(meta.pids) ? meta.pids : null;
+                _cfGrantedPids = _cfReusedPids;
+            } catch (e) {
+                return false;
+            }
+            _markCfReady();
+            return true;
+        }
+
+        // The background issuance after a reuse landed. If the fresh token grants a
+        // different district set, DP overlays may be holding tiles fetched under the old
+        // one (blank 403s for a district just bought, or real tiles for one that lapsed),
+        // so tear them down exactly as syncEdgeToEntitlements does. Either way re-run the
+        // viewport pass: the auth listener clears village overlays on its way through.
+        function _afterReusedCookiesRefreshed() {
+            if (_cfReusedPids === undefined) return;
+            const before = _cfReusedPids;
+            _cfReusedPids = undefined;
+            const norm = function(a) { return Array.isArray(a) ? a.slice().sort().join('|') : '?'; };
+            if (norm(before) !== norm(_cfGrantedPids)) {
+                clearAllLayersOfType(dpOverlays);
+                dpTileStatus = Array(dpLayerData.length).fill(false);
+            }
+            loadTilesBasedOnViewport();
         }
 
         // Issues a fresh CloudFront cookie + mmp-token pair. Resolves TRUE only when a new
@@ -1007,26 +1095,8 @@
             scheduleCfCookieRefresh(data ? data.expiresAt : null);
             if (!data) return false;
 
-            if (!cfCookiesReady) {
-                cfCookiesReady = true;
-                // Layer data already fetching in parallel — now cookies are set, trigger tile load
-                loadTilesBasedOnViewport();
-                // Dismiss loading screen after layer data triggers first tile load
-                setTimeout(function() {
-                    var ls = document.getElementById('app-loading-screen');
-                    if (ls) {
-                        ls.style.opacity = '0';
-                        setTimeout(function() {
-                            // display:none instead of remove() — keeps splash banner
-                            // as the LCP candidate so PageSpeed reports LCP at first
-                            // paint (~1.4s) rather than at element-removal time (~7s).
-                            ls.style.display = 'none';
-                            ls.style.pointerEvents = 'none';
-                            if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
-                        }, 500);
-                    }
-                }, 1500);
-            }
+            if (!cfCookiesReady) _markCfReady();
+            else _afterReusedCookiesRefreshed();
             return true;
         }
 
@@ -6219,8 +6289,18 @@
                 if (bl) bl.textContent = '\u2713 Lower ' + unit + 'ly cost';
             });
 
-            // Layer data loading deferred until CloudFront cookies are ready
-            // (prevents tile overlays from being created before cookies exist)
+            // Start layer data NOW rather than after sign-in + cookie issuance, which cost
+            // ~2 s on a cold load (measured 2026-09-23). It used to be deferred "so tile
+            // overlays are not created before cookies exist" — that guarantee does not
+            // depend on the deferral: overlays are only ever created from
+            // loadTilesBasedOnViewport(), which returns early until cfCookiesReady, and
+            // the layer files plus appConfig/dataVersions are public reads.
+            // Demo mode keeps the old order: it must not load anything until a real
+            // sign-in, and its auth branch returns before issuing cookies.
+            if (!isDemoMode) {
+                fetchLayerData();
+                _tryReuseCfCookies();
+            }
 
             // Load sidebar navigation from Firebase. The sidebar is hidden until the
             // user opens it, so its Firebase fetch + DOM build can wait — we yield it
@@ -10074,7 +10154,20 @@
         // loaded AND the user is already at a premium zoom from a restored
         // position, re-dispatch zoom_changed so the listener can correctly
         // decide whether to show the access dialog or unlock tiles.
+        // Layer data now starts at initMap, before sign-in resolves (see the note there),
+        // so it can land before this visitor's purchases are known. Judging a restored
+        // premium zoom at that moment would clamp a paying customer to 14 and flash the
+        // paywall until getPurchaseStatus answered. Hold the startup re-check until the
+        // auth listener says entitlements are known, and let it re-run it then.
+        var _entitlementsKnown = false;
+        function _setEntitlementsKnown() {
+            if (_entitlementsKnown) return;
+            _entitlementsKnown = true;
+            maybeRerunZoomCheck();
+        }
+
         function maybeRerunZoomCheck() {
+            if (!_entitlementsKnown) return;
             if (!dpDataLoaded || !villageDataLoaded) return;
             if (!map) return;
             try {
