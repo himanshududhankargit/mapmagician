@@ -570,7 +570,7 @@
         //       Survey of 2026-09-20: 31 records still need MaxZoom (Alandi Corporation 21,
         //       Paithan inner 20, Sangli Gaothan 21...) and 10 need MinZoom (three
         //       PMRDA/Satara folders start at 8). 882 of 924 blanks are genuinely 11-18.
-        var APP_VERSION = '190';
+        var APP_VERSION = '191';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -1013,6 +1013,52 @@
             return true;
         }
 
+        // ── Pre-auth cookies: first visits no longer wait for sign-in ────────────────
+        // With nothing in the jar to reuse, tiles used to wait for three calls IN SERIES:
+        // anonymous sign-up (~1.0 s) -> the SDK's account lookup (~0.8 s) -> issuance
+        // (~0.5 s). getCloudFrontCookies now also answers an unauthenticated
+        // {preauth: true} call with the three policy cookies — exactly what any anonymous
+        // visitor is given today, and NO mmp-token, so zoom >= 15 stays gated at the edge.
+        // It is sent the moment this script runs, in parallel with sign-in.
+        //
+        // The signed-in issuance always has the last word: if it has already written, the
+        // pre-auth answer is dropped; if it lands later it overwrites, and because this is
+        // treated like a reuse (_cfReusedPids = []), _afterReusedCookiesRefreshed rebuilds
+        // the DP overlays when the real token grants districts.
+        const CF_FUNCTION_URL = 'https://asia-south1-sodium-hour-256110.cloudfunctions.net/getCloudFrontCookies';
+        let _cfAuthedWritten = false;   // set once a signed-in issuance has written the jar
+
+        function _cfReusableNow() {
+            try {
+                const jar = document.cookie;
+                if (jar.indexOf('CloudFront-Key-Pair-Id=') === -1 || jar.indexOf('CloudFront-Policy=') === -1
+                    || jar.indexOf('CloudFront-Signature=') === -1) return false;
+                const meta = JSON.parse(localStorage.getItem(CF_META_KEY) || 'null');
+                const age = meta && typeof meta.at === 'number' ? Date.now() - meta.at : -1;
+                return age >= 0 && age <= CF_REUSE_MAX_AGE_MS;
+            } catch (e) { return false; }
+        }
+
+        (function _startPreauthCookies() {
+            if (isDemoMode) return;             // demo must not load anything before a real sign-in
+            if (_cfReusableNow()) return;       // initMap will reuse the jar instead
+            let body;
+            try {
+                body = JSON.stringify({ data: { preauth: true, tileHost: typeof TILE_HOST === 'string' ? TILE_HOST : '' } });
+            } catch (e) { return; }
+            fetch(CF_FUNCTION_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body })
+                .then(function(r) { return r.ok ? r.json() : null; })
+                .then(function(j) {
+                    const d = j && j.result;
+                    if (!d || d.preauth !== true) return;
+                    if (cfCookiesReady || _cfAuthedWritten) return;   // the real issuance won the race
+                    if (!writeCfCookies(d)) return;                   // cookies blocked: normal path shows the banner
+                    _cfReusedPids = [];
+                    _markCfReady();
+                })
+                .catch(function() { /* no pre-auth = today's behaviour */ });
+        })();
+
         // The background issuance after a reuse landed. If the fresh token grants a
         // different district set, DP overlays may be holding tiles fetched under the old
         // one (blank 403s for a district just bought, or real tiles for one that lapsed),
@@ -1199,6 +1245,7 @@
                         return false;
                     }
                     hideCookiesBlockedBanner();
+                    _cfAuthedWritten = true;   // a late pre-auth answer must not overwrite this
 
                     if (expectPid && Array.isArray(data.grantedPids)
                         && data.grantedPids.indexOf(expectPid) === -1
@@ -6533,6 +6580,9 @@
             if (!isDemoMode) {
                 fetchLayerData();
                 _tryReuseCfCookies();
+                // Pre-auth cookies may have landed before the map existed, in which case
+                // _markCfReady's tile pass returned early on !map. Run it now.
+                if (cfCookiesReady) loadTilesBasedOnViewport();
             }
 
             // Load sidebar navigation from Firebase. The sidebar is hidden until the
