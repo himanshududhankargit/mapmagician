@@ -570,7 +570,12 @@
         //       Survey of 2026-09-20: 31 records still need MaxZoom (Alandi Corporation 21,
         //       Paithan inner 20, Sangli Gaothan 21...) and 10 need MinZoom (three
         //       PMRDA/Satara folders start at 8). 882 of 924 blanks are genuinely 11-18.
-        var APP_VERSION = '194';
+        // 195 = Video tutorial (youtu.be/y02IQpR2GLo). "Watch tutorial" pill between
+        //       Try Demo and Not now in the unlock dialog plays the video IN PLACE of the
+        //       plan cards (Back to plans restores them); Settings -> Support gets a
+        //       "Video tutorial" entry opening it in a pop-up. Iframe built on click,
+        //       destroyed on every close path (MutationObserver on .open).
+        var APP_VERSION = '195';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -3807,7 +3812,86 @@
             // hand a tester the live build (or the reverse) through this button.
             var _zrDemo = document.getElementById('zoom-restrict-demo');
             if (_zrDemo) _zrDemo.onclick = () => window.open(location.pathname + '?demo=1', '_blank', 'noopener');
+
+            // "Watch tutorial" pill -> the video plays in place of the plan cards.
+            var _zrVideo = document.getElementById('zoom-restrict-video');
+            if (_zrVideo) _zrVideo.onclick = showPlanVideo;
+            var _zrBack = document.getElementById('pd-video-back');
+            if (_zrBack) _zrBack.onclick = hidePlanVideo;
         }
+
+        // --- Tutorial video (staging 195) ---
+        // The iframe is CREATED on click and DESTROYED on close, never preloaded: opening
+        // the unlock dialog or Settings costs zero YouTube bytes, and closing by any
+        // route (X, Not now, Back, a purchase, Android back) cannot leave audio playing
+        // behind the map. youtube-nocookie keeps YouTube cookies off until playback.
+        var TUTORIAL_VIDEO_ID = 'y02IQpR2GLo';
+        function tutorialEmbed(startSec) {
+            var f = document.createElement('iframe');
+            f.src = 'https://www.youtube-nocookie.com/embed/' + TUTORIAL_VIDEO_ID +
+                '?autoplay=1&rel=0&playsinline=1' + (startSec ? '&start=' + startSec : '');
+            f.title = 'How to use dpplans.com';
+            f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+            f.allowFullscreen = true;
+            return f;
+        }
+
+        // In the unlock dialog the player takes the plan cards' place. The cards'
+        // previous inline display is remembered rather than assumed, because the
+        // no-data variant of this dialog hides them itself.
+        var _pdVideoPrevDisplay = null;
+        function showPlanVideo() {
+            var wrap = document.getElementById('pd-video-wrap');
+            var frame = document.getElementById('pd-video-frame');
+            var tabs = document.getElementById('pd-plan-tabs');
+            if (!wrap || !frame) return;
+            if (!frame.firstChild) frame.appendChild(tutorialEmbed(0));
+            if (tabs && _pdVideoPrevDisplay === null) {
+                _pdVideoPrevDisplay = tabs.style.display;
+                tabs.style.display = 'none';
+            }
+            wrap.hidden = false;
+            try { wrap.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+        }
+        function hidePlanVideo() {
+            var wrap = document.getElementById('pd-video-wrap');
+            var frame = document.getElementById('pd-video-frame');
+            var tabs = document.getElementById('pd-plan-tabs');
+            if (frame) frame.innerHTML = '';
+            if (wrap) wrap.hidden = true;
+            if (tabs && _pdVideoPrevDisplay !== null) tabs.style.display = _pdVideoPrevDisplay;
+            _pdVideoPrevDisplay = null;
+        }
+        // Every close path ends in removing .open (there are ~10 of them), so watch the
+        // class instead of patching each one.
+        (function () {
+            var ov = document.getElementById('zoom-restrict-overlay');
+            if (!ov || typeof MutationObserver === 'undefined') return;
+            new MutationObserver(function () {
+                if (!ov.classList.contains('open')) hidePlanVideo();
+            }).observe(ov, { attributes: true, attributeFilter: ['class'] });
+        })();
+
+        // Settings -> "Video tutorial": the same video in its own pop-up.
+        function openTutorialVideo() {
+            var ov = document.getElementById('tutorial-video-overlay');
+            var frame = document.getElementById('tutorial-video-frame');
+            if (!ov || !frame) return;
+            if (!frame.firstChild) frame.appendChild(tutorialEmbed(0));
+            ov.classList.add('open');
+        }
+        function closeTutorialVideo() {
+            var ov = document.getElementById('tutorial-video-overlay');
+            var frame = document.getElementById('tutorial-video-frame');
+            if (ov) ov.classList.remove('open');
+            if (frame) frame.innerHTML = '';
+        }
+        (function () {
+            var ov = document.getElementById('tutorial-video-overlay');
+            var x = document.getElementById('tutorial-video-close');
+            if (x) x.onclick = closeTutorialVideo;
+            if (ov) ov.addEventListener('click', function (e) { if (e.target === ov) closeTutorialVideo(); });
+        })();
 
         function showNoDataDialog() {
             // Guarded at the source as well as at the caller above: this dialog offers
@@ -8424,6 +8508,10 @@
             var _verEl = document.getElementById('settings-version');
             if (_verEl) _verEl.textContent = ': Ver -' + APP_VERSION;
 
+            document.getElementById('settings-video-tutorial').addEventListener('click', function() {
+                closeSettingsPanel();
+                openTutorialVideo();
+            });
             document.getElementById('settings-contact-support').addEventListener('click', function() {
                 closeSettingsPanel();
                 openSupportForm(null, false);
