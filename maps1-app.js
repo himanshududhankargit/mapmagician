@@ -575,7 +575,10 @@
         //       plan cards (Back to plans restores them); Settings -> Support gets a
         //       "Video tutorial" entry opening it in a pop-up. Iframe built on click,
         //       destroyed on every close path (MutationObserver on .open).
-        var APP_VERSION = '195';
+        // 196 = The "Watch tutorial" pill now TOGGLES: while the video shows it turns
+        //       green and reads "View plans". The separate "Back to plans" link above
+        //       the player is gone - one control, in the pinned row that never scrolls.
+        var APP_VERSION = '196';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -3813,11 +3816,13 @@
             var _zrDemo = document.getElementById('zoom-restrict-demo');
             if (_zrDemo) _zrDemo.onclick = () => window.open(location.pathname + '?demo=1', '_blank', 'noopener');
 
-            // "Watch tutorial" pill -> the video plays in place of the plan cards.
+            // "Watch tutorial" pill -> the video plays in place of the plan cards; the
+            // same pill ("View plans" while the video shows) brings the cards back.
             var _zrVideo = document.getElementById('zoom-restrict-video');
-            if (_zrVideo) _zrVideo.onclick = showPlanVideo;
-            var _zrBack = document.getElementById('pd-video-back');
-            if (_zrBack) _zrBack.onclick = hidePlanVideo;
+            if (_zrVideo) _zrVideo.onclick = function () {
+                var wrap = document.getElementById('pd-video-wrap');
+                if (wrap && !wrap.hidden) hidePlanVideo(); else showPlanVideo();
+            };
         }
 
         // --- Tutorial video (staging 195) ---
@@ -3851,12 +3856,16 @@
                 tabs.style.display = 'none';
             }
             wrap.hidden = false;
+            var btn = document.getElementById('zoom-restrict-video');
+            if (btn) { btn.classList.add('pd-showing-video'); btn.title = 'Back to the plans'; }
             try { wrap.scrollIntoView({ block: 'nearest' }); } catch (e) {}
         }
         function hidePlanVideo() {
             var wrap = document.getElementById('pd-video-wrap');
             var frame = document.getElementById('pd-video-frame');
             var tabs = document.getElementById('pd-plan-tabs');
+            var btn = document.getElementById('zoom-restrict-video');
+            if (btn) { btn.classList.remove('pd-showing-video'); btn.title = 'Watch a 3-minute video tutorial'; }
             if (frame) frame.innerHTML = '';
             if (wrap) wrap.hidden = true;
             if (tabs && _pdVideoPrevDisplay !== null) tabs.style.display = _pdVideoPrevDisplay;
