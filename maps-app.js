@@ -592,7 +592,15 @@
         //       file data/database/d5.bin (versioned by layer_bbox) instead of the RTDB
         //       districtBboxes node, with RTDB kept as the fallback. Checked in Edge on
         //       staging: cold visit, warm reload, and d5 blocked.
-        var APP_VERSION = '200';
+        // 201 = Zoomed-out overview: below zoom 11 the map showed bare satellite with no
+        //       sign that plans exist. One merged, blurry z8-10 pyramid of every web plan
+        //       (scripts/build-overview-tiles.py, manifest data/coverage/overview.json) now
+        //       draws under the plan layers. Manifest fetched only on the first zoom-out.
+        // 202 = PROMOTION of 201 to live: blurry z8-10 overview of every web plan under
+        //       the plan layers, so zooming out below 11 no longer shows bare satellite.
+        //       Checked in Chrome on staging: z10 Pune, z8 state view, z11 handover,
+        //       DP layer toggle.
+        var APP_VERSION = '202';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -6189,6 +6197,10 @@
                     }, 1500);
                 } catch (e) {}
             });
+            // Zoomed-out overview (201): fetched the first time the view drops below the
+            // plans' own minimum zoom — including a saved/deep-link zoom below it.
+            map.addListener('zoom_changed', _overviewMaybeLoad);
+            _overviewMaybeLoad();
             // Show purchase dialog when user hits zoom 14 in unpurchased region, hide when they zoom out
             map.addListener('zoom_changed', function() {
                 // Fade Solapur decorative labels smoothly as the zoom changes
@@ -9167,6 +9179,8 @@
                 oldDPTileStatus = Array(oldDPLayerData.length).fill(false);
 
                 if (isDPLayerVisible) loadTilesBasedOnViewport();
+                _overviewRefresh();
+                _overviewMaybeLoad();
             });
 
             // DP layer toggle -- controls whichever DP set is currently active
@@ -9187,6 +9201,8 @@
                         else loadTilesBasedOnViewport();
                     }
                 }
+                _overviewRefresh();
+                _overviewMaybeLoad();
             });
 
             document.getElementById('village-layer').addEventListener('change', function() {
@@ -9235,6 +9251,7 @@
                 updateOverlayOpacity(dpOverlays, currentOpacity);
                 updateOverlayOpacity(villageOverlays, currentOpacity);
                 updateOverlayOpacity(oldDPOverlays, currentOpacity);
+                if (_overviewMapType) _overviewMapType.setOpacity(currentOpacity);
             }
             opacityPanel.addEventListener('input', function() { applyOpacity(this.value); });
             opacityInfo.addEventListener('input', function() { applyOpacity(this.value); });
@@ -12290,6 +12307,121 @@
             this.opacity_ = opacity;
             this.tiles_.forEach(function(div) { div.style.opacity = opacity; });
         };
+
+        // ==================== Zoomed-out overview (z8-10) ====================
+        // Below a plan's own MinZoom (11 for almost every sheet) the map showed bare
+        // satellite, with nothing to say the plans exist. scripts/build-overview-tiles.py
+        // merges every web plan's z11 tiles into ONE blurry pyramid for z8-10 and lists
+        // the tiles it wrote in data/coverage/overview.json; this layer draws it under
+        // the plan layers. One merged pyramid rather than "draw each plan's z11 tiles at
+        // 10": the web plans are ~500 small folders, so that costs 450-900 requests per
+        // screen at z8-9 (measured 2026-09-29) against ~10-30 here.
+        //
+        // 🛑 Only tiles NAMED in the manifest are requested: CloudFront caches a 404 on
+        // this distribution for ~100 years, and every build lives under its own id path.
+        // The manifest is fetched on the first zoom below the plans' minimum, so sessions
+        // that never zoom out pay nothing. No manifest / fetch failed = no overview, the
+        // behaviour before 201.
+        const OVERVIEW_URL = LAYER_JSON_BASE.replace(/\/database$/, '/coverage') + '/overview.json';
+        let _overview = null;           // { prefix, zmin, zmax, has: Set of 'z/x/y' }
+        let _overviewState = 0;         // 0 not loaded, 1 loading, 2 ready, 3 failed
+        let _overviewMapType = null;
+
+        // Mirrors what it summarises: the current DP plans. Old maps have no overview.
+        function _overviewWanted() {
+            return isDPLayerVisible && !isShowingOldMaps && !isDemoMode;
+        }
+
+        function OverviewMapType() {
+            this.tileSize = new google.maps.Size(256, 256);
+            this.maxZoom = 22;
+            this.minZoom = 0;
+            this.name = 'overview';
+            this.tiles_ = new Set();
+        }
+
+        OverviewMapType.prototype.getTile = function(tileCoord, zoom, ownerDocument) {
+            var div = ownerDocument.createElement('div');
+            div.style.width = '256px';
+            div.style.height = '256px';
+            div.style.opacity = currentOpacity;
+            var ov = _overview;
+            if (!ov || zoom < ov.zmin || zoom > ov.zmax || !_overviewWanted()) return div;
+            var n = 1 << zoom;
+            var key = zoom + '/' + (((tileCoord.x % n) + n) % n) + '/' + tileCoord.y;
+            if (!ov.has.has(key)) return div;
+
+            var canvas = ownerDocument.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            canvas.style.width = '256px';
+            canvas.style.height = '256px';
+            canvas.style.display = 'block';
+            div.appendChild(canvas);
+            var ctx = canvas.getContext('2d');
+            var img = new Image();
+            img.onload = function() {
+                if (div.parentNode) ctx.drawImage(img, 0, 0, 256, 256);
+                if (img._mmBlobUrl) { try { URL.revokeObjectURL(img._mmBlobUrl); } catch (e) {} img._mmBlobUrl = null; }
+            };
+            img.onerror = function() {
+                if (img._mmBlobUrl) { try { URL.revokeObjectURL(img._mmBlobUrl); } catch (e) {} img._mmBlobUrl = null; }
+            };
+            var url = tileBaseUrl + ov.prefix + '/' + key + '.png';
+            loadTileWithCache(url, zoom).then(function(blobUrl) {
+                if (blobUrl === TILE_ABSENT) return;   // MUST precede the truthy test — see TILE_ABSENT
+                if (div._tileImg !== img) {            // released while loading
+                    if (blobUrl) { try { URL.revokeObjectURL(blobUrl); } catch (e) {} }
+                    return;
+                }
+                if (blobUrl) { img._mmBlobUrl = blobUrl; img.src = blobUrl; }
+                else img.src = url;
+            }).catch(function() { if (div._tileImg === img) img.src = url; });
+
+            div._tileImg = img;
+            this.tiles_.add(div);
+            return div;
+        };
+
+        OverviewMapType.prototype.releaseTile = function(tile) {
+            this.tiles_.delete(tile);
+            _abortTileImages(tile);
+        };
+
+        OverviewMapType.prototype.setOpacity = function(opacity) {
+            this.tiles_.forEach(function(div) { div.style.opacity = opacity; });
+        };
+
+        // Kept at index 0 so every plan layer paints over it. Re-inserting is also how a
+        // visibility toggle takes effect: Google Maps only calls getTile again for a
+        // map type that was removed and added back.
+        function _overviewRefresh() {
+            if (!map || !_overviewMapType) return;
+            var i = map.overlayMapTypes.getArray().indexOf(_overviewMapType);
+            if (i !== -1) map.overlayMapTypes.removeAt(i);
+            if (_overviewWanted()) map.overlayMapTypes.insertAt(0, _overviewMapType);
+        }
+
+        function _overviewMaybeLoad() {
+            if (_overviewState !== 0 || !map || !_overviewWanted()) return;
+            if (!(map.getZoom() < MIN_ZOOM_FOR_DP)) return;
+            _overviewState = 1;
+            fetch(OVERVIEW_URL, { cache: 'default' })
+                .then(function(r) { return r.ok ? r.json() : null; })
+                .then(function(doc) {
+                    if (!doc || doc.v !== 1 || typeof doc.prefix !== 'string' || !doc.tiles ||
+                        !(doc.zmin >= 0) || !(doc.zmax >= doc.zmin)) { _overviewState = 3; return; }
+                    var has = new Set();
+                    Object.keys(doc.tiles).forEach(function(z) {
+                        (doc.tiles[z] || []).forEach(function(t) { has.add(z + '/' + t[0] + '/' + t[1]); });
+                    });
+                    _overview = { prefix: doc.prefix, zmin: doc.zmin, zmax: doc.zmax, has: has };
+                    _overviewMapType = new OverviewMapType();
+                    _overviewState = 2;
+                    _overviewRefresh();
+                })
+                .catch(function() { _overviewState = 3; });
+        }
 
         // ==================== Download Map (Android plan-download port) ====================
         // Port of the Android app's "Download Map": Android snapshots the live GoogleMap 3
