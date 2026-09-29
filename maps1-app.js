@@ -582,7 +582,10 @@
         //       data/database/d5.bin via getCachedOrFetchLayer, versioned by layer_bbox,
         //       instead of reading the RTDB node on every visit without a warm cache.
         //       RTDB stays as the fallback if the file cannot be fetched.
-        var APP_VERSION = '198';
+        // 199 = 198 fix: getCachedOrFetchLayer resolves null on a failed fetch instead of
+        //       rejecting, so d5 unavailable now reaches the RTDB fallback (was: empty index
+        //       for the whole session). Caught by blocking d5 in Edge before promotion.
+        var APP_VERSION = '199';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -2525,6 +2528,10 @@
             _districtBboxLoadPromise = getCachedOrFetchLayer(
                 DISTRICT_BBOX_CACHE_KEY, DISTRICT_BBOX_FILE, DISTRICT_BBOX_VERSION_KEY, _refetchDistrictBbox)
                 .then(function(node) {
+                    // getCachedOrFetchLayer never rejects: a failed fetch resolves to null
+                    // (see the warning under it). Treat that as unavailable, or a cold visit
+                    // would keep an empty index for the whole session and never fall back.
+                    if (!node) throw new Error(DISTRICT_BBOX_FILE + ' fetch failed');
                     const fresh = _bboxIndexFromNode(node);
                     if (fresh.length) GEOJSON_DISTRICT_INDEX = fresh;
                     console.log('[districtBbox] ' + fresh.length + ' districts from ' + DISTRICT_BBOX_FILE);
