@@ -1,0 +1,142 @@
+name: Build zoomed-out overview
+
+# Rebuilds the blurry z8-10 overview of every web plan (.github/scripts/build-overview-tiles.py,
+# drawn by OverviewMapType in maps*-app.js) whenever d1.bin is published, and weekly to catch
+# tiles re-uploaded in place, which change no RTDB record. A run whose inputs are unchanged
+# exits before downloading anything, so the weekly run normally commits nothing.
+#
+# Order matters and is why the manifest is committed LAST: tiles go to a brand-new
+# _overview/<id>/ folder first, then data/coverage/overview.json points the map at them. The map
+# never requests a tile the manifest does not list (a CloudFront 404 is cached ~100 years).
+#
+# Required repo secrets (already present for republish-districts.yml):
+#   AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY  IAM user github-actions-mmp-tile-gate. Its inline
+#       policy mmp-overview-tiles allows s3:ListBucket (prefix MapMagicianTM/dpplans/*),
+#       s3:GetObject on MapMagicianTM/dpplans/*, and s3:PutObject + s3:DeleteObject on
+#       MapMagicianTM/dpplans/_overview/* ONLY — it cannot alter a plan tile.
+#   NOTIFY_GMAIL_USER / NOTIFY_GMAIL_PASS      failure mail
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'data/database/d1.bin'
+  schedule:
+    - cron: '30 21 * * 0'          # Mondays 03:00 IST
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Rebuild even if the inputs are unchanged'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: build-overview
+  cancel-in-progress: false
+
+jobs:
+  overview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install deps
+        run: pip install pillow==11.3.0 boto3
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      # Reads the CHECKED-OUT d1.bin, not the live one: this runs on the push, before Pages has
+      # deployed it.
+      - name: Build + upload
+        id: build
+        run: >
+          python .github/scripts/build-overview-tiles.py
+          --d1 data/database/d1.bin --upload --prune
+          ${{ inputs.force && '--force' || '' }}
+
+      # A Pages deploy queued behind a running one can hang for 10 min and error (2026-07-02,
+      # 2026-08-09) — and the running one is usually the d1.bin publish that triggered us. Push
+      # only once no build is in flight.
+      - name: Wait for any in-flight Pages build
+        if: steps.build.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 40); do
+            st=$(gh api "repos/${{ github.repository }}/pages/builds/latest" --jq .status || echo unknown)
+            if [ "$st" != "building" ] && [ "$st" != "queued" ]; then echo "Pages: $st"; exit 0; fi
+            sleep 15
+          done
+          echo "::warning::Pages still busy after 10 min — pushing anyway"
+
+      - name: Commit + push the manifest
+        id: push
+        if: steps.build.outputs.changed == 'true'
+        run: |
+          git config user.name  mmp-bot
+          git config user.email mmp-bot@users.noreply.github.com
+          git add data/coverage/overview.json
+          git commit -m "chore(data): rebuild zoomed-out overview ${{ steps.build.outputs.build_id }}"
+          for i in 1 2 3 4 5; do
+            if git pull --rebase origin main && git push origin HEAD:main; then
+              echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 15
+          done
+          exit 1
+
+      # Pushes made with the workflow token may not start a Pages build on their own. Ask for one
+      # only if none has appeared for our commit, so we never queue a second, racing deploy.
+      - name: Make sure Pages publishes the manifest
+        if: steps.build.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 6); do
+            c=$(gh api "repos/${{ github.repository }}/pages/builds/latest" --jq .commit || echo none)
+            if [ "$c" = "${{ steps.push.outputs.sha }}" ]; then echo "Pages build started for $c"; exit 0; fi
+            sleep 15
+          done
+          echo "No Pages build for our commit after 90 s — requesting one"
+          gh api --method POST "repos/${{ github.repository }}/pages/builds"
+
+      - name: Notify — failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.NOTIFY_GMAIL_USER }}
+          password: ${{ secrets.NOTIFY_GMAIL_PASS }}
+          from: Map Magician CI <${{ secrets.NOTIFY_GMAIL_USER }}>
+          to: himanshududhankar@gmail.com
+          subject: "[mmp] Zoomed-out overview rebuild FAILED"
+          body: |
+            The zoomed-out (zoom 8-10) overview could not be rebuilt.
+
+            Nothing is broken for customers: the map keeps showing the PREVIOUS overview, and
+            every plan still shows normally from its own minimum zoom. A plan added since the
+            last good build just has no zoom-out view yet.
+
+            The run log says which step failed:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            -------- details, for Claude Code --------
+            trigger: ${{ github.event_name }}  commit: ${{ github.sha }}
+            script: .github/scripts/build-overview-tiles.py (refuses an empty or half-size build)
+            IAM: github-actions-mmp-tile-gate, inline policy mmp-overview-tiles
