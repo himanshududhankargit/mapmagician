@@ -578,7 +578,11 @@
         // 196 = The "Watch tutorial" pill now TOGGLES: while the video shows it turns
         //       green and reads "View plans". The separate "Back to plans" link above
         //       the player is gone - one control, in the pinned row that never scrolls.
-        var APP_VERSION = '196';
+        // 198 = District bounds index (districtBboxes) now loads from the CDN file
+        //       data/database/d5.bin via getCachedOrFetchLayer, versioned by layer_bbox,
+        //       instead of reading the RTDB node on every visit without a warm cache.
+        //       RTDB stays as the fallback if the file cannot be fetched.
+        var APP_VERSION = '198';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -2445,91 +2449,112 @@
         const IS_LOW_MEMORY_DEVICE = (navigator.deviceMemory || 8) < 8;
         let isVillageBoundaryEnabled = !IS_LOW_MEMORY_DEVICE;
 
-        // ---------- District bounds index (Firebase-backed, localStorage-cached) ----------
+        // ---------- District bounds index (CDN file d5.bin, localStorage-cached) ----------
         // Source of truth is Firebase RTDB node `districtBboxes`, populated by the
         // districtBboxPublisher AWS Lambda whenever a zip is uploaded/deleted to
-        // s3://www.mapdata.com/dpplans/0geojson_dontUnzip/. Cached in localStorage
-        // (`layer_district_bbox`) using the same version-gated pattern as DP plan;
-        // Lambda bumps `appConfig/dataVersions/layer_district_bbox` on every change
-        // so cached web users invalidate within one page-load cycle.
+        // s3://www.mapdata.com/dpplans/0geojson_dontUnzip/. The auto-publish pipeline
+        // mirrors that node to data/database/d5.bin (+.gz), exactly like d1-d4, and bumps
+        // appConfig/dataVersions/layer_bbox once the file is live.
+        //
+        // It used to be read straight from RTDB, and the web SDK keeps no disk copy of
+        // RTDB data (unlike the Android app's persistence), so every visit without a warm
+        // cache -- a third of map loads on 2026-09-28: new visitors, in-app browsers,
+        // crawlers -- downloaded the whole node from the database. Now those visits pull
+        // the CDN file through getCachedOrFetchLayer, the same path as the layers, and
+        // RTDB is read only if the file cannot be fetched at all.
+        //
+        // ⚠️ Keyed on `layer_bbox`, NOT `layer_district_bbox`: the Lambda bumps the latter the
+        // moment it writes RTDB, before d5.bin is rebuilt, so a browser would cache the old
+        // file under the new version. The pipeline bumps `layer_bbox` only once d5.bin is live.
         //
         // Kept as `let` so the synchronous localStorage seed populates entries
         // before the first viewport check on warm-cache loads. On cold cache
         // the array starts empty; first call to _doLoadGeoJsonForViewport awaits
         // loadDistrictBboxIndex() to guarantee data before iterating.
-        const DISTRICT_BBOX_CACHE_KEY = 'layer_district_bbox';
-        const DISTRICT_BBOX_VERSION_KEY = 'layer_district_bbox';
+        const DISTRICT_BBOX_CACHE_KEY = 'layer_bbox';
+        const DISTRICT_BBOX_VERSION_KEY = 'layer_bbox';
+        const DISTRICT_BBOX_FILE = 'd5';
         let GEOJSON_DISTRICT_INDEX = [];
         let _districtBboxLoadPromise = null;
 
+        // The node (as published, or as read from RTDB) -> the compact array the viewport
+        // code iterates. Keys in RTDB order (integer-like first, then lexical), which is the
+        // order the old snapshot.forEach produced.
+        function _bboxIndexFromNode(node) {
+            const out = [];
+            if (!node || typeof node !== 'object') return out;
+            const isInt = (k) => /^-?\d{1,10}$/.test(k);
+            const keys = Object.keys(node).sort((a, b) => {
+                if (isInt(a) && isInt(b)) return Number(a) - Number(b);
+                if (isInt(a)) return -1;
+                if (isInt(b)) return 1;
+                return a < b ? -1 : a > b ? 1 : 0;
+            });
+            for (const key of keys) {
+                const v = node[key];
+                const b = v && v.bbox;
+                if (!b || typeof b.north !== 'number') continue;
+                const fileName = v.fileName || (key + '.zip');
+                out.push({
+                    name: v.name || key,
+                    file: fileName.replace(/\.zip$/i, ''),
+                    n: b.north, s: b.south, e: b.east, w: b.west,
+                });
+            }
+            return out;
+        }
+
         (function _seedDistrictBboxFromCache() {
             try {
+                // The pre-d5 cache held the converted array under another key; drop it.
+                localStorage.removeItem('layer_district_bbox');
                 const raw = localStorage.getItem(DISTRICT_BBOX_CACHE_KEY);
                 if (!raw) return;
                 const parsed = JSON.parse(raw);
-                if (parsed && Array.isArray(parsed.d)) GEOJSON_DISTRICT_INDEX = parsed.d;
+                if (parsed && parsed.d) GEOJSON_DISTRICT_INDEX = _bboxIndexFromNode(parsed.d);
             } catch (e) { /* ignore */ }
         })();
 
+        function _refetchDistrictBbox() {
+            _districtBboxLoadPromise = null;
+            loadDistrictBboxIndex();
+        }
+
         function loadDistrictBboxIndex() {
             if (_districtBboxLoadPromise) return _districtBboxLoadPromise;
-            _districtBboxLoadPromise = (async function() {
-                let cached = null;
-                try {
-                    const raw = localStorage.getItem(DISTRICT_BBOX_CACHE_KEY);
-                    if (raw) cached = JSON.parse(raw);
-                } catch (e) { /* ignore */ }
-
-                let liveVersion = null;
-                try {
-                    liveVersion = await firebase.database()
-                        .ref('appConfig/dataVersions/' + DISTRICT_BBOX_VERSION_KEY)
-                        .once('value')
-                        .then(function(s) { return s.val(); });
-                } catch (e) {
-                    // Network/Firebase issue. If we have a cached array, keep it.
-                    console.warn('[districtBbox] version read failed:', e && e.message);
-                    if (cached && Array.isArray(cached.d)) return GEOJSON_DISTRICT_INDEX;
-                }
-
-                const cachedVersion = cached ? cached.v : null;
-                if (cached && Array.isArray(cached.d) && cached.d.length > 0
-                    && liveVersion === cachedVersion) {
+            _districtBboxLoadPromise = getCachedOrFetchLayer(
+                DISTRICT_BBOX_CACHE_KEY, DISTRICT_BBOX_FILE, DISTRICT_BBOX_VERSION_KEY, _refetchDistrictBbox)
+                .then(function(node) {
+                    const fresh = _bboxIndexFromNode(node);
+                    if (fresh.length) GEOJSON_DISTRICT_INDEX = fresh;
+                    console.log('[districtBbox] ' + fresh.length + ' districts from ' + DISTRICT_BBOX_FILE);
                     return GEOJSON_DISTRICT_INDEX;
-                }
-
-                // Cold cache OR stale OR empty: read full bbox node from Firebase.
-                const snap = await firebase.database().ref('districtBboxes').once('value');
-                const fresh = [];
-                snap.forEach(function(child) {
-                    const v = child.val();
-                    const b = v && v.bbox;
-                    if (!b || typeof b.north !== 'number') return;
-                    const fileName = v.fileName || (child.key + '.zip');
-                    fresh.push({
-                        name: v.name || child.key,
-                        file: fileName.replace(/\.zip$/i, ''),
-                        n: b.north, s: b.south, e: b.east, w: b.west,
-                    });
+                })
+                .catch(async function(e) {
+                    // CDN file unreachable (network, or not yet published): the old RTDB read,
+                    // so district boundaries never go dark because of the file.
+                    console.warn('[districtBbox] ' + DISTRICT_BBOX_FILE + ' unavailable, reading RTDB:', e && e.message);
+                    try {
+                        const snap = await firebase.database().ref('districtBboxes').once('value');
+                        const fresh = _bboxIndexFromNode(snap.val());
+                        if (fresh.length) GEOJSON_DISTRICT_INDEX = fresh;
+                    } catch (e2) {
+                        console.warn('[districtBbox] RTDB read failed:', e2 && e2.message);
+                    }
+                    _districtBboxLoadPromise = null;   // let the next caller retry the file
+                    return GEOJSON_DISTRICT_INDEX;
                 });
-
-                GEOJSON_DISTRICT_INDEX = fresh;
-                try {
-                    localStorage.setItem(DISTRICT_BBOX_CACHE_KEY, JSON.stringify({
-                        v: liveVersion === undefined ? null : liveVersion,
-                        d: fresh,
-                    }));
-                } catch (e) { /* quota — fine */ }
-                return fresh;
-            })();
             return _districtBboxLoadPromise;
         }
 
-        // Kick off the network revalidation in the background. Synchronous seed
-        // above already populated GEOJSON_DISTRICT_INDEX from cache for warm
-        // loads; this resolves the cold-cache case before the first viewport
-        // intersection runs (also enforced by an await in _doLoadGeoJsonForViewport).
-        loadDistrictBboxIndex();
+        // Kick off the load in the background. Synchronous seed above already populated
+        // GEOJSON_DISTRICT_INDEX from cache for warm loads; this resolves the cold-cache
+        // case before the first viewport intersection runs (also enforced by an await in
+        // _doLoadGeoJsonForViewport).
+        // 🛑 Deferred, not called inline: getCachedOrFetchLayer reads consts declared much
+        // further down this file (LAYER_JSON_BASE, _layerFetchers, _inFlightLayerFetches),
+        // which are in their temporal dead zone until the script finishes evaluating.
+        setTimeout(loadDistrictBboxIndex, 0);
         // 15-color palette — high contrast, no greys/white/black. Fully opaque so
         // boundaries stay visible on satellite + busy basemaps; prior 0.39 alpha
         // washed out against dense imagery.
