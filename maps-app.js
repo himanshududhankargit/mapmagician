@@ -600,7 +600,18 @@
         //       the plan layers, so zooming out below 11 no longer shows bare satellite.
         //       Checked in Chrome on staging: z10 Pune, z8 state view, z11 handover,
         //       DP layer toggle.
-        var APP_VERSION = '202';
+        // 203 = Download Map: the free re-download ("Get" under Settings -> Downloads)
+        //       worked signed out — history is per-browser localStorage and nothing on that
+        //       path checked sign-in. Rows now carry the owner's email; the list and
+        //       _dlmapRegenerate show/allow only the signed-in account's own rows.
+        //       Download Map now needs sign-in BEFORE the viewfinder/preview (was: only at
+        //       Pay); signing in from that prompt resumes straight into the viewfinder.
+        //       Fix: the Pay button stayed on "Processing…" after the sign-in prompt, a
+        //       cancelled checkout or a payment error (busy-off never restored the label).
+        // 204 = PROMOTION of 203 to live: Download Map needs sign-in before the viewfinder,
+        //       Downloads history is per account (Get needs sign-in), and the Pay button no
+        //       longer sticks on "Processing" after sign-in / cancelled checkout.
+        var APP_VERSION = '204';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -662,6 +673,8 @@
 
         // Auth state listener
         firebase.auth().onAuthStateChanged(user => {
+            // Downloads history is account-scoped — redraw it for whoever is now signed in.
+            try { _dlmapRenderHistory(); } catch (e) {}
             // In embed mode, skip all auth UI/session/purchase logic — just load tiles
             if (isEmbedMode) {
                 currentUser = user;
@@ -712,6 +725,21 @@
             } else {
                 settingsSignedOut.style.display = 'block';
                 settingsSignedIn.style.display = 'none';
+            }
+            // Preview already open (signed in from the Pay prompt, or a session that began
+            // before this build): its credits were read signed out — re-read and redraw.
+            if (user && !user.isAnonymous && _dlmapSession && _dlmapSession.phase === 'preview') {
+                var _dlS = _dlmapSession;
+                _dlmapFetchCredits().then(function(c) {
+                    if (_dlmapSession !== _dlS || _dlS.running) return;
+                    _dlS.credits = c;
+                    if (!document.getElementById('dlmap-pay-btn').classList.contains('busy')) _dlmapRefreshPayButton();
+                });
+            }
+            // Download Map was tapped signed out — resume it now that they're signed in.
+            if (user && !user.isAnonymous && _dlmapResumeAt && Date.now() - _dlmapResumeAt < 5 * 60e3) {
+                _dlmapResumeAt = 0;
+                setTimeout(function() { try { startDownloadMapFlow(); } catch (e) {} }, 300);
             }
 
             if (user && !user.isAnonymous) {
@@ -8997,7 +9025,7 @@
                     return;
                 }
                 if (regenTs) {
-                    var rec = _dlmapHistoryList().filter(function(r) { return String(r.ts) === regenTs; })[0];
+                    var rec = _dlmapHistoryMine().filter(function(r) { return String(r.ts) === regenTs; })[0];
                     if (rec) _dlmapRegenerate(rec);
                 }
             });
@@ -12520,7 +12548,30 @@
                     'Processing <span class="dlmapd-dots"><span></span><span></span><span></span></span>';
             } else {
                 btn.classList.remove('busy');
+                _dlmapRefreshPayButton();
             }
+        }
+        // Price + CTA label from the current session (price, credits, phase). Label lives
+        // in a span — setting textContent on the button itself would destroy the design-1b
+        // download icon beside it.
+        function _dlmapRefreshPayButton() {
+            var s = _dlmapSession;
+            if (!s) return;
+            document.getElementById('dlmap-pay-btn').classList.remove('busy');
+            var price = _dlmapPrice();
+            var credit = s.credits && s.credits.usable;
+            var priceText =
+                s.phase !== 'preview' ? 'Paid'
+                : credit ? '1 credit (' + s.credits.balance + ' available)'
+                : (price >= 1 ? '₹' + price + ' per download' : 'FREE');
+            // Two price spans: the desktop receipt rail and the mobile sticky footer.
+            document.querySelectorAll('.dlmap-price-value').forEach(function(el) {
+                el.textContent = priceText;
+            });
+            document.getElementById('dlmap-pay-label').textContent =
+                s.phase !== 'preview' ? 'Download'
+                : credit ? 'Use 1 credit & Download'
+                : (price >= 1 ? 'Pay ₹' + price + ' & Download' : 'Download');
         }
 
         // Where this sheet was captured: the centre of the capture box and the on-screen
@@ -13467,25 +13518,10 @@
                 (s.phase === 'preview' && s.sample) ? '' : 'none';    // post-pay preview IS full res
             document.getElementById('dlmap-caption').value = s.caption || DLMAP_DEFAULT_CAPTION;
             document.getElementById('dlmap-scalebar-opt').checked = true;   // default ON each session
-            var price = _dlmapPrice();
-            var credit = s.credits && s.credits.usable;
-            var priceText =
-                s.phase !== 'preview' ? 'Paid'
-                : credit ? '1 credit (' + s.credits.balance + ' available)'
-                : (price >= 1 ? '₹' + price + ' per download' : 'FREE');
-            // Two price spans: the desktop receipt rail and the mobile sticky footer.
-            document.querySelectorAll('.dlmap-price-value').forEach(function(el) {
-                el.textContent = priceText;
-            });
-            // Label lives in a span — setting textContent on the button itself would
-            // destroy the design-1b download icon beside it. Also clears any
-            // "Processing…" busy state and last run's saved banner.
+            // Also clears any "Processing…" busy state and last run's saved banner.
             document.getElementById('dlmap-saved-note').classList.remove('show');
-            document.getElementById('dlmap-pay-btn').classList.remove('busy', 'saved');
-            document.getElementById('dlmap-pay-label').textContent =
-                s.phase !== 'preview' ? 'Download'
-                : credit ? 'Use 1 credit & Download'
-                : (price >= 1 ? 'Pay ₹' + price + ' & Download' : 'Download');
+            document.getElementById('dlmap-pay-btn').classList.remove('saved');
+            _dlmapRefreshPayButton();
             _dlmapRenderPreview(function() {
                 progress.classList.remove('open');
                 document.getElementById('dlmap-preview-overlay').classList.add('open');
@@ -13537,9 +13573,22 @@
             if (window.mmAnnotations) { try { window.mmAnnotations.endCapturePreview(); } catch (e) {} }
         }
 
+        // Set when Download Map was tapped signed out: the sign-in popup opens, and a
+        // sign-in within 5 minutes walks straight into the viewfinder (onAuthStateChanged).
+        var _dlmapResumeAt = 0;
         function startDownloadMapFlow() {
             if (_dlmapSession && _dlmapSession.running) return;           // re-entry guard
             if (!map) return;
+            // A real account is required BEFORE any framing or preview, not just at the
+            // Pay button: credits, history and the delivery record are all per account,
+            // and a signed-out preview read as "the download is broken" to customers.
+            if (!_dlmapAccountKey()) {
+                _dlmapResumeAt = Date.now();
+                _dlmapToast('Sign in to download a map');
+                document.getElementById('auth-dialog-overlay').classList.add('open');
+                return;
+            }
+            _dlmapResumeAt = 0;
             // "Capture Area" viewfinder first (same UX as the Android apps): the user
             // frames the region in a template-ratio box, then Proceed captures exactly
             // that box. Map gestures pass through the dimmer (pointer-events:none).
@@ -13718,6 +13767,22 @@
             var now = Date.now();
             return list.filter(function(r) { return r && r.geo && (!r.expiry || r.expiry > now); });
         }
+        // Whose download a history row is. localStorage is per BROWSER, not per account,
+        // so without this a signed-out visitor (or the next person on a shared PC) saw the
+        // previous customer's paid downloads under Settings and could re-render them with
+        // "Get" — no sign-in was checked anywhere on that path. '' = nobody signed in.
+        function _dlmapAccountKey() {
+            var u = firebase.auth().currentUser;
+            return (u && !u.isAnonymous && u.email) ? u.email.toLowerCase() : '';
+        }
+        // The rows the signed-in account may see and re-download. Rows written before
+        // the owner stamp (build 203) carry none and expire within 7 days; they show for
+        // any signed-in account, never for a signed-out one.
+        function _dlmapHistoryMine() {
+            var me = _dlmapAccountKey();
+            if (!me) return [];
+            return _dlmapHistoryList().filter(function(r) { return !r.owner || r.owner === me; });
+        }
         function _dlmapHistoryWrite(list) {
             try { localStorage.setItem(DLMAP_HISTORY_KEY, JSON.stringify(list.slice(0, 10))); } catch (e) {}
         }
@@ -13756,6 +13821,7 @@
                            tmpl: s.tmplName, district: s.districtName || '',
                            pid: s.districtPid || '',
                            pay: (s.outcomeCtx && s.outcomeCtx.paymentId) || '',
+                           owner: _dlmapAccountKey(),
                            expiry: expiry });
             _dlmapHistoryWrite(list);
             _dlmapRenderHistory();
@@ -13805,7 +13871,8 @@
                             geo: { cz: r.zoom, hCss: r.hCss || 0, lat: r.lat, lng: r.lng },
                             gz: r.gz || 0, caption: '', tmpl: '',
                             district: r.districtName || '', pid: r.districtPid || '',
-                            pay: r.paymentId, expiry: ts + 7 * 864e5 });
+                            pay: r.paymentId, owner: _dlmapAccountKey(),
+                            expiry: ts + 7 * 864e5 });
                 added++;
             });
             if (!added) return;
@@ -13854,7 +13921,7 @@
             // _dlmapEnumerateJobs, so a lapsed pass silently degrades to free detail —
             // a tampered localStorage can only ever buy back detail the user could
             // already see on screen.
-            var usable = list.slice();
+            var usable = _dlmapHistoryMine();
             box.innerHTML = '';
             empty.style.display = usable.length ? 'none' : '';
             if (!usable.length) return;
@@ -13884,6 +13951,15 @@
         // white holes this path used to hand back (it replayed the stored gz blindly).
         async function _dlmapRegenerate(rec) {
             if (_dlmapSession && _dlmapSession.running) return;
+            // Same rule as the Pay button: no download of any kind without a signed-in
+            // account, and only that account's own rows (the list is filtered too; this
+            // guards a stale list rendered before a sign-out).
+            var me = _dlmapAccountKey();
+            if (!me || (rec.owner && rec.owner !== me)) {
+                _dlmapToast('Sign in to download this map');
+                document.getElementById('auth-dialog-overlay').classList.add('open');
+                return;
+            }
             if (rec.pid && !hasPurchase(rec.pid)) {          // pass lapsed since the purchase
                 _dlmapToast('Your plan for this region has ended — re-rendering at free detail');
             }
