@@ -173,9 +173,82 @@ button { font: inherit; cursor: pointer; }
   box-shadow: 0 6px 28px rgba(37, 99, 235, 0.55);
   text-decoration: none;
 }
+
+/* Animated plan fade (MapEmbed + MapFadeFrame). The base frame (overlay at 0%) sits
+   over the plan frame (overlay at 70%); fading it 0 -> 1 -> 0 reproduces the plan at
+   every opacity 70% -> 0% -> 70%, and the chip mocks the opacity slider in step. All
+   four keyframe sets share one 6.2s timeline — keep their stops in sync. Same design
+   as the homepage banner (mapmagician-main/index2.html). */
+.map-showcase .banner-base { opacity: 0; will-change: opacity; }
+.map-showcase .badge-row {
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 8px; margin-bottom: 12px;
+}
+.map-showcase .badge-row .live-badge { margin-bottom: 0; }
+.opacity-chip {
+  --mb-track: 84px;
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(17, 24, 39, 0.82);
+  color: #fff; padding: 5px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+.opacity-track {
+  position: relative; width: var(--mb-track); height: 4px;
+  border-radius: 2px; background: rgba(255, 255, 255, 0.3);
+}
+.opacity-fill {
+  position: absolute; inset: 0; border-radius: 2px;
+  background: linear-gradient(90deg, #60a5fa, #a78bfa);
+  transform-origin: left center; transform: scaleX(0.7);
+}
+.opacity-thumb {
+  position: absolute; top: 50%; left: 0;
+  width: 12px; height: 12px; margin-top: -6px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  transform: translateX(calc((var(--mb-track) - 12px) * 0.7));
+}
+@property --mb-pct { syntax: '<integer>'; inherits: false; initial-value: 70; }
+.opacity-pct {
+  --mb-pct: 70;
+  min-width: 3.2ch; text-align: right; font-variant-numeric: tabular-nums;
+  counter-reset: mbpct var(--mb-pct);
+}
+.opacity-pct::after { content: counter(mbpct) "%"; }
+
+.map-showcase.is-animating .banner-base { animation: mb-base 6.2s ease-in-out infinite; }
+.map-showcase.is-animating .opacity-fill { animation: mb-fill 6.2s ease-in-out infinite; }
+.map-showcase.is-animating .opacity-thumb { animation: mb-thumb 6.2s ease-in-out infinite; }
+.map-showcase.is-animating .opacity-pct { animation: mb-pct 6.2s ease-in-out infinite; }
+.map-showcase.is-paused .banner-base,
+.map-showcase.is-paused .opacity-fill,
+.map-showcase.is-paused .opacity-thumb,
+.map-showcase.is-paused .opacity-pct { animation-play-state: paused; }
+@keyframes mb-base {
+  0%, 20% { opacity: 0; } 45%, 60% { opacity: 1; } 85%, 100% { opacity: 0; }
+}
+@keyframes mb-fill {
+  0%, 20% { transform: scaleX(0.7); } 45%, 60% { transform: scaleX(0); } 85%, 100% { transform: scaleX(0.7); }
+}
+@keyframes mb-thumb {
+  0%, 20% { transform: translateX(calc((var(--mb-track) - 12px) * 0.7)); }
+  45%, 60% { transform: translateX(0); }
+  85%, 100% { transform: translateX(calc((var(--mb-track) - 12px) * 0.7)); }
+}
+@keyframes mb-pct {
+  0%, 20% { --mb-pct: 70; } 45%, 60% { --mb-pct: 0; } 85%, 100% { --mb-pct: 70; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-showcase .banner-base,
+  .map-showcase .opacity-fill,
+  .map-showcase .opacity-thumb,
+  .map-showcase .opacity-pct { animation: none !important; }
+}
+
 @media (max-width: 720px) {
   .map-showcase { height: 420px; }
   .map-showcase .caption { font-size: 15px; margin-bottom: 14px; }
+  .opacity-chip { --mb-track: 64px; gap: 6px; padding: 5px 10px; font-size: 11px; }
 }
 
 /* --- Region header (breadcrumbs + summary, between header and map showcase) --- */

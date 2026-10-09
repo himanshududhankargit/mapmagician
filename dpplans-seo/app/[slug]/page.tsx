@@ -171,7 +171,9 @@ export default function RegionPage({ params }: Props) {
           <div className="top-row">
             <div className="icon-large">
               {region.iconUrl ? (
-                <img src={region.iconUrl} alt="" width={50} height={50} />
+                // lazy = no automatic <head> preload: these district icons are ~65 KB
+                // PNGs drawn at 50px, and must not compete with the hero (LCP) image.
+                <img src={region.iconUrl} alt="" width={50} height={50} loading="lazy" decoding="async" />
               ) : (
                 <span aria-hidden="true">▦</span>
               )}
