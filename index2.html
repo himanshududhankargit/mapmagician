@@ -48,9 +48,17 @@
 
     <!-- Preload the map banner image — it is the mobile LCP element, so start the
          fetch during head parse (same pattern as maps.html). -->
+    <!-- One preload per art-direction branch; the media queries MUST match the
+         <source media> in the map banner or the browser fetches the hero twice. -->
     <link rel="preload" as="image" type="image/webp" fetchpriority="high"
-          href="AssetsGIS/hero-banner-1280.webp"
-          imagesrcset="AssetsGIS/hero-banner-768.webp 768w, AssetsGIS/hero-banner-1280.webp 1280w, AssetsGIS/hero-banner-1920.webp 1920w"
+          media="(max-width: 720px)"
+          href="AssetsGIS/hero-banner-plan-sq640.webp"
+          imagesrcset="AssetsGIS/hero-banner-plan-sq480.webp 480w, AssetsGIS/hero-banner-plan-sq640.webp 640w, AssetsGIS/hero-banner-plan-sq800.webp 800w"
+          imagesizes="100vw">
+    <link rel="preload" as="image" type="image/webp" fetchpriority="high"
+          media="(min-width: 721px)"
+          href="AssetsGIS/hero-banner-plan-1280.webp"
+          imagesrcset="AssetsGIS/hero-banner-plan-768.webp 768w, AssetsGIS/hero-banner-plan-1280.webp 1280w, AssetsGIS/hero-banner-plan-1920.webp 1920w"
           imagesizes="100vw">
 
     <!-- JSON-LD: FAQ targeting informational queries (what is GIS, how to overlay maps, etc.) -->
@@ -409,11 +417,108 @@
             font-weight: 600;
             font-size: 1rem;
             box-shadow: 0 4px 20px rgba(37,99,235,0.4);
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: box-shadow 0.3s;
         }
+        /* 🛑 NO transform / filter / position on .map-banner-cta, even on hover. Any of
+           them makes the CTA the containing block of its ::after, so the stretched link
+           shrinks to the button: hovering the map lifted the button, the click area
+           collapsed, and clicks on the map itself hit nothing (measured 2026-10-09:
+           0 of 4 off-button clicks opened the map). Hover feedback is glow only. */
         .map-banner-cta:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 30px rgba(37,99,235,0.5);
+            box-shadow: 0 6px 30px rgba(37,99,235,0.65), 0 0 0 3px rgba(255,255,255,0.35);
+        }
+
+        /* Animated plan fade. The base frame (overlay at 0%) sits over the LCP frame
+           (overlay at 70%); fading it 0 -> 1 -> 0 reproduces the plan at every opacity
+           70% -> 0% -> 70%. The chip mocks the map's opacity slider in the same rhythm.
+           All four keyframe sets share one 6.2s timeline — keep their stops in sync. */
+        .map-banner-base { opacity: 0; will-change: opacity; }
+        .map-banner-badges {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .map-banner-badges .map-banner-badge { margin-bottom: 0; }
+        .map-banner-opacity {
+            --mb-track: 84px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            background: rgba(17, 24, 39, 0.82);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .map-banner-opacity-track {
+            position: relative;
+            width: var(--mb-track);
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.3);
+        }
+        .map-banner-opacity-fill {
+            position: absolute;
+            inset: 0;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            transform-origin: left center;
+            transform: scaleX(0.7);
+        }
+        .map-banner-opacity-thumb {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 12px;
+            height: 12px;
+            margin-top: -6px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.45);
+            transform: translateX(calc((var(--mb-track) - 12px) * 0.7));
+        }
+        @property --mb-pct { syntax: '<integer>'; inherits: false; initial-value: 70; }
+        .map-banner-opacity-pct {
+            --mb-pct: 70;
+            min-width: 3.2ch;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+            counter-reset: mbpct var(--mb-pct);
+        }
+        .map-banner-opacity-pct::after { content: counter(mbpct) "%"; }
+
+        .map-banner.is-animating .map-banner-base { animation: mb-base 6.2s ease-in-out infinite; }
+        .map-banner.is-animating .map-banner-opacity-fill { animation: mb-fill 6.2s ease-in-out infinite; }
+        .map-banner.is-animating .map-banner-opacity-thumb { animation: mb-thumb 6.2s ease-in-out infinite; }
+        .map-banner.is-animating .map-banner-opacity-pct { animation: mb-pct 6.2s ease-in-out infinite; }
+        .map-banner.is-paused .map-banner-base,
+        .map-banner.is-paused .map-banner-opacity-fill,
+        .map-banner.is-paused .map-banner-opacity-thumb,
+        .map-banner.is-paused .map-banner-opacity-pct { animation-play-state: paused; }
+        @keyframes mb-base {
+            0%, 20% { opacity: 0; } 45%, 60% { opacity: 1; } 85%, 100% { opacity: 0; }
+        }
+        @keyframes mb-fill {
+            0%, 20% { transform: scaleX(0.7); } 45%, 60% { transform: scaleX(0); } 85%, 100% { transform: scaleX(0.7); }
+        }
+        @keyframes mb-thumb {
+            0%, 20% { transform: translateX(calc((var(--mb-track) - 12px) * 0.7)); }
+            45%, 60% { transform: translateX(0); }
+            85%, 100% { transform: translateX(calc((var(--mb-track) - 12px) * 0.7)); }
+        }
+        @keyframes mb-pct {
+            0%, 20% { --mb-pct: 70; } 45%, 60% { --mb-pct: 0; } 85%, 100% { --mb-pct: 70; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .map-banner .map-banner-base,
+            .map-banner .map-banner-opacity-fill,
+            .map-banner .map-banner-opacity-thumb,
+            .map-banner .map-banner-opacity-pct { animation: none !important; }
         }
 
         /* Hero Section */
@@ -1076,6 +1181,7 @@
         @media (max-width: 768px) {
             .map-banner { height: 410px; /* 60px nav + 350px banner */ }
             .map-banner-img { top: 60px; height: calc(100% - 60px); }
+            .map-banner-opacity { --mb-track: 64px; gap: 6px; padding: 5px 10px; font-size: 0.72rem; }
             .map-banner-overlay { top: 60px; padding-bottom: 24px; }
             .map-banner-text { font-size: 0.92rem; padding: 0 1rem; text-align: center; }
             .map-banner-cta { padding: 12px 24px; font-size: 0.9rem; }
@@ -1288,21 +1394,30 @@
         </div>
     </nav>
 
-    <!-- Map Banner (static preview — click anywhere to open the interactive map) -->
+    <!-- Map Banner (animated preview — click anywhere to open the interactive map).
+         Two pixel-aligned captures of the live map: "plan" (overlay at 70%) is the
+         static LCP image; "base" (overlay at 0%) loads AFTER window load and fades
+         in and out on top, so the plan appears to fade like the real opacity
+         slider. Rebuild both with compress-hero-motion.js. Phones get a square centre
+         crop (a ~400px-wide cover-cropped banner only shows the middle third of the
+         3:1 strip, so the crop is lighter AND sharper). -->
     <section class="map-banner" id="map-showcase">
         <picture>
             <source
                 type="image/webp"
-                srcset="AssetsGIS/hero-banner-768.webp 768w,
-                        AssetsGIS/hero-banner-1280.webp 1280w,
-                        AssetsGIS/hero-banner-1920.webp 1920w"
+                media="(max-width: 720px)"
+                srcset="AssetsGIS/hero-banner-plan-sq480.webp 480w,
+                        AssetsGIS/hero-banner-plan-sq640.webp 640w,
+                        AssetsGIS/hero-banner-plan-sq800.webp 800w"
+                sizes="100vw">
+            <source
+                type="image/webp"
+                srcset="AssetsGIS/hero-banner-plan-768.webp 768w,
+                        AssetsGIS/hero-banner-plan-1280.webp 1280w,
+                        AssetsGIS/hero-banner-plan-1920.webp 1920w"
                 sizes="100vw">
             <img
-                src="AssetsGIS/hero-banner-1280.jpg"
-                srcset="AssetsGIS/hero-banner-768.jpg 768w,
-                        AssetsGIS/hero-banner-1280.jpg 1280w,
-                        AssetsGIS/hero-banner-1920.jpg 1920w"
-                sizes="100vw"
+                src="AssetsGIS/hero-banner-plan-1280.jpg"
                 width="1920"
                 height="640"
                 alt="MapMagician GIS — Development Plan overlay on Google Maps"
@@ -1310,11 +1425,49 @@
                 decoding="async"
                 class="map-banner-img">
         </picture>
+        <!-- No src/srcset until window load (see the script at the end of body), so it
+             never competes with the LCP image. Same box as the LCP image, so it can
+             never become a larger LCP candidate either. -->
+        <picture class="map-banner-base-pic" aria-hidden="true">
+            <source
+                type="image/webp"
+                media="(max-width: 720px)"
+                data-srcset="AssetsGIS/hero-banner-base-sq480.webp 480w,
+                             AssetsGIS/hero-banner-base-sq640.webp 640w,
+                             AssetsGIS/hero-banner-base-sq800.webp 800w"
+                sizes="100vw">
+            <source
+                type="image/webp"
+                data-srcset="AssetsGIS/hero-banner-base-768.webp 768w,
+                             AssetsGIS/hero-banner-base-1280.webp 1280w,
+                             AssetsGIS/hero-banner-base-1920.webp 1920w"
+                sizes="100vw">
+            <img
+                data-src="AssetsGIS/hero-banner-base-1280.jpg"
+                width="1920"
+                height="640"
+                alt=""
+                decoding="async"
+                class="map-banner-img map-banner-base">
+        </picture>
         <div class="map-banner-overlay">
-            <span class="map-banner-badge">
-                <span class="pulse-dot"></span>
-                LIVE
-            </span>
+            <div class="map-banner-badges">
+                <span class="map-banner-badge">
+                    <span class="pulse-dot"></span>
+                    LIVE
+                </span>
+                <!-- Decorative mock of the map's opacity control, animated in step with the fade. -->
+                <span class="map-banner-opacity" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                        <polyline points="2 17 12 22 22 17"/>
+                        <polyline points="2 12 12 17 22 12"/>
+                    </svg>
+                    <span class="map-banner-opacity-label">Plan opacity</span>
+                    <span class="map-banner-opacity-track"><span class="map-banner-opacity-fill"></span><span class="map-banner-opacity-thumb"></span></span>
+                    <span class="map-banner-opacity-pct"></span>
+                </span>
+            </div>
             <span class="map-banner-text">Development Plans for 157+ Regions Across India</span>
             <a href="../maps.html?lat=19.076&amp;lng=72.877&amp;zoom=13"
                target="_blank"
@@ -2323,6 +2476,44 @@
                 mobileMenu.classList.remove('active');
             }
         });
+
+        // Hero plan fade: fetch the base frame only after window load (never on the
+        // LCP path), start the animation once it has decoded, and pause it while the
+        // banner is scrolled out of view. Reduced-motion, Save-Data and 2G visitors
+        // keep the static frame and never download the second image.
+        (function () {
+            var banner = document.getElementById('map-showcase');
+            if (!banner) return;
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            var conn = navigator.connection;
+            if (conn && (conn.saveData || /2g/.test(conn.effectiveType || ''))) return;
+            function start() {
+                var pic = banner.querySelector('.map-banner-base-pic');
+                var img = pic && pic.querySelector('img');
+                if (!img) return;
+                img.onload = function () {
+                    // decode first, so the fade's first frames don't stutter on a big image
+                    (img.decode ? img.decode() : Promise.resolve()).then(go, go);
+                };
+                function go() {
+                    // a resize can swap the srcset candidate and fire load again
+                    if (banner.classList.contains('is-animating')) return;
+                    banner.classList.add('is-animating');
+                    if ('IntersectionObserver' in window) {
+                        new IntersectionObserver(function (entries) {
+                            banner.classList.toggle('is-paused', !entries[0].isIntersecting);
+                        }).observe(banner);
+                    }
+                }
+                pic.querySelectorAll('[data-srcset]').forEach(function (el) {
+                    el.srcset = el.getAttribute('data-srcset');
+                    el.removeAttribute('data-srcset');
+                });
+                img.src = img.getAttribute('data-src');
+            }
+            if (document.readyState === 'complete') start();
+            else window.addEventListener('load', start);
+        })();
     </script>
 </body>
 </html>
