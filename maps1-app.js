@@ -597,7 +597,12 @@
         //       Pay); signing in from that prompt resumes straight into the viewfinder.
         //       Fix: the Pay button stayed on "Processing…" after the sign-in prompt, a
         //       cancelled checkout or a payment error (busy-off never restored the label).
-        var APP_VERSION = '203';
+        // 205 = New tutorial video (Oct 2026), two cuts: a phone held upright gets the 9:16
+        //       cut (youtu.be/qbSxuKb0UfE), every other screen the 16:9 cut
+        //       (youtu.be/UO_Rqp_J1nw). Replaces y02IQpR2GLo in the unlock dialog's
+        //       "Watch tutorial" and Settings -> "Video tutorial" (now "4 min"). The tall
+        //       player is capped to the screen height. Pop-up heading follows the domain.
+        var APP_VERSION = '205';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -3891,12 +3896,21 @@
         // the unlock dialog or Settings costs zero YouTube bytes, and closing by any
         // route (X, Not now, Back, a purchase, Android back) cannot leave audio playing
         // behind the map. youtube-nocookie keeps YouTube cookies off until playback.
-        var TUTORIAL_VIDEO_ID = 'y02IQpR2GLo';
-        function tutorialEmbed(startSec) {
+        // Two cuts of the same tutorial (205): a portrait screen — a phone held upright —
+        // gets the 9:16 cut, everything else the 16:9 one. Decided when the player opens.
+        var TUTORIAL_VIDEO_WIDE = 'UO_Rqp_J1nw';
+        var TUTORIAL_VIDEO_TALL = 'qbSxuKb0UfE';
+        function tutorialIsTall() {
+            return window.innerHeight > window.innerWidth;
+        }
+        function tutorialHeading() {
+            return /dpplans/i.test(location.hostname) ? 'How to use dpplans.com' : 'How to use MapMagician';
+        }
+        function tutorialEmbed(startSec, tall) {
             var f = document.createElement('iframe');
-            f.src = 'https://www.youtube-nocookie.com/embed/' + TUTORIAL_VIDEO_ID +
+            f.src = 'https://www.youtube-nocookie.com/embed/' + (tall ? TUTORIAL_VIDEO_TALL : TUTORIAL_VIDEO_WIDE) +
                 '?autoplay=1&rel=0&playsinline=1' + (startSec ? '&start=' + startSec : '');
-            f.title = 'How to use dpplans.com';
+            f.title = tutorialHeading();
             f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
             f.allowFullscreen = true;
             return f;
@@ -3911,7 +3925,11 @@
             var frame = document.getElementById('pd-video-frame');
             var tabs = document.getElementById('pd-plan-tabs');
             if (!wrap || !frame) return;
-            if (!frame.firstChild) frame.appendChild(tutorialEmbed(0));
+            if (!frame.firstChild) {
+                var tall = tutorialIsTall();
+                frame.classList.toggle('tv-tall', tall);
+                frame.appendChild(tutorialEmbed(0, tall));
+            }
             if (tabs && _pdVideoPrevDisplay === null) {
                 _pdVideoPrevDisplay = tabs.style.display;
                 tabs.style.display = 'none';
@@ -3926,7 +3944,7 @@
             var frame = document.getElementById('pd-video-frame');
             var tabs = document.getElementById('pd-plan-tabs');
             var btn = document.getElementById('zoom-restrict-video');
-            if (btn) { btn.classList.remove('pd-showing-video'); btn.title = 'Watch a 3-minute video tutorial'; }
+            if (btn) { btn.classList.remove('pd-showing-video'); btn.title = 'Watch a 4-minute video tutorial'; }
             if (frame) frame.innerHTML = '';
             if (wrap) wrap.hidden = true;
             if (tabs && _pdVideoPrevDisplay !== null) tabs.style.display = _pdVideoPrevDisplay;
@@ -3947,7 +3965,14 @@
             var ov = document.getElementById('tutorial-video-overlay');
             var frame = document.getElementById('tutorial-video-frame');
             if (!ov || !frame) return;
-            if (!frame.firstChild) frame.appendChild(tutorialEmbed(0));
+            if (!frame.firstChild) {
+                var tall = tutorialIsTall();
+                frame.classList.toggle('tv-tall', tall);
+                ov.classList.toggle('tv-tall-mode', tall);
+                frame.appendChild(tutorialEmbed(0, tall));
+            }
+            var head = document.getElementById('tutorial-video-title');
+            if (head) head.textContent = tutorialHeading();
             ov.classList.add('open');
         }
         function closeTutorialVideo() {
