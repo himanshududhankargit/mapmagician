@@ -611,7 +611,15 @@
         // 204 = PROMOTION of 203 to live: Download Map needs sign-in before the viewfinder,
         //       Downloads history is per account (Get needs sign-in), and the Pay button no
         //       longer sticks on "Processing" after sign-in / cancelled checkout.
-        var APP_VERSION = '204';
+        // 205 = New tutorial video (Oct 2026), two cuts: a phone held upright gets the 9:16
+        //       cut (youtu.be/qbSxuKb0UfE), every other screen the 16:9 cut
+        //       (youtu.be/UO_Rqp_J1nw). Replaces y02IQpR2GLo in the unlock dialog's
+        //       "Watch tutorial" and Settings -> "Video tutorial" (now "4 min"). The tall
+        //       player is capped to the screen height. Pop-up heading follows the domain.
+        // 206 = PROMOTION of 205 to live: new tutorial video, 9:16 on portrait phones and
+        //       16:9 elsewhere. Checked on staging at 1536x864 and 390x844 (Settings pop-up
+        //       and the unlock dialog), iframe removed on close.
+        var APP_VERSION = '206';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -3905,12 +3913,21 @@
         // the unlock dialog or Settings costs zero YouTube bytes, and closing by any
         // route (X, Not now, Back, a purchase, Android back) cannot leave audio playing
         // behind the map. youtube-nocookie keeps YouTube cookies off until playback.
-        var TUTORIAL_VIDEO_ID = 'y02IQpR2GLo';
-        function tutorialEmbed(startSec) {
+        // Two cuts of the same tutorial (205): a portrait screen — a phone held upright —
+        // gets the 9:16 cut, everything else the 16:9 one. Decided when the player opens.
+        var TUTORIAL_VIDEO_WIDE = 'UO_Rqp_J1nw';
+        var TUTORIAL_VIDEO_TALL = 'qbSxuKb0UfE';
+        function tutorialIsTall() {
+            return window.innerHeight > window.innerWidth;
+        }
+        function tutorialHeading() {
+            return /dpplans/i.test(location.hostname) ? 'How to use dpplans.com' : 'How to use MapMagician';
+        }
+        function tutorialEmbed(startSec, tall) {
             var f = document.createElement('iframe');
-            f.src = 'https://www.youtube-nocookie.com/embed/' + TUTORIAL_VIDEO_ID +
+            f.src = 'https://www.youtube-nocookie.com/embed/' + (tall ? TUTORIAL_VIDEO_TALL : TUTORIAL_VIDEO_WIDE) +
                 '?autoplay=1&rel=0&playsinline=1' + (startSec ? '&start=' + startSec : '');
-            f.title = 'How to use dpplans.com';
+            f.title = tutorialHeading();
             f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
             f.allowFullscreen = true;
             return f;
@@ -3925,7 +3942,11 @@
             var frame = document.getElementById('pd-video-frame');
             var tabs = document.getElementById('pd-plan-tabs');
             if (!wrap || !frame) return;
-            if (!frame.firstChild) frame.appendChild(tutorialEmbed(0));
+            if (!frame.firstChild) {
+                var tall = tutorialIsTall();
+                frame.classList.toggle('tv-tall', tall);
+                frame.appendChild(tutorialEmbed(0, tall));
+            }
             if (tabs && _pdVideoPrevDisplay === null) {
                 _pdVideoPrevDisplay = tabs.style.display;
                 tabs.style.display = 'none';
@@ -3940,7 +3961,7 @@
             var frame = document.getElementById('pd-video-frame');
             var tabs = document.getElementById('pd-plan-tabs');
             var btn = document.getElementById('zoom-restrict-video');
-            if (btn) { btn.classList.remove('pd-showing-video'); btn.title = 'Watch a 3-minute video tutorial'; }
+            if (btn) { btn.classList.remove('pd-showing-video'); btn.title = 'Watch a 4-minute video tutorial'; }
             if (frame) frame.innerHTML = '';
             if (wrap) wrap.hidden = true;
             if (tabs && _pdVideoPrevDisplay !== null) tabs.style.display = _pdVideoPrevDisplay;
@@ -3961,7 +3982,14 @@
             var ov = document.getElementById('tutorial-video-overlay');
             var frame = document.getElementById('tutorial-video-frame');
             if (!ov || !frame) return;
-            if (!frame.firstChild) frame.appendChild(tutorialEmbed(0));
+            if (!frame.firstChild) {
+                var tall = tutorialIsTall();
+                frame.classList.toggle('tv-tall', tall);
+                ov.classList.toggle('tv-tall-mode', tall);
+                frame.appendChild(tutorialEmbed(0, tall));
+            }
+            var head = document.getElementById('tutorial-video-title');
+            if (head) head.textContent = tutorialHeading();
             ov.classList.add('open');
         }
         function closeTutorialVideo() {

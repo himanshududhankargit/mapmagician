@@ -1071,6 +1071,12 @@
         .pd-video-frame { border-radius:10px; margin-bottom:10px; }
         .pd-video-frame iframe, .tv-frame iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
         #tutorial-video-overlay .zoom-dialog { max-width:880px; width:calc(100% - 24px); }
+        /* 205: a phone held upright gets the 9:16 cut, never taller than the screen */
+        .pd-video-frame.tv-tall { aspect-ratio:9/16; margin-left:auto; margin-right:auto;
+            width:clamp(220px, calc((100vh - 260px) * 9 / 16), 100%); width:clamp(220px, calc((100dvh - 260px) * 9 / 16), 100%); }
+        .tv-frame.tv-tall { aspect-ratio:9/16; margin:0 auto;
+            width:clamp(220px, calc((100vh - 110px) * 9 / 16), 100%); width:clamp(220px, calc((100dvh - 110px) * 9 / 16), 100%); }
+        #tutorial-video-overlay.tv-tall-mode .zoom-dialog { max-width:440px; }
         .tv-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px 12px 18px;
             font-size:15px; font-weight:700; color:#004D40; }
         .tv-close { width:30px; height:30px; border-radius:50%; border:none; background:#eceff1; color:#455a64;
@@ -1972,7 +1978,7 @@
             <div class="layer-section-title">Support</div>
             <button id="settings-video-tutorial" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;margin-bottom:8px;">
                 <svg viewBox="0 0 24 17" aria-hidden="true" style="width:20px;height:14px;flex-shrink:0;"><rect width="24" height="17" rx="4" fill="#FF0000"/><path d="M9.6 4.6v7.8l6.6-3.9z" fill="#fff"/></svg>
-                Video tutorial (3 min)
+                Video tutorial (4 min)
             </button>
             <button id="settings-contact-support" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#333;font-family:inherit;text-align:left;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
@@ -2359,7 +2365,7 @@
             <!-- Pinned dismiss: sits between body and footer so scroll can't hide it -->
             <div class="pd-dismiss-row">
                 <button class="pd-try-demo" id="zoom-restrict-demo" type="button" title="Explore a free sample plan">&#9654; Try Demo</button>
-                <button class="pd-try-demo pd-watch-video" id="zoom-restrict-video" type="button" title="Watch a 3-minute video tutorial">
+                <button class="pd-try-demo pd-watch-video" id="zoom-restrict-video" type="button" title="Watch a 4-minute video tutorial">
                     <span class="pdv-watch"><svg width="20" height="14" viewBox="0 0 24 17" aria-hidden="true"><rect width="24" height="17" rx="4" fill="#FF0000"/><path d="M9.6 4.6v7.8l6.6-3.9z" fill="#fff"/></svg>Watch tutorial</span>
                     <span class="pdv-plans"><svg width="15" height="13" viewBox="0 0 24 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="3" y1="3" x2="21" y2="3"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="3" y1="17" x2="21" y2="17"/></svg>View plans</span>
                 </button>
@@ -3161,7 +3167,7 @@
     <div class="zoom-dialog-overlay" id="tutorial-video-overlay" data-dismiss="tutorial-video-close">
         <div class="zoom-dialog">
             <div class="tv-head">
-                <span>How to use dpplans.com</span>
+                <span id="tutorial-video-title">How to use dpplans.com</span>
                 <button class="tv-close" id="tutorial-video-close" type="button" aria-label="Close">&times;</button>
             </div>
             <div class="tv-frame" id="tutorial-video-frame"></div>
@@ -3171,7 +3177,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps-app.js?v=204" defer></script>
+    <script src="maps-app.js?v=206" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
