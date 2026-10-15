@@ -619,7 +619,14 @@
         // 206 = PROMOTION of 205 to live: new tutorial video, 9:16 on portrait phones and
         //       16:9 elsewhere. Checked on staging at 1536x864 and 390x844 (Settings pop-up
         //       and the unlock dialog), iframe removed on close.
-        var APP_VERSION = '206';
+        // 207 = Contact Support refuses a message that says nothing (a customer sent "." on
+        //       2026-10-15). Needs 10+ letters/digits (any script), 3+ letters, 4+ different
+        //       characters; on Send it shows a red note under the box instead of an alert, and
+        //       the Send button is never disabled. Same rule enforced by sendSupportRequest.
+        // 208 = PROMOTION of 207 to live: maps-support.js now carries the support-message
+        //       rule and its red note. Checked on staging: "." refused with the note, a real
+        //       message ("please send map") delivered with the email layout unchanged.
+        var APP_VERSION = '208';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();

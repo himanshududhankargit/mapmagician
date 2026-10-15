@@ -109,6 +109,7 @@
                 <input type="text" id="support-region" readonly style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#333;background:#f5f5f5;margin-bottom:12px;box-sizing:border-box;">
                 <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">Your Message</label>
                 <textarea id="support-message" rows="4" placeholder="Describe your issue..." style="width:100%;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;resize:vertical;margin-bottom:16px;box-sizing:border-box;font-family:inherit;"></textarea>
+                <div id="support-message-error" style="display:none;margin:-8px 0 14px 0;font-size:12.5px;line-height:1.45;color:#c62828;"></div>
                 <div style="background:#fff8e1;padding:10px 12px;border-radius:8px;border-left:3px solid #f9a825;margin:0 0 14px 0;font-size:12.5px;line-height:1.45;color:#5d4037;">
                     <strong>Note:</strong> Android &amp; Web are <strong>separate platforms</strong> &mdash; a subscription bought on the Android app does <strong>not</strong> work on web (and vice versa).
                 </div>
@@ -151,6 +152,45 @@
             const d = document.createElement('div');
             d.textContent = (s == null) ? '' : String(s);
             return d.innerHTML;
+        }
+
+        // >>> SHARED RULE — a copy of functions/supportMessage.js (sendSupportRequest).
+        // Refuses a message that says nothing ("." reached support@ on 2026-10-15). Must stay
+        // identical to the server copy: a message accepted here but refused there would show
+        // the customer "Failed to send". functions/test_support_message.js checks both.
+        // Counts letters, digits and vowel signs in any script, so Marathi/Hindi score the
+        // same as English: needs 10+ of them, 3+ letters, 4+ different characters.
+        var SUPPORT_MESSAGE_TOO_VAGUE =
+            'Please describe your problem in a few words (for example: which region, and what is not working) so we can help you.';
+
+        function supportMessageProblem(text) {
+            var s = String(text == null ? '' : text).trim();
+            var all, letters;
+            try {
+                all = s.match(new RegExp('[\\p{L}\\p{M}\\p{N}]', 'gu')) || [];
+                letters = s.match(new RegExp('\\p{L}', 'gu')) || [];
+            } catch (_) {
+                // Browsers without Unicode property escapes: Latin + Devanagari covers our customers.
+                all = s.match(/[A-Za-z0-9\u0900-\u097F]/g) || [];
+                letters = s.match(/[A-Za-z\u0904-\u0939\u0950\u0958-\u0961\u0972-\u097F]/g) || [];
+            }
+            var distinct = {};
+            for (var i = 0; i < all.length; i++) distinct[all[i].toLowerCase()] = 1;
+            if (all.length < 10 || letters.length < 3 || Object.keys(distinct).length < 4) {
+                return SUPPORT_MESSAGE_TOO_VAGUE;
+            }
+            return '';
+        }
+        // <<< SHARED RULE
+
+        // Shown under the message box when Send is pressed on a message that says nothing.
+        // The Send button is deliberately NEVER disabled for this (owner's call): a greyed-out
+        // button with no reason given confuses people; pressing it and reading why does not.
+        function supportShowMessageError(text) {
+            const el = document.getElementById('support-message-error');
+            el.textContent = text || '';
+            el.style.display = text ? '' : 'none';
+            document.getElementById('support-message').style.borderColor = text ? '#c62828' : '#e0e0e0';
         }
 
         // Show exactly one step of the support dialog; hide the rest.
@@ -387,6 +427,7 @@
         function showSupportFormStep(regionName, prefillMessage) {
             document.getElementById('support-region').value = regionName || (findDistrictAtCenter()?.districtName || 'General');
             document.getElementById('support-message').value = prefillMessage || '';
+            supportShowMessageError('');
             document.getElementById('support-send-btn').disabled = false;
             document.getElementById('support-send-btn').textContent = 'Send Message';
             supportShowSection('support-form-section');
@@ -481,7 +522,13 @@
 
         document.getElementById('support-send-btn').addEventListener('click', async () => {
             const msg = document.getElementById('support-message').value.trim();
-            if (!msg) { alert('Please enter a message.'); return; }
+            const vague = supportMessageProblem(msg);
+            if (vague) {
+                supportShowMessageError(vague);
+                document.getElementById('support-message').focus();
+                return;
+            }
+            supportShowMessageError('');
             const btn = document.getElementById('support-send-btn');
             btn.disabled = true;
             btn.textContent = 'Sending...';
@@ -585,6 +632,13 @@
                 btn.disabled = false;
                 btn.textContent = 'Send Message';
                 alert('Failed to send: ' + (e.message || 'Please try again.'));
+            }
+        });
+
+        document.getElementById('support-message').addEventListener('input', (e) => {
+            if (document.getElementById('support-message-error').style.display !== 'none'
+                && !supportMessageProblem(e.target.value)) {
+                supportShowMessageError('');
             }
         });
 
