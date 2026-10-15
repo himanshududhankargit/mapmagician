@@ -602,7 +602,12 @@
         //       (youtu.be/UO_Rqp_J1nw). Replaces y02IQpR2GLo in the unlock dialog's
         //       "Watch tutorial" and Settings -> "Video tutorial" (now "4 min"). The tall
         //       player is capped to the screen height. Pop-up heading follows the domain.
-        var APP_VERSION = '205';
+        // 207 = Contact Support refuses a message that says nothing (a customer sent "." on
+        //       2026-10-15). Needs 10+ letters/digits (any script), 3+ letters, 4+ different
+        //       characters; on Send it shows a red note under the box instead of an alert, and
+        //       the Send button is never disabled. Same rule enforced by sendSupportRequest.
+        //       Staged as maps1-support.js (the live page keeps maps-support.js).
+        var APP_VERSION = '207';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -1697,7 +1702,7 @@
             if (_supportLoading) return _supportLoading;
             _supportLoading = new Promise(function (resolve, reject) {
                 var sc = document.createElement('script');
-                sc.src = 'maps-support.js?v=' + APP_VERSION;
+                sc.src = 'maps1-support.js?v=' + APP_VERSION;
                 sc.onload = function () {
                     if (window.mmSupport) resolve(window.mmSupport);
                     else { _supportLoading = null; reject(new Error('support init failed')); }
