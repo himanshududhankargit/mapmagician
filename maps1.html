@@ -1130,6 +1130,9 @@
            footer step aside; header, web-only notice and Not now stay. */
         #zoom-restrict-overlay.pd-reviewing #pd-plan-tabs,
         #zoom-restrict-overlay.pd-reviewing .pd-footer { display:none !important; }
+        /* With the footer gone the Try Demo / Not now row is the dialog's last row: give it the
+           bottom breathing room the footer used to provide (210 - it sat on the very edge). */
+        #zoom-restrict-overlay.pd-reviewing .pd-dismiss-row { padding-top:10px; padding-bottom:max(16px, env(safe-area-inset-bottom, 0px)); border-top:1px solid #ECEFF1; }
         .pd-review { --rv-hero:#0B3F37; --rv-mint:#A3E4CF; --rv-ink:#14231F; --rv-text:#3D4A46; --rv-muted:#6B7A75; --rv-teal:#0E5E52; --rv-teal-hover:#0B4E44; --rv-teal-text:#0F6B5C; --rv-line:#E3E8E6; --rv-good:#2E7D32; --rv-bad:#C62828;
             margin:0 0 16px; color:var(--rv-text); text-align:left; animation:pdr-in .18s ease-out; }
         .pd-review[hidden] { display:none; }
@@ -3303,7 +3306,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=209" defer></script>
+    <script src="maps1-app.js?v=210" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
