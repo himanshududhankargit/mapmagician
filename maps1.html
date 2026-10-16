@@ -1122,6 +1122,97 @@
         .pd-card-cta { width:100%; padding:12px; font-size:14px; font-weight:600; border:none; border-radius:10px; color:#fff; cursor:pointer; transition:opacity 0.15s; }
         .pd-card-cta:hover { opacity:0.9; }
         @media (max-width: 520px) { .pd-plan-card { flex:0 0 80%; min-width:0; } }
+        /* Confirm step (209): a plan button opens this INSIDE the purchase dialog, in the plan
+           cards' place, and only its "Confirm & pay" starts checkout. Themed on the owner's
+           mockup "B - Region hero" (2026-10-16): the REGION sits in a dark-teal card with faint
+           map contour lines, coverage and price below it - two columns on desktop, stacked on a
+           phone. While it shows (.pd-reviewing on the overlay) the cards and the app-store
+           footer step aside; header, web-only notice and Not now stay. */
+        #zoom-restrict-overlay.pd-reviewing #pd-plan-tabs,
+        #zoom-restrict-overlay.pd-reviewing .pd-footer { display:none !important; }
+        .pd-review { --rv-hero:#0B3F37; --rv-mint:#A3E4CF; --rv-ink:#14231F; --rv-text:#3D4A46; --rv-muted:#6B7A75; --rv-teal:#0E5E52; --rv-teal-hover:#0B4E44; --rv-teal-text:#0F6B5C; --rv-line:#E3E8E6; --rv-good:#2E7D32; --rv-bad:#C62828;
+            margin:0 0 16px; color:var(--rv-text); text-align:left; animation:pdr-in .18s ease-out; }
+        .pd-review[hidden] { display:none; }
+        /* Opacity only: the name's flight measures its landing spot while this plays. */
+        @keyframes pdr-in { from { opacity:0; } to { opacity:1; } }
+        /* Header swap: step-1 heading (with the region name) out, step-2 heading in. */
+        #zoom-restrict-overlay .pd-review-head { display:none; }
+        #zoom-restrict-overlay.pd-reviewing .pd-review-head { display:block; animation:pdr-in .3s ease-out both; }
+        #zoom-restrict-overlay.pd-reviewing .pd-plan-head { display:none; }
+        /* Staggered entrance: the card's badge, qualifier and Change pill appear once the
+           flying name has landed (flight 0.95s), so nothing sits in its path. */
+        #zoom-restrict-overlay.pd-reviewing .pdr-badge,
+        #zoom-restrict-overlay.pd-reviewing .pdr-region-qual,
+        #zoom-restrict-overlay.pd-reviewing .pdr-change { animation:pdr-in .3s .7s both; }
+        @media (prefers-reduced-motion: reduce) {
+            #zoom-restrict-overlay.pd-reviewing .pdr-badge,
+            #zoom-restrict-overlay.pd-reviewing .pdr-region-qual,
+            #zoom-restrict-overlay.pd-reviewing .pdr-change,
+            #zoom-restrict-overlay.pd-reviewing .pd-review-head { animation:none; }
+        }
+        /* Long names: the title is fitted to two lines by fitHeaderTitle(); the subtitle only
+           repeats the name, so it stays on one line. */
+        #zoom-restrict-region { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        /* The region name's flight from the header into the card (a fixed-position copy, so
+           the card's rounded clip can't cut it off mid-air). */
+        .pdr-fly { position:fixed; margin:0; z-index:5000; pointer-events:none; transform-origin:50% 50%; color:#fff; font-weight:800; line-height:1.1; letter-spacing:-0.5px; text-align:center; text-wrap:balance; overflow-wrap:break-word; will-change:transform; }
+        .pdr-fly .pdr-alt { color:var(--rv-mint, #A3E4CF); }
+        @media (prefers-reduced-motion: reduce) { .pd-review { animation:none; } }
+        .pdr-hero { position:relative; overflow:hidden; padding:20px 18px 20px; border-radius:16px; background:var(--rv-hero); color:#fff; text-align:center; }
+        .pdr-contours { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+        .pdr-badge { position:relative; display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:999px; background:var(--rv-mint); color:var(--rv-hero); font-size:12px; font-weight:800; letter-spacing:1.3px; text-transform:uppercase; }
+        /* Size is set by fitRegionName(): starts large and steps down until the name sits on
+           two lines, so a 46-character name still fits a phone. */
+        /* Scoped under .pdr-hero to outrank ".zoom-dialog h3" (colour, margin, weight). */
+        .pdr-hero .pdr-region-name { position:relative; margin:12px 0 14px; font-size:40px; font-weight:800; line-height:1.1; letter-spacing:-0.5px; color:#fff; text-wrap:balance; overflow-wrap:break-word; }
+        .pdr-region-name .pdr-alt { color:var(--rv-mint); }
+        /* Opening beat: the name arrives LARGE, holds long enough to be read, then settles to
+           its fitted size. --pdr-pop (1.06-1.4) is computed per name so it never outgrows the
+           card; transform only, so nothing below moves while it plays. */
+        .pdr-hero .pdr-region-name.pdr-pop { animation:pdr-pop .95s cubic-bezier(.2,.75,.25,1) both; }
+        @keyframes pdr-pop {
+            0%   { transform:scale(var(--pdr-pop, 1.25)); opacity:0; }
+            12%  { opacity:1; }
+            45%  { transform:scale(var(--pdr-pop, 1.25)); }
+            100% { transform:scale(1); opacity:1; }
+        }
+        @media (prefers-reduced-motion: reduce) { .pdr-hero .pdr-region-name.pdr-pop { animation:none; } }
+        /* A trailing "(Updated 16/10/2025)" / "(New)" / "(Draft)" moves here, smaller, so a long
+           name keeps its size; it stays visible because it can tell two regions apart. */
+        .pdr-region-qual { position:relative; margin:-6px 0 14px; font-size:14px; font-weight:600; color:var(--rv-mint); }
+        .pdr-region-qual[hidden] { display:none; }
+        .pdr-change { position:relative; min-height:40px; padding:8px 20px; border:1px solid rgba(255,255,255,0.4); border-radius:999px; background:transparent; color:#fff; font:inherit; font-size:14px; font-weight:600; cursor:pointer; }
+        .pdr-change:hover { background:rgba(255,255,255,0.1); }
+        .pdr-body { display:grid; grid-template-columns:1fr 1fr; gap:16px; padding-top:16px; align-items:start; }
+        .pdr-covers { min-width:0; border:1px solid var(--rv-line); border-radius:14px; padding:14px 16px; background:#fff; }
+        .pdr-covers-label { margin-bottom:10px; font-size:11px; font-weight:700; letter-spacing:1.3px; text-transform:uppercase; color:var(--rv-muted); }
+        .pdr-covers ul { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px; font-size:14px; }
+        .pdr-covers li { display:flex; gap:10px; align-items:flex-start; line-height:1.4; }
+        .pdr-covers li strong { color:var(--rv-ink); overflow-wrap:anywhere; }
+        .pdr-covers svg { flex-shrink:0; margin-top:2px; }
+        .pdr-ok svg { color:var(--rv-good); }
+        .pdr-no svg { color:var(--rv-bad); }
+        .pdr-buy { min-width:0; display:flex; flex-direction:column; gap:10px; }
+        .pdr-plan-row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+        .pdr-plan { font-size:15.5px; font-weight:700; color:var(--rv-ink); }
+        .pdr-price { font-size:30px; font-weight:800; line-height:1.1; color:var(--rv-ink); white-space:nowrap; font-variant-numeric:tabular-nums; }
+        .pdr-price small { margin-left:3px; font-size:13px; font-weight:400; color:var(--rv-muted); }
+        .pdr-terms { margin-top:-6px; font-size:13px; color:var(--rv-muted); }
+        .pdr-go { width:100%; min-height:52px; display:flex; align-items:center; justify-content:center; gap:10px; padding:12px 16px; border:none; border-radius:12px; background:var(--rv-teal); color:#fff; font:inherit; font-size:16px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(14,94,82,0.28); }
+        .pdr-go:hover { background:var(--rv-teal-hover); }
+        .pdr-go svg { flex-shrink:0; }
+        .pdr-back { align-self:center; min-height:40px; display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:none; background:none; font:inherit; font-size:14.5px; font-weight:600; color:var(--rv-teal-text); cursor:pointer; }
+        .pdr-back:hover { text-decoration:underline; }
+        .pd-review button:focus-visible { outline:3px solid rgba(15,107,92,0.45); outline-offset:2px; }
+        .pdr-hero button:focus-visible { outline-color:rgba(163,228,207,0.85); }
+        @media (max-width: 600px) {
+            .pdr-hero { padding:16px 14px; }
+            .pdr-hero .pdr-region-name { margin:10px 0 12px; }
+            .pdr-body { grid-template-columns:1fr; gap:12px; padding-top:12px; }
+            .pdr-covers { padding:12px 14px; }
+            .pdr-covers ul { gap:7px; font-size:13.5px; }
+            .pdr-price { font-size:26px; }
+        }
         .pd-cta { width:100%; padding:14px; font-size:15px; font-weight:600; border:none; border-radius:10px; background:#00796B; color:#fff; cursor:pointer; letter-spacing:0.2px; transition:background 0.15s,transform 0.1s; box-shadow:0 1px 3px rgba(0,121,107,0.25); }
         .pd-cta:hover { background:#00695C; }
         .pd-cta:active { transform:scale(0.99); }
@@ -2301,9 +2392,17 @@
         <div class="zoom-dialog" style="max-width:720px;padding:0;">
             <!-- Header -->
             <div class="pd-header">
-                <div class="pd-kicker">Choose Your Plan</div>
-                <h3 id="zoom-restrict-title" class="pd-title">Web Unlock Region</h3>
-                <div id="zoom-restrict-region" style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;display:none;"></div>
+                <!-- Step 1 heading. While the confirm step shows (.pd-reviewing) it gives way to
+                     the step-2 heading below, and the region name flies down into the card. -->
+                <div class="pd-plan-head">
+                    <div class="pd-kicker">Choose Your Plan</div>
+                    <h3 id="zoom-restrict-title" class="pd-title">Web Unlock Region</h3>
+                    <div id="zoom-restrict-region" style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;display:none;"></div>
+                </div>
+                <div class="pd-review-head">
+                    <div class="pd-kicker">Step 2 of 2 &middot; Review</div>
+                    <h3 class="pd-title">Confirm your plan</h3>
+                </div>
                 <button class="pd-close" id="zoom-restrict-close" type="button" aria-label="Close">&times;</button>
             </div>
             <!-- Body: side-by-side plan cards -->
@@ -2358,6 +2457,33 @@
                      Empty until "Watch tutorial" is clicked; emptied again on close. -->
                 <div class="pd-video-wrap" id="pd-video-wrap" hidden>
                     <div class="pd-video-frame" id="pd-video-frame"></div>
+                </div>
+                <!-- Confirm step (staging 209): a plan button opens this in the cards' place, and
+                     only "Confirm & pay" starts payment. Texts filled by showPlanConfirm(). -->
+                <div class="pd-review" id="pd-review" role="region" aria-labelledby="pd-review-region" hidden>
+                    <div class="pdr-hero">
+                        <svg class="pdr-contours" viewBox="0 0 600 220" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="#fff" stroke-opacity="0.08" stroke-width="1.2" vector-effect="non-scaling-stroke"><path d="M0 46C110 18 210 78 330 50S520 22 600 58"/><path d="M0 104C130 76 230 136 350 106S530 78 600 112"/><path d="M0 168C120 140 250 196 370 166S540 142 600 176"/><path d="M150 0V220M300 0V220M450 0V220" stroke-dasharray="3 7"/></svg>
+                        <div class="pdr-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 5-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 15 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>You&rsquo;re unlocking</div>
+                        <h3 class="pdr-region-name" id="pd-review-region"></h3>
+                        <div class="pdr-region-qual" id="pd-review-region-qual" hidden></div>
+                        <button class="pdr-change" id="pd-review-change" type="button">Not your area? Change region</button>
+                    </div>
+                    <div class="pdr-body">
+                        <div class="pdr-covers">
+                            <div class="pdr-covers-label">What this pass covers</div>
+                            <ul>
+                                <li class="pdr-ok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Website access for <strong id="pd-review-region-2"></strong></span></li>
+                                <li class="pdr-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg><span>Android app &mdash; separate purchase</span></li>
+                                <li class="pdr-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg><span>Other regions &mdash; each needs its own pass</span></li>
+                            </ul>
+                        </div>
+                        <div class="pdr-buy">
+                            <div class="pdr-plan-row"><span class="pdr-plan" id="pd-review-plan"></span><span class="pdr-price" id="pd-review-price"></span></div>
+                            <div class="pdr-terms" id="pd-review-terms"></div>
+                            <button class="pdr-go" id="pd-review-go" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span id="pd-review-go-label"></span></button>
+                            <button class="pdr-back" id="pd-review-back" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Back to plans</button>
+                        </div>
+                    </div>
                 </div>
                 <div id="zoom-restrict-price" style="display:none;"></div>
                 <div id="zoom-restrict-sub-price" style="display:none;"></div>
@@ -3177,7 +3303,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=207" defer></script>
+    <script src="maps1-app.js?v=209" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
