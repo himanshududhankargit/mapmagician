@@ -626,7 +626,23 @@
         // 208 = PROMOTION of 207 to live: maps-support.js now carries the support-message
         //       rule and its red note. Checked on staging: "." refused with the note, a real
         //       message ("please send map") delivered with the email layout unchanged.
-        var APP_VERSION = '208';
+        // 209 = Confirm the region before paying. A customer wanting Palghar/Vasai-Virar
+        //       subscribed to Osmanabad/Dharashiv (2026-10-16) — the region was in the title,
+        //       the sign-in prompt and Razorpay, and nobody read it. Subscribe / 7-Day now
+        //       open a confirm step in the plan cards' place, themed on the owner's mockup
+        //       "B - Region hero": the region large in a dark-teal card (fitted to two lines,
+        //       "(Updated ...)" on its own line), what the pass covers, price, and "Confirm &
+        //       pay" - the only button that starts checkout. "Change region" opens the Regions
+        //       browser. The Regions-list Buy badges open this paywall instead of paying.
+        // 210 = 209 fix: with the footer hidden during the confirm step, the Try Demo / Watch
+        //       tutorial / Not now row sat on the dialog's very bottom edge on phones. It now
+        //       gets its own bottom padding (and the safe-area inset) and a divider above.
+        // 211 = PROMOTION of 209-210 to live: Subscribe / 7-Day open the region confirm
+        //       step (region card with the name flown in from the header, long names
+        //       fitted, "Confirm & pay" the only checkout button), Regions-list Buy badges
+        //       open the paywall. Owner tested 209 on a phone (dpplans.com/maps1); 210
+        //       fixed the bottom button row sitting on the dialog edge.
+        var APP_VERSION = '211';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -3628,6 +3644,35 @@
             if (map) map.setOptions({ draggable: true, scrollwheel: true, disableDoubleClickZoom: false, zoomControl: true, gestureHandling: 'greedy' });
         }
 
+        // Leaving the paywall steps the map back below the free ceiling — but only when
+        // the paywall's zoom clamp put it there. Opened from the Regions list (209) the
+        // map can sit at zoom 7, and "back to 13" would zoom INTO wherever it was.
+        function paywallZoomBack(withBypass) {
+            if (!map || map.getZoom() < MAX_FREE_ZOOM) return;
+            if (withBypass) {
+                zoomBypassActive = true;
+                google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
+            }
+            smoothZoomTo(MAX_FREE_ZOOM - 1);
+        }
+
+        // Run fn once the history traversal that a closing dialog / Regions browser
+        // starts has LANDED (its popstate), so a dialog opened next pushes a clean
+        // entry instead of racing it. Register BEFORE the close. Falls back after
+        // 500 ms when nothing was history-tracked. Same handoff as the mismatch dialog.
+        function afterHistorySettles(fn) {
+            var done = false;
+            function run() {
+                if (done) return;
+                done = true;
+                window.removeEventListener('popstate', onPop);
+                fn();
+            }
+            function onPop() { setTimeout(run, 0); }
+            window.addEventListener('popstate', onPop);
+            setTimeout(run, 500);
+        }
+
         function showZoomRestrictionDialog(district) {
             const overlay = document.getElementById('zoom-restrict-overlay');
             const title = document.getElementById('zoom-restrict-title');
@@ -3637,6 +3682,8 @@
             const priceEl = document.getElementById('zoom-price-amount');
 
             lastRestrictedDistrict = district;
+            // Every open starts on the plan cards, never on a review step left from before.
+            hidePlanConfirm();
 
             // Restore cards + support (may have been changed by showNoDataDialog)
             document.getElementById('zoom-restrict-support').style.display = '';
@@ -3653,8 +3700,15 @@
             desc.style.display = 'none';
 
             if (district) {
-                title.textContent = 'Web Unlock ' + district.districtName;
-                regionInfo.textContent = district.districtName + ' Region';
+                // The name sits in its own span: the confirm step flies it from here into
+                // its region card (flyRegionName).
+                title.textContent = 'Web Unlock ';
+                var titleRegion = document.createElement('span');
+                titleRegion.id = 'zoom-restrict-title-region';
+                titleRegion.textContent = district.districtName;
+                title.appendChild(titleRegion);
+                // Names like "Osmanabad/Dharashiv Region" already end in the word.
+                regionInfo.textContent = /\bregion$/i.test(district.districtName) ? district.districtName : district.districtName + ' Region';
                 regionInfo.style.display = 'block';
             } else {
                 title.textContent = 'Web Unlock Premium Maps';
@@ -3699,14 +3753,20 @@
             newBtn.style.background = '#2196F3';
             actionBtn.parentNode.replaceChild(newBtn, actionBtn);
 
-            newBtn.addEventListener('click', () => {
+            // The plan buttons only open the review step (209); its main button runs the
+            // purchase below. With no region there is nothing to confirm.
+            const buyNow = () => {
                 overlay.classList.remove('open');
                 enableMapInteraction();
-                smoothZoomTo(MAX_FREE_ZOOM - 1);
+                paywallZoomBack(false);
                 setTimeout(() => {
                     if (district) buyRegion(district.productPurchaseID, district.districtName);
                     else openRegionsBrowser();
                 }, 300);
+            };
+            newBtn.addEventListener('click', () => {
+                if (!district) { buyNow(); return; }
+                showPlanConfirm({ kind: 'onetime', regionName: district.districtName, onConfirm: buyNow });
             });
 
             // Replace subscribe button to remove old listeners
@@ -3726,26 +3786,39 @@
                 existingSub.status === 'halted'
                 || existingSub.status === 'pending'
                 || (existingSub.graceAppliedThisCycle && Number(existingSub.graceExpiry || 0) > Date.now())));
-            if (subRecoverable) {
-                newSubBtn.textContent = 'Renew Subscription';
-            }
+            // The clone carries the previous open's label, so reset it both ways — a
+            // Renew label must not stick to the next, non-recoverable region.
+            newSubBtn.textContent = subRecoverable ? 'Renew Subscription' : 'Subscribe Now';
 
-            newSubBtn.addEventListener('click', () => {
+            const subscribeNow = () => {
                 overlay.classList.remove('open');
                 enableMapInteraction();
-                smoothZoomTo(MAX_FREE_ZOOM - 1);
+                paywallZoomBack(false);
                 setTimeout(() => {
                     if (district) subscribeRegion(district.productPurchaseID, district.districtName);
                     else openRegionsBrowser();
                 }, 300);
+            };
+            newSubBtn.addEventListener('click', () => {
+                if (!district) { subscribeNow(); return; }
+                showPlanConfirm({ kind: subRecoverable ? 'renew' : 'sub', regionName: district.districtName, onConfirm: subscribeNow });
             });
 
             document.getElementById('zoom-restrict-cancel').onclick = () => {
                 overlay.classList.remove('open');
                 enableMapInteraction();
-                zoomBypassActive = true;
-                smoothZoomTo(MAX_FREE_ZOOM - 1);
-                google.maps.event.addListenerOnce(map, 'idle', () => { zoomBypassActive = false; });
+                paywallZoomBack(true);
+            };
+
+            // "Change" next to the region on the review step: leave like Not now, then
+            // open the Regions browser once the paywall's history entry has been popped,
+            // so the browser's own pushState can't race it (see showRegionMismatchDialog).
+            document.getElementById('pd-review-change').onclick = () => {
+                try { mmAnalytics.event('paywall_change_region', { item_id: district ? district.productPurchaseID : '' }); } catch (e) {}
+                afterHistorySettles(() => openRegionsBrowser());
+                overlay.classList.remove('open');
+                enableMapInteraction();
+                paywallZoomBack(true);
             };
 
             wireZoomRestrictShared();
@@ -3763,6 +3836,7 @@
             };
 
             overlay.classList.add('open');
+            fitHeaderTitle();
 
             // Peek animation: briefly show second card on small screens
             var pdScroll = document.getElementById('pd-cards-scroll');
@@ -3954,6 +4028,7 @@
                 frame.classList.toggle('tv-tall', tall);
                 frame.appendChild(tutorialEmbed(0, tall));
             }
+            hidePlanConfirm();
             if (tabs && _pdVideoPrevDisplay === null) {
                 _pdVideoPrevDisplay = tabs.style.display;
                 tabs.style.display = 'none';
@@ -3974,13 +4049,213 @@
             if (tabs && _pdVideoPrevDisplay !== null) tabs.style.display = _pdVideoPrevDisplay;
             _pdVideoPrevDisplay = null;
         }
+        // --- Confirm step (staging 209) ---
+        // A plan button no longer starts payment. It opens this step in the plan cards' place
+        // (.pd-reviewing on the overlay), naming the REGION in a large hero, and only its
+        // "Confirm & pay" launches checkout. Region names come from RTDB, so every text goes
+        // in through textContent.
+        var _pdConfirmAction = null;
+        var REVIEW_PERIODS = {
+            day:   { plan: 'Daily Web Pass',   every: 'every day' },
+            week:  { plan: 'Weekly Web Pass',  every: 'every 7 days' },
+            month: { plan: 'Monthly Web Pass', every: 'every month' }
+        };
+        // "Aurangabad/Chatrapati Sambhaji Nagar (updated)" -> main "Aurangabad",
+        // alt "Chatrapati Sambhaji Nagar", qual "Updated". Only a slash BETWEEN WORDS splits,
+        // never the one in a date like "Pune (Updated 16/10/2025)".
+        function splitRegionName(name) {
+            var s = String(name || '').trim(), qual = '', alt = '';
+            var q = s.match(/^(.*\S)\s*\(([^()]+)\)$/);
+            if (q) { s = q[1]; qual = q[2].trim(); qual = qual.charAt(0).toUpperCase() + qual.slice(1); }
+            var a = s.match(/^(.*?[^\d\s])\s*\/\s*([^\d\s].*)$/);
+            if (a) { s = a[1]; alt = a[2]; }
+            return { main: s, alt: alt, qual: qual };
+        }
+        // Start large and step down until the name sits on two lines, so even the 46-character
+        // names ("Kharghar / Panvel Municipal Corporation Raigad") fit a phone. Needs the
+        // element visible to measure.
+        function fitRegionName() {
+            var el = document.getElementById('pd-review-region');
+            if (!el || !el.offsetParent) return;
+            var phone = window.matchMedia && window.matchMedia('(max-width: 600px)').matches;
+            var size = phone ? 32 : 40, min = phone ? 22 : 26;
+            el.style.fontSize = size + 'px';
+            while (size > min && el.offsetHeight > size * 1.1 * 2 + 4) {
+                size -= 2;
+                el.style.fontSize = size + 'px';
+            }
+        }
+        // Play the opening beat: start as large as the card allows (widest line vs the
+        // card's width, capped at 1.4x) and settle to the fitted size. A long name that
+        // already fills the card barely grows, so it is never clipped.
+        function popRegionName() {
+            var el = document.getElementById('pd-review-region');
+            if (!el || !el.offsetParent) return;
+            var r = document.createRange();
+            r.selectNodeContents(el);
+            var widest = r.getBoundingClientRect().width;
+            var s = widest > 0 ? Math.min(1.4, Math.max(1.06, (el.clientWidth - 8) / widest)) : 1.25;
+            el.style.setProperty('--pdr-pop', s.toFixed(3));
+            el.classList.remove('pdr-pop');
+            void el.offsetWidth; // restart the animation on every open
+            el.classList.add('pdr-pop');
+        }
+        // The plan dialog's own title ("Web Unlock <region>") gets the same treatment: long
+        // names step down from 20px until the title sits on two lines (floor 15px).
+        function fitHeaderTitle() {
+            var el = document.getElementById('zoom-restrict-title');
+            if (!el || !el.offsetParent) return;
+            var size = 20;
+            el.style.fontSize = size + 'px';
+            while (size > 15 && el.offsetHeight > size * 1.3 * 2 + 4) {
+                size -= 1;
+                el.style.fontSize = size + 'px';
+            }
+        }
+        // Shared-element move (Material style): the region name leaves the step-1 title and
+        // lands in the confirm card, overshooting to the card's pop size before settling. A
+        // fixed-position copy does the flying so the card's rounded clip can't cut it; the
+        // real name stays hidden until it lands. No source (or reduced motion) -> the pop.
+        var _pdFlight = null;
+        function endRegionFlight() {
+            if (!_pdFlight) return;
+            var f = _pdFlight;
+            _pdFlight = null;
+            try { f.anim.cancel(); } catch (e) {}
+            if (f.clone.parentNode) f.clone.parentNode.removeChild(f.clone);
+            f.el.style.visibility = '';
+        }
+        function flyRegionName(srcRect) {
+            var el = document.getElementById('pd-review-region');
+            endRegionFlight();
+            var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (!el || !el.offsetParent || !srcRect || !srcRect.width || !el.animate || reduce) { popRegionName(); return; }
+            el.classList.remove('pdr-pop');
+            var dst = el.getBoundingClientRect();
+            var r = document.createRange();
+            r.selectNodeContents(el);
+            var text = r.getBoundingClientRect();
+            if (!text.width) { popRegionName(); return; }
+            // Overshoot: as large as the card's width allows, and less for a tall (multi-line)
+            // name so its peak doesn't touch the Change pill below.
+            var pop = Math.min(1.25, 1 + 14 / text.height, Math.max(1, (el.clientWidth - 8) / text.width));
+            var s = Math.min(srcRect.width / text.width, srcRect.height / text.height);
+            var dx = (srcRect.left + srcRect.width / 2) - (dst.left + dst.width / 2);
+            var dy = (srcRect.top + srcRect.height / 2) - (dst.top + dst.height / 2);
+            var clone = el.cloneNode(true);
+            clone.removeAttribute('id');
+            clone.className = 'pdr-fly';
+            clone.setAttribute('aria-hidden', 'true');
+            clone.style.cssText = 'left:' + dst.left + 'px;top:' + dst.top + 'px;width:' + dst.width + 'px;font-size:' + el.style.fontSize + ';';
+            document.body.appendChild(clone);
+            el.style.visibility = 'hidden';
+            var anim = clone.animate([
+                { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + s + ')', easing: 'cubic-bezier(0.3, 0, 0, 1)' },
+                { transform: 'scale(' + pop + ')', offset: 0.6, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+                { transform: 'none' }
+            ], { duration: 950, fill: 'both' });
+            _pdFlight = { anim: anim, clone: clone, el: el };
+            anim.onfinish = endRegionFlight;
+        }
+        window.addEventListener('resize', function () {
+            var box = document.getElementById('pd-review');
+            if (box && !box.hidden) { endRegionFlight(); fitRegionName(); }
+            var ov = document.getElementById('zoom-restrict-overlay');
+            if (ov && ov.classList.contains('open')) fitHeaderTitle();
+        });
+        function showPlanConfirm(opts) {
+            var ov = document.getElementById('zoom-restrict-overlay');
+            var box = document.getElementById('pd-review');
+            if (!ov || !box) { opts.onConfirm(); return; }
+            hidePlanVideo();
+            var set = function (id, text) { document.getElementById(id).textContent = text; };
+            var oneTime = opts.kind === 'onetime';
+
+            var parts = splitRegionName(opts.regionName);
+            var nameEl = document.getElementById('pd-review-region');
+            nameEl.textContent = parts.main;
+            if (parts.alt) {
+                var alt = document.createElement('span');
+                alt.className = 'pdr-alt';
+                alt.textContent = ' / ' + parts.alt;
+                nameEl.appendChild(alt);
+            }
+            var qualEl = document.getElementById('pd-review-region-qual');
+            qualEl.textContent = parts.qual;
+            qualEl.hidden = !parts.qual;
+            set('pd-review-region-2', String(opts.regionName).replace(/([^\d\s])\s*\/\s*(?=[^\d\s])/g, '$1 / '));
+
+            // The price is read off the card the user just tapped, so this step can never
+            // disagree with it ("..." while pricing is still loading is shown as-is).
+            var shown = document.getElementById(oneTime ? 'zoom-price-amount' : 'zoom-sub-price-amount').textContent.trim();
+            var n = Number(shown.replace(/[^\d.]/g, ''));
+            var price = n > 0 ? '₹' + n.toLocaleString('en-IN') : shown;
+            var unit = document.createElement('small');
+            if (oneTime) {
+                set('pd-review-plan', '7-Day Web Pass');
+                unit.textContent = 'one-time';
+                set('pd-review-terms', 'One-time payment · No auto-renewal');
+                set('pd-review-go-label', 'Confirm & pay ' + price);
+            } else {
+                // Same period source as subscribeRegion's checkout description; appConfig
+                // stores it capitalised ("Week"), so normalise before the lookup.
+                var u = String((cachedSubPricing.get('default') || {}).periodUnit || 'week').toLowerCase();
+                var p = REVIEW_PERIODS[u] || { plan: 'Web Pass', every: 'every ' + u };
+                set('pd-review-plan', p.plan);
+                unit.textContent = '/ ' + u;
+                set('pd-review-terms', 'Auto-renews ' + p.every + ' · Cancel anytime');
+                set('pd-review-go-label', (opts.kind === 'renew' ? 'Confirm & renew ' : 'Confirm & pay ') + price);
+            }
+            var priceEl = document.getElementById('pd-review-price');
+            priceEl.textContent = price;
+            priceEl.appendChild(unit);
+
+            _pdConfirmAction = opts.onConfirm;
+            // Where the name sits in the step-1 title, measured BEFORE the header swaps.
+            var srcEl = document.getElementById('zoom-restrict-title-region');
+            var srcRect = srcEl && srcEl.offsetParent ? srcEl.getBoundingClientRect() : null;
+            ov.classList.add('pd-reviewing');
+            box.hidden = false;
+            fitRegionName();
+            // On a short phone the step is taller than the dialog's scroll area: show its top
+            // (the region) rather than whichever edge is nearest.
+            var scroller = box.closest('.pd-body');
+            var fits = !scroller || box.offsetHeight <= scroller.clientHeight;
+            try { box.scrollIntoView({ block: fits ? 'nearest' : 'start' }); } catch (e) {}
+            try { document.getElementById('pd-review-go').focus({ preventScroll: true }); } catch (e) {}
+            flyRegionName(srcRect);
+        }
+        function hidePlanConfirm() {
+            var ov = document.getElementById('zoom-restrict-overlay');
+            var box = document.getElementById('pd-review');
+            _pdConfirmAction = null;
+            endRegionFlight();
+            if (box) box.hidden = true;
+            // Guarded: the overlay's class MutationObserver below calls this, and an
+            // unconditional classList.remove still writes the attribute and re-fires it.
+            if (ov && ov.classList.contains('pd-reviewing')) ov.classList.remove('pd-reviewing');
+        }
+        (function () {
+            var go = document.getElementById('pd-review-go');
+            var back = document.getElementById('pd-review-back');
+            if (go) go.onclick = function () {
+                var act = _pdConfirmAction;
+                hidePlanConfirm();
+                if (act) act();
+            };
+            if (back) back.onclick = function () {
+                try { mmAnalytics.event('paywall_confirm_back', { item_id: lastRestrictedDistrict ? lastRestrictedDistrict.productPurchaseID : '' }); } catch (e) {}
+                hidePlanConfirm();
+            };
+        })();
+
         // Every close path ends in removing .open (there are ~10 of them), so watch the
         // class instead of patching each one.
         (function () {
             var ov = document.getElementById('zoom-restrict-overlay');
             if (!ov || typeof MutationObserver === 'undefined') return;
             new MutationObserver(function () {
-                if (!ov.classList.contains('open')) hidePlanVideo();
+                if (!ov.classList.contains('open')) { hidePlanVideo(); hidePlanConfirm(); }
             }).observe(ov, { attributes: true, attributeFilter: ['class'] });
         })();
 
@@ -4018,6 +4293,7 @@
             // the page is that there is exactly one region.
             if (isDemoMode) return;
             wireZoomRestrictShared();
+            hidePlanConfirm();
             const overlay = document.getElementById('zoom-restrict-overlay');
             const title = document.getElementById('zoom-restrict-title');
             const desc = document.getElementById('zoom-restrict-desc');
@@ -4025,6 +4301,7 @@
             const supportBtn = document.getElementById('zoom-restrict-support');
 
             title.textContent = 'No Map Data Available';
+            title.style.fontSize = '';  // drop a long region name's fitted size
             desc.style.display = '';  // re-show shared span (purchase dialog hides it)
             desc.textContent = 'There are no development plan maps available for this area. Browse available regions to explore maps.';
             // Hide the web-only purchase notice + amber styling — irrelevant on the no-data dialog
@@ -7098,11 +7375,17 @@
                     }
 
                     // Buy badge click
+                    // 209: opens the paywall (plan cards + region confirm) instead of paying
+                    // directly — in a list, a tap on the neighbouring row buys the wrong region.
+                    // The browser sits above the paywall (z 3500 vs 3000), so close it first and
+                    // let its history unwind before the paywall pushes its own entry.
                     var buyBadge = card.querySelector('.region-card-badge.buy');
                     if (buyBadge) {
                         buyBadge.addEventListener('click', function(e) {
                             e.stopPropagation();
-                            buyRegion(buyBadge.dataset.pid, buyBadge.dataset.name);
+                            var target = { productPurchaseID: buyBadge.dataset.pid, districtName: buyBadge.dataset.name };
+                            afterHistorySettles(function() { showZoomRestrictionDialog(target); });
+                            closeRegionBrowser();
                         });
                     }
 
@@ -7326,12 +7609,14 @@
                         ${item.hasChildren ? '<span class="sidebar-list-arrow">&#8250;</span>' : ''}
                     `;
 
-                    // Buy badge click (stop propagation so it doesn't drill into district)
+                    // Buy badge click (stop propagation so it doesn't drill into district).
+                    // 209: opens the paywall so the region is confirmed before paying; the
+                    // sidebar (z 2500) stays open underneath, so Not now returns to the list.
                     const buyBadge = btn.querySelector('.buy-badge');
                     if (buyBadge) {
                         buyBadge.addEventListener('click', (e) => {
                             e.stopPropagation();
-                            buyRegion(buyBadge.dataset.pid, buyBadge.dataset.name);
+                            showZoomRestrictionDialog({ productPurchaseID: buyBadge.dataset.pid, districtName: buyBadge.dataset.name });
                         });
                     }
 
