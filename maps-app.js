@@ -642,7 +642,9 @@
         //       fitted, "Confirm & pay" the only checkout button), Regions-list Buy badges
         //       open the paywall. Owner tested 209 on a phone (dpplans.com/maps1); 210
         //       fixed the bottom button row sitting on the dialog edge.
-        var APP_VERSION = '211';
+        // 213 = PROMOTION of 212 to live: the Razorpay checkout email is locked to the signed-in
+        //       account (readonly) in all five checkouts. Owner checked it on staging.
+        var APP_VERSION = '213';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -1978,6 +1980,8 @@
                         email: currentUser.email,
                         name: currentUser.displayName || ''
                     },
+                    // Lock the checkout email to the signed-in account. Editable, it let a buyer type another address (pay_TqKiUqCMPJnn0x, 2026-10-21: bought on patilrajlaxmi105@, receipt filed under mahadevrao90@), so Razorpay search and the support card showed the payment on the wrong account.
+                    readonly: { email: true },
                     theme: { color: '#008577' },
                     handler: async function(response) {
                         updateStatus('Payment successful! Activating...');
@@ -2193,6 +2197,8 @@
                         email: currentUser.email,
                         name: currentUser.displayName || ''
                     },
+                    // Checkout email locked to the signed-in account (see the 7-Day Pass checkout).
+                    readonly: { email: true },
                     theme: { color: '#008577' },
                     handler: async function(response) {
                         // Payment went through Razorpay UI — show processing.
@@ -2395,6 +2401,8 @@
                         email: currentUser.email,
                         name: currentUser.displayName || ''
                     },
+                    // Checkout email locked to the signed-in account (see the 7-Day Pass checkout).
+                    readonly: { email: true },
                     theme: { color: '#008577' },
                     handler: async function(response) {
                         document.getElementById('payment-loading-text').textContent = 'Confirming renewal...';
@@ -11662,6 +11670,8 @@
                     name: 'Village Plan (GIS)',
                     description: 'Web only (not Android) — 7-Day Pass: ' + villageName,
                     prefill: { email: currentUser.email, name: currentUser.displayName || '' },
+                    // Checkout email locked to the signed-in account (see the 7-Day Pass checkout).
+                    readonly: { email: true },
                     theme: { color: '#1565C0' },
                     handler: async function(response) {
                         updateStatus('Payment successful! Activating...');
@@ -13057,6 +13067,8 @@
                     name: 'Map Magician',
                     description: 'Map download' + (s.districtName ? ' — ' + s.districtName : ''),
                     prefill: { email: user.email },
+                    // Checkout email locked to the signed-in account (see the 7-Day Pass checkout).
+                    readonly: { email: true },
                     handler: function(response) {
                         (async function() {
                             // Cover the gap between checkout closing and the tile fetch:
