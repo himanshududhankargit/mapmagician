@@ -618,7 +618,7 @@
         // 210 = 209 fix: with the footer hidden during the confirm step, the Try Demo / Watch
         //       tutorial / Not now row sat on the dialog's very bottom edge on phones. It now
         //       gets its own bottom padding (and the safe-area inset) and a divider above.
-        var APP_VERSION = '212';
+        var APP_VERSION = '214';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -4191,6 +4191,7 @@
             var priceEl = document.getElementById('pd-review-price');
             priceEl.textContent = price;
             priceEl.appendChild(unit);
+            updateReviewAccount();
 
             _pdConfirmAction = opts.onConfirm;
             // Where the name sits in the step-1 title, measured BEFORE the header swaps.
@@ -4207,6 +4208,37 @@
             try { document.getElementById('pd-review-go').focus({ preventScroll: true }); } catch (e) {}
             flyRegionName(srcRect);
         }
+        // Name the account the pass will land on. A buyer with two Google accounts paid on
+        // patilrajlaxmi105@ and then asked, signed in as mahadevrao90@, why the map was locked
+        // (2026-10-21) — nothing on our side or Razorpay's said which account was buying.
+        // Re-run on every auth change, so a switch made from here shows the new account.
+        function updateReviewAccount() {
+            var box = document.getElementById('pd-review-account');
+            if (!box) return;
+            var text = document.getElementById('pd-review-account-text');
+            var sw = document.getElementById('pd-review-account-switch');
+            text.textContent = '';
+            if (currentUser && !currentUser.isAnonymous && currentUser.email) {
+                text.appendChild(document.createTextNode('Pass will be added to'));
+                var who = document.createElement('strong');
+                who.textContent = currentUser.email;
+                text.appendChild(who);
+                sw.hidden = false;
+            } else {
+                text.textContent = 'You’ll sign in with Google next — the pass goes to that account.';
+                sw.hidden = true;
+            }
+            box.hidden = false;
+        }
+        (function () {
+            var sw = document.getElementById('pd-review-account-switch');
+            // Straight from the tap: the sign-in popup must open inside the user gesture.
+            if (sw) sw.onclick = function () {
+                try { mmAnalytics.event('paywall_switch_account', {}); } catch (e) {}
+                triggerGoogleSignIn();
+            };
+            firebase.auth().onAuthStateChanged(function () { updateReviewAccount(); });
+        })();
         function hidePlanConfirm() {
             var ov = document.getElementById('zoom-restrict-overlay');
             var box = document.getElementById('pd-review');

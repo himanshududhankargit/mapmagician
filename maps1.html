@@ -1206,6 +1206,15 @@
         .pdr-go svg { flex-shrink:0; }
         .pdr-back { align-self:center; min-height:40px; display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:none; background:none; font:inherit; font-size:14.5px; font-weight:600; color:var(--rv-teal-text); cursor:pointer; }
         .pdr-back:hover { text-decoration:underline; }
+        /* Which Google account gets the pass. Razorpay locks its email box to this account but
+           shows it unstyled, so this is the only place the buyer is told. */
+        .pdr-account { display:flex; flex-wrap:wrap; align-items:center; gap:2px 8px; padding:10px 12px; border:1px solid var(--rv-line); border-radius:12px; background:#F4F8F7; font-size:13px; color:var(--rv-text); }
+        .pdr-account[hidden] { display:none; }
+        .pdr-account-text { flex:1 1 auto; min-width:0; line-height:1.4; }
+        .pdr-account-text strong { display:block; color:var(--rv-ink); font-size:14px; overflow-wrap:anywhere; }
+        .pdr-account-switch { min-height:36px; padding:4px 6px; border:none; background:none; font:inherit; font-size:13.5px; font-weight:600; color:var(--rv-teal-text); cursor:pointer; }
+        .pdr-account-switch:hover { text-decoration:underline; }
+        .pdr-account-switch[hidden] { display:none; }
         .pd-review button:focus-visible { outline:3px solid rgba(15,107,92,0.45); outline-offset:2px; }
         .pdr-hero button:focus-visible { outline-color:rgba(163,228,207,0.85); }
         @media (max-width: 600px) {
@@ -2483,6 +2492,10 @@
                         <div class="pdr-buy">
                             <div class="pdr-plan-row"><span class="pdr-plan" id="pd-review-plan"></span><span class="pdr-price" id="pd-review-price"></span></div>
                             <div class="pdr-terms" id="pd-review-terms"></div>
+                            <div class="pdr-account" id="pd-review-account" hidden>
+                                <span class="pdr-account-text" id="pd-review-account-text"></span>
+                                <button class="pdr-account-switch" id="pd-review-account-switch" type="button">Use a different account</button>
+                            </div>
                             <button class="pdr-go" id="pd-review-go" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span id="pd-review-go-label"></span></button>
                             <button class="pdr-back" id="pd-review-back" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Back to plans</button>
                         </div>
@@ -3306,7 +3319,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=212" defer></script>
+    <script src="maps1-app.js?v=214" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
