@@ -622,7 +622,9 @@
         //       shared loadRazorpay(), so the payment window opens without a second wait.
         // 221 = 220 re-keyed: 220 was pushed twice (APP_VERSION fixed on the 2nd), so
         //       browsers that pinned the first ?v=220 kept showing 219.
-        var APP_VERSION = '221';
+        // 222 = order servers woken ({ warmup: true }) when the price dialog opens, so the
+        //       3-4 s cold boot of createOrder / createSubscription is over before Pay.
+        var APP_VERSION = '222';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -1579,6 +1581,19 @@
             }
             return _razorpayLoad.catch(function() {
                 throw new Error(errMsg || 'Could not load payment gateway.');
+            });
+        }
+
+        // Wake the order servers while the price dialog is open. createOrder /
+        // createSubscription sleep between the rare purchases and need ~3-4 s to boot,
+        // which used to land after the Pay tap. { warmup: true } is answered at once
+        // and touches no data. At most once per 5 min per page; never retried.
+        var _paymentWarmAt = 0;
+        function warmPaymentServers() {
+            if (isDemoMode || Date.now() - _paymentWarmAt < 5 * 60 * 1000) return;
+            _paymentWarmAt = Date.now();
+            ['createOrder', 'createSubscription'].forEach(function(name) {
+                try { functions.httpsCallable(name)({ warmup: true }).catch(function() {}); } catch (e) {}
             });
         }
 
@@ -3679,6 +3694,7 @@
 
         function showZoomRestrictionDialog(district) {
             loadRazorpay().catch(function() {});
+            warmPaymentServers();
             const overlay = document.getElementById('zoom-restrict-overlay');
             const title = document.getElementById('zoom-restrict-title');
             const desc = document.getElementById('zoom-restrict-desc');
