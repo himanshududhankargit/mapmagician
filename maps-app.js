@@ -644,7 +644,11 @@
         //       fixed the bottom button row sitting on the dialog edge.
         // 213 = PROMOTION of 212 to live: the Razorpay checkout email is locked to the signed-in
         //       account (readonly) in all five checkouts. Owner checked it on staging.
-        var APP_VERSION = '218';
+        // 223 = PROMOTION of the 220-222 payment speed-up only (not the rest of staging):
+        //       Razorpay checkout.js preloaded by one shared loadRazorpay(), and the order
+        //       servers woken ({ warmup: true }) when the price dialog opens. Owner tested
+        //       222 on staging: 7-day order 6-7 s -> 0.9 s, subscription -> 1.7 s.
+        var APP_VERSION = '223';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -1577,6 +1581,46 @@
             loadTilesBasedOnViewport();
         }
 
+        // Razorpay checkout.js, loaded once and shared. Started early (when the
+        // price dialog opens, and alongside createOrder) so the ~100 KB script is
+        // already here by the time the order comes back, instead of downloading
+        // only after it. A failed load (offline / ad blocker) is forgotten so the
+        // next tap retries.
+        var _razorpayLoad = null;
+        function loadRazorpay(errMsg) {
+            if (typeof Razorpay !== 'undefined') return Promise.resolve();
+            if (!_razorpayLoad) {
+                _razorpayLoad = new Promise(function(resolve, reject) {
+                    var s = document.createElement('script');
+                    s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                    s.async = true;
+                    s.onload = resolve;
+                    s.onerror = function() {
+                        _razorpayLoad = null;
+                        s.remove();
+                        reject(new Error('Could not load payment gateway.'));
+                    };
+                    document.head.appendChild(s);
+                });
+            }
+            return _razorpayLoad.catch(function() {
+                throw new Error(errMsg || 'Could not load payment gateway.');
+            });
+        }
+
+        // Wake the order servers while the price dialog is open. createOrder /
+        // createSubscription sleep between the rare purchases and need ~3-4 s to boot,
+        // which used to land after the Pay tap. { warmup: true } is answered at once
+        // and touches no data. At most once per 5 min per page; never retried.
+        var _paymentWarmAt = 0;
+        function warmPaymentServers() {
+            if (isDemoMode || Date.now() - _paymentWarmAt < 5 * 60 * 1000) return;
+            _paymentWarmAt = Date.now();
+            ['createOrder', 'createSubscription'].forEach(function(name) {
+                try { functions.httpsCallable(name)({ warmup: true }).catch(function() {}); } catch (e) {}
+            });
+        }
+
         // --- Subscription status ---
         async function fetchSubscriptionStatus() {
             if (!currentUser || currentUser.isAnonymous) {
@@ -1963,6 +2007,7 @@
             loadingOverlay.classList.add('open');
 
             try {
+                loadRazorpay().catch(function() {});
                 const createOrder = functions.httpsCallable('createOrder');
                 const { data } = await createOrder({ productId, regionName });
 
@@ -2042,16 +2087,7 @@
                     }
                 };
 
-                if (typeof Razorpay === 'undefined') {
-                    // Razorpay script not loaded — try loading it dynamically
-                    await new Promise(function(resolve, reject) {
-                        const s = document.createElement('script');
-                        s.src = 'https://checkout.razorpay.com/v1/checkout.js';
-                        s.onload = resolve;
-                        s.onerror = function() { reject(new Error('Could not load payment gateway. Please check your internet connection or disable ad blocker.')); };
-                        document.head.appendChild(s);
-                    });
-                }
+                await loadRazorpay('Could not load payment gateway. Please check your internet connection or disable ad blocker.');
                 try {
                     mmAnalytics.event('begin_checkout', {
                         currency: data.currency || 'INR',
@@ -2135,6 +2171,7 @@
             loadingOverlay.classList.add('open');
 
             try {
+                loadRazorpay().catch(function() {});
                 var createSubscription = functions.httpsCallable('createSubscription');
                 var result = await createSubscription({ productId: productId, regionName: regionName });
 
@@ -2257,15 +2294,7 @@
                     }
                 };
 
-                if (typeof Razorpay === 'undefined') {
-                    await new Promise(function(resolve, reject) {
-                        var s = document.createElement('script');
-                        s.src = 'https://checkout.razorpay.com/v1/checkout.js';
-                        s.onload = resolve;
-                        s.onerror = function() { reject(new Error('Could not load payment gateway.')); };
-                        document.head.appendChild(s);
-                    });
-                }
+                await loadRazorpay();
                 try {
                     mmAnalytics.event('begin_checkout', {
                         currency: 'INR',
@@ -2379,6 +2408,7 @@
             loadingOverlay.classList.add('open');
             try {
                 var getInvoice = functions.httpsCallable('getSubscriptionRenewInvoice');
+                loadRazorpay().catch(function() {});
                 var result = await getInvoice({ productId: productId });
                 var inv = result.data;
                 if (inv && inv.lapsed) {
@@ -2395,15 +2425,7 @@
                     return;
                 }
 
-                if (typeof Razorpay === 'undefined') {
-                    await new Promise(function(resolve, reject) {
-                        var s = document.createElement('script');
-                        s.src = 'https://checkout.razorpay.com/v1/checkout.js';
-                        s.onload = resolve;
-                        s.onerror = function() { reject(new Error('Could not load payment gateway.')); };
-                        document.head.appendChild(s);
-                    });
-                }
+                await loadRazorpay();
 
                 var options = {
                     key: 'rzp_live_SXr1BKnoysSo9r',
@@ -3695,6 +3717,8 @@
         }
 
         function showZoomRestrictionDialog(district) {
+            loadRazorpay().catch(function() {});
+            warmPaymentServers();
             const overlay = document.getElementById('zoom-restrict-overlay');
             const title = document.getElementById('zoom-restrict-title');
             const desc = document.getElementById('zoom-restrict-desc');
@@ -11670,6 +11694,7 @@
             loadingOverlay.classList.add('open');
 
             try {
+                loadRazorpay().catch(function() {});
                 var createOrder = functions.httpsCallable('createOrder');
                 var result = await createOrder({
                     productId: 'villagePlanDefault',
@@ -11734,15 +11759,7 @@
                     }
                 };
 
-                if (typeof Razorpay === 'undefined') {
-                    await new Promise(function(resolve, reject) {
-                        var s = document.createElement('script');
-                        s.src = 'https://checkout.razorpay.com/v1/checkout.js';
-                        s.onload = resolve;
-                        s.onerror = function() { reject(new Error('Could not load payment gateway.')); };
-                        document.head.appendChild(s);
-                    });
-                }
+                await loadRazorpay();
                 try {
                     mmAnalytics.event('begin_checkout', {
                         currency: data.currency || 'INR',
@@ -13030,6 +13047,7 @@
                 // seconds. Failure is non-fatal: it only costs the unload report.
                 var idToken = '';
                 try { idToken = await user.getIdToken(); } catch (e) {}
+                loadRazorpay().catch(function() {});
                 var createDownloadOrder = functions.httpsCallable('createDownloadOrder');
                 // districtName rides along so every server-side record (ledger, delivery
                 // receipt, outcome event) carries a region a human can read, instead of
@@ -13063,15 +13081,7 @@
                     _dlmapFinalizeDownload();
                     return;
                 }
-                if (typeof Razorpay === 'undefined') {
-                    await new Promise(function(resolve, reject) {
-                        var sc = document.createElement('script');
-                        sc.src = 'https://checkout.razorpay.com/v1/checkout.js';
-                        sc.onload = resolve;
-                        sc.onerror = function() { reject(new Error('checkout blocked')); };
-                        document.head.appendChild(sc);
-                    });
-                }
+                await loadRazorpay('checkout blocked');
                 try {
                     mmAnalytics.event('begin_checkout', {
                         currency: resp.currency || 'INR', value: (resp.amount || 0) / 100,
