@@ -4044,6 +4044,8 @@
             wrap.hidden = false;
             var btn = document.getElementById('zoom-restrict-video');
             if (btn) { btn.classList.add('pd-showing-video'); btn.title = 'Back to the plans'; }
+            var ov = document.getElementById('zoom-restrict-overlay');
+            if (ov) ov.classList.add('pd-video-mode');
             try { wrap.scrollIntoView({ block: 'nearest' }); } catch (e) {}
         }
         function hidePlanVideo() {
@@ -4052,6 +4054,8 @@
             var tabs = document.getElementById('pd-plan-tabs');
             var btn = document.getElementById('zoom-restrict-video');
             if (btn) { btn.classList.remove('pd-showing-video'); btn.title = 'Watch a 4-minute video tutorial'; }
+            var ov = document.getElementById('zoom-restrict-overlay');
+            if (ov) ov.classList.remove('pd-video-mode');
             if (frame) frame.innerHTML = '';
             if (wrap) wrap.hidden = true;
             if (tabs && _pdVideoPrevDisplay !== null) tabs.style.display = _pdVideoPrevDisplay;
