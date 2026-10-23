@@ -620,7 +620,9 @@
         //       gets its own bottom padding (and the safe-area inset) and a divider above.
         // 220 = Razorpay checkout.js preloaded (price dialog / alongside createOrder) by one
         //       shared loadRazorpay(), so the payment window opens without a second wait.
-        var APP_VERSION = '220';
+        // 221 = 220 re-keyed: 220 was pushed twice (APP_VERSION fixed on the 2nd), so
+        //       browsers that pinned the first ?v=220 kept showing 219.
+        var APP_VERSION = '221';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
