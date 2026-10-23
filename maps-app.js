@@ -644,7 +644,7 @@
         //       fixed the bottom button row sitting on the dialog edge.
         // 213 = PROMOTION of 212 to live: the Razorpay checkout email is locked to the signed-in
         //       account (readonly) in all five checkouts. Owner checked it on staging.
-        var APP_VERSION = '213';
+        var APP_VERSION = '216';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -4055,7 +4055,9 @@
             var btn = document.getElementById('zoom-restrict-video');
             if (btn) { btn.classList.remove('pd-showing-video'); btn.title = 'Watch a 4-minute video tutorial'; }
             var ov = document.getElementById('zoom-restrict-overlay');
-            if (ov) ov.classList.remove('pd-video-mode');
+            // Guarded like hidePlanConfirm: the overlay's class observer calls this, and an
+            // unconditional remove re-fires it forever, freezing the page on every close.
+            if (ov && ov.classList.contains('pd-video-mode')) ov.classList.remove('pd-video-mode');
             if (frame) frame.innerHTML = '';
             if (wrap) wrap.hidden = true;
             if (tabs && _pdVideoPrevDisplay !== null) tabs.style.display = _pdVideoPrevDisplay;

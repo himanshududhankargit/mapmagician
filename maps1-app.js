@@ -618,7 +618,7 @@
         // 210 = 209 fix: with the footer hidden during the confirm step, the Try Demo / Watch
         //       tutorial / Not now row sat on the dialog's very bottom edge on phones. It now
         //       gets its own bottom padding (and the safe-area inset) and a divider above.
-        var APP_VERSION = '214';
+        var APP_VERSION = '217';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -4029,7 +4029,9 @@
             var btn = document.getElementById('zoom-restrict-video');
             if (btn) { btn.classList.remove('pd-showing-video'); btn.title = 'Watch a 4-minute video tutorial'; }
             var ov = document.getElementById('zoom-restrict-overlay');
-            if (ov) ov.classList.remove('pd-video-mode');
+            // Guarded like hidePlanConfirm: the overlay's class observer calls this, and an
+            // unconditional remove re-fires it forever, freezing the page on every close.
+            if (ov && ov.classList.contains('pd-video-mode')) ov.classList.remove('pd-video-mode');
             if (frame) frame.innerHTML = '';
             if (wrap) wrap.hidden = true;
             if (tabs && _pdVideoPrevDisplay !== null) tabs.style.display = _pdVideoPrevDisplay;
