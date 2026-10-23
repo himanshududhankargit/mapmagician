@@ -644,7 +644,7 @@
         //       fixed the bottom button row sitting on the dialog edge.
         // 213 = PROMOTION of 212 to live: the Razorpay checkout email is locked to the signed-in
         //       account (readonly) in all five checkouts. Owner checked it on staging.
-        var APP_VERSION = '216';
+        var APP_VERSION = '218';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -2152,14 +2152,18 @@
                 var subscriptionId = result.data.subscriptionId;
 
                 // Poll for webhook confirmation — don't trust Razorpay UI result
-                function pollForSubscriptionActivation(pid, subId, attempts, maxAttempts) {
+                // quiet: a background check after a cancelled checkout — no overlay, no
+                // "being processed" message; it only unlocks if a late UPI payment lands.
+                function pollForSubscriptionActivation(pid, subId, attempts, maxAttempts, quiet) {
                     if (attempts >= maxAttempts) {
+                        if (quiet) return;
                         loadingOverlay.classList.remove('open');
                         updateStatus('Subscription is being processed. Please refresh in a minute.');
                         return;
                     }
                     setTimeout(async function() {
-                        await fetchPurchaseStatus(true, pid);
+                        // A failed fetch must not end the chain: that left the overlay up for good.
+                        try { await fetchPurchaseStatus(true, pid); } catch (e) {}
                         if (hasPurchase(pid)) {
                             // Webhook confirmed — subscription is active
                             try {
@@ -2183,7 +2187,7 @@
                             loadingOverlay.classList.remove('open');
                             updateStatus('Subscription active!');
                         } else {
-                            pollForSubscriptionActivation(pid, subId, attempts + 1, maxAttempts);
+                            pollForSubscriptionActivation(pid, subId, attempts + 1, maxAttempts, quiet);
                         }
                     }, 3000); // poll every 3 seconds
                 }
@@ -2238,6 +2242,15 @@
                                 await confirmSub({ subscriptionId: subscriptionId, productId: productId });
                             } catch (e) {
                                 console.warn('confirmSubscription (ondismiss) fallback:', e && (e.message || e.code) || e);
+                                // "Status: created" = nothing was authorised, i.e. a plain cancel:
+                                // close the overlay now instead of blocking the map for a minute.
+                                // ("authenticated" = UPI mandate approved, charge pending -> keep waiting.)
+                                if (/failed-precondition/.test(String(e && e.code)) && /Status: created\b/.test(String(e && e.message))) {
+                                    loadingOverlay.classList.remove('open');
+                                    updateStatus('Payment cancelled');
+                                    pollForSubscriptionActivation(productId, subscriptionId, 0, 20, true);
+                                    return;
+                                }
                             }
                             pollForSubscriptionActivation(productId, subscriptionId, 0, 20);
                         }
