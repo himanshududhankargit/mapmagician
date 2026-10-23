@@ -618,7 +618,9 @@
         // 210 = 209 fix: with the footer hidden during the confirm step, the Try Demo / Watch
         //       tutorial / Not now row sat on the dialog's very bottom edge on phones. It now
         //       gets its own bottom padding (and the safe-area inset) and a divider above.
-        var APP_VERSION = '219';
+        // 220 = Razorpay checkout.js preloaded (price dialog / alongside createOrder) by one
+        //       shared loadRazorpay(), so the payment window opens without a second wait.
+        var APP_VERSION = '220';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
