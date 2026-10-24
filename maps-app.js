@@ -648,7 +648,12 @@
         //       Razorpay checkout.js preloaded by one shared loadRazorpay(), and the order
         //       servers woken ({ warmup: true }) when the price dialog opens. Owner tested
         //       222 on staging: 7-day order 6-7 s -> 0.9 s, subscription -> 1.7 s.
-        var APP_VERSION = '225';
+        // 228 = PROMOTION of 226-227 only (not the rest of staging): when the map is ready
+        //       the splash mascot glides into a slot at the left end of the search bar and
+        //       stays (#mm-badge), so it takes no map space. Decorative: no tap, one-shot
+        //       blink every 7-11 s, hidden in demo mode, reduced motion keeps the old fade.
+        //       Checked on staging 227 at 1280x800, 390x844 and 320x640.
+        var APP_VERSION = '228';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -1053,15 +1058,91 @@
         var _basemapDrawn = false;
         var _splashLifting = false;
 
+        // --- Search-bar mascot (#mm-badge, 226-228) -------------------------------
+        // The splash mascot glides into a slot at the left end of the search bar and stays.
+        // It is decorative (no tap); see the #mm-badge markup comment in the HTML.
+        var _mmBadgeTimer = null;
+        function _mmBadgeAllowed() { return !isEmbedMode && !isDemoMode; }
+        function _mmReducedMotion() {
+            return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        }
+        // A one-shot class every 7-11 s, never an infinite CSS loop: a looping animation
+        // would keep repainting the badge for the whole session.
+        function _mmBadgeBlinkLater() {
+            if (_mmBadgeTimer) return;
+            _mmBadgeTimer = setTimeout(function() {
+                _mmBadgeTimer = null;
+                var b = document.getElementById('mm-badge');
+                if (!b) return;
+                if (!document.hidden) b.classList.add('mm-blink');
+                _mmBadgeBlinkLater();
+            }, 7000 + Math.random() * 4000);
+        }
+        function _mmBadgeStart() {
+            var b = document.getElementById('mm-badge');
+            if (!b || b.dataset.mmStarted) return;
+            b.dataset.mmStarted = '1';
+            b.classList.remove('mm-wait');
+            b.addEventListener('animationend', function() { b.classList.remove('mm-blink'); });
+            if (_mmBadgeAllowed() && !_mmReducedMotion()) _mmBadgeBlinkLater();
+        }
+        // Glide the splash mascot into the search-bar slot. Returns false, and the caller
+        // uses the plain fade, when the slot is not laid out, motion is reduced, or the
+        // browser lacks the Web Animations API. The path is a curve (mostly sideways first,
+        // then up into the bar), sampled into keyframes because a CSS transition can only
+        // move in a straight line.
+        function _mmFlyToBadge(ls, done) {
+            var wrap = ls.querySelector('.mm-mark-wrap'), b = document.getElementById('mm-badge');
+            if (!wrap || !b || !wrap.animate || !_mmBadgeAllowed() || _mmReducedMotion()) return false;
+            var art0 = wrap.querySelector('svg'), art1 = b.querySelector('svg');
+            if (!art0 || !art1) return false;
+            var r0 = art0.getBoundingClientRect(), r1 = art1.getBoundingClientRect();
+            if (!r0.width || !r1.width) return false;
+            var x0 = r0.left + r0.width / 2, y0 = r0.top + r0.height / 2;
+            var x1 = r1.left + r1.width / 2, y1 = r1.top + r1.height / 2;
+            var cx = x0 + (x1 - x0) * 0.7, cy = y0 + (y1 - y0) * 0.25;
+            var s1 = r1.width / r0.width, kf = [];
+            for (var i = 0; i <= 18; i++) {
+                var t = i / 18, u = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2, v = 1 - u;
+                var dx = v * v * x0 + 2 * v * u * cx + u * u * x1 - x0;
+                var dy = v * v * y0 + 2 * v * u * cy + u * u * y1 - y0;
+                kf.push({ offset: t, transform: 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(' + (1 + (s1 - 1) * u).toFixed(4) + ')' });
+            }
+            b.classList.add('mm-wait');        // the flying mascot stands in for it until it lands
+            ls.style.pointerEvents = 'none';   // taps reach the map from the first frame
+            ls.classList.add('mm-handoff');
+            setTimeout(function() { ls.classList.add('mm-arrive'); }, 680);
+            var landedOnce = false;
+            function land() {
+                if (landedOnce) return;
+                landedOnce = true;
+                _mmBadgeStart();
+                done();
+            }
+            var anim = wrap.animate(kf, { duration: 600, delay: 200, easing: 'linear', fill: 'forwards' });
+            anim.onfinish = land;
+            setTimeout(land, 1300);   // a hidden tab can hold the animation back; never strand the splash
+            return true;
+        }
+
         function _liftSplash() {
             if (_splashLifting) return;
             _splashLifting = true;
+            // The mascot handoff starts at once. Its CSS holds the banner and backdrop for
+            // the same 250 ms grace, so the first plan tiles still land underneath them.
+            var lsNow = document.getElementById('app-loading-screen');
+            if (lsNow && lsNow.style.display !== 'none' && _mmFlyToBadge(lsNow, function() {
+                // display:none, never remove(): the banner stays the LCP candidate.
+                lsNow.style.display = 'none';
+                if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
+            })) return;
             setTimeout(function() {
                 var ls = document.getElementById('app-loading-screen');
                 if (!ls || ls.style.display === 'none') {
                     // Skipped up front by the inline check in the HTML: the disclaimer
                     // still belongs at this moment, when the map is actually drawn.
                     if (window.__splashSkipped && typeof window._showDisclaimer === 'function') window._showDisclaimer();
+                    _mmBadgeStart();
                     return;
                 }
                 ls.style.transition = 'opacity 0.3s ease';
@@ -1073,6 +1154,7 @@
                     ls.style.display = 'none';
                     ls.style.pointerEvents = 'none';
                     if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
+                    _mmBadgeStart();
                 }, 300);
             }, SPLASH_PLAN_GRACE_MS);
         }
