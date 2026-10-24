@@ -624,7 +624,15 @@
         //       browsers that pinned the first ?v=220 kept showing 219.
         // 222 = order servers woken ({ warmup: true }) when the price dialog opens, so the
         //       3-4 s cold boot of createOrder / createSubscription is over before Pay.
-        var APP_VERSION = '224';
+        // 226 = Splash handoff "Mascot keeps watch". When the map is ready the words and the
+        //       white card fade and the mascot glides from the card into a small white badge
+        //       above the left end of the bottom bar (#mm-badge), where it stays. Decorative:
+        //       no tap, pointer-events:none, z-index 990 so every bar, sheet and dialog covers
+        //       it; hidden in embed/demo, while measuring, while capturing a download and
+        //       under the new-regions sheet. Only the mascot moves (a transform). The badge's
+        //       only motion is a one-shot blink every ~9 s from a timer, never a CSS loop.
+        //       Returning visitors (no splash) get a fade-in. Reduced motion = old fade.
+        var APP_VERSION = '226';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -1029,15 +1037,98 @@
         var _basemapDrawn = false;
         var _splashLifting = false;
 
+        // --- Corner mascot (#mm-badge, staging 226) --------------------------------
+        // The splash mascot glides into a small white badge at the bottom-left and stays.
+        // It is decorative (no tap) and sits under every other piece of UI; see the
+        // #mm-badge markup comment in the HTML.
+        var _mmBadgeTimer = null;
+        function _mmBadgeAllowed() { return !isEmbedMode && !isDemoMode; }
+        function _mmReducedMotion() {
+            return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        }
+        // Same float above the bottom bar as #dp-progress-strip, kept current on resize.
+        function _mmBadgeSyncBottom() {
+            var b = document.getElementById('mm-badge'), bb = document.getElementById('bottom-bar');
+            if (b && bb) b.style.setProperty('--mm-bb-h', bb.offsetHeight + 'px');
+        }
+        // A one-shot class every 7-11 s, never an infinite CSS loop: a looping animation
+        // would repaint the badge over the map every frame for the whole session.
+        function _mmBadgeBlinkLater() {
+            if (_mmBadgeTimer) return;
+            _mmBadgeTimer = setTimeout(function() {
+                _mmBadgeTimer = null;
+                var b = document.getElementById('mm-badge');
+                if (!b) return;
+                if (!document.hidden) b.classList.add('mm-blink');
+                _mmBadgeBlinkLater();
+            }, 7000 + Math.random() * 4000);
+        }
+        function _mmBadgeShow(landed) {
+            var b = document.getElementById('mm-badge');
+            if (!b || !_mmBadgeAllowed() || b.classList.contains('on')) return;
+            _mmBadgeSyncBottom();
+            if (landed) b.classList.add('mm-landed');   // the flying mascot is already there
+            b.classList.add('on');
+            window.addEventListener('resize', _mmBadgeSyncBottom, { passive: true });
+            b.addEventListener('animationend', function() { b.classList.remove('mm-blink'); });
+            if (!_mmReducedMotion()) _mmBadgeBlinkLater();
+        }
+        // Glide the splash mascot into the badge. Returns false, and the caller uses the
+        // plain fade, when there is no badge to fly to, motion is reduced, or the browser
+        // lacks the Web Animations API. The path is a shallow arc (up, then down-left),
+        // sampled into keyframes because a CSS transition can only move in a straight line.
+        function _mmFlyToBadge(ls, done) {
+            var wrap = ls.querySelector('.mm-mark-wrap'), b = document.getElementById('mm-badge');
+            if (!wrap || !b || !wrap.animate || !_mmBadgeAllowed() || _mmReducedMotion()) return false;
+            var art0 = wrap.querySelector('svg'), art1 = b.querySelector('svg');
+            if (!art0 || !art1) return false;
+            _mmBadgeSyncBottom();
+            var r0 = wrap.getBoundingClientRect(), r1 = b.getBoundingClientRect();
+            var w0 = art0.getBoundingClientRect().width, w1 = art1.getBoundingClientRect().width;
+            if (!r0.width || !r1.width || !w0 || !w1) return false;   // badge hidden by a mode
+            var x0 = r0.left + r0.width / 2, y0 = r0.top + r0.height / 2;
+            var x1 = r1.left + r1.width / 2, y1 = r1.top + r1.height / 2;
+            var cx = x0 * 0.45 + x1 * 0.55, cy = Math.min(y0, y1) - 50;
+            var s1 = w1 / w0, kf = [];
+            for (var i = 0; i <= 18; i++) {
+                var t = i / 18, u = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2, v = 1 - u;
+                var dx = v * v * x0 + 2 * v * u * cx + u * u * x1 - x0;
+                var dy = v * v * y0 + 2 * v * u * cy + u * u * y1 - y0;
+                kf.push({ offset: t, transform: 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(' + (1 + (s1 - 1) * u).toFixed(4) + ')' });
+            }
+            ls.style.pointerEvents = 'none';   // taps reach the map from the first frame
+            ls.classList.add('mm-handoff');
+            var landedOnce = false;
+            function land() {
+                if (landedOnce) return;
+                landedOnce = true;
+                _mmBadgeShow(true);
+                done();
+            }
+            var anim = wrap.animate(kf, { duration: 600, delay: 200, easing: 'linear', fill: 'forwards' });
+            anim.onfinish = land;
+            setTimeout(land, 1300);   // a hidden tab can hold the animation back; never strand the splash
+            return true;
+        }
+
         function _liftSplash() {
             if (_splashLifting) return;
             _splashLifting = true;
+            // The mascot handoff starts at once. Its CSS holds the banner and backdrop for
+            // the same 250 ms grace, so the first plan tiles still land underneath them.
+            var lsNow = document.getElementById('app-loading-screen');
+            if (lsNow && lsNow.style.display !== 'none' && _mmFlyToBadge(lsNow, function() {
+                // display:none, never remove(): the banner stays the LCP candidate.
+                lsNow.style.display = 'none';
+                if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
+            })) return;
             setTimeout(function() {
                 var ls = document.getElementById('app-loading-screen');
                 if (!ls || ls.style.display === 'none') {
                     // Skipped up front by the inline check in the HTML: the disclaimer
                     // still belongs at this moment, when the map is actually drawn.
                     if (window.__splashSkipped && typeof window._showDisclaimer === 'function') window._showDisclaimer();
+                    _mmBadgeShow(false);
                     return;
                 }
                 ls.style.transition = 'opacity 0.3s ease';
@@ -1049,6 +1140,7 @@
                     ls.style.display = 'none';
                     ls.style.pointerEvents = 'none';
                     if (typeof window._showDisclaimer === 'function') window._showDisclaimer();
+                    _mmBadgeShow(false);
                 }, 300);
             }, SPLASH_PLAN_GRACE_MS);
         }
@@ -2890,6 +2982,7 @@
 
             // Show toolbar
             document.getElementById('measure-toolbar').classList.add('active');
+            document.body.classList.add('mm-measuring');   // corner mascot steps aside
             document.getElementById('measure-info').classList.add('active');
             document.getElementById('measure-info').textContent = mode === 'length' ? '0 m' : '0 sq m';
             document.getElementById('measure-status').textContent = 'Tap to place points';
@@ -3056,6 +3149,7 @@
 
             // Hide UI
             document.getElementById('measure-toolbar').classList.remove('active');
+            document.body.classList.remove('mm-measuring');
             document.getElementById('measure-info').classList.remove('active');
             document.getElementById('btn-measure-length').classList.remove('active');
             document.getElementById('btn-measure-area').classList.remove('active');
