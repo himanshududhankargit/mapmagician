@@ -1497,19 +1497,6 @@
          .sr-only (line 192) keeps this out of the visual layout but in the DOM, so
          Googlebot can read the page topic. Do not remove without an alternative H1. -->
     <h1 class="sr-only">Development Plan Maps — Pune, Mumbai, Hyderabad, Bengaluru, Nashik, Nagpur, Thane and 40+ Indian Regions</h1>
-    <!-- Corner mascot (staging 226). When the map is ready the mascot glides from the
-         splash card into this badge (_mmFlyToBadge in the app JS) and stays. Decorative
-         only: no tap (pointer-events:none), and z-index 990 keeps it under every bar,
-         sheet and dialog (the lowest of those is 999). It reuses the splash artwork with
-         <use>, so it adds no second drawing, and its only motion is a one-shot blink. -->
-    <div id="mm-badge" aria-hidden="true">
-        <svg viewBox="87 27 363 349" focusable="false">
-            <use href="#mm-art"/>
-            <g class="mmb-eye"><use href="#mm-eye-l"/></g>
-            <g class="mmb-eye"><use href="#mm-eye-r"/></g>
-            <use href="#mm-spark-1"/><use href="#mm-spark-2"/><use href="#mm-spark-3"/>
-        </svg>
-    </div>
     <!-- App loading screen — banner image is the LCP element so first paint is fast.
          Existing IDs preserved so the dpplans rebrand script and fade-out logic still work. -->
     <div id="app-loading-screen" style="position:fixed;inset:0;z-index:99999;background:#111827;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;overflow:hidden;">
@@ -1661,7 +1648,7 @@
        around the mascot while it glides into #mm-badge, and the banner and backdrop
        hold for the usual 250 ms grace (the first plan tiles land under them) before
        fading. Only the mascot moves (one transform); the rest is opacity and colour.
-       The halo is sized so that at the badge's scale (35/104) it IS the 48 px badge. */
+       The white halo keeps the dark mascot readable over the map on the way. */
     .mm-mark-wrap { position: relative; }
     .mm-mark { position: relative; }
     .mm-mark-wrap::before {
@@ -1676,22 +1663,27 @@
     #app-loading-screen.mm-handoff .mm-card > :not(.mm-mark-wrap) { opacity: 0; transition: opacity .16s ease-out; }
     #app-loading-screen.mm-handoff .mm-mark-wrap::before { opacity: 1; transition: opacity .3s ease-out .25s; }
 
+    /* Just before landing the white halo fades: over the white search bar only its
+       shadow would show, and the slot has none. */
+    #app-loading-screen.mm-handoff.mm-arrive .mm-mark-wrap::before { opacity: 0; transition: opacity .12s linear; }
+
     #mm-badge {
-        position: absolute; z-index: 990; pointer-events: none;
-        left: calc(12px + env(safe-area-inset-left, 0px)); bottom: calc(var(--mm-bb-h, 52px) + 6px);
-        width: 48px; height: 48px; border-radius: 50%; background: #fff;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        display: flex; align-items: center; justify-content: center;
-        opacity: 0; visibility: hidden; transition: opacity .25s ease, visibility 0s linear .25s;
+        flex: 0 0 auto; width: 32px; height: 32px; margin: 0 -4px 0 -6px;
+        display: flex; align-items: center; justify-content: center; pointer-events: none;
     }
-    #mm-badge.on { opacity: 1; visibility: visible; transition: opacity .25s ease; }
-    #mm-badge.on.mm-landed { transition: none; }
-    #mm-badge svg { display: block; width: 35px; height: 33.65px; overflow: visible; }
+    #mm-badge.mm-wait { visibility: hidden; }
+    #mm-badge svg { display: block; width: 32px; height: 30.8px; overflow: visible; }
     #mm-badge .mmb-eye { transform-box: fill-box; transform-origin: 50% 50%; }
     #mm-badge.mm-blink .mmb-eye { animation: mmb-blink 260ms ease-in-out; }
     @keyframes mmb-blink { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(.08); } }
-    body.embed-mode #mm-badge, body.demo-mode #mm-badge, body.dlmap-capturing #mm-badge,
-    body.mmnr-open #mm-badge, body.mm-measuring #mm-badge { display: none; }
+    #mm-badge + #search-input { padding-left: 2px; }
+    @media (max-width: 480px) { #mm-badge { margin: 0 -4px 0 -2px; } }
+    /* 320-360 px phones: keep "Search Place..." whole. */
+    @media (max-width: 360px) {
+        #mm-badge, #mm-badge svg { width: 28px; } #mm-badge svg { height: 26.9px; }
+        .top-search-row { gap: 4px; } #mm-badge + #search-input { padding-right: 4px; }
+    }
+    body.demo-mode #mm-badge { display: none; }
 
     @keyframes app-icon-pulse { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.08); opacity:0.85; } }
     .app-icon-animated { animation: app-icon-pulse 2s ease-in-out infinite; }
@@ -1792,6 +1784,19 @@
 
     <!-- Top search row -->
     <div class="top-search-row">
+        <!-- Search-bar mascot (staging 227). When the map is ready the splash mascot glides
+             into this slot (_mmFlyToBadge in the app JS) and stays, so it takes no map space.
+             Decorative only: no tap (pointer-events:none). The slot is always laid out, so
+             nothing in the bar shifts when it lands. It reuses the splash artwork with <use>,
+             and its only motion is a one-shot blink. -->
+        <span id="mm-badge" aria-hidden="true">
+            <svg viewBox="87 27 363 349" focusable="false">
+                <use href="#mm-art"/>
+                <g class="mmb-eye"><use href="#mm-eye-l"/></g>
+                <g class="mmb-eye"><use href="#mm-eye-r"/></g>
+                <use href="#mm-spark-1"/><use href="#mm-spark-2"/><use href="#mm-spark-3"/>
+            </svg>
+        </span>
         <input id="search-input" type="search" placeholder="Search Place..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
         <!-- Demo mode swaps the search field for a banner: there is exactly one
              region, so a place search can only ever disappoint. -->
@@ -3378,7 +3383,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=226" defer></script>
+    <script src="maps1-app.js?v=227" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
