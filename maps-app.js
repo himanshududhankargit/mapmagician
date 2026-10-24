@@ -648,7 +648,7 @@
         //       Razorpay checkout.js preloaded by one shared loadRazorpay(), and the order
         //       servers woken ({ warmup: true }) when the price dialog opens. Owner tested
         //       222 on staging: 7-day order 6-7 s -> 0.9 s, subscription -> 1.7 s.
-        var APP_VERSION = '223';
+        var APP_VERSION = '225';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -2191,11 +2191,20 @@
                 // Poll for webhook confirmation — don't trust Razorpay UI result
                 // quiet: a background check after a cancelled checkout — no overlay, no
                 // "being processed" message; it only unlocks if a late UPI payment lands.
-                function pollForSubscriptionActivation(pid, subId, attempts, maxAttempts, quiet) {
+                // slow: the second, background phase. UPI AutoPay can take longer than the first 3 min
+                // (3 of ~250 subscriptions on 2026-10-10..24 activated 3.5-7 min after payment); the page
+                // used to stop there with "refresh in a minute" and the customer wrote in while still locked.
+                // Now it keeps checking every 20 s for up to 15 more min (45 calls at most) and unlocks itself.
+                function pollForSubscriptionActivation(pid, subId, attempts, maxAttempts, quiet, slow) {
                     if (attempts >= maxAttempts) {
                         if (quiet) return;
                         loadingOverlay.classList.remove('open');
-                        updateStatus('Subscription is being processed. Please refresh in a minute.');
+                        if (!slow) {
+                            updateStatus('Subscription is being processed. The map will unlock by itself in a few minutes.');
+                            pollForSubscriptionActivation(pid, subId, 0, 45, false, true);
+                            return;
+                        }
+                        updateStatus('Subscription is still being processed. Please refresh in a few minutes, or contact support if it stays locked.');
                         return;
                     }
                     setTimeout(async function() {
@@ -2224,9 +2233,9 @@
                             loadingOverlay.classList.remove('open');
                             updateStatus('Subscription active!');
                         } else {
-                            pollForSubscriptionActivation(pid, subId, attempts + 1, maxAttempts, quiet);
+                            pollForSubscriptionActivation(pid, subId, attempts + 1, maxAttempts, quiet, slow);
                         }
-                    }, 3000); // poll every 3 seconds
+                    }, slow ? 20000 : 3000); // every 3 s, then every 20 s in the slow phase
                 }
 
                 var options = {
