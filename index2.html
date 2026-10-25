@@ -1691,6 +1691,10 @@
                     </svg>
                 </button>
                 <div class="screenshots" id="gisScreenshots">
+                    <!-- "How it works" motion graphic, drawn in code by AssetsGIS/how-it-works/hiw.js; opens the map -->
+                    <a class="screenshot mm-hiw-card" href="maps.html" style="aspect-ratio:1/2;background:#24302a" aria-label="How Development Plan GIS works: the magician lays the official Development Plan on the satellite map, pins it to GPS points and zooms to a plot. Opens the map.">
+                        <div id="mm-hiw" data-base="AssetsGIS/how-it-works/"></div>
+                    </a>
                     <div class="screenshot" onclick="openFullscreen('AssetsGIS/demo-animation.gif', 'App Demo Animation', 'gis', 0)">
                         <img src="AssetsGIS/demo-animation.gif" alt="Development Plan GIS demo — Maharashtra DP map overlaid on satellite imagery" width="288" height="640" loading="lazy">
                     </div>
@@ -2515,5 +2519,6 @@
             else window.addEventListener('load', start);
         })();
     </script>
+    <script src="AssetsGIS/how-it-works/hiw.js?v=1" defer></script>
 </body>
 </html>
