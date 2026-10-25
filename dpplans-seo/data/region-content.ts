@@ -33,6 +33,16 @@ export type RegionContent = {
   // Extra region-specific FAQs, merged ahead of the auto-generated region.faqs in the
   // visible FAQ block + FAQPage JSON-LD. Use to reinforce a specific entity (e.g. NMRDA).
   faqs?: RegionFaq[];
+  // Drop the auto-generated region.faqs (written in Maharashtra "DP" wording) so `faqs`
+  // stands alone. The download FAQs are still appended.
+  replaceGeneratedFaqs?: boolean;
+  // What the statutory plan is called where it isn't a "Development Plan" — "Master Plan"
+  // in Karnataka and Telangana. When set, the template's own headings, captions and copy
+  // say this instead of "Development Plan" / "DP".
+  planTerm?: string;
+  // The plan's name in headings and prose, e.g. "Mysuru Master Plan 2031".
+  // Default: "<shortName> Development Plan".
+  planName?: string;
 };
 
 export const REGION_CONTENT: Record<string, RegionContent> = {
@@ -1344,6 +1354,85 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       { label: 'District', value: 'Vijayapura District, Northern Karnataka' },
       { label: 'Geographic basin', value: 'Krishna river basin, Deccan Plateau' },
       { label: 'Heritage precinct', value: 'Gol Gumbaz, Ibrahim Rauza, Jod Gumbaz (Adil Shahi capital, 1490–1686)' },
+    ],
+  },
+
+  // Sources: the plan's own sheet title block ("MASTER PLAN FOR MYSORE - NANJANGUD LOCAL
+  // PLANNING AREA - 2031 (REVISION-II) / PROPOSED LANDUSE MAP / PLANNING DISTRICT NO. 1,
+  // SHEET NO. 01"); Wikipedia "Mysuru Local Planning Area", citing MUDA's master_plan.htm,
+  // Planning_Districts.htm and CDP 2031 Vol. 1 (509 sq km, 1,696,577 at the 2011 census,
+  // 45 planning districts, Mysore / Nanjangud / Srirangapatna taluks); MUDA → Mysuru
+  // Development Authority: Udayavani (assembly cleared the MDA Bill, Dec 2024) and Deccan
+  // Herald (MUDA became MDA in May 2025). mudamysore.gov.in no longer resolves (checked
+  // 2026-10-25), so no official link is printed. Approval status of Revision-II is left
+  // unstated on purpose — reports conflict.
+  'mysuru-dp-plan': {
+    // Karnataka says "Master Plan" (and "CDP"), not "Development Plan" — the Bengaluru page's
+    // GSC queries are all "master plan" / "bda" / "cdp" / "rmp 2031". Cover the "Mysore"
+    // spelling and the MUDA name, both still what people type.
+    pageTitle: 'Mysuru Master Plan 2031 — Mysore MUDA land-use map online',
+    description:
+      'View the Mysuru (Mysore) Master Plan 2031 online — the Master Plan for Mysore–Nanjangud Local Planning Area, Revision-II, prepared by MUDA (now the Mysuru Development Authority). Proposed land-use map over satellite imagery: zones, roads and reservations from Mysuru city to Nanjangud.',
+    keywords: [
+      'mysuru master plan',
+      'mysore master plan',
+      'mysore master plan 2031',
+      'mysuru master plan 2031',
+      'muda master plan',
+      'mysore cdp 2031',
+      'mysore nanjangud local planning area master plan',
+      'nanjangud master plan',
+      'mysore land use map',
+      'mysuru zoning map',
+      'mda mysuru master plan',
+    ],
+    planTerm: 'Master Plan',
+    planName: 'Mysuru Master Plan 2031',
+    paragraphs: [
+      'The Mysuru Master Plan 2031 — formally the Master Plan for Mysore–Nanjangud Local Planning Area – 2031 (Revision-II) — is the land-use plan for Mysuru city and the planning area around it, prepared under the Karnataka Town and Country Planning Act, 1961. It was drawn up by the Mysore Urban Development Authority (MUDA). In 2025 MUDA was replaced by the Mysuru Development Authority (MDA), but the plan sheets, older documents and most searches still use the MUDA name and the "Mysore" spelling.',
+      'The Local Planning Area covers about 509 sq km over parts of Mysuru, Nanjangud and Srirangapatna (Mandya district) taluks, and had a population of 1,696,577 at the 2011 census. It is divided into 45 planning districts, and the plan’s Proposed Land Use Map is published sheet by sheet for each planning district.',
+      'On this map those sheets are joined into one layer and aligned with satellite imagery, so you can read the proposed land use, roads and reservations for any plot from Mysuru city south to Nanjangud. Search a locality or landmark, then compare the zone with what is on the ground. The map shows the plan as published; for an official confirmation of a particular plot’s zoning, apply to the Mysuru Development Authority.',
+    ],
+    quickFacts: [
+      { label: 'Plan', value: 'Master Plan for Mysore–Nanjangud Local Planning Area – 2031 (Revision-II)' },
+      { label: 'Map shown', value: 'Proposed Land Use Map, sheet by planning district' },
+      { label: 'Prepared by', value: 'Mysore Urban Development Authority (MUDA)' },
+      { label: 'Planning authority now', value: 'Mysuru Development Authority (MDA), since 2025' },
+      { label: 'Area', value: 'About 509 sq km in 45 planning districts' },
+      { label: 'Taluks', value: 'Parts of Mysuru, Nanjangud and Srirangapatna (Mandya district)' },
+      { label: 'Population', value: '1,696,577 (2011 census)' },
+      { label: 'Governing Act', value: 'Karnataka Town and Country Planning Act, 1961' },
+    ],
+    replaceGeneratedFaqs: true,
+    faqs: [
+      {
+        q: 'Where can I view the Mysuru Master Plan 2031 online?',
+        a: 'On this page and on the full DPPlans map. The Master Plan for Mysore–Nanjangud Local Planning Area – 2031 (Revision-II) is drawn over satellite imagery, so you can read the zone, proposed roads and reservations for any plot in Mysuru (Mysore), Nanjangud and the villages between them.',
+      },
+      {
+        q: 'Which plan does this Mysore master plan map show?',
+        a: 'The Proposed Land Use Map of the Master Plan for Mysore–Nanjangud Local Planning Area – 2031 (Revision-II), prepared by the Mysore Urban Development Authority (MUDA). The plan is published one planning district at a time; here the sheets are joined into one map and aligned with satellite imagery.',
+      },
+      {
+        q: 'Is MUDA still the planning authority for Mysuru?',
+        a: 'No. In 2025 MUDA was replaced by the Mysuru Development Authority (MDA). The Master Plan 2031 was prepared under the MUDA name, which is why older documents and searches still say "MUDA master plan".',
+      },
+      {
+        q: 'Is Nanjangud covered by the Mysuru Master Plan?',
+        a: 'Yes. The Local Planning Area runs south from Mysuru city to Nanjangud, and both are part of the same Master Plan 2031 (Revision-II), so Nanjangud plots can be checked on this map too.',
+      },
+      {
+        q: 'Is the Mysuru Master Plan map official?',
+        a: 'The zones are traced from the authority’s own Master Plan 2031 (Revision-II) sheets and aligned with satellite imagery. It is a viewing aid, not a certified copy: for an official confirmation of a particular plot’s zoning, apply to the Mysuru Development Authority.',
+      },
+      {
+        q: 'Is access free?',
+        a: 'Browsing the Mysuru region is free up to zoom level 14. High-detail (zoom 15–18) imagery is unlocked with a 7-day access pass.',
+      },
+      {
+        q: 'What devices does the Mysuru Master Plan viewer work on?',
+        a: 'The viewer runs in any modern browser — desktop, tablet, or mobile. There is also a native Android app.',
+      },
     ],
   },
 };

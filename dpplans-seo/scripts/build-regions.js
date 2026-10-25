@@ -362,7 +362,9 @@ function buildFaqs(region) {
     },
     {
       q: `Can I see specific villages or sectors inside ${city}?`,
-      a: villagesCount > 0
+      a: villagesCount === 1
+        ? `Yes — ${region.villages[0].name} is indexed inside ${city} and can be opened directly from the search bar on the map. Zoom in from there to inspect any locality or survey number the plan covers.`
+        : villagesCount > 0
         ? `Yes — ${villagesCount} sub-locations are indexed inside ${city}, including ${region.villages.slice(0, 4).map(v => v.name).join(', ')} and more. Each can be opened directly from the search bar on the map.`
         : `Yes — zoom into the ${city} region on the map to inspect any locality, sector or survey number covered by the Development Plan.`,
     },
@@ -387,7 +389,7 @@ function buildFeatures(region) {
     `Measure distances and areas directly on the ${city} map`,
     `Mobile-friendly — view ${city} DP zones on the go`,
     region.villages.length > 0
-      ? `${region.villages.length} indexed sub-locations inside ${city}`
+      ? `${region.villages.length} indexed sub-location${region.villages.length === 1 ? '' : 's'} inside ${city}`
       : `Latest published ${city} DP boundaries`,
   ];
 }

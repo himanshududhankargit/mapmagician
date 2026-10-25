@@ -36,7 +36,7 @@ export function generateMetadata({ params }: Props): Metadata {
   // region pages are what already rank for the city term. Curated regions with their own
   // pageTitle keep it — those were written against specific GSC queries.
   const title = content?.pageTitle ?? `${region.shortName} Development Plan Map — view online & download`;
-  const description = content?.description ?? `View the ${region.displayName} Development Plan online and download any part of it as a print-ready A4 map sheet. Interactive DP overlay over satellite imagery, ${region.villages.length || 'all'} sub-locations indexed${region.state ? `, covering ${region.state}` : ''}.`;
+  const description = content?.description ?? `View the ${region.displayName} Development Plan online and download any part of it as a print-ready A4 map sheet. Interactive DP overlay over satellite imagery, ${region.villages.length === 1 ? '1 sub-location' : `${region.villages.length || 'all'} sub-locations`} indexed${region.state ? `, covering ${region.state}` : ''}.`;
   const url = `${SITE.origin}/${region.slug}/`;
   const og = region.iconUrl
     ? [{ url: region.iconUrl, width: 1200, height: 630, alt: `${region.shortName} DP Plan` }]
@@ -72,6 +72,15 @@ export default function RegionPage({ params }: Props) {
   if (!region) notFound();
 
   const regionContent = regionContentBySlug(params.slug);
+  // "Master Plan" regions (Karnataka, Telangana) set planTerm / planName in
+  // data/region-content.ts; everyone else keeps "Development Plan" / "DP".
+  const term = regionContent?.planTerm ?? 'Development Plan';
+  const short = regionContent?.planTerm ?? 'DP';
+  const planName = regionContent?.planName ?? `${region.shortName} ${term}`;
+  const planNameLong = regionContent?.planName ?? `${region.displayName} ${term}`;
+  const features = regionContent?.planTerm
+    ? region.features.map(f => f.replace(/Development Plan|\bDP\b/g, term))
+    : region.features;
   // Municipal-corporation targeting: when this region's plan covers a real municipal
   // corporation, front-load a corporation-specific FAQ (visible + FAQPage JSON-LD) so the
   // page ranks for "<City> Municipal Corporation development plan" searches.
@@ -88,8 +97,8 @@ export default function RegionPage({ params }: Props) {
   const faqs: RegionFaq[] = [
     ...corpFaq,
     ...(regionContent?.faqs ?? []),
-    ...region.faqs,
-    ...downloadFaqs(region.shortName, `the ${region.displayName} Development Plan`),
+    ...(regionContent?.replaceGeneratedFaqs ? [] : region.faqs),
+    ...downloadFaqs(region.shortName, `the ${planNameLong}`, regionContent?.planTerm),
   ];
   // Curated (indexable) sub-locations — surfaced prominently and the ONLY ones we
   // internally link, so Google's crawl budget concentrates on pages worth indexing
@@ -109,9 +118,9 @@ export default function RegionPage({ params }: Props) {
       '@context': 'https://schema.org',
       '@type': 'Place',
       '@id': url + '#place',
-      name: `${region.shortName} Development Plan`,
+      name: planName,
       url,
-      description: `Interactive Development Plan map for ${region.displayName}.`,
+      description: `Interactive ${term} map for ${region.displayName}.`,
       ...(region.state
         ? { containedInPlace: { '@type': 'AdministrativeArea', name: region.state, addressCountry: 'IN' } }
         : {}),
@@ -159,7 +168,7 @@ export default function RegionPage({ params }: Props) {
     },
   ];
 
-  const showcaseCaption = `Live preview of the ${region.shortName} Development Plan${region.state ? `, ${region.state}` : ''}`;
+  const showcaseCaption = `Live preview of the ${planName}${region.state ? `, ${region.state}` : ''}`;
 
   return (
     <>
@@ -181,8 +190,8 @@ export default function RegionPage({ params }: Props) {
             <div>
               <h1>{regionContent?.pageTitle ?? `${region.shortName} Development Plan Map — view online & download`}</h1>
               <p className="summary">
-                Interactive Development Plan viewer for <strong>{region.displayName}</strong>
-                {region.state ? `, ${region.state}` : ''}. The DP overlay aligns with satellite imagery so you
+                Interactive {term} viewer for <strong>{region.displayName}</strong>
+                {region.state ? `, ${region.state}` : ''}. The {short} overlay aligns with satellite imagery so you
                 can identify zones, reservations, and road lines for any plot.
               </p>
             </div>
@@ -199,7 +208,7 @@ export default function RegionPage({ params }: Props) {
       <div className="region-cta-row">
         <div className="container row">
           <div className="meta">
-            <b>{region.shortName}</b> · {region.villages.length > 0 ? `${region.villages.length} sub-locations indexed` : 'Development Plan'}
+            <b>{region.shortName}</b> · {region.villages.length > 0 ? `${region.villages.length} sub-location${region.villages.length === 1 ? '' : 's'} indexed` : term}
             {region.state ? ` · ${region.state}` : ''}
           </div>
           <a className="btn btn-primary" href={region.fullMapUrl} target="_blank" rel="noopener">
@@ -211,9 +220,9 @@ export default function RegionPage({ params }: Props) {
       <div className="container region-body">
         <div>
           <section className="card text-block">
-            <h2>About the {region.shortName} Development Plan</h2>
+            <h2>About the {planName}</h2>
             <p>
-              The {region.displayName} Development Plan defines land-use zones, road alignments, reservations and
+              The {planNameLong} defines land-use zones, road alignments, reservations and
               proposed amenities across {region.shortName}{region.state ? `, ${region.state}` : ''}. DPPlans renders
               the published plan as an interactive overlay on satellite imagery — pan, zoom, search by survey number
               or village, and measure distances directly on the map.
@@ -244,7 +253,7 @@ export default function RegionPage({ params }: Props) {
 
           {regionContent && (
             <section className="card region-plan-details">
-              <h2>{region.shortName} Development Plan — key details</h2>
+              <h2>{planName} — key details</h2>
               {regionContent.paragraphs.map((p, i) => (
                 <p key={i}>{p}</p>
               ))}
@@ -266,8 +275,9 @@ export default function RegionPage({ params }: Props) {
 
           <DownloadSheet
             placeName={region.shortName}
-            planName={`the ${region.displayName} Development Plan`}
+            planName={`the ${planNameLong}`}
             mapUrl={region.fullMapUrl}
+            planTerm={regionContent?.planTerm}
           />
 
           {curatedVillages.length > 0 && (
@@ -333,7 +343,7 @@ export default function RegionPage({ params }: Props) {
           <section className="card features">
             <h2>What you get on the {region.shortName} map</h2>
             <ul>
-              {region.features.map((f, i) => (
+              {features.map((f, i) => (
                 <li key={i}>{f}</li>
               ))}
             </ul>
@@ -358,7 +368,7 @@ export default function RegionPage({ params }: Props) {
             <h3>Download a printable sheet</h3>
             <p className="aux">
               Pick any area on the {region.shortName} map and download it as a print-ready A4 sheet —
-              DP overlay on satellite imagery, with a scale bar and north arrow.
+              {' '}{short} overlay on satellite imagery, with a scale bar and north arrow.
             </p>
             <Link className="btn btn-white btn-block" href={DOWNLOAD.hubPath}>
               How map downloads work →

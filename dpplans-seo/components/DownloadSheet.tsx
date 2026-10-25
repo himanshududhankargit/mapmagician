@@ -31,18 +31,23 @@ type Props = {
   mapUrl: string;
   /** compact = no sample image and shorter prose (sub-location pages). */
   variant?: 'full' | 'compact';
+  /** "Master Plan" where the statutory plan goes by that name (Karnataka, Telangana).
+   *  Unset = "Development Plan", short form "DP". */
+  planTerm?: string;
 };
 
-export function DownloadSheet({ placeName, planName, mapUrl, variant = 'full' }: Props) {
+export function DownloadSheet({ placeName, planName, mapUrl, variant = 'full', planTerm }: Props) {
+  const term = planTerm ?? 'Development Plan';
+  const short = planTerm ?? 'DP';
   return (
     <section className="card dl-sheet" id="download">
-      <h2>Download the {placeName} Development Plan map</h2>
+      <h2>Download the {placeName} {term} map</h2>
       <p>
         Besides viewing {planName} online, you can <strong>download the part of it you are
         actually interested in</strong> as a print-ready map sheet. You draw a capture box over
         the plot, road or village you need, and the app renders that exact area at full
         resolution — {DOWNLOAD.widthPx}&nbsp;×&nbsp;{DOWNLOAD.heightPx}&nbsp;pixels, sized for{' '}
-        {DOWNLOAD.paperNote} — with the DP overlay drawn over satellite imagery.
+        {DOWNLOAD.paperNote} — with the {short} overlay drawn over satellite imagery.
       </p>
 
       {variant === 'full' && (
@@ -51,12 +56,12 @@ export function DownloadSheet({ placeName, planName, mapUrl, variant = 'full' }:
             src={DOWNLOAD.sampleImage}
             width={DOWNLOAD.sampleWidth}
             height={DOWNLOAD.sampleHeight}
-            alt={`Sample print-ready Development Plan map sheet, as downloaded for ${placeName}`}
+            alt={`Sample print-ready ${term} map sheet, as downloaded for ${placeName}`}
             loading="lazy"
             decoding="async"
           />
           <figcaption>
-            A generated sheet: Development Plan overlay on satellite imagery, inside a titled
+            A generated sheet: {term} overlay on satellite imagery, inside a titled
             border with a scale bar, north arrow and your own caption.
           </figcaption>
         </figure>
@@ -64,7 +69,7 @@ export function DownloadSheet({ placeName, planName, mapUrl, variant = 'full' }:
 
       <h3>What the downloaded sheet contains</h3>
       <ul className="dl-list">
-        <li>The {placeName} DP overlay — zones, reservations and road lines — over satellite imagery</li>
+        <li>The {placeName} {short} overlay — zones, reservations and road lines — over satellite imagery</li>
         <li>A geodetic scale bar, so distances stay readable at whatever size you print</li>
         <li>North arrow, sheet border and a caption you type yourself (default: "Part Development Plan")</li>
         <li>
@@ -74,7 +79,7 @@ export function DownloadSheet({ placeName, planName, mapUrl, variant = 'full' }:
         <li>Full-resolution tiles, not a screenshot — text and plot boundaries stay sharp when printed</li>
       </ul>
 
-      <h3>How to download the {placeName} DP map</h3>
+      <h3>How to download the {placeName} {short} map</h3>
       <ol className="dl-steps">
         <li>
           <a href={mapUrl} target="_blank" rel="noopener">Open {placeName} on the full map</a> and zoom to the
@@ -99,8 +104,8 @@ export function DownloadSheet({ placeName, planName, mapUrl, variant = 'full' }:
 
       <p className="dl-note">
         The file is a high-resolution <strong>{DOWNLOAD.format} image</strong>, not a PDF, and it is not the
-        planning authority's sanctioned-plan document — it is a map sheet generated from the DP overlay for
-        the area you picked. For a certified copy or a DP remark, apply to the planning authority.
+        planning authority's sanctioned-plan document — it is a map sheet generated from the {short} overlay for
+        the area you picked. {planTerm ? 'For a certified copy' : 'For a certified copy or a DP remark'}, apply to the planning authority.
         {variant === 'full' && (
           <>
             {' '}
@@ -116,22 +121,26 @@ export function DownloadSheet({ placeName, planName, mapUrl, variant = 'full' }:
  * The download questions, phrased the way people actually type them. Appended to each
  * page's FAQ list so they land in the visible accordion AND in the FAQPage JSON-LD.
  */
-export function downloadFaqs(placeName: string, planName: string): RegionFaq[] {
+export function downloadFaqs(placeName: string, planName: string, planTerm?: string): RegionFaq[] {
+  // planTerm: see DownloadSheet's prop of the same name.
+  const term = planTerm ?? 'Development Plan';
+  const short = planTerm ?? 'DP';
+  const searched = planTerm ?? 'DP plan';
   return [
     {
-      q: `Can I download the ${placeName} Development Plan map?`,
-      a: `Yes. Open ${placeName} on the ${SITE.name} map, tap Download Map, drag the capture box over the area you want, and confirm — the app renders that area as a print-ready sheet (${DOWNLOAD.widthPx}×${DOWNLOAD.heightPx} pixels, ${DOWNLOAD.paperNote}) with the DP overlay on satellite imagery, a scale bar, a north arrow and your own caption. It is a paid one-off: you see the price and a preview of the sheet before you confirm, and you can re-download that sheet free while your region pass is active.`,
+      q: `Can I download the ${placeName} ${term} map?`,
+      a: `Yes. Open ${placeName} on the ${SITE.name} map, tap Download Map, drag the capture box over the area you want, and confirm — the app renders that area as a print-ready sheet (${DOWNLOAD.widthPx}×${DOWNLOAD.heightPx} pixels, ${DOWNLOAD.paperNote}) with the ${short} overlay on satellite imagery, a scale bar, a north arrow and your own caption. It is a paid one-off: you see the price and a preview of the sheet before you confirm, and you can re-download that sheet free while your region pass is active.`,
     },
     {
-      q: `Is the ${placeName} DP plan available as a PDF download?`,
-      a: `The sheet you download from ${SITE.name} is a high-resolution ${DOWNLOAD.format} image rather than a PDF — it prints on A4 without scaling and can be dropped straight into a report or a PDF you assemble yourself. It is also not the planning authority's sanctioned-plan PDF: it is a map sheet generated for the exact area you select, which is usually what people want when they search for a "${placeName} DP plan PDF download", because the official documents are city-wide files where a single plot is hard to find. For a certified extract or DP remark, apply to the planning authority.`,
+      q: `Is the ${placeName} ${searched} available as a PDF download?`,
+      a: `The sheet you download from ${SITE.name} is a high-resolution ${DOWNLOAD.format} image rather than a PDF — it prints on A4 without scaling and can be dropped straight into a report or a PDF you assemble yourself. It is also not the planning authority's sanctioned-plan PDF: it is a map sheet generated for the exact area you select, which is usually what people want when they search for a "${placeName} ${searched} PDF download", because the official documents are city-wide files where a single plot is hard to find. ${planTerm ? 'For a certified extract' : 'For a certified extract or DP remark'}, apply to the planning authority.`,
     },
     // Deliberately NOT "how much does it cost" — we do not print the price (see the
     // note on DOWNLOAD in lib/site.ts). This asks the question behind it instead:
     // what do I need before the sheet is worth downloading.
     {
       q: `Do I need a region pass to download the ${placeName} map?`,
-      a: `Viewing ${planName} online stays free up to zoom level 14, and a sheet will still generate without a pass — but only at that free level of detail, which suits a locality overview rather than plot-level work. A 7-day access pass for the region unlocks the high-detail DP tiles (zoom 15 and beyond), so the sheet renders at full detail, and while the pass is active you can re-download any sheet you have already generated at no extra cost.`,
+      a: `Viewing ${planName} online stays free up to zoom level 14, and a sheet will still generate without a pass — but only at that free level of detail, which suits a locality overview rather than plot-level work. A 7-day access pass for the region unlocks the high-detail ${short} tiles (zoom 15 and beyond), so the sheet renders at full detail, and while the pass is active you can re-download any sheet you have already generated at no extra cost.`,
     },
     // The one genuinely free thing we can offer the "…pdf free download" tail, which is a
     // real and steady slice of the demand ("dp plan pune pdf free download", "dp plan 2034
@@ -140,7 +149,7 @@ export function downloadFaqs(placeName: string, planName: string): RegionFaq[] {
     // is "mark my plot", not "annotate": autocomplete has volume for marking land/property
     // boundaries and none at all for annotating a plan.
     {
-      q: `Can I mark my plot on the ${placeName} Development Plan map for free?`,
+      q: `Can I mark my plot on the ${placeName} ${term} map for free?`,
       a: `Yes — marking up the map costs nothing and needs no account. Open ${placeName} on the ${SITE.name} map and tap Annotate: outline a plot and show its area on the plan, trace a road and label it with its length, drop pins, or type notes anywhere. Your markings stay on that device between visits. Viewing ${planName} is free up to zoom level 14; a region pass unlocks the plot-level detail above that, and downloading a print-ready sheet is a paid one-off — but the marking itself is free either way, and anything you mark is drawn onto the sheet at full resolution if you do download one.`,
     },
   ];
