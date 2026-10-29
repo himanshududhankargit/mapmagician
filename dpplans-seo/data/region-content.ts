@@ -1106,7 +1106,7 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
   'ahmednagar-dp-plan': {
     pageTitle: 'Ahilyanagar (Ahmednagar) Development Plan 2026 — DP map & download',
     description:
-      'View the Ahilyanagar (Ahmednagar) Development Plan 2026 online — the DP for the Ahilyanagar Municipal Corporation area, with Gaothan CTS survey sheets for the city core, Kedgaon and Nagapur. Interactive overlay on satellite imagery, also covering Jamkhed, Shirdi, Sangamner and Pathardi; download any part as a print-ready map sheet.',
+      'View the Ahilyanagar (Ahmednagar) Development Plan online — the revised draft DP 2026 for the Municipal Corporation area, with its Gaothan CTS sheets for the city core, Kedgaon and Nagapur. Interactive overlay on satellite imagery, also covering Jamkhed, Shirdi, Sangamner and Pathardi; download any part as a print-ready map sheet.',
     keywords: [
       'ahilyanagar development plan',
       'ahilyanagar development plan 2026',
@@ -1117,17 +1117,20 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'ahilyanagar gaothan cts map',
       'ahmednagar development plan map pdf download',
       'ahmednagar city development plan 2026',
+      'ahilyanagar draft development plan 2026',
     ],
     paragraphs: [
       'The Ahilyanagar Development Plan — still widely searched as the Ahmednagar Development Plan — is administered by the Ahilyanagar Municipal Corporation, constituted in 2003 under the Maharashtra Regional and Town Planning Act, 1966 as the Ahmednagar Municipal Corporation and succeeding the earlier Ahmednagar Municipal Council. The district and its headquarters were renamed Ahilyanagar after Punyashlok Ahilyadevi Holkar, the Holkar queen born at Chondi in the district’s Jamkhed taluka. Both names remain in everyday use and refer to the same authority and the same plan.',
-      'This map now carries the Ahilyanagar Development Plan 2026 for the Municipal Corporation area, together with the Gaothan CTS (City Survey) sheets for the city core and for the Kedgaon and Nagapur gaothans — the cadastral sheets that show individual CTS plot boundaries rather than only zone colours, and which are readable down to street level. The earlier Ahmednagar DP sheets stay available on the older plan layer, so the previous plan can be compared against the 2026 one instead of being replaced by it.',
+      'Since 29 October 2026 this map carries the revised draft Development Plan that the Municipal Corporation published under Section 26(1) on 10 September 2026: its 11 city sheets as one layer, with the draft’s Gaothan CTS (City Survey) sheets for the city core and for the Kedgaon and Nagapur gaothans drawn above it — the cadastral sheets that show individual CTS plot boundaries and are readable down to street level. It replaces the Existing Land Use map added in August 2026. What the draft proposes — its 479 reservations, sheets, the objections (closed on 9 October 2026) and what happens next — is set out on the Ahilyanagar Draft DP 2026 page. The earlier Ahmednagar DP sheets stay available on the older plan layer.',
       'Ahilyanagar sits in central Maharashtra at the junction of multiple regional connections — national highways linking Pune, Chhatrapati Sambhajinagar (Aurangabad), Manmad and Solapur — and the city is an important regional trading and educational centre. The Bhima river basin lies to the south, and the Pravara river / Bhandardara dam reservoir lies to the west. Industrial activity centres on the MIDC industrial areas at Nagar and Supa, and includes sugar processing, dairy and food-processing units.',
-      'The DP overlay reflects the published zoning, reservation and road-line boundaries georeferenced over satellite imagery, covering the Corporation jurisdiction including the historic city core, defence-establishment lands (Ahilyanagar is home to the Armoured Corps Centre & School of the Indian Army) and the expanding industrial peripheries along the Pune and Chhatrapati Sambhajinagar highways. Beyond the city, the Development Plans for Jamkhed, Shirdi, Sangamner and Pathardi are mapped on the same layer.',
+      'The overlays are georeferenced over satellite imagery and cover the Corporation jurisdiction, including the historic city core, defence-establishment lands (Ahilyanagar is home to the Armoured Corps Centre & School of the Indian Army) and the expanding industrial peripheries along the Pune and Chhatrapati Sambhajinagar highways. Beyond the city, the Development Plans for Jamkhed, Shirdi, Sangamner and Pathardi are mapped on the same layer.',
     ],
     quickFacts: [
       { label: 'Planning authority', value: 'Ahilyanagar (Ahmednagar) Municipal Corporation' },
-      { label: 'Latest plan on this map', value: 'Ahilyanagar Development Plan 2026' },
-      { label: 'Also mapped', value: 'Gaothan CTS sheets — city core, Kedgaon, Nagapur' },
+      { label: 'Latest layer on this map', value: 'Revised draft Development Plan 2026 (on the map since 29 Oct 2026)' },
+      { label: 'Draft DP published', value: '10 September 2026, Section 26(1)' },
+      { label: 'Objections', value: 'Closed 9 October 2026; hearings next' },
+      { label: 'Also mapped', value: 'Draft Gaothan CTS sheets — city core, Kedgaon, Nagapur' },
       { label: 'District renamed', value: 'Ahmednagar → Ahilyanagar, after Punyashlok Ahilyadevi Holkar' },
       { label: 'Corporation formed', value: '2003' },
       { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
@@ -1142,7 +1145,7 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       },
       {
         q: 'Which Ahilyanagar Development Plan does this map show?',
-        a: 'The map carries the Ahilyanagar Development Plan 2026 for the Municipal Corporation area, plus the Gaothan CTS (City Survey) sheets for the city core and for the Kedgaon and Nagapur gaothans. The earlier Ahmednagar DP sheets have not been removed — they remain on the older plan layer, so you can read the previous plan and the 2026 plan against the same satellite imagery.',
+        a: 'For the Municipal Corporation area it shows the revised draft Development Plan published on 10 September 2026 — the proposed zones, the 479 reservations and the road lines — on the map since 29 October 2026, together with the draft’s Gaothan CTS (City Survey) sheets for the city core and for the Kedgaon and Nagapur gaothans. Being a draft, it can still change at the hearings and when the State sanctions it. The earlier Ahmednagar DP sheets remain on the older plan layer.',
       },
       {
         q: 'Which other towns in Ahilyanagar district are on the map?',

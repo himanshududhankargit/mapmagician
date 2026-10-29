@@ -445,6 +445,19 @@ export default function RegionPage({ params }: Props) {
             </div>
           )}
 
+          {region.slug === 'ahmednagar-dp-plan' && (
+            <div className="side-card">
+              <h3>Draft DP 2026</h3>
+              <p className="aux">
+                AMC published its revised draft Development Plan on 10 September 2026: 479 reservations and 18 map
+                sheets, all now on the map. Objections closed on 9 October 2026, with about 850 filed.
+              </p>
+              <Link className="btn btn-white btn-block" href="/ahilyanagar-draft-development-plan-2026/">
+                Ahilyanagar Draft DP 2026 →
+              </Link>
+            </div>
+          )}
+
           {region.slug === 'pune-dp-plan' && (
             <div className="side-card">
               <h3>Twin city: PCMC</h3>
