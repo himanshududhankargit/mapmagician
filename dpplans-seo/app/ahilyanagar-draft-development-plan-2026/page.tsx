@@ -29,9 +29,11 @@ const DRAFT_LAYER_LIVE = true;
 
 const PAGE_URL = `${SITE.origin}/ahilyanagar-draft-development-plan-2026/`;
 const REGION_PATH = '/ahmednagar-dp-plan/';
-const AMC_TP_URL = 'https://amc.gov.in/town-planning/';
-const NOTICE_URL = 'https://amc.gov.in/wp-content/uploads/%E0%A4%AA%E0%A5%8D%E0%A4%B0%E0%A4%BE%E0%A4%B0%E0%A5%82%E0%A4%AA-%E0%A4%B5%E0%A4%BF%E0%A4%95%E0%A4%BE%E0%A4%B8-%E0%A4%AF%E0%A5%8B%E0%A4%9C%E0%A4%A8%E0%A5%87%E0%A4%9A%E0%A5%87-%E0%A4%AA%E0%A5%8D%E0%A4%B0%E0%A4%B8%E0%A4%BF%E0%A4%A6%E0%A5%8D%E0%A4%A7%E0%A5%80%E0%A4%95%E0%A4%B0%E0%A4%A3.pdf';
-const REPORT_URL = 'https://amc.gov.in/wp-content/uploads/Report-PLU-26-us.pdf';
+// No links to AMC's document pages (the owner, 2026-10-29): they hand out the 18 sheets as free
+// downloads, so a link sends our visitors — and anyone copying the plan — away from our map.
+// The source is cited as plain text instead; the news links stay (they don't carry the sheets).
+const SOURCE =
+  'Source: Ahilyanagar Municipal Corporation notice AMC/TP/891/2026 (Maharashtra Government Gazette, Nashik Division, 10–16 September 2026) and its Draft Development Plan report.';
 
 const TITLE = 'Ahilyanagar Draft DP 2026 — map, 479 reservations, objections';
 const DESCRIPTION =
@@ -229,8 +231,8 @@ const FAQS = [
     a: 'No. A draft Development Plan can change at the hearing stage and when the State Government sanctions it, so a zone or reservation on the draft is a proposal, not a final designation. Until the plan is sanctioned, confirm the current position of a plot with the Ahilyanagar Municipal Corporation before buying, selling or building.',
   },
   {
-    q: 'Where are the official draft DP maps?',
-    a: 'The AMC town-planning page links the 18 detailed sheets (Grid-1 to Grid-18, scale 1:4000), a combined map, the Marathi and English reports and the publication notice. Copies of the plan can also be bought at the Commissioner’s office.',
+    q: 'Where can I see the draft DP maps?',
+    a: 'All 18 sheets — Grid-1 to Grid-18, drawn at 1:4000 — are on the DPPlans map over satellite imagery, so a plot can be found by survey number or landmark instead of being read off a paper sheet. Copies of the plan for official use can be bought at the Commissioner’s office of the Ahilyanagar Municipal Corporation.',
   },
   {
     q: 'Can I check my plot against the draft on DPPlans?',
@@ -419,9 +421,8 @@ export default function AhilyanagarDraftDp2026Page() {
               {SHEETS.map(s => <li key={s}>{s}</li>)}
             </ul>
             <p className="aux-text">
-              Official sheets, combined map and reports: <a href={AMC_TP_URL} target="_blank" rel="noopener">AMC town
-              planning</a> · <a href={NOTICE_URL} target="_blank" rel="noopener">publication notice</a> ·{' '}
-              <a href={REPORT_URL} target="_blank" rel="noopener">report (English)</a>
+              All 18 sheets are on the DPPlans map —{' '}
+              <a href={MAP_URL} target="_blank" rel="noopener">open them over satellite imagery</a>. {SOURCE}
             </p>
           </section>
 
@@ -451,13 +452,13 @@ export default function AhilyanagarDraftDp2026Page() {
           </div>
 
           <div className="side-card">
-            <h3>Official documents</h3>
+            <h3>Check your plot on the draft</h3>
             <p className="aux">
-              AMC publishes the draft sheets, the combined map, the reports in Marathi and English, and the Section
-              26(1) notice on its town-planning page.
+              All 18 draft sheets over satellite imagery — search a survey number or landmark and read its proposed
+              zone and any reservation. The gaothan CTS sheets show individual plots.
             </p>
-            <a className="btn btn-white btn-block" href={AMC_TP_URL} target="_blank" rel="noopener">
-              AMC town planning →
+            <a className="btn btn-white btn-block" href={MAP_URL} target="_blank" rel="noopener">
+              Open the draft on the map →
             </a>
           </div>
 
