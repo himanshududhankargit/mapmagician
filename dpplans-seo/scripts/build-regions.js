@@ -61,6 +61,21 @@ const DISPLAY_NAME_ALIASES = {
 // A pinned row still consumes its NATURAL slug's dedupe counter, so sibling rows keep the
 // -2/-3 suffixes they already have indexed.
 const LOCATION_ALIASES = [
+  // --- PMC 9 merged villages, Draft DP 2026 (menuGIS rows "<Village> (Draft DP 2026 - 9
+  // merged villages)", appended AFTER the existing Pune rows on 2026-11-09) ---
+  // Without these the bracket is stripped and each row becomes a second "Lohegaon" /
+  // "Dhayari" … page at a -2 URL. The name sets the H1 and the slug
+  // (/pune-dp-plan/lohegaon-draft-dp-2026/ etc.). Anchored on the bracket so the existing
+  // bare "Lohegaon", "Dhayari", "Shivane" … rows are never matched.
+  { test: /^lohegaon\s*\(draft dp 2026/i, name: 'Lohegaon Draft DP 2026' },
+  { test: /^undri\s*\(draft dp 2026/i, name: 'Undri Draft DP 2026' },
+  { test: /^shivane\s*\(draft dp 2026/i, name: 'Shivane Draft DP 2026' },
+  { test: /^uttamnagar\s*\(draft dp 2026/i, name: 'Uttamnagar Draft DP 2026' },
+  { test: /^dhayari\s*\(draft dp 2026/i, name: 'Dhayari Draft DP 2026' },
+  { test: /^ambegaon bk\s*\(draft dp 2026/i, name: 'Ambegaon Bk Draft DP 2026' },
+  { test: /^ambegaon kh\s*\(draft dp 2026/i, name: 'Ambegaon Kh Draft DP 2026' },
+  { test: /^mundhwa keshav nagar\s*\(draft dp 2026/i, name: 'Mundhwa (Keshav Nagar) Draft DP 2026' },
+  { test: /^hadapsar sade satra nali\s*\(draft dp 2026/i, name: 'Hadapsar (Sade Satra Nali) Draft DP 2026' },
   { test: /kalyan.*dombi.*muncipal/i, name: 'Kalyan-Dombivli' },
   { test: /buvanagiri|bhuvanagiri|bhongir/i, name: 'Bhongir' },
   { test: /medchal/i, name: 'Medchal' },
