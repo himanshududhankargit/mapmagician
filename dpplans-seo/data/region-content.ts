@@ -92,6 +92,8 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'pune zoning map',
       'pune development plan map',
       'pmc merged villages dp plan',
+      'समाविष्ट ९ गावे विकास आराखडा',
+      'पुणे समाविष्ट गावे डीपी प्लॅन',
       'pune 9 villages draft dp',
       'pmc 9 villages development plan',
       'pune merged villages development plan 2026',
@@ -131,6 +133,7 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       id: 'merged-villages-draft-dp',
       heading: 'PMC 9 merged villages — Draft DP 2026',
       paragraphs: [
+        'मराठी: पुणे महानगरपालिकेत समाविष्ट ९ गावांचा प्रारूप विकास आराखडा (डीपी प्लॅन) २०२६ — लोहगाव, मुंढवा (केशवनगर), हडपसर (साडेसतरा नळी), शिवणे (उत्तमनगरसह), आंबेगाव बुद्रुक, आंबेगाव खुर्द, उंड्री आणि धायरी. प्रत्येक गावाचा नकाशा खालील लिंकवर पाहा.',
         'Eleven villages were merged into Pune Municipal Corporation (PMC) limits in 2017, and PMC declared its intention to prepare a Development Plan for them in 2018 (Section 23, PMC Resolution No. 160 of 28 June 2018). Fursungi and Uruli Devachi were taken out of PMC by a notification of 11 September 2024, so the draft plan now covers 9 areas, all in Haveli taluka: Lohegaon (remaining part), Mundhwa (Keshav Nagar), Hadapsar (Sade Satra Nali), Shivane (including Uttamnagar), Ambegaon Budruk, Ambegaon Khurd, Undri and Dhayari.',
         'The draft Development Plan was published under Section 26(1) of the MRTP Act in the Pune Divisional Gazette of 16–22 October 2025, with 60 days for suggestions and objections. This map shows that draft plan over satellite imagery. It is separate from the sanctioned 2017 Pune DP, which covers the older PMC limits, and from the plan for the 23 villages merged into PMC in 2021, which is still being prepared.',
         'A draft DP is not final. Changes made after the hearings are published for public inspection, and the plan comes into force only when the State Government sanctions it. Until then zones, reservations and road lines can change, so confirm a plot’s position with PMC before any decision.',
