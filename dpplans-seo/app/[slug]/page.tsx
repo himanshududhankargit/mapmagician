@@ -273,6 +273,44 @@ export default function RegionPage({ params }: Props) {
             </section>
           )}
 
+          {regionContent?.spotlight && (
+            <section className="card region-plan-details region-spotlight" id={regionContent.spotlight.id}>
+              <h2>{regionContent.spotlight.heading}</h2>
+              {regionContent.spotlight.paragraphs.map((p, i) => (
+                <p key={i}>{p}</p>
+              ))}
+              {regionContent.spotlight.updates && regionContent.spotlight.updates.length > 0 && (
+                <>
+                  <h3>Latest updates</h3>
+                  <ul className="region-updates">
+                    {regionContent.spotlight.updates.map((u, i) => (
+                      <li key={i}>
+                        <strong>{u.date}</strong> — {u.text}
+                        {u.href && (
+                          <>
+                            {' '}(<a href={u.href} target="_blank" rel="noopener nofollow">{u.source ?? 'source'}</a>)
+                          </>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+              {regionContent.spotlight.links.length > 0 && (
+                <>
+                  <h3>{regionContent.spotlight.linksHeading ?? 'Pages in this plan'}</h3>
+                  <ul className="see-also">
+                    {regionContent.spotlight.links.map(l => (
+                      <li key={l.href}>
+                        <Link href={l.href}>{l.label} →</Link>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </section>
+          )}
+
           <DownloadSheet
             placeName={region.shortName}
             planName={`the ${planNameLong}`}
