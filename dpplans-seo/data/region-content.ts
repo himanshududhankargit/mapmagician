@@ -15,6 +15,23 @@ import type { RegionFaq } from '@/lib/site';
 
 export type RegionQuickFact = { label: string; value: string };
 
+// A dated news / notification line in a spotlight's "Latest updates" list. Newest first.
+// `source` names the outlet or authority; news-only facts must be worded as "reported".
+export type RegionUpdate = { date: string; text: string; source?: string; href?: string };
+
+// A highlighted sub-plan inside a region page — e.g. the PMC Draft DP for the 9 villages
+// merged into Pune in 2017. Rendered as its own card with an anchor (`id`) so sub-location
+// pages can deep-link to it, a "Latest updates" list, and links to its village pages.
+// Future news on the same plan goes into `updates` here — never a separate news page.
+export type RegionSpotlight = {
+  id: string;
+  heading: string;
+  paragraphs: string[];
+  updates?: RegionUpdate[];
+  linksHeading?: string;
+  links: { label: string; href: string }[];
+};
+
 export type RegionContent = {
   // 1-3 paragraphs of unique prose. Aim 150-300 words combined.
   paragraphs: string[];
@@ -43,6 +60,8 @@ export type RegionContent = {
   // The plan's name in headings and prose, e.g. "Mysuru Master Plan 2031".
   // Default: "<shortName> Development Plan".
   planName?: string;
+  // Optional highlighted sub-plan card (see RegionSpotlight).
+  spotlight?: RegionSpotlight;
 };
 
 export const REGION_CONTENT: Record<string, RegionContent> = {
@@ -72,6 +91,16 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       'pune dp remark',
       'pune zoning map',
       'pune development plan map',
+      'pmc merged villages dp plan',
+      'समाविष्ट ९ गावे विकास आराखडा',
+      'पुणे समाविष्ट गावे डीपी प्लॅन',
+      'pune 9 villages draft dp',
+      'pmc 9 villages development plan',
+      'pune merged villages development plan 2026',
+      'lohegaon draft dp plan',
+      'dhayari draft dp plan',
+      'undri dp plan',
+      'shivane dp plan',
       'pmc dp map',
       'pmc limits map',
       'pmc town planning',
@@ -99,6 +128,47 @@ export const REGION_CONTENT: Record<string, RegionContent> = {
       { label: 'Governing Act', value: 'Maharashtra Regional and Town Planning Act, 1966' },
       { label: 'Twin city (planned separately)', value: 'Pimpri-Chinchwad (PCMC)' },
       { label: 'Wider metropolitan authority', value: 'PMRDA (Pune Metropolitan Region Development Authority)' },
+    ],
+    spotlight: {
+      id: 'merged-villages-draft-dp',
+      heading: 'PMC 9 merged villages — Draft DP 2026',
+      paragraphs: [
+        'मराठी: पुणे महानगरपालिकेत समाविष्ट ९ गावांचा प्रारूप विकास आराखडा (डीपी प्लॅन) २०२६ — लोहगाव, मुंढवा (केशवनगर), हडपसर (साडेसतरा नळी), शिवणे (उत्तमनगरसह), आंबेगाव बुद्रुक, आंबेगाव खुर्द, उंड्री आणि धायरी. प्रत्येक गावाचा नकाशा खालील लिंकवर पाहा.',
+        'Eleven villages were merged into Pune Municipal Corporation (PMC) limits in 2017, and PMC declared its intention to prepare a Development Plan for them in 2018 (Section 23, PMC Resolution No. 160 of 28 June 2018). Fursungi and Uruli Devachi were taken out of PMC by a notification of 11 September 2024, so the draft plan now covers 9 areas, all in Haveli taluka: Lohegaon (remaining part), Mundhwa (Keshav Nagar), Hadapsar (Sade Satra Nali), Shivane (including Uttamnagar), Ambegaon Budruk, Ambegaon Khurd, Undri and Dhayari.',
+        'The draft Development Plan was published under Section 26(1) of the MRTP Act in the Pune Divisional Gazette of 16–22 October 2025, with 60 days for suggestions and objections. This map shows that draft plan over satellite imagery. It is separate from the sanctioned 2017 Pune DP, which covers the older PMC limits, and from the plan for the 23 villages merged into PMC in 2021, which is still being prepared.',
+        'A draft DP is not final. Changes made after the hearings are published for public inspection, and the plan comes into force only when the State Government sanctions it. Until then zones, reservations and road lines can change, so confirm a plot’s position with PMC before any decision.',
+      ],
+      // Newest first. News-only facts are worded "Reported". Sources checked 2026-11-09;
+      // the official Sec 28(4) notice was not on pmc.gov.in yet - add it here when it is.
+      updates: [
+        { date: '7 Nov 2026', text: 'Reported: PMC has made 143 changes to the draft after considering 7,590 suggestions and objections — 84 road, 30 amenity and 28 reservation changes. Lohegaon has the most changes (31) and Ambegaon Khurd the fewest (7). The changes and revised maps are open for public inspection for 30 days. Reports differ on whether the plan has already been sent to the State Government, and the official notice has not yet appeared on pmc.gov.in.', source: 'Punekar News', href: 'https://www.punekarnews.in/pune-dp-lohgaon-gets-maximum-changes-as-pmc-revises-development-plan-for-9-villages/' },
+        { date: '7 Nov 2026', text: 'Reported: the modified plan can be inspected at the office of the Assistant Director of Town Planning, Pune Branch, and at the Municipal Commissioner’s office, PMC.', source: 'CivicMirror', href: 'https://civicmirror.in/city/pmc-pune-143-modifications-in-the-development-plan-for-nine-villages/' },
+        { date: '7 Nov 2026', text: 'पुण्यातील नऊ गावांच्या विकास आराखड्यात १४३ बदल (143 changes to the nine villages’ development plan).', source: 'Pudhari', href: 'https://pudhari.news/maharashtra/pune/pune-nine-villages-development-plan-143-changes-sk04' },
+        { date: 'Mar–Apr 2026', text: 'Reported: hearings on the suggestions and objections were held, and the planning committee report followed in July 2026.', source: 'CivicMirror', href: 'https://civicmirror.in/city/pmc-pune-143-modifications-in-the-development-plan-for-nine-villages/' },
+        { date: '16 Oct 2025', text: 'Draft DP published under Section 26(1) of the MRTP Act (Pune Divisional Gazette, 16–22 October 2025); suggestions and objections invited for 60 days.', source: 'Gazette, PMC website', href: 'https://adc-ecos.enlightcloud.com/1133pmcwebsitev2/s3fs-public/DP-Plan/11%20villages%20-%20section%2026%20maps/11-Villages-Gazette-sec-26-2025-10-16.pdf' },
+      ],
+      linksHeading: 'Draft DP 2026 map pages for each village',
+      links: [
+        { label: 'Lohegaon Draft DP 2026', href: '/pune-dp-plan/lohegaon-draft-dp-2026/' },
+        { label: 'Mundhwa (Keshav Nagar) Draft DP 2026', href: '/pune-dp-plan/mundhwa-keshav-nagar-draft-dp-2026/' },
+        { label: 'Hadapsar (Sade Satra Nali) Draft DP 2026', href: '/pune-dp-plan/hadapsar-sade-satra-nali-draft-dp-2026/' },
+        { label: 'Shivane Draft DP 2026', href: '/pune-dp-plan/shivane-draft-dp-2026/' },
+        { label: 'Uttamnagar (Shivane) Draft DP 2026', href: '/pune-dp-plan/uttamnagar-draft-dp-2026/' },
+        { label: 'Ambegaon Bk Draft DP 2026', href: '/pune-dp-plan/ambegaon-bk-draft-dp-2026/' },
+        { label: 'Ambegaon Kh Draft DP 2026', href: '/pune-dp-plan/ambegaon-kh-draft-dp-2026/' },
+        { label: 'Undri Draft DP 2026', href: '/pune-dp-plan/undri-draft-dp-2026/' },
+        { label: 'Dhayari Draft DP 2026', href: '/pune-dp-plan/dhayari-draft-dp-2026/' },
+      ],
+    },
+    faqs: [
+      {
+        q: 'Is the Development Plan for the 9 villages merged into PMC on this map?',
+        a: 'Yes. The PMC draft Development Plan for the merged villages — Lohegaon, Mundhwa (Keshav Nagar), Hadapsar (Sade Satra Nali), Shivane (with Uttamnagar), Ambegaon Budruk, Ambegaon Khurd, Undri and Dhayari — is shown on the Pune map, and each village has its own Draft DP 2026 page. It is a draft published under Section 26 of the MRTP Act in October 2025, not the sanctioned 2017 Pune DP, so zones and roads there can still change.',
+      },
+      {
+        q: 'What is the latest on the PMC 9 villages draft DP?',
+        a: 'News reports of 7 November 2026 say PMC made 143 changes to the draft after considering 7,590 suggestions and objections, and that the changes are open for public inspection for 30 days. The plan becomes final only after State Government sanction. The latest updates, with sources, are listed in the “PMC 9 merged villages — Draft DP 2026” section of this page.',
+      },
     ],
   },
 

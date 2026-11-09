@@ -527,6 +527,9 @@ button { font: inherit; cursor: pointer; }
 .see-also { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 6px; }
 .see-also li { padding: 10px 14px; background: #fff; border: 1px solid var(--border); border-radius: 10px; font-size: 15px; }
 .see-also a { font-weight: 500; }
+.region-updates { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px; }
+.region-updates li { padding: 10px 14px; border-left: 3px solid var(--border); font-size: 15px; line-height: 1.5; }
+.region-spotlight { scroll-margin-top: 80px; }
 
 /* Sub-locations list (main-column card) */
 .sublocations .aux-text { color: var(--text-light); font-size: 14.5px; margin-bottom: 16px; }

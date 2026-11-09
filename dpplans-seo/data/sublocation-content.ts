@@ -83,10 +83,10 @@ export const SUBLOCATION_CONTENT: Record<string, SubLocationContent> = {
       'lohegaon pmc dp map',
     ],
     intro:
-      'Lohegaon is a north-east Pune locality best known as the home of Pune International Airport (the Lohegaon airbase), on the Vishrantwadi–Dhanori side of the city within Pune Municipal Corporation (PMC) limits. This page opens the sanctioned Pune Development Plan zoomed to Lohegaon as an interactive overlay on satellite imagery, so you can read the land-use zone, public reservations and proposed DP road lines for any plot here.',
+      'Lohegaon is a north-east Pune locality best known as the home of Pune International Airport (the Lohegaon airbase), on the Vishrantwadi–Dhanori side of the city within Pune Municipal Corporation (PMC) limits. This page opens the Pune DP map zoomed to Lohegaon as an interactive overlay on satellite imagery, so you can read the land-use zone, public reservations and proposed DP road lines for any plot here. The part of Lohegaon that was merged into PMC in 2017 is covered by PMC’s separate Draft Development Plan for the merged villages (Draft DP 2026), not by the sanctioned 2017 Pune DP — see the Lohegaon Draft DP 2026 page for that plan.',
     paragraphs: [
       'Lohegaon has grown quickly as a residential and rental belt around the airport and the Dhanori–Vishrantwadi corridor, which makes the DP road alignments and road-widening lines through the area particularly worth checking before any plot decision — search by survey or CTS number and toggle the overlay to confirm whether a proposed road, reservation or zone boundary falls on the plot.',
-      'PMC publishes the sanctioned DP sheets covering Lohegaon as PDFs on pmc.gov.in; rather than downloading and scanning a large sheet, you can read the same zone and DP remark for a specific plot directly on this map. Browsing Lohegaon is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass.',
+      'PMC publishes its DP sheets as PDFs on pmc.gov.in; rather than downloading and scanning a large sheet, you can read the same zone and DP remark for a specific plot directly on this map. Browsing Lohegaon is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass.',
     ],
   },
   'pune-dp-plan/baner': {
@@ -249,7 +249,7 @@ export const SUBLOCATION_CONTENT: Record<string, SubLocationContent> = {
   'pune-dp-plan/dhayari': {
     pageTitle: 'Dhayari DP Plan map online — PMC zones & land use, Pune',
     description:
-      'View the Dhayari section of the Pune (PMC) Development Plan online. Interactive DP overlay on satellite imagery off Sinhagad Road — read the land-use zone, reservations and DP road lines for any plot in Dhayari, south-west Pune.',
+      'View the Dhayari section of the PMC Development Plan online — the Draft DP 2026 for the villages merged into PMC. Interactive DP overlay on satellite imagery off Sinhagad Road — read the land-use zone, reservations and DP road lines for any plot in Dhayari, south-west Pune.',
     keywords: [
       'dhayari dp plan',
       'dhayari development plan',
@@ -259,10 +259,10 @@ export const SUBLOCATION_CONTENT: Record<string, SubLocationContent> = {
       'dhayari pune land use',
     ],
     intro:
-      'Dhayari is a south-west Pune residential locality off Sinhagad Road, near Narhe and on the approach towards Sinhagad fort, within Pune Municipal Corporation (PMC) limits. This page opens the sanctioned Pune Development Plan zoomed to Dhayari as an interactive overlay on satellite imagery, so you can read the land-use zone, reservations and proposed DP road lines for any plot.',
+      'Dhayari is a south-west Pune residential locality off Sinhagad Road, near Narhe and on the approach towards Sinhagad fort, within Pune Municipal Corporation (PMC) limits. Dhayari is one of the villages merged into PMC limits in 2017, so the plan shown here is PMC’s Draft Development Plan for the merged villages (Draft DP 2026), not the sanctioned 2017 Pune DP. This page opens it zoomed to Dhayari as an interactive overlay on satellite imagery, so you can read the proposed land-use zone, reservations and DP road lines for any plot.',
     paragraphs: [
       'Dhayari has filled in rapidly with residential development off Sinhagad Road, which makes the proposed DP road and road-widening lines worth checking plot-by-plot — search a survey or CTS number and toggle the overlay to confirm the zone and any reservation or DP road on the plot.',
-      'PMC publishes the sanctioned DP sheets covering Dhayari as PDFs on pmc.gov.in; rather than downloading a large sheet, you can read the same zone and DP remark for a specific plot here. Browsing Dhayari is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass.',
+      'PMC publishes its DP sheets as PDFs on pmc.gov.in; rather than downloading a large sheet, you can read the same zone and DP remark for a specific plot here. Browsing Dhayari is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass.',
     ],
   },
 
@@ -561,6 +561,129 @@ export const SUBLOCATION_CONTENT: Record<string, SubLocationContent> = {
       'To use the map: search a survey number, or a landmark such as the Municipal Council office, the bus stand, a school or a market, to place yourself in the town. Then toggle the Development Plan overlay to read the land-use zone — residential, commercial, industrial, agricultural or reserved public use — along with road reservations and widening lines. Confirm the current sanctioned position with the Jamkhed Municipal Council before relying on a zone for a plot decision.',
     ],
   },
+
+  // --- PMC 9 merged villages, Draft DP 2026 (added 2026-11-09) ---
+  // menuGIS rows "<Village> (Draft DP 2026 - 9 merged villages)"; slugs come from the
+  // LOCATION_ALIASES in scripts/build-regions.js. Status / news lives ONCE in the Pune
+  // region spotlight (region-content.ts, id merged-villages-draft-dp) - keep these pages
+  // to the village and plan identity so they never go stale.
+  'pune-dp-plan/lohegaon-draft-dp-2026': {
+    pageTitle: 'Lohegaon DP Plan 2026 (Draft) — PMC merged villages map',
+    description:
+      'Lohegaon draft DP plan 2026 map: PMC’s Draft Development Plan for the merged villages — proposed zones, reservations and DP roads. लोहगाव विकास आराखडा.',
+    keywords: ['lohegaon draft dp plan', 'lohegaon dp plan 2026', 'lohegaon draft development plan', 'lohegaon dp plan', 'lohegaon dp road', 'pmc merged villages dp plan', 'pmc 9 villages draft dp', 'लोहगाव विकास आराखडा', 'लोहगाव डीपी प्लॅन'],
+    intro:
+      'Lohegaon is the north-east Pune village around Pune International Airport; the remaining part of Lohegaon outside the old PMC limits. It is one of the villages merged into Pune Municipal Corporation (PMC) limits in 2017, and PMC has prepared a separate Draft Development Plan for these merged villages, apart from the sanctioned 2017 Pune DP. This page opens that draft plan zoomed to Lohegaon as an interactive overlay on satellite imagery, so you can read the proposed land-use zone, reservations and DP road lines for any plot.',
+    paragraphs: [
+      'मराठी: लोहगाव — पुणे महानगरपालिकेत समाविष्ट गावांचा प्रारूप विकास आराखडा (डीपी प्लॅन) २०२६ येथे नकाशावर पाहा: प्रस्तावित झोन, आरक्षणे आणि डीपी रस्ते.',
+      'Because this is a draft, the zones, reservations and road lines for Lohegaon can still change before the State Government sanctions the plan. The current stage of the draft and the latest news are kept in one place, the “PMC 9 merged villages — Draft DP 2026” section of the Pune DP page; confirm the final position with PMC before relying on a zone for any decision.',
+      'Browsing Lohegaon is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass, the same pass that covers the sanctioned Pune DP.',
+    ],
+  },
+  'pune-dp-plan/undri-draft-dp-2026': {
+    pageTitle: 'Undri DP Plan 2026 (Draft) — PMC merged villages map',
+    description:
+      'Undri draft DP plan 2026 map: PMC’s Draft Development Plan for the merged villages — proposed zones, reservations and DP roads. उंड्री विकास आराखडा.',
+    keywords: ['undri draft dp plan', 'undri dp plan 2026', 'undri draft development plan', 'undri dp plan', 'undri dp road', 'pmc merged villages dp plan', 'pmc 9 villages draft dp', 'उंड्री विकास आराखडा', 'उंड्री डीपी प्लॅन'],
+    intro:
+      'Undri is a fast-growing residential village in south-east Pune, beyond Kondhwa and NIBM. It is one of the villages merged into Pune Municipal Corporation (PMC) limits in 2017, and PMC has prepared a separate Draft Development Plan for these merged villages, apart from the sanctioned 2017 Pune DP. This page opens that draft plan zoomed to Undri as an interactive overlay on satellite imagery, so you can read the proposed land-use zone, reservations and DP road lines for any plot.',
+    paragraphs: [
+      'मराठी: उंड्री — पुणे महानगरपालिकेत समाविष्ट गावांचा प्रारूप विकास आराखडा (डीपी प्लॅन) २०२६ येथे नकाशावर पाहा: प्रस्तावित झोन, आरक्षणे आणि डीपी रस्ते.',
+      'Because this is a draft, the zones, reservations and road lines for Undri can still change before the State Government sanctions the plan. The current stage of the draft and the latest news are kept in one place, the “PMC 9 merged villages — Draft DP 2026” section of the Pune DP page; confirm the final position with PMC before relying on a zone for any decision.',
+      'Browsing Undri is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass, the same pass that covers the sanctioned Pune DP.',
+    ],
+  },
+  'pune-dp-plan/shivane-draft-dp-2026': {
+    pageTitle: 'Shivane DP Plan 2026 (Draft) — PMC merged villages map',
+    description:
+      'Shivane draft DP plan 2026 map: PMC’s Draft Development Plan for the merged villages — proposed zones, reservations and DP roads. शिवणे विकास आराखडा.',
+    keywords: ['shivane draft dp plan', 'shivane dp plan 2026', 'shivane draft development plan', 'shivane dp plan', 'shivane dp road', 'pmc merged villages dp plan', 'pmc 9 villages draft dp', 'शिवणे विकास आराखडा', 'शिवणे डीपी प्लॅन'],
+    intro:
+      'Shivane is a village in west Pune on the Mutha river, beyond Warje, next to Uttamnagar. It is one of the villages merged into Pune Municipal Corporation (PMC) limits in 2017, and PMC has prepared a separate Draft Development Plan for these merged villages, apart from the sanctioned 2017 Pune DP. This page opens that draft plan zoomed to Shivane as an interactive overlay on satellite imagery, so you can read the proposed land-use zone, reservations and DP road lines for any plot.',
+    paragraphs: [
+      'मराठी: शिवणे — पुणे महानगरपालिकेत समाविष्ट गावांचा प्रारूप विकास आराखडा (डीपी प्लॅन) २०२६ येथे नकाशावर पाहा: प्रस्तावित झोन, आरक्षणे आणि डीपी रस्ते.',
+      'Because this is a draft, the zones, reservations and road lines for Shivane can still change before the State Government sanctions the plan. The current stage of the draft and the latest news are kept in one place, the “PMC 9 merged villages — Draft DP 2026” section of the Pune DP page; confirm the final position with PMC before relying on a zone for any decision.',
+      'Browsing Shivane is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass, the same pass that covers the sanctioned Pune DP.',
+    ],
+  },
+  'pune-dp-plan/uttamnagar-draft-dp-2026': {
+    pageTitle: 'Uttamnagar DP Plan 2026 (Draft) — PMC merged villages map',
+    description:
+      'Uttamnagar (Shivane) draft DP plan 2026 map: PMC’s Draft Development Plan for the merged villages — proposed zones, reservations and DP roads. उत्तमनगर (शिवणे) विकास आराखडा.',
+    keywords: ['uttamnagar draft dp plan', 'uttamnagar dp plan 2026', 'uttamnagar draft development plan', 'uttamnagar dp plan', 'uttamnagar dp road', 'pmc merged villages dp plan', 'pmc 9 villages draft dp', 'उत्तमनगर (शिवणे) विकास आराखडा', 'उत्तमनगर (शिवणे) डीपी प्लॅन'],
+    intro:
+      'Uttamnagar is a locality in west Pune on the Mutha river, on the way to NDA and Khadakwasla. In the plan it is counted as part of Shivane, one of the villages merged into Pune Municipal Corporation (PMC) limits in 2017, and PMC has prepared a separate Draft Development Plan for these merged villages, apart from the sanctioned 2017 Pune DP. This page opens that draft plan zoomed to Uttamnagar as an interactive overlay on satellite imagery, so you can read the proposed land-use zone, reservations and DP road lines for any plot.',
+    paragraphs: [
+      'मराठी: उत्तमनगर (शिवणे) — पुणे महानगरपालिकेत समाविष्ट गावांचा प्रारूप विकास आराखडा (डीपी प्लॅन) २०२६ येथे नकाशावर पाहा: प्रस्तावित झोन, आरक्षणे आणि डीपी रस्ते.',
+      'Because this is a draft, the zones, reservations and road lines for Uttamnagar can still change before the State Government sanctions the plan. The current stage of the draft and the latest news are kept in one place, the “PMC 9 merged villages — Draft DP 2026” section of the Pune DP page; confirm the final position with PMC before relying on a zone for any decision.',
+      'Browsing Uttamnagar is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass, the same pass that covers the sanctioned Pune DP.',
+    ],
+  },
+  'pune-dp-plan/dhayari-draft-dp-2026': {
+    pageTitle: 'Dhayari DP Plan 2026 (Draft) — PMC merged villages map',
+    description:
+      'Dhayari draft DP plan 2026 map: PMC’s Draft Development Plan for the merged villages — proposed zones, reservations and DP roads. धायरी विकास आराखडा.',
+    keywords: ['dhayari draft dp plan', 'dhayari dp plan 2026', 'dhayari draft development plan', 'dhayari dp plan', 'dhayari dp road', 'pmc merged villages dp plan', 'pmc 9 villages draft dp', 'धायरी विकास आराखडा', 'धायरी डीपी प्लॅन'],
+    intro:
+      'Dhayari is a residential village off Sinhagad Road in south-west Pune, near Narhe. It is one of the villages merged into Pune Municipal Corporation (PMC) limits in 2017, and PMC has prepared a separate Draft Development Plan for these merged villages, apart from the sanctioned 2017 Pune DP. This page opens that draft plan zoomed to Dhayari as an interactive overlay on satellite imagery, so you can read the proposed land-use zone, reservations and DP road lines for any plot.',
+    paragraphs: [
+      'मराठी: धायरी — पुणे महानगरपालिकेत समाविष्ट गावांचा प्रारूप विकास आराखडा (डीपी प्लॅन) २०२६ येथे नकाशावर पाहा: प्रस्तावित झोन, आरक्षणे आणि डीपी रस्ते.',
+      'Because this is a draft, the zones, reservations and road lines for Dhayari can still change before the State Government sanctions the plan. The current stage of the draft and the latest news are kept in one place, the “PMC 9 merged villages — Draft DP 2026” section of the Pune DP page; confirm the final position with PMC before relying on a zone for any decision.',
+      'Browsing Dhayari is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass, the same pass that covers the sanctioned Pune DP.',
+    ],
+  },
+  'pune-dp-plan/ambegaon-bk-draft-dp-2026': {
+    pageTitle: 'Ambegaon Bk DP Plan 2026 (Draft) — PMC merged villages map',
+    description:
+      'Ambegaon Bk draft DP plan 2026 map: PMC’s Draft Development Plan for the merged villages — proposed zones, reservations and DP roads. आंबेगाव बुद्रुक विकास आराखडा.',
+    keywords: ['ambegaon bk draft dp plan', 'ambegaon bk dp plan 2026', 'ambegaon bk draft development plan', 'ambegaon bk dp plan', 'ambegaon bk dp road', 'pmc merged villages dp plan', 'pmc 9 villages draft dp', 'आंबेगाव बुद्रुक विकास आराखडा', 'आंबेगाव बुद्रुक डीपी प्लॅन'],
+    intro:
+      'Ambegaon Bk is Ambegaon Budruk, a residential village in south Pune between Katraj and Narhe. It is one of the villages merged into Pune Municipal Corporation (PMC) limits in 2017, and PMC has prepared a separate Draft Development Plan for these merged villages, apart from the sanctioned 2017 Pune DP. This page opens that draft plan zoomed to Ambegaon Bk as an interactive overlay on satellite imagery, so you can read the proposed land-use zone, reservations and DP road lines for any plot.',
+    paragraphs: [
+      'मराठी: आंबेगाव बुद्रुक — पुणे महानगरपालिकेत समाविष्ट गावांचा प्रारूप विकास आराखडा (डीपी प्लॅन) २०२६ येथे नकाशावर पाहा: प्रस्तावित झोन, आरक्षणे आणि डीपी रस्ते.',
+      'Because this is a draft, the zones, reservations and road lines for Ambegaon Bk can still change before the State Government sanctions the plan. The current stage of the draft and the latest news are kept in one place, the “PMC 9 merged villages — Draft DP 2026” section of the Pune DP page; confirm the final position with PMC before relying on a zone for any decision.',
+      'Browsing Ambegaon Bk is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass, the same pass that covers the sanctioned Pune DP.',
+    ],
+  },
+  'pune-dp-plan/ambegaon-kh-draft-dp-2026': {
+    pageTitle: 'Ambegaon Kh DP Plan 2026 (Draft) — PMC merged villages map',
+    description:
+      'Ambegaon Kh draft DP plan 2026 map: PMC’s Draft Development Plan for the merged villages — proposed zones, reservations and DP roads. आंबेगाव खुर्द विकास आराखडा.',
+    keywords: ['ambegaon kh draft dp plan', 'ambegaon kh dp plan 2026', 'ambegaon kh draft development plan', 'ambegaon kh dp plan', 'ambegaon kh dp road', 'pmc merged villages dp plan', 'pmc 9 villages draft dp', 'आंबेगाव खुर्द विकास आराखडा', 'आंबेगाव खुर्द डीपी प्लॅन'],
+    intro:
+      'Ambegaon Kh is Ambegaon Khurd, a residential village in south Pune next to Ambegaon Budruk, near Katraj. It is one of the villages merged into Pune Municipal Corporation (PMC) limits in 2017, and PMC has prepared a separate Draft Development Plan for these merged villages, apart from the sanctioned 2017 Pune DP. This page opens that draft plan zoomed to Ambegaon Kh as an interactive overlay on satellite imagery, so you can read the proposed land-use zone, reservations and DP road lines for any plot.',
+    paragraphs: [
+      'मराठी: आंबेगाव खुर्द — पुणे महानगरपालिकेत समाविष्ट गावांचा प्रारूप विकास आराखडा (डीपी प्लॅन) २०२६ येथे नकाशावर पाहा: प्रस्तावित झोन, आरक्षणे आणि डीपी रस्ते.',
+      'Because this is a draft, the zones, reservations and road lines for Ambegaon Kh can still change before the State Government sanctions the plan. The current stage of the draft and the latest news are kept in one place, the “PMC 9 merged villages — Draft DP 2026” section of the Pune DP page; confirm the final position with PMC before relying on a zone for any decision.',
+      'Browsing Ambegaon Kh is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass, the same pass that covers the sanctioned Pune DP.',
+    ],
+  },
+  'pune-dp-plan/mundhwa-keshav-nagar-draft-dp-2026': {
+    pageTitle: 'Keshav Nagar DP Plan 2026 (Draft) — PMC merged villages map',
+    description:
+      'Mundhwa (Keshav Nagar) draft DP plan 2026 map: PMC’s Draft Development Plan for the merged villages — proposed zones, reservations and DP roads. मुंढवा (केशवनगर) विकास आराखडा.',
+    keywords: ['keshav nagar draft dp plan', 'keshav nagar dp plan 2026', 'keshav nagar draft development plan', 'keshav nagar dp plan', 'keshav nagar dp road', 'pmc merged villages dp plan', 'pmc 9 villages draft dp', 'मुंढवा (केशवनगर) विकास आराखडा', 'मुंढवा (केशवनगर) डीपी प्लॅन'],
+    intro:
+      'Mundhwa (Keshav Nagar) is the Keshav Nagar part of Mundhwa in east Pune, on the Mula-Mutha river near Kharadi. It is one of the villages merged into Pune Municipal Corporation (PMC) limits in 2017, and PMC has prepared a separate Draft Development Plan for these merged villages, apart from the sanctioned 2017 Pune DP. This page opens that draft plan zoomed to Mundhwa (Keshav Nagar) as an interactive overlay on satellite imagery, so you can read the proposed land-use zone, reservations and DP road lines for any plot.',
+    paragraphs: [
+      'मराठी: मुंढवा (केशवनगर) — पुणे महानगरपालिकेत समाविष्ट गावांचा प्रारूप विकास आराखडा (डीपी प्लॅन) २०२६ येथे नकाशावर पाहा: प्रस्तावित झोन, आरक्षणे आणि डीपी रस्ते.',
+      'Because this is a draft, the zones, reservations and road lines for Mundhwa (Keshav Nagar) can still change before the State Government sanctions the plan. The current stage of the draft and the latest news are kept in one place, the “PMC 9 merged villages — Draft DP 2026” section of the Pune DP page; confirm the final position with PMC before relying on a zone for any decision.',
+      'Browsing Mundhwa (Keshav Nagar) is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass, the same pass that covers the sanctioned Pune DP.',
+    ],
+  },
+  'pune-dp-plan/hadapsar-sade-satra-nali-draft-dp-2026': {
+    pageTitle: 'Sade Satra Nali DP Plan 2026 (Draft) — PMC merged villages map',
+    description:
+      'Hadapsar (Sade Satra Nali) draft DP plan 2026 map: PMC’s Draft Development Plan for the merged villages — proposed zones, reservations and DP roads. हडपसर (साडेसतरा नळी) विकास आराखडा.',
+    keywords: ['sade satra nali draft dp plan', 'sade satra nali dp plan 2026', 'sade satra nali draft development plan', 'sade satra nali dp plan', 'sade satra nali dp road', 'pmc merged villages dp plan', 'pmc 9 villages draft dp', 'हडपसर (साडेसतरा नळी) विकास आराखडा', 'हडपसर (साडेसतरा नळी) डीपी प्लॅन'],
+    intro:
+      'Hadapsar (Sade Satra Nali) is the Sade Satra Nali part of Hadapsar in east Pune, off Magarpatta and Manjari Road. It is one of the villages merged into Pune Municipal Corporation (PMC) limits in 2017, and PMC has prepared a separate Draft Development Plan for these merged villages, apart from the sanctioned 2017 Pune DP. This page opens that draft plan zoomed to Hadapsar (Sade Satra Nali) as an interactive overlay on satellite imagery, so you can read the proposed land-use zone, reservations and DP road lines for any plot.',
+    paragraphs: [
+      'मराठी: हडपसर (साडेसतरा नळी) — पुणे महानगरपालिकेत समाविष्ट गावांचा प्रारूप विकास आराखडा (डीपी प्लॅन) २०२६ येथे नकाशावर पाहा: प्रस्तावित झोन, आरक्षणे आणि डीपी रस्ते.',
+      'Because this is a draft, the zones, reservations and road lines for Hadapsar (Sade Satra Nali) can still change before the State Government sanctions the plan. The current stage of the draft and the latest news are kept in one place, the “PMC 9 merged villages — Draft DP 2026” section of the Pune DP page; confirm the final position with PMC before relying on a zone for any decision.',
+      'Browsing Hadapsar (Sade Satra Nali) is free up to zoom level 14; the higher-detail DP tiles unlock with a 7-day Pune access pass, the same pass that covers the sanctioned Pune DP.',
+    ],
+  },
 };
 
 export type SubLocationLink = { label: string; href: string };
@@ -579,6 +702,48 @@ export type SubLocationLink = { label: string; href: string };
  * page at 2.0% CTR while the Kalyan hub converts at 13.4%).
  */
 export const SUBLOCATION_LINKS: Record<string, SubLocationLink[]> = {
+  'pune-dp-plan/lohegaon-draft-dp-2026': [
+    { label: 'PMC 9 merged villages — Draft DP 2026: status, latest updates and all 9 villages', href: '/pune-dp-plan/#merged-villages-draft-dp' },
+    { label: 'Lohegaon DP Plan — the Lohegaon locality page', href: '/pune-dp-plan/lohegaon/' },
+  ],
+  'pune-dp-plan/undri-draft-dp-2026': [
+    { label: 'PMC 9 merged villages — Draft DP 2026: status, latest updates and all 9 villages', href: '/pune-dp-plan/#merged-villages-draft-dp' },
+  ],
+  'pune-dp-plan/shivane-draft-dp-2026': [
+    { label: 'PMC 9 merged villages — Draft DP 2026: status, latest updates and all 9 villages', href: '/pune-dp-plan/#merged-villages-draft-dp' },
+  ],
+  'pune-dp-plan/uttamnagar-draft-dp-2026': [
+    { label: 'PMC 9 merged villages — Draft DP 2026: status, latest updates and all 9 villages', href: '/pune-dp-plan/#merged-villages-draft-dp' },
+  ],
+  'pune-dp-plan/dhayari-draft-dp-2026': [
+    { label: 'PMC 9 merged villages — Draft DP 2026: status, latest updates and all 9 villages', href: '/pune-dp-plan/#merged-villages-draft-dp' },
+    { label: 'Dhayari DP Plan — the Dhayari locality page', href: '/pune-dp-plan/dhayari/' },
+  ],
+  'pune-dp-plan/ambegaon-bk-draft-dp-2026': [
+    { label: 'PMC 9 merged villages — Draft DP 2026: status, latest updates and all 9 villages', href: '/pune-dp-plan/#merged-villages-draft-dp' },
+  ],
+  'pune-dp-plan/ambegaon-kh-draft-dp-2026': [
+    { label: 'PMC 9 merged villages — Draft DP 2026: status, latest updates and all 9 villages', href: '/pune-dp-plan/#merged-villages-draft-dp' },
+  ],
+  'pune-dp-plan/mundhwa-keshav-nagar-draft-dp-2026': [
+    { label: 'PMC 9 merged villages — Draft DP 2026: status, latest updates and all 9 villages', href: '/pune-dp-plan/#merged-villages-draft-dp' },
+  ],
+  'pune-dp-plan/hadapsar-sade-satra-nali-draft-dp-2026': [
+    { label: 'PMC 9 merged villages — Draft DP 2026: status, latest updates and all 9 villages', href: '/pune-dp-plan/#merged-villages-draft-dp' },
+    { label: 'Hadapsar DP Plan — the Hadapsar locality page', href: '/pune-dp-plan/hadapsar/' },
+  ],
+  'pune-dp-plan/lohegaon': [
+    { label: 'Lohegaon Draft DP 2026 — the PMC draft plan for the merged villages', href: '/pune-dp-plan/lohegaon-draft-dp-2026/' },
+    { label: 'PMC 9 merged villages — Draft DP 2026: status and latest updates', href: '/pune-dp-plan/#merged-villages-draft-dp' },
+  ],
+  'pune-dp-plan/dhayari': [
+    { label: 'Dhayari Draft DP 2026 — the PMC draft plan for the merged villages', href: '/pune-dp-plan/dhayari-draft-dp-2026/' },
+    { label: 'PMC 9 merged villages — Draft DP 2026: status and latest updates', href: '/pune-dp-plan/#merged-villages-draft-dp' },
+  ],
+  'pune-dp-plan/hadapsar': [
+    { label: 'Hadapsar (Sade Satra Nali) Draft DP 2026 — the PMC draft plan for the merged villages', href: '/pune-dp-plan/hadapsar-sade-satra-nali-draft-dp-2026/' },
+    { label: 'PMC 9 merged villages — Draft DP 2026: status and latest updates', href: '/pune-dp-plan/#merged-villages-draft-dp' },
+  ],
   'pune-dp-plan/pimpri-chinchwad-municipal-corporation': [
     { label: 'PCMC Development Plan 2025 (Draft) — full plan overview, key facts and FAQs', href: '/pcmc-development-plan/' },
     { label: 'Pune (PMC) Development Plan — the adjoining city', href: '/pune-dp-plan/' },
