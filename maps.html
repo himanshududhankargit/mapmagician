@@ -1115,6 +1115,7 @@
         .pd-dot { width:8px; height:8px; border-radius:50%; background:#ccc; transition:background 0.2s; }
         .pd-dot-active { background:#00796B; }
         .pd-app-hint-dots { display:flex; justify-content:center; gap:8px; margin-top:10px; }
+        .pd-app-hint-dots:empty { display:none; }
         .pd-app-hint-dot { width:8px; height:8px; border-radius:50%; background:#cfd8dc; cursor:pointer; transition:background 0.2s, transform 0.2s; }
         .pd-app-hint-dot:hover { background:#b0bec5; }
         .pd-app-hint-dot-active { background:#00796B; transform:scale(1.2); }
@@ -1242,11 +1243,133 @@
         .pd-app-hints-row::-webkit-scrollbar { display:none; }
         .pd-app-hints-row .pd-mobile-hint { flex:0 0 100%; scroll-snap-align:start; min-width:0; box-sizing:border-box; }
         @media (min-width:521px) { .pd-app-hints-row .pd-mobile-hint { flex:0 0 calc(50% - 5px); } }
-        @media (min-width:521px) { #pd-app-hint-dots { display:none; } }
         /* Village dialog is only 400px wide — force one-hint-at-a-time regardless of viewport */
         #village-app-hints-scroll .pd-mobile-hint { flex:0 0 100% !important; }
         .pd-support { display:block; margin:12px auto 0; padding:6px 14px; background:#E3F2FD; border:1px solid #90CAF9; border-radius:999px; color:#1565C0; font-size:12px; font-weight:600; cursor:pointer; width:fit-content; max-width:100%; text-align:center; transition:background 0.15s, border-color 0.15s; font-family:inherit; white-space:nowrap; }
         .pd-support:hover { background:#BBDEFB; border-color:#64B5F6; color:#0D47A1; }
+        /* 229: "Phone or iPhone?" hint card + the "Works on your phone" sheet (#mweb-overlay).
+           Visitors tapped "Prefer mobile? -> Google Play" believing the Android app was the only
+           way to use a pass on a phone. Every Play link on this page now opens the sheet first:
+           the website works in any phone browser with the same Google login, and the app is a
+           separate purchase. "I still want the Android app" goes on to the store. */
+        .pd-web-icon { display:flex; align-items:center; justify-content:center; background:#E0F2F1; box-shadow:none; }
+        .pd-web-btn { color:#00695C; border-color:#B2DFDB; font-family:inherit; cursor:pointer; }
+        .pd-web-btn:hover { background:#E0F2F1; }
+        /* A touch phone gets no Windows-app card: it is the one device that can't use it. */
+        @media (pointer:coarse) and (max-width:520px) { .pd-hint-desktop { display:none !important; } }
+        /* Wide price dialog: the three cards side by side as icon | title, text, button. */
+        @media (min-width:640px) {
+            #pd-app-hints-scroll .pd-mobile-hint { flex:1 1 0; display:grid; grid-template-columns:32px minmax(0,1fr); column-gap:10px; row-gap:8px; align-items:start; padding:10px 12px; }
+            #pd-app-hints-scroll .pd-app-icon { width:32px; height:32px; }
+            #pd-app-hints-scroll .pd-play-btn { grid-column:2; justify-self:start; }
+        }
+        /* 229: on a phone (or any short screen) the WHOLE price dialog scrolls and only the
+           Try Demo / Not now row stays pinned. Before, the header, that row and the app-store
+           footer were all pinned: on live 228 they took 58% of a 390x664 iPhone and 73% of a
+           360x640 Android, leaving the plan cards a 262px / 162px window with Subscribe and
+           Get 7-Day Access below it. The footer now scrolls in under the cards. */
+        @media (max-width:520px), (max-height:600px) {
+            #zoom-restrict-overlay .zoom-dialog { overflow-y:auto; overscroll-behavior:contain; }
+            #zoom-restrict-overlay .pd-header,
+            #zoom-restrict-overlay .pd-body,
+            #zoom-restrict-overlay .pd-footer { flex:none; }
+            #zoom-restrict-overlay .pd-body { overflow:visible; }
+            #zoom-restrict-overlay .pd-dismiss-row { position:sticky; bottom:0; z-index:3; flex:none; margin-top:0; padding-top:8px; padding-bottom:8px; background:#fff; box-shadow:0 -8px 12px -10px rgba(0,0,0,0.25); }
+        }
+        @media (max-width:520px) { #zoom-restrict-overlay .pd-header { padding:16px 40px 14px; } }
+        /* One line for the three pinned buttons on a 360px phone (they wrapped to two). */
+        @media (max-width:400px) {
+            .pd-dismiss-row { gap:6px; padding-left:8px; padding-right:8px; }
+            .pd-try-demo { padding:8px 11px; font-size:12px; gap:5px; }
+            .pd-dismiss-row .pd-cancel { padding:8px 8px; font-size:12.5px; }
+        }
+        #mweb-overlay { z-index:4100; }
+        #mweb-overlay .zoom-dialog { position:relative; max-width:680px; width:calc(100% - 24px); margin:auto; text-align:left; }
+        .mweb-x { position:absolute; top:10px; right:10px; z-index:5; width:32px; height:32px; border:none; border-radius:50%; background:rgba(255,255,255,0.92); color:#455A64; font-size:20px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; box-shadow:0 1px 4px rgba(0,0,0,0.18); }
+        .mweb-x:hover { background:#FFEBEE; color:#B71C1C; }
+        .mweb-grid { display:grid; grid-template-columns:250px minmax(0,1fr); grid-template-rows:auto 1fr; grid-template-areas:"stage head" "stage body"; }
+        .mweb-stage { grid-area:stage; display:flex; align-items:center; justify-content:center; padding:26px 20px; background:linear-gradient(160deg,#00796B 0%,#004D40 100%); }
+        .mweb-head { grid-area:head; padding:26px 52px 0 24px; }
+        .mweb-body { grid-area:body; display:flex; flex-direction:column; gap:12px; padding:14px 24px 18px; }
+        .mweb-kicker { margin-bottom:6px; font-size:11px; font-weight:800; letter-spacing:1.4px; text-transform:uppercase; color:#00796B; }
+        #mweb-overlay h3 { margin:0; font-size:21px; line-height:1.25; font-weight:800; color:#14231F; }
+        .mweb-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; font-size:14px; color:#37474F; }
+        .mweb-list li { display:flex; gap:9px; align-items:flex-start; line-height:1.4; }
+        .mweb-list svg { flex-shrink:0; margin-top:2px; color:#2E7D32; }
+        .mweb-qr { display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid #E3E8E6; border-radius:12px; background:#F4F8F7; font-size:13px; line-height:1.45; color:#3D4A46; }
+        .mweb-qr svg { flex-shrink:0; width:84px; height:84px; border-radius:6px; }
+        .mweb-qr strong { display:block; margin-bottom:2px; font-size:14px; color:#14231F; }
+        /* 230: install as a web app (Android phones; see the sheet's JS for why not iPhone). */
+        .mweb-install { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid #B2DFDB; border-radius:12px; background:#F0FAF8; }
+        .mweb-install[hidden] { display:none; }
+        .mweb-install-ic { flex:none; width:34px; height:34px; border-radius:9px; background:#00695C; display:flex; align-items:center; justify-content:center; }
+        .mweb-install-txt { flex:1; min-width:0; font-size:12.5px; line-height:1.4; color:#3D4A46; }
+        .mweb-install-txt strong { display:block; font-size:14px; color:#14231F; }
+        .mweb-install-btn { flex:none; min-height:38px; padding:8px 16px; border:none; border-radius:10px; background:#00796B; color:#fff; font:inherit; font-size:13.5px; font-weight:700; cursor:pointer; }
+        .mweb-install-btn:hover { background:#00695C; }
+        .mweb-install-btn[hidden] { display:none; }
+        .mweb-install.mweb-install-done { border-color:#A5D6A7; background:#E8F5E9; }
+        /* iPhone / iPad (html.mm-ios, set by maps1-app.js): no Android-app card or link. */
+        .mm-ios .pd-hint-android, .mm-ios .mweb-play { display:none !important; }
+        .mweb-warn { padding:10px 12px; border-left:3px solid #f9a825; border-radius:8px; background:#fff8e1; font-size:13px; line-height:1.45; color:#5d4037; }
+        .mweb-go { width:100%; min-height:48px; padding:10px 14px; border:none; border-radius:12px; background:#0E5E52; color:#fff; font:inherit; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(14,94,82,0.25); }
+        .mweb-go:hover { background:#0B4E44; }
+        .mweb-play { align-self:center; display:inline-flex; align-items:center; gap:7px; margin-top:-4px; padding:6px 8px; font-size:13px; font-weight:600; color:#1B5E20; text-decoration:none; }
+        .mweb-play:hover { text-decoration:underline; }
+        /* Copy for a phone vs a computer, and for "came from a Play link" vs "from the card". */
+        #mweb-overlay.mweb-on-phone .mweb-pc, #mweb-overlay:not(.mweb-on-phone) .mweb-ph,
+        #mweb-overlay.mweb-from-play .mweb-k-web, #mweb-overlay:not(.mweb-from-play) .mweb-k-play { display:none !important; }
+        /* The phone: real captures of this site (Thane, z13, 390x760 iPhone viewport) under a
+           CSS frame. Overlays are placed in % of the capture, sizes in cqw of the screen. */
+        .mweb-phone { position:relative; flex:none; width:200px; padding:6px; border-radius:38px; background:#15181b;
+            box-shadow:0 0 0 2px #aeb5bc, 0 0 0 3.5px #6b7279, 0 22px 44px rgba(0,0,0,0.45); }
+        .mweb-phone::before, .mweb-phone::after { content:''; position:absolute; width:3px; border-radius:2px; background:#8f979e; }
+        .mweb-phone::before { left:-5px; top:22%; height:12%; box-shadow:0 -34px 0 0 #8f979e; }
+        .mweb-phone::after { right:-5px; top:28%; height:16%; }
+        .mweb-screen { position:relative; aspect-ratio:390/844; border-radius:32px; overflow:hidden; background:#000; container-type:inline-size; }
+        .mweb-status { position:absolute; left:0; right:0; top:0; height:5.22%; display:flex; align-items:center; justify-content:space-between; padding:0 9% 0 11%; background:#fff; color:#111; font-size:4cqw; font-weight:700; }
+        .mweb-status svg { height:3.6cqw; width:auto; }
+        .mweb-island { position:absolute; left:50%; top:1.1%; width:30%; height:3.3%; transform:translateX(-50%); border-radius:999px; background:#000; }
+        .mweb-view { position:absolute; left:0; right:0; top:5.22%; height:90.05%; overflow:hidden; background:#cfd8dc; }
+        .mweb-shot { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+        .mweb-plan { opacity:0; }
+        .mweb-url { position:absolute; left:0; right:0; bottom:0; height:4.73%; display:flex; align-items:flex-start; justify-content:center; background:#f2f2f7; }
+        .mweb-url span { display:inline-flex; align-items:center; gap:1.2cqw; margin-top:0.6%; padding:0.5cqw 5cqw; border-radius:999px; background:#fff; font-size:3.4cqw; color:#333; box-shadow:0 0 0 1px rgba(0,0,0,0.06); }
+        .mweb-url svg { width:2.8cqw; height:2.8cqw; }
+        .mweb-toast { position:absolute; left:50%; top:13.6%; display:inline-flex; align-items:center; gap:1.6cqw; padding:1.8cqw 3.6cqw; border-radius:999px; background:#0B3F37; color:#fff; font-size:3.7cqw; font-weight:700; white-space:nowrap; box-shadow:0 1cqw 3cqw rgba(0,0,0,0.35); opacity:0; transform:translate(-50%,-40%); }
+        .mweb-toast svg, .mweb-signed svg { width:3.6cqw; height:3.6cqw; flex:none; }
+        .mweb-signed { position:absolute; left:26.7%; top:82.4%; width:46.6%; height:5.9%; display:flex; align-items:center; justify-content:center; gap:1.6cqw; border-radius:999px; background:#2E7D32; color:#fff; font-size:3.9cqw; font-weight:700; white-space:nowrap; box-shadow:0 1cqw 3cqw rgba(0,0,0,0.3); opacity:0; transform:scale(0.85); }
+        .mweb-tap { position:absolute; left:50%; top:85.4%; width:12cqw; height:12cqw; margin:-6cqw 0 0 -6cqw; border-radius:50%; background:rgba(255,255,255,0.75); box-shadow:0 0 0 2px rgba(0,0,0,0.15); opacity:0; transform:scale(0.4); }
+        /* A 10 s story, restarted on each open: the plan appears, the visitor taps Sign in
+           with Google, it turns to "Signed in", and "Your pass works here too" drops in. */
+        .mweb-run .mweb-plan { animation:mweb-plan 10s ease-in-out infinite; }
+        .mweb-run .mweb-tap { animation:mweb-tap 10s ease-out infinite; }
+        .mweb-run .mweb-signed { animation:mweb-signed 10s ease-out infinite; }
+        .mweb-run .mweb-toast { animation:mweb-toast 10s ease-out infinite; }
+        @keyframes mweb-plan { 0%, 8% { opacity:0; } 20%, 90% { opacity:1; } 100% { opacity:0; } }
+        @keyframes mweb-tap { 0%, 30% { opacity:0; transform:scale(0.4); } 32% { opacity:1; transform:scale(0.6); } 37%, 100% { opacity:0; transform:scale(1.6); } }
+        @keyframes mweb-signed { 0%, 34% { opacity:0; transform:scale(0.85); } 38%, 92% { opacity:1; transform:scale(1); } 97%, 100% { opacity:0; transform:scale(1); } }
+        @keyframes mweb-toast { 0%, 44% { opacity:0; transform:translate(-50%,-40%); } 49%, 92% { opacity:1; transform:translate(-50%,0); } 97%, 100% { opacity:0; transform:translate(-50%,0); } }
+        @media (prefers-reduced-motion: reduce) {
+            .mweb-run .mweb-plan, .mweb-run .mweb-tap, .mweb-run .mweb-signed, .mweb-run .mweb-toast { animation:none; }
+            .mweb-plan, .mweb-signed { opacity:1; transform:none; }
+            .mweb-toast { opacity:1; transform:translate(-50%,0); }
+        }
+        /* Phone: the phone mock beside the heading in a teal band, everything else below. */
+        @media (max-width:560px) {
+            #mweb-overlay .zoom-dialog { width:calc(100% - 20px); }
+            .mweb-grid { grid-template-columns:124px minmax(0,1fr); grid-template-rows:auto auto; grid-template-areas:"stage head" "body body"; }
+            .mweb-stage { padding:12px 4px 12px 14px; background:#00695C; }
+            .mweb-head { display:flex; flex-direction:column; justify-content:center; padding:16px 44px 16px 14px; background:#00695C; }
+            .mweb-kicker { color:#B2DFDB; font-size:10px; letter-spacing:1px; }
+            #mweb-overlay h3 { font-size:18px; color:#fff; }
+            .mweb-phone { width:104px; padding:4px; border-radius:22px; box-shadow:0 0 0 1.5px #aeb5bc, 0 10px 22px rgba(0,0,0,0.4); }
+            .mweb-phone::before, .mweb-phone::after { display:none; }
+            .mweb-screen { border-radius:19px; }
+            .mweb-body { gap:9px; padding:12px 16px 10px; }
+            .mweb-list { font-size:13.5px; gap:7px; }
+            .mweb-warn { font-size:12.5px; }
+        }
         #addon-panel-search::placeholder { color:#c8e6c9; opacity:1; }
         .unlock-toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:#2E7D32; color:#fff; padding:12px 24px; border-radius:8px; font-size:14px; font-weight:500; box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:4000; opacity:0; transition:opacity 0.3s,transform 0.3s; pointer-events:none; font-family:'Segoe UI',Roboto,Arial,sans-serif; display:flex; align-items:center; gap:8px; }
         .unlock-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
@@ -2170,7 +2293,7 @@
         </div>
         <div class="layer-section">
             <div class="layer-section-title">Get the App</div>
-            <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;text-decoration:none;font-size:14px;color:#333;font-family:inherit;text-align:left;">
+            <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener" data-android-app style="display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #dadce0;border-radius:8px;background:#fff;text-decoration:none;font-size:14px;color:#333;font-family:inherit;text-align:left;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="#1B5E20" style="flex-shrink:0;"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
                 Android &mdash; Google Play
             </a>
@@ -2432,7 +2555,7 @@
                     <div style="font-size:12px;color:#666;margin-top:1px;">Native Windows desktop app</div>
                 </div>
             </a>
-            <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid #C8E6C9;border-radius:12px;background:#F8FFF8;text-decoration:none;color:#333;margin-bottom:10px;transition:background 0.15s;">
+            <a href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener" data-android-app style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid #C8E6C9;border-radius:12px;background:#F8FFF8;text-decoration:none;color:#333;margin-bottom:10px;transition:background 0.15s;">
                 <div style="width:40px;height:40px;border-radius:10px;background:#1B5E20;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
                 </div>
@@ -2567,17 +2690,24 @@
             <!-- Footer: mobile hint + support -->
             <div class="pd-footer">
                 <div class="pd-app-hints-row" id="pd-app-hints-scroll">
-                    <div class="pd-mobile-hint">
+                    <div class="pd-mobile-hint pd-hint-web">
+                        <span class="pd-app-icon pd-web-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00796B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></span>
+                        <div class="pd-mobile-hint-text">
+                            <strong>Phone or iPhone?</strong>Use it in your phone&rsquo;s browser or install it as a web app &mdash; same login.
+                        </div>
+                        <button class="pd-play-btn pd-web-btn" type="button" data-mweb-open>See how</button>
+                    </div>
+                    <div class="pd-mobile-hint pd-hint-android">
                         <picture><source srcset="AssetsGIS/image-1.webp" type="image/webp"><img class="pd-app-icon" src="AssetsGIS/image-1.png" alt="MapMagician app icon" width="36" height="36" loading="lazy" decoding="async"></picture>
                         <div class="pd-mobile-hint-text">
-                            <strong>Prefer mobile?</strong>Get the Android app for on-the-go access.
+                            <strong>Prefer the Android app?</strong>A separate app with its own purchase.
                         </div>
-                        <a class="pd-play-btn" href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener">
+                        <a class="pd-play-btn" href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener" data-android-app>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="#1B5E20"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
                             Google Play
                         </a>
                     </div>
-                    <div class="pd-mobile-hint">
+                    <div class="pd-mobile-hint pd-hint-desktop">
                         <picture><source srcset="AssetsGIS/image-1.webp" type="image/webp"><img class="pd-app-icon" src="AssetsGIS/image-1.png" alt="MapMagician app icon" width="36" height="36" loading="lazy" decoding="async"></picture>
                         <div class="pd-mobile-hint-text">
                             <strong>Want desktop app?</strong>Get MapMagician from the Microsoft Store.
@@ -2588,11 +2718,59 @@
                         </a>
                     </div>
                 </div>
-                <div class="pd-app-hint-dots" id="pd-app-hint-dots">
-                    <span class="pd-app-hint-dot pd-app-hint-dot-active" data-idx="0"></span>
-                    <span class="pd-app-hint-dot" data-idx="1"></span>
-                </div>
+                <div class="pd-app-hint-dots" id="pd-app-hint-dots"></div>
                 <button class="pd-support" id="zoom-restrict-support">Need help? Contact Support</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- "Works on your phone" sheet (staging 229). Opened by the "Phone or iPhone?" hint card
+         and, FIRST, by every Google Play link on this page (click handler in maps1-app.js):
+         the website works in any phone browser with the same Google login, and the Android
+         app is a separate purchase. "I still want the Android app" goes on to the store.
+         The phone shows real captures of this site (AssetsGIS/mobile-web/, loaded on first
+         open). data-dismiss: the back-button observer collects it once at load. -->
+    <div class="zoom-dialog-overlay" id="mweb-overlay" data-dismiss="mweb-close" role="dialog" aria-modal="true" aria-labelledby="mweb-title">
+        <div class="zoom-dialog" style="padding:0;">
+            <button class="mweb-x" id="mweb-close" type="button" aria-label="Close">&times;</button>
+            <div class="mweb-grid">
+                <div class="mweb-stage" aria-hidden="true">
+                    <div class="mweb-phone">
+                        <div class="mweb-screen">
+                            <div class="mweb-view">
+                                <img class="mweb-shot" data-src="AssetsGIS/mobile-web/phone-base.webp" alt="" width="450" height="877" decoding="async">
+                                <img class="mweb-shot mweb-plan" data-src="AssetsGIS/mobile-web/phone-plan.webp" alt="" width="450" height="877" decoding="async">
+                                <span class="mweb-toast"><svg viewBox="0 0 24 24" fill="none" stroke="#A3E4CF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Your pass works here too</span>
+                                <span class="mweb-tap"></span>
+                                <span class="mweb-signed"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Signed in</span>
+                            </div>
+                            <div class="mweb-status"><span>9:41</span><svg viewBox="0 0 64 14" fill="#111"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6" width="3" height="8" rx="1"/><rect x="10" y="3" width="3" height="11" rx="1"/><rect x="15" y="0" width="3" height="14" rx="1"/><path d="M30 13.5l-2.6-3a3.6 3.6 0 0 1 5.2 0zM24.4 7.2a8.2 8.2 0 0 1 11.2 0l-1.6 1.8a5.8 5.8 0 0 0-8 0zM21.5 4a12.4 12.4 0 0 1 17 0l-1.6 1.8a10 10 0 0 0-13.8 0z"/><rect x="43" y="1.5" width="18" height="11" rx="3" fill="none" stroke="#111" stroke-width="1.4"/><rect x="45" y="3.5" width="12" height="7" rx="1.5"/><rect x="62" y="5" width="1.8" height="4" rx=".9"/></svg></div>
+                            <div class="mweb-island"></div>
+                            <div class="mweb-url"><span><svg viewBox="0 0 24 24" fill="#555"><path d="M17 9V7a5 5 0 0 0-10 0v2H5v13h14V9zm-8 0V7a3 3 0 0 1 6 0v2z"/></svg>mapmagician.in</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mweb-head">
+                    <div class="mweb-kicker"><span class="mweb-k-play">Before you install</span><span class="mweb-k-web">No app needed</span></div>
+                    <h3 id="mweb-title"><span class="mweb-pc">MapMagician works on your phone &mdash; in the browser</span><span class="mweb-ph">This website works right here on your phone</span></h3>
+                </div>
+                <div class="mweb-body">
+                    <ul class="mweb-list">
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Android or iPhone &mdash; Chrome, Safari or any browser</span></li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Sign in with the <strong>same Google account</strong></span></li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Your pass works on phone <strong>and</strong> computer &mdash; no app, nothing extra to pay</span></li>
+                        <li class="mweb-pc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>On Android it can also be <strong>installed as a web app</strong> &mdash; no Play Store needed</span></li>
+                    </ul>
+                    <div class="mweb-qr mweb-pc"><svg viewBox="-2 -2 33 33" width="112" height="112" shape-rendering="crispEdges" aria-hidden="true"><rect x="-2" y="-2" width="33" height="33" fill="#fff"/><path fill="#0B3F37" d="M0 0h7v1h-7zM11 0h1v1h-1zM13 0h2v1h-2zM16 0h4v1h-4zM22 0h7v1h-7zM0 1h1v1h-1zM6 1h1v1h-1zM9 1h3v1h-3zM13 1h4v1h-4zM18 1h1v1h-1zM20 1h1v1h-1zM22 1h1v1h-1zM28 1h1v1h-1zM0 2h1v1h-1zM2 2h3v1h-3zM6 2h1v1h-1zM9 2h1v1h-1zM13 2h1v1h-1zM17 2h2v1h-2zM22 2h1v1h-1zM24 2h3v1h-3zM28 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM9 3h2v1h-2zM13 3h2v1h-2zM19 3h1v1h-1zM22 3h1v1h-1zM24 3h3v1h-3zM28 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM10 4h2v1h-2zM13 4h6v1h-6zM22 4h1v1h-1zM24 4h3v1h-3zM28 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM8 5h1v1h-1zM10 5h2v1h-2zM13 5h7v1h-7zM22 5h1v1h-1zM28 5h1v1h-1zM0 6h7v1h-7zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h7v1h-7zM11 7h1v1h-1zM14 7h2v1h-2zM17 7h1v1h-1zM0 8h1v1h-1zM3 8h1v1h-1zM5 8h2v1h-2zM8 8h1v1h-1zM10 8h1v1h-1zM15 8h2v1h-2zM19 8h1v1h-1zM21 8h1v1h-1zM23 8h1v1h-1zM2 9h2v1h-2zM8 9h1v1h-1zM14 9h1v1h-1zM16 9h1v1h-1zM20 9h3v1h-3zM25 9h1v1h-1zM28 9h1v1h-1zM0 10h1v1h-1zM3 10h4v1h-4zM9 10h1v1h-1zM18 10h2v1h-2zM21 10h2v1h-2zM25 10h3v1h-3zM1 11h1v1h-1zM3 11h1v1h-1zM7 11h2v1h-2zM10 11h2v1h-2zM14 11h3v1h-3zM18 11h1v1h-1zM20 11h1v1h-1zM23 11h2v1h-2zM26 11h2v1h-2zM0 12h2v1h-2zM3 12h1v1h-1zM5 12h4v1h-4zM10 12h1v1h-1zM12 12h1v1h-1zM17 12h1v1h-1zM20 12h3v1h-3zM25 12h1v1h-1zM27 12h2v1h-2zM0 13h1v1h-1zM3 13h2v1h-2zM7 13h2v1h-2zM10 13h3v1h-3zM19 13h3v1h-3zM23 13h1v1h-1zM0 14h1v1h-1zM3 14h6v1h-6zM10 14h1v1h-1zM16 14h1v1h-1zM20 14h1v1h-1zM22 14h1v1h-1zM25 14h4v1h-4zM2 15h1v1h-1zM4 15h2v1h-2zM9 15h1v1h-1zM13 15h3v1h-3zM17 15h1v1h-1zM19 15h1v1h-1zM25 15h1v1h-1zM27 15h1v1h-1zM0 16h2v1h-2zM4 16h4v1h-4zM9 16h2v1h-2zM13 16h3v1h-3zM17 16h2v1h-2zM20 16h2v1h-2zM23 16h1v1h-1zM27 16h1v1h-1zM1 17h2v1h-2zM4 17h2v1h-2zM7 17h1v1h-1zM10 17h1v1h-1zM12 17h1v1h-1zM16 17h2v1h-2zM22 17h2v1h-2zM25 17h1v1h-1zM28 17h1v1h-1zM0 18h1v1h-1zM2 18h2v1h-2zM6 18h1v1h-1zM11 18h3v1h-3zM16 18h2v1h-2zM22 18h2v1h-2zM27 18h2v1h-2zM4 19h1v1h-1zM10 19h1v1h-1zM12 19h2v1h-2zM17 19h6v1h-6zM27 19h2v1h-2zM0 20h1v1h-1zM3 20h2v1h-2zM6 20h2v1h-2zM10 20h1v1h-1zM12 20h1v1h-1zM14 20h3v1h-3zM20 20h5v1h-5zM26 20h1v1h-1zM8 21h2v1h-2zM11 21h1v1h-1zM13 21h1v1h-1zM19 21h2v1h-2zM24 21h1v1h-1zM26 21h3v1h-3zM0 22h7v1h-7zM9 22h1v1h-1zM11 22h1v1h-1zM13 22h2v1h-2zM16 22h1v1h-1zM20 22h1v1h-1zM22 22h1v1h-1zM24 22h1v1h-1zM27 22h1v1h-1zM0 23h1v1h-1zM6 23h1v1h-1zM8 23h4v1h-4zM13 23h1v1h-1zM18 23h1v1h-1zM20 23h1v1h-1zM24 23h4v1h-4zM0 24h1v1h-1zM2 24h3v1h-3zM6 24h1v1h-1zM9 24h1v1h-1zM11 24h2v1h-2zM14 24h1v1h-1zM17 24h1v1h-1zM20 24h5v1h-5zM27 24h2v1h-2zM0 25h1v1h-1zM2 25h3v1h-3zM6 25h1v1h-1zM8 25h4v1h-4zM13 25h2v1h-2zM17 25h1v1h-1zM19 25h1v1h-1zM22 25h1v1h-1zM24 25h4v1h-4zM0 26h1v1h-1zM2 26h3v1h-3zM6 26h1v1h-1zM11 26h2v1h-2zM14 26h1v1h-1zM16 26h3v1h-3zM24 26h3v1h-3zM28 26h1v1h-1zM0 27h1v1h-1zM6 27h1v1h-1zM9 27h1v1h-1zM11 27h2v1h-2zM14 27h2v1h-2zM17 27h4v1h-4zM22 27h1v1h-1zM24 27h1v1h-1zM27 27h1v1h-1zM0 28h7v1h-7zM8 28h1v1h-1zM10 28h1v1h-1zM14 28h1v1h-1zM16 28h2v1h-2zM20 28h2v1h-2zM23 28h2v1h-2zM27 28h1v1h-1z"/></svg><div><strong>Scan with your phone&rsquo;s camera</strong>or open <b>www.mapmagician.in</b> in its browser.</div></div>
+                    <div class="mweb-install mweb-ph" id="mweb-install" hidden>
+                        <span class="mweb-install-ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14"/></svg></span>
+                        <div class="mweb-install-txt"><strong>Install it as a web app</strong><span id="mweb-install-sub">Free &mdash; adds it to your home screen, same login.</span></div>
+                        <button class="mweb-install-btn" id="mweb-install-btn" type="button">Install</button>
+                    </div>
+                    <div class="mweb-warn">&#9888;&#65039; <strong>The Android app is a separate purchase.</strong> Website and app passes don&rsquo;t unlock each other.</div>
+                    <button class="mweb-go" id="mweb-continue" type="button"><span class="mweb-pc">Got it &mdash; I&rsquo;ll use the website</span><span class="mweb-ph">Got it &mdash; continue here</span></button>
+                    <a class="mweb-play" id="mweb-play" href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="#1B5E20"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>I still want the Android app (separate purchase)</a>
+                </div>
             </div>
         </div>
     </div>
@@ -2669,17 +2847,24 @@
             <!-- Footer: Android / Windows app hints (one-at-a-time, auto-cycles like DP dialog) -->
             <div class="pd-footer">
                 <div class="pd-app-hints-row" id="village-app-hints-scroll">
-                    <div class="pd-mobile-hint">
+                    <div class="pd-mobile-hint pd-hint-web">
+                        <span class="pd-app-icon pd-web-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00796B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></span>
+                        <div class="pd-mobile-hint-text">
+                            <strong>Phone or iPhone?</strong>Use it in your phone&rsquo;s browser or install it as a web app &mdash; same login.
+                        </div>
+                        <button class="pd-play-btn pd-web-btn" type="button" data-mweb-open>See how</button>
+                    </div>
+                    <div class="pd-mobile-hint pd-hint-android">
                         <picture><source srcset="AssetsGIS/image-1.webp" type="image/webp"><img class="pd-app-icon" src="AssetsGIS/image-1.png" alt="MapMagician app icon" width="36" height="36" loading="lazy" decoding="async"></picture>
                         <div class="pd-mobile-hint-text">
-                            <strong>Prefer mobile?</strong>Get the Android app for on-the-go access.
+                            <strong>Prefer the Android app?</strong>A separate app with its own purchase.
                         </div>
-                        <a class="pd-play-btn" href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener">
+                        <a class="pd-play-btn" href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener" data-android-app>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="#1B5E20"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
                             Google Play
                         </a>
                     </div>
-                    <div class="pd-mobile-hint">
+                    <div class="pd-mobile-hint pd-hint-desktop">
                         <picture><source srcset="AssetsGIS/image-1.webp" type="image/webp"><img class="pd-app-icon" src="AssetsGIS/image-1.png" alt="MapMagician app icon" width="36" height="36" loading="lazy" decoding="async"></picture>
                         <div class="pd-mobile-hint-text">
                             <strong>Want desktop app?</strong>Get MapMagician from the Microsoft Store.
@@ -2690,10 +2875,7 @@
                         </a>
                     </div>
                 </div>
-                <div class="pd-app-hint-dots" id="village-app-hint-dots">
-                    <span class="pd-app-hint-dot pd-app-hint-dot-active" data-idx="0"></span>
-                    <span class="pd-app-hint-dot" data-idx="1"></span>
-                </div>
+                <div class="pd-app-hint-dots" id="village-app-hint-dots"></div>
                 <button class="pd-support" id="village-support-btn">Need help? Contact Support</button>
             </div>
         </div>
@@ -3370,7 +3552,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps-app.js?v=228" defer></script>
+    <script src="maps-app.js?v=231" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
