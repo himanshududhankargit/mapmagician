@@ -642,7 +642,12 @@
         //       New "Phone or iPhone?" hint card beside the Android / Windows ones. On a phone
         //       the price dialog now scrolls as a whole with only Try Demo / Not now pinned
         //       (the pinned footer had hidden the Subscribe buttons on 360-390px phones).
-        var APP_VERSION = '229';
+        // 230 = The sheet shows on EVERY Google Play tap (229 skipped it after "I still want the
+        //       Android app", which read as "worked once"); on Android that link opens the Play
+        //       Store app via intent:// in the same tab instead of stacking play.google.com tabs.
+        //       "Install it as a web app" button on Android phones (browser install prompt, else
+        //       menu steps). iPhone: no Android-app card or link, no install offer.
+        var APP_VERSION = '230';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -4047,21 +4052,50 @@
             };
         }
 
-        // "Works on your phone" sheet (229) - the why is on #mweb-overlay in maps1.html.
+        // "Works on your phone" sheet (229-230) - the why is on #mweb-overlay in maps1.html.
         // Every Google Play link carries data-android-app: a plain click on one opens the sheet
-        // instead of the store. "I still want the Android app" opens the store and lets later
-        // Play clicks through for the rest of the session; a ctrl/middle click (new tab) always
-        // goes straight through. GA4: mweb_open / mweb_use_website / mweb_still_android.
+        // instead of the store, EVERY time (229 let later clicks skip it for the session, which
+        // read as "it only worked once"). "I still want the Android app" opens the Play Store
+        // APP on Android through intent:// in the same tab - 229's play.google.com new-tab link
+        // stacked up browser tabs and Chrome does not reliably hand a second new tab to the
+        // store app. Elsewhere it stays a normal web link. A ctrl/middle click on a Play link
+        // (new tab) always goes straight through.
+        // 230: "Install it as a web app" on Android phones: the browser's own install prompt when
+        // it has offered one (deferredInstallPrompt, captured in maps1.html), else the menu
+        // steps. Not offered on iPhone: a home-screen app there has its own storage (signed
+        // out) and the Google sign-in popup is untested in it. iPhone also gets no Android-app
+        // card or link (html.mm-ios).
+        // GA4: mweb_open / mweb_use_website / mweb_still_android / mweb_install {result}.
         (function () {
-            var SKIP_KEY = 'mm_mweb_android_ok';
+            var ua = navigator.userAgent || '';
+            var isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            var isAndroid = /Android/i.test(ua);
+            if (isIOS) document.documentElement.classList.add('mm-ios');
             var ov = document.getElementById('mweb-overlay');
             if (!ov) return;
+            var PLAY_INTENT = 'intent://details?id=com.himanshu.gis#Intent;scheme=market;package=com.android.vending;S.browser_fallback_url=' +
+                encodeURIComponent('https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN') + ';end';
             function onPhone() {
-                return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') ||
+                return /Android|iPhone|iPad|iPod/i.test(ua) ||
                     !!(window.matchMedia && matchMedia('(pointer: coarse) and (max-width: 900px)').matches);
             }
+            function installedApp() {
+                try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; }
+            }
             function track(name, params) { try { mmAnalytics.event(name, params || {}); } catch (e) {} }
+            var inst = document.getElementById('mweb-install');
+            var instSub = document.getElementById('mweb-install-sub');
+            var instBtn = document.getElementById('mweb-install-btn');
+            var INSTALL_SUB = instSub ? instSub.innerHTML : '';
+            function resetInstall() {
+                if (!inst) return;
+                inst.hidden = isIOS || !onPhone() || installedApp();
+                inst.classList.remove('mweb-install-done');
+                instSub.innerHTML = INSTALL_SUB;
+                instBtn.hidden = false;
+            }
             function openSheet(fromPlay, where) {
+                resetInstall();
                 Array.prototype.forEach.call(ov.querySelectorAll('img[data-src]'), function (im) {
                     im.src = im.getAttribute('data-src');
                     im.removeAttribute('data-src');
@@ -4082,7 +4116,6 @@
                 var where = host ? host.id : 'settings';
                 if (t.hasAttribute('data-mweb-open')) { e.preventDefault(); openSheet(false, where); return; }
                 if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
-                try { if (sessionStorage.getItem(SKIP_KEY) === '1') return; } catch (err) {}
                 e.preventDefault();
                 openSheet(true, where);
             });
@@ -4091,10 +4124,40 @@
                 track('mweb_use_website', {});
                 closeSheet();
             });
-            document.getElementById('mweb-play').addEventListener('click', function () {
-                try { sessionStorage.setItem(SKIP_KEY, '1'); } catch (e) {}
+            document.getElementById('mweb-play').addEventListener('click', function (e) {
                 track('mweb_still_android', {});
-                setTimeout(closeSheet, 0);
+                if (isAndroid) {
+                    // Same tab, so no pile of play.google.com tabs. The sheet closes a moment
+                    // later: closing pops a history entry, which must not cancel the hand-off.
+                    e.preventDefault();
+                    window.location.href = PLAY_INTENT;
+                    setTimeout(closeSheet, 1200);
+                } else {
+                    setTimeout(closeSheet, 0);
+                }
+            });
+            if (instBtn) instBtn.addEventListener('click', async function () {
+                var p = (typeof deferredInstallPrompt !== 'undefined') ? deferredInstallPrompt : null;
+                if (p) {
+                    deferredInstallPrompt = null;              // a prompt can be shown only once
+                    try {
+                        p.prompt();
+                        var choice = await p.userChoice;
+                        var outcome = choice && choice.outcome;
+                        track('mweb_install', { result: outcome || 'unknown' });
+                        if (outcome === 'accepted') {
+                            inst.classList.add('mweb-install-done');
+                            instSub.textContent = 'Installed \u2014 open MapMagician from your home screen.';
+                            instBtn.hidden = true;
+                        }
+                        return;
+                    } catch (err) {}
+                }
+                // No prompt from the browser (already offered and dismissed, not eligible yet, or
+                // a browser without one): the menu route always works.
+                track('mweb_install', { result: 'manual' });
+                instSub.innerHTML = 'Open the browser menu <b>&#8942;</b> and tap <b>Install app</b> or <b>Add to Home screen</b>.';
+                instBtn.hidden = true;
             });
             ov.addEventListener('click', function (e) { if (e.target === ov) closeSheet(); });
         })();

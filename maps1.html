@@ -1308,7 +1308,18 @@
         .mweb-qr { display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid #E3E8E6; border-radius:12px; background:#F4F8F7; font-size:13px; line-height:1.45; color:#3D4A46; }
         .mweb-qr svg { flex-shrink:0; width:84px; height:84px; border-radius:6px; }
         .mweb-qr strong { display:block; margin-bottom:2px; font-size:14px; color:#14231F; }
-        .mweb-tip { font-size:12.5px; line-height:1.45; color:#546E7A; }
+        /* 230: install as a web app (Android phones; see the sheet's JS for why not iPhone). */
+        .mweb-install { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid #B2DFDB; border-radius:12px; background:#F0FAF8; }
+        .mweb-install[hidden] { display:none; }
+        .mweb-install-ic { flex:none; width:34px; height:34px; border-radius:9px; background:#00695C; display:flex; align-items:center; justify-content:center; }
+        .mweb-install-txt { flex:1; min-width:0; font-size:12.5px; line-height:1.4; color:#3D4A46; }
+        .mweb-install-txt strong { display:block; font-size:14px; color:#14231F; }
+        .mweb-install-btn { flex:none; min-height:38px; padding:8px 16px; border:none; border-radius:10px; background:#00796B; color:#fff; font:inherit; font-size:13.5px; font-weight:700; cursor:pointer; }
+        .mweb-install-btn:hover { background:#00695C; }
+        .mweb-install-btn[hidden] { display:none; }
+        .mweb-install.mweb-install-done { border-color:#A5D6A7; background:#E8F5E9; }
+        /* iPhone / iPad (html.mm-ios, set by maps1-app.js): no Android-app card or link. */
+        .mm-ios .pd-hint-android, .mm-ios .mweb-play { display:none !important; }
         .mweb-warn { padding:10px 12px; border-left:3px solid #f9a825; border-radius:8px; background:#fff8e1; font-size:13px; line-height:1.45; color:#5d4037; }
         .mweb-go { width:100%; min-height:48px; padding:10px 14px; border:none; border-radius:12px; background:#0E5E52; color:#fff; font:inherit; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(14,94,82,0.25); }
         .mweb-go:hover { background:#0B4E44; }
@@ -1356,15 +1367,15 @@
         /* Phone: the phone mock beside the heading in a teal band, everything else below. */
         @media (max-width:560px) {
             #mweb-overlay .zoom-dialog { width:calc(100% - 20px); }
-            .mweb-grid { grid-template-columns:132px minmax(0,1fr); grid-template-rows:auto auto; grid-template-areas:"stage head" "body body"; }
-            .mweb-stage { padding:16px 4px 16px 14px; background:#00695C; }
+            .mweb-grid { grid-template-columns:124px minmax(0,1fr); grid-template-rows:auto auto; grid-template-areas:"stage head" "body body"; }
+            .mweb-stage { padding:12px 4px 12px 14px; background:#00695C; }
             .mweb-head { display:flex; flex-direction:column; justify-content:center; padding:16px 44px 16px 14px; background:#00695C; }
             .mweb-kicker { color:#B2DFDB; font-size:10px; letter-spacing:1px; }
             #mweb-overlay h3 { font-size:18px; color:#fff; }
-            .mweb-phone { width:112px; padding:4px; border-radius:22px; box-shadow:0 0 0 1.5px #aeb5bc, 0 10px 22px rgba(0,0,0,0.4); }
+            .mweb-phone { width:104px; padding:4px; border-radius:22px; box-shadow:0 0 0 1.5px #aeb5bc, 0 10px 22px rgba(0,0,0,0.4); }
             .mweb-phone::before, .mweb-phone::after { display:none; }
             .mweb-screen { border-radius:19px; }
-            .mweb-body { gap:10px; padding:14px 16px 12px; }
+            .mweb-body { gap:9px; padding:12px 16px 10px; }
             .mweb-list { font-size:13.5px; gap:7px; }
             .mweb-warn { font-size:12.5px; }
         }
@@ -2695,11 +2706,11 @@
                     <div class="pd-mobile-hint pd-hint-web">
                         <span class="pd-app-icon pd-web-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00796B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></span>
                         <div class="pd-mobile-hint-text">
-                            <strong>Phone or iPhone?</strong>This website works in your phone&rsquo;s browser &mdash; same login, no app.
+                            <strong>Phone or iPhone?</strong>Use it in your phone&rsquo;s browser or install it as a web app &mdash; same login.
                         </div>
                         <button class="pd-play-btn pd-web-btn" type="button" data-mweb-open>See how</button>
                     </div>
-                    <div class="pd-mobile-hint">
+                    <div class="pd-mobile-hint pd-hint-android">
                         <picture><source srcset="AssetsGIS/image-1.webp" type="image/webp"><img class="pd-app-icon" src="AssetsGIS/image-1.png" alt="MapMagician app icon" width="36" height="36" loading="lazy" decoding="async"></picture>
                         <div class="pd-mobile-hint-text">
                             <strong>Prefer the Android app?</strong>A separate app with its own purchase.
@@ -2761,10 +2772,15 @@
                         <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Android or iPhone &mdash; Chrome, Safari or any browser</span></li>
                         <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Sign in with the <strong>same Google account</strong></span></li>
                         <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Your pass works on phone <strong>and</strong> computer &mdash; no app, nothing extra to pay</span></li>
+                        <li class="mweb-pc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>On Android it can also be <strong>installed as a web app</strong> &mdash; no Play Store needed</span></li>
                     </ul>
                     <div class="mweb-qr mweb-pc"><svg viewBox="-2 -2 33 33" width="112" height="112" shape-rendering="crispEdges" aria-hidden="true"><rect x="-2" y="-2" width="33" height="33" fill="#fff"/><path fill="#0B3F37" d="M0 0h7v1h-7zM11 0h1v1h-1zM13 0h2v1h-2zM16 0h4v1h-4zM22 0h7v1h-7zM0 1h1v1h-1zM6 1h1v1h-1zM9 1h3v1h-3zM13 1h4v1h-4zM18 1h1v1h-1zM20 1h1v1h-1zM22 1h1v1h-1zM28 1h1v1h-1zM0 2h1v1h-1zM2 2h3v1h-3zM6 2h1v1h-1zM9 2h1v1h-1zM13 2h1v1h-1zM17 2h2v1h-2zM22 2h1v1h-1zM24 2h3v1h-3zM28 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM9 3h2v1h-2zM13 3h2v1h-2zM19 3h1v1h-1zM22 3h1v1h-1zM24 3h3v1h-3zM28 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM10 4h2v1h-2zM13 4h6v1h-6zM22 4h1v1h-1zM24 4h3v1h-3zM28 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM8 5h1v1h-1zM10 5h2v1h-2zM13 5h7v1h-7zM22 5h1v1h-1zM28 5h1v1h-1zM0 6h7v1h-7zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h7v1h-7zM11 7h1v1h-1zM14 7h2v1h-2zM17 7h1v1h-1zM0 8h1v1h-1zM3 8h1v1h-1zM5 8h2v1h-2zM8 8h1v1h-1zM10 8h1v1h-1zM15 8h2v1h-2zM19 8h1v1h-1zM21 8h1v1h-1zM23 8h1v1h-1zM2 9h2v1h-2zM8 9h1v1h-1zM14 9h1v1h-1zM16 9h1v1h-1zM20 9h3v1h-3zM25 9h1v1h-1zM28 9h1v1h-1zM0 10h1v1h-1zM3 10h4v1h-4zM9 10h1v1h-1zM18 10h2v1h-2zM21 10h2v1h-2zM25 10h3v1h-3zM1 11h1v1h-1zM3 11h1v1h-1zM7 11h2v1h-2zM10 11h2v1h-2zM14 11h3v1h-3zM18 11h1v1h-1zM20 11h1v1h-1zM23 11h2v1h-2zM26 11h2v1h-2zM0 12h2v1h-2zM3 12h1v1h-1zM5 12h4v1h-4zM10 12h1v1h-1zM12 12h1v1h-1zM17 12h1v1h-1zM20 12h3v1h-3zM25 12h1v1h-1zM27 12h2v1h-2zM0 13h1v1h-1zM3 13h2v1h-2zM7 13h2v1h-2zM10 13h3v1h-3zM19 13h3v1h-3zM23 13h1v1h-1zM0 14h1v1h-1zM3 14h6v1h-6zM10 14h1v1h-1zM16 14h1v1h-1zM20 14h1v1h-1zM22 14h1v1h-1zM25 14h4v1h-4zM2 15h1v1h-1zM4 15h2v1h-2zM9 15h1v1h-1zM13 15h3v1h-3zM17 15h1v1h-1zM19 15h1v1h-1zM25 15h1v1h-1zM27 15h1v1h-1zM0 16h2v1h-2zM4 16h4v1h-4zM9 16h2v1h-2zM13 16h3v1h-3zM17 16h2v1h-2zM20 16h2v1h-2zM23 16h1v1h-1zM27 16h1v1h-1zM1 17h2v1h-2zM4 17h2v1h-2zM7 17h1v1h-1zM10 17h1v1h-1zM12 17h1v1h-1zM16 17h2v1h-2zM22 17h2v1h-2zM25 17h1v1h-1zM28 17h1v1h-1zM0 18h1v1h-1zM2 18h2v1h-2zM6 18h1v1h-1zM11 18h3v1h-3zM16 18h2v1h-2zM22 18h2v1h-2zM27 18h2v1h-2zM4 19h1v1h-1zM10 19h1v1h-1zM12 19h2v1h-2zM17 19h6v1h-6zM27 19h2v1h-2zM0 20h1v1h-1zM3 20h2v1h-2zM6 20h2v1h-2zM10 20h1v1h-1zM12 20h1v1h-1zM14 20h3v1h-3zM20 20h5v1h-5zM26 20h1v1h-1zM8 21h2v1h-2zM11 21h1v1h-1zM13 21h1v1h-1zM19 21h2v1h-2zM24 21h1v1h-1zM26 21h3v1h-3zM0 22h7v1h-7zM9 22h1v1h-1zM11 22h1v1h-1zM13 22h2v1h-2zM16 22h1v1h-1zM20 22h1v1h-1zM22 22h1v1h-1zM24 22h1v1h-1zM27 22h1v1h-1zM0 23h1v1h-1zM6 23h1v1h-1zM8 23h4v1h-4zM13 23h1v1h-1zM18 23h1v1h-1zM20 23h1v1h-1zM24 23h4v1h-4zM0 24h1v1h-1zM2 24h3v1h-3zM6 24h1v1h-1zM9 24h1v1h-1zM11 24h2v1h-2zM14 24h1v1h-1zM17 24h1v1h-1zM20 24h5v1h-5zM27 24h2v1h-2zM0 25h1v1h-1zM2 25h3v1h-3zM6 25h1v1h-1zM8 25h4v1h-4zM13 25h2v1h-2zM17 25h1v1h-1zM19 25h1v1h-1zM22 25h1v1h-1zM24 25h4v1h-4zM0 26h1v1h-1zM2 26h3v1h-3zM6 26h1v1h-1zM11 26h2v1h-2zM14 26h1v1h-1zM16 26h3v1h-3zM24 26h3v1h-3zM28 26h1v1h-1zM0 27h1v1h-1zM6 27h1v1h-1zM9 27h1v1h-1zM11 27h2v1h-2zM14 27h2v1h-2zM17 27h4v1h-4zM22 27h1v1h-1zM24 27h1v1h-1zM27 27h1v1h-1zM0 28h7v1h-7zM8 28h1v1h-1zM10 28h1v1h-1zM14 28h1v1h-1zM16 28h2v1h-2zM20 28h2v1h-2zM23 28h2v1h-2zM27 28h1v1h-1z"/></svg><div><strong>Scan with your phone&rsquo;s camera</strong>or open <b>www.mapmagician.in</b> in its browser.</div></div>
-                    <div class="mweb-tip mweb-ph">Tip: <b>Add to Home screen</b> (browser menu, or Share on iPhone) gives it an app icon.</div>
-                    <div class="mweb-warn">&#9888;&#65039; <strong>The Android app is a separate purchase.</strong> A website pass does not unlock the app, and an app purchase does not unlock the website.</div>
+                    <div class="mweb-install mweb-ph" id="mweb-install" hidden>
+                        <span class="mweb-install-ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14"/></svg></span>
+                        <div class="mweb-install-txt"><strong>Install it as a web app</strong><span id="mweb-install-sub">Free &mdash; adds it to your home screen, same login.</span></div>
+                        <button class="mweb-install-btn" id="mweb-install-btn" type="button">Install</button>
+                    </div>
+                    <div class="mweb-warn">&#9888;&#65039; <strong>The Android app is a separate purchase.</strong> Website and app passes don&rsquo;t unlock each other.</div>
                     <button class="mweb-go" id="mweb-continue" type="button"><span class="mweb-pc">Got it &mdash; I&rsquo;ll use the website</span><span class="mweb-ph">Got it &mdash; continue here</span></button>
                     <a class="mweb-play" id="mweb-play" href="https://play.google.com/store/apps/details?id=com.himanshu.gis&hl=en_IN" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="#1B5E20"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.2l2.807 1.626a1 1 0 010 1.734l-2.808 1.626L15.206 12l2.492-2.493zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>I still want the Android app (separate purchase)</a>
                 </div>
@@ -2847,11 +2863,11 @@
                     <div class="pd-mobile-hint pd-hint-web">
                         <span class="pd-app-icon pd-web-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00796B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></span>
                         <div class="pd-mobile-hint-text">
-                            <strong>Phone or iPhone?</strong>This website works in your phone&rsquo;s browser &mdash; same login, no app.
+                            <strong>Phone or iPhone?</strong>Use it in your phone&rsquo;s browser or install it as a web app &mdash; same login.
                         </div>
                         <button class="pd-play-btn pd-web-btn" type="button" data-mweb-open>See how</button>
                     </div>
-                    <div class="pd-mobile-hint">
+                    <div class="pd-mobile-hint pd-hint-android">
                         <picture><source srcset="AssetsGIS/image-1.webp" type="image/webp"><img class="pd-app-icon" src="AssetsGIS/image-1.png" alt="MapMagician app icon" width="36" height="36" loading="lazy" decoding="async"></picture>
                         <div class="pd-mobile-hint-text">
                             <strong>Prefer the Android app?</strong>A separate app with its own purchase.
@@ -3549,7 +3565,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=229" defer></script>
+    <script src="maps1-app.js?v=230" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">
