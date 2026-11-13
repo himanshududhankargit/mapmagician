@@ -635,7 +635,14 @@
         // 227 = The mascot lands in the search bar's left end instead of the bottom-left
         //       corner, so it takes no map space on phones (owner, 2026-10-24). Its slot is
         //       always laid out, so nothing shifts when it lands; hidden in demo mode.
-        var APP_VERSION = '227';
+        // 229 = "Works on your phone" sheet: every Google Play link first explains that the
+        //       website works in any phone browser with the same Google login and that the
+        //       Android app is a separate purchase (real captures of this site in a phone
+        //       frame, QR on a computer); "I still want the Android app" goes on to the store.
+        //       New "Phone or iPhone?" hint card beside the Android / Windows ones. On a phone
+        //       the price dialog now scrolls as a whole with only Try Demo / Not now pinned
+        //       (the pinned footer had hidden the Subscribe buttons on 360-390px phones).
+        var APP_VERSION = '229';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -3974,45 +3981,123 @@
                 }, 500);
             }
 
-            // Cycle app hints (Android / Microsoft Store) — alternate start each time
-            var appScroll = document.getElementById('pd-app-hints-scroll');
-            var appDots = document.getElementById('pd-app-hint-dots');
-            if (appScroll) {
-                var dotEls = appDots ? appDots.querySelectorAll('.pd-app-hint-dot') : [];
-                var appCycleTimer = null;
-                function updateAppDots() {
-                    if (!dotEls.length) return;
-                    var idx = appScroll.scrollLeft > appScroll.scrollWidth / 4 ? 1 : 0;
-                    dotEls.forEach(function(d, i) {
-                        d.classList.toggle('pd-app-hint-dot-active', i === idx);
-                    });
+            // App hints (Phone or iPhone? / Android app / Windows app): see initAppHintCarousel.
+            initAppHintCarousel(document.getElementById('pd-app-hints-scroll'),
+                document.getElementById('pd-app-hint-dots'), overlay, 'pd-app-hint-i');
+        }
+
+        // App-store hint strip under the price dialogs (paywall + village). One card at a time
+        // on a phone (auto-advances every 3 s, dots), side by side where they fit. 229: three
+        // cards now and a touch phone hides the Windows one, so the scroll stops and the dots
+        // are built from the cards actually shown instead of the old hard-wired pair. Each open
+        // starts one card further on (sessionStorage), as the old Android/Windows swap did.
+        function initAppHintCarousel(scrollEl, dotsEl, overlay, storeKey) {
+            if (!scrollEl) return;
+            if (scrollEl._mmHintStop) scrollEl._mmHintStop();   // reopened: drop the old timer
+            if (dotsEl) dotsEl.textContent = '';
+            var cards = Array.prototype.filter.call(scrollEl.children, function (c) { return c.offsetParent !== null; });
+            if (!cards.length) return;
+            var maxX = Math.max(0, scrollEl.scrollWidth - scrollEl.clientWidth);
+            var stops = [];
+            cards.forEach(function (c) {
+                var x = Math.min(c.offsetLeft - cards[0].offsetLeft, maxX);
+                if (!stops.length || x - stops[stops.length - 1] > 4) stops.push(x);
+            });
+            if (stops.length < 2) return;                          // everything fits: no cycling
+            var timer = null;
+            function nearest() {
+                var x = scrollEl.scrollLeft, best = 0;
+                for (var i = 1; i < stops.length; i++) {
+                    if (Math.abs(stops[i] - x) < Math.abs(stops[best] - x)) best = i;
                 }
-                function stopAppCycle() {
-                    if (appCycleTimer) { clearInterval(appCycleTimer); appCycleTimer = null; }
-                }
-                var lastApp = sessionStorage.getItem('pd-app-last') || 'android';
-                if (lastApp === 'android') {
-                    appScroll.scrollLeft = appScroll.scrollWidth - appScroll.clientWidth;
-                    sessionStorage.setItem('pd-app-last', 'windows');
-                } else {
-                    appScroll.scrollLeft = 0;
-                    sessionStorage.setItem('pd-app-last', 'android');
-                }
-                updateAppDots();
-                appCycleTimer = setInterval(function() {
-                    if (!overlay.classList.contains('open')) { stopAppCycle(); return; }
-                    appScroll.scrollTo({ left: appScroll.scrollLeft > 0 ? 0 : appScroll.scrollWidth, behavior: 'smooth' });
-                }, 2000);
-                appScroll.addEventListener('touchstart', stopAppCycle, { once: true });
-                appScroll.addEventListener('scroll', updateAppDots, { passive: true });
-                dotEls.forEach(function(d, i) {
-                    d.addEventListener('click', function() {
-                        stopAppCycle();
-                        appScroll.scrollTo({ left: i === 0 ? 0 : appScroll.scrollWidth, behavior: 'smooth' });
-                    });
+                return best;
+            }
+            function paint() {
+                if (!dotsEl) return;
+                var on = nearest();
+                Array.prototype.forEach.call(dotsEl.children, function (d, i) {
+                    d.classList.toggle('pd-app-hint-dot-active', i === on);
                 });
             }
+            function go(i, instant) { scrollEl.scrollTo({ left: stops[i], behavior: instant ? 'auto' : 'smooth' }); }
+            function stop() { if (timer) { clearInterval(timer); timer = null; } }
+            if (dotsEl) stops.forEach(function (_, i) {
+                var d = document.createElement('span');
+                d.className = 'pd-app-hint-dot';
+                d.addEventListener('click', function () { stop(); go(i); });
+                dotsEl.appendChild(d);
+            });
+            var start = 0;
+            try {
+                start = (parseInt(sessionStorage.getItem(storeKey), 10) + 1) % stops.length || 0;
+                sessionStorage.setItem(storeKey, String(start));
+            } catch (e) {}
+            go(start, true);
+            paint();
+            timer = setInterval(function () {
+                if (!overlay.classList.contains('open')) { stop(); return; }
+                go((nearest() + 1) % stops.length);
+            }, 3000);
+            scrollEl.addEventListener('scroll', paint, { passive: true });
+            scrollEl.addEventListener('touchstart', stop, { passive: true });
+            scrollEl._mmHintStop = function () {
+                stop();
+                scrollEl.removeEventListener('scroll', paint);
+                scrollEl.removeEventListener('touchstart', stop);
+            };
         }
+
+        // "Works on your phone" sheet (229) - the why is on #mweb-overlay in maps1.html.
+        // Every Google Play link carries data-android-app: a plain click on one opens the sheet
+        // instead of the store. "I still want the Android app" opens the store and lets later
+        // Play clicks through for the rest of the session; a ctrl/middle click (new tab) always
+        // goes straight through. GA4: mweb_open / mweb_use_website / mweb_still_android.
+        (function () {
+            var SKIP_KEY = 'mm_mweb_android_ok';
+            var ov = document.getElementById('mweb-overlay');
+            if (!ov) return;
+            function onPhone() {
+                return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') ||
+                    !!(window.matchMedia && matchMedia('(pointer: coarse) and (max-width: 900px)').matches);
+            }
+            function track(name, params) { try { mmAnalytics.event(name, params || {}); } catch (e) {} }
+            function openSheet(fromPlay, where) {
+                Array.prototype.forEach.call(ov.querySelectorAll('img[data-src]'), function (im) {
+                    im.src = im.getAttribute('data-src');
+                    im.removeAttribute('data-src');
+                });
+                ov.classList.toggle('mweb-on-phone', onPhone());
+                ov.classList.toggle('mweb-from-play', fromPlay);
+                // Restart the phone's 10 s story from its first frame on every open.
+                var ph = ov.querySelector('.mweb-phone');
+                if (ph) { ph.classList.remove('mweb-run'); void ph.offsetWidth; ph.classList.add('mweb-run'); }
+                ov.classList.add('open');
+                track('mweb_open', { source: fromPlay ? 'play_link' : 'hint_card', where: where });
+            }
+            function closeSheet() { ov.classList.remove('open'); }
+            document.addEventListener('click', function (e) {
+                var t = e.target && e.target.closest ? e.target.closest('[data-mweb-open], a[data-android-app]') : null;
+                if (!t) return;
+                var host = t.closest('.zoom-dialog-overlay, .auth-dialog-overlay');
+                var where = host ? host.id : 'settings';
+                if (t.hasAttribute('data-mweb-open')) { e.preventDefault(); openSheet(false, where); return; }
+                if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+                try { if (sessionStorage.getItem(SKIP_KEY) === '1') return; } catch (err) {}
+                e.preventDefault();
+                openSheet(true, where);
+            });
+            document.getElementById('mweb-close').addEventListener('click', closeSheet);
+            document.getElementById('mweb-continue').addEventListener('click', function () {
+                track('mweb_use_website', {});
+                closeSheet();
+            });
+            document.getElementById('mweb-play').addEventListener('click', function () {
+                try { sessionStorage.setItem(SKIP_KEY, '1'); } catch (e) {}
+                track('mweb_still_android', {});
+                setTimeout(closeSheet, 0);
+            });
+            ov.addEventListener('click', function (e) { if (e.target === ov) closeSheet(); });
+        })();
 
         // Friendly "you own a different region of this pair" clearance dialog.
         // Shown before the paywall when the user owns a confused-partner region
@@ -4345,6 +4430,8 @@
             // On a short phone the step is taller than the dialog's scroll area: show its top
             // (the region) rather than whichever edge is nearest.
             var scroller = box.closest('.pd-body');
+            // 229: on a phone the whole dialog scrolls and the body no longer clips.
+            if (scroller && getComputedStyle(scroller).overflowY === 'visible') scroller = box.closest('.zoom-dialog');
             var fits = !scroller || box.offsetHeight <= scroller.clientHeight;
             try { box.scrollIntoView({ block: fits ? 'nearest' : 'start' }); } catch (e) {}
             try { document.getElementById('pd-review-go').focus({ preventScroll: true }); } catch (e) {}
@@ -11734,44 +11821,9 @@
 
             overlay.classList.add('open');
 
-            // Cycle app hints (Android / Microsoft Store) — alternate start each time
-            var villageAppScroll = document.getElementById('village-app-hints-scroll');
-            var villageAppDots = document.getElementById('village-app-hint-dots');
-            if (villageAppScroll) {
-                var vDotEls = villageAppDots ? villageAppDots.querySelectorAll('.pd-app-hint-dot') : [];
-                var villageAppCycleTimer = null;
-                function updateVillageDots() {
-                    if (!vDotEls.length) return;
-                    var idx = villageAppScroll.scrollLeft > villageAppScroll.scrollWidth / 4 ? 1 : 0;
-                    vDotEls.forEach(function(d, i) {
-                        d.classList.toggle('pd-app-hint-dot-active', i === idx);
-                    });
-                }
-                function stopVillageCycle() {
-                    if (villageAppCycleTimer) { clearInterval(villageAppCycleTimer); villageAppCycleTimer = null; }
-                }
-                var lastApp = sessionStorage.getItem('village-app-last') || 'android';
-                if (lastApp === 'android') {
-                    villageAppScroll.scrollLeft = villageAppScroll.scrollWidth - villageAppScroll.clientWidth;
-                    sessionStorage.setItem('village-app-last', 'windows');
-                } else {
-                    villageAppScroll.scrollLeft = 0;
-                    sessionStorage.setItem('village-app-last', 'android');
-                }
-                updateVillageDots();
-                villageAppCycleTimer = setInterval(function() {
-                    if (!overlay.classList.contains('open')) { stopVillageCycle(); return; }
-                    villageAppScroll.scrollTo({ left: villageAppScroll.scrollLeft > 0 ? 0 : villageAppScroll.scrollWidth, behavior: 'smooth' });
-                }, 2000);
-                villageAppScroll.addEventListener('touchstart', stopVillageCycle, { once: true });
-                villageAppScroll.addEventListener('scroll', updateVillageDots, { passive: true });
-                vDotEls.forEach(function(d, i) {
-                    d.addEventListener('click', function() {
-                        stopVillageCycle();
-                        villageAppScroll.scrollTo({ left: i === 0 ? 0 : villageAppScroll.scrollWidth, behavior: 'smooth' });
-                    });
-                });
-            }
+            // App hints (Phone or iPhone? / Android app / Windows app): see initAppHintCarousel.
+            initAppHintCarousel(document.getElementById('village-app-hints-scroll'),
+                document.getElementById('village-app-hint-dots'), overlay, 'village-app-hint-i');
         }
 
         async function buyVillage(villageName) {
