@@ -661,7 +661,10 @@
         // 234 = Signed in: the paywall header shows "Signed in as <email>" (a calm chip) in place of
         //       the repeated region line (owner's idea, 2026-11-15); a tap opens Google's account
         //       chooser. The pill/chip is one line always, so the header height never changes.
-        var APP_VERSION = '234';
+        // 235 = Sign in opens Google's account sheet over the page on Chrome / Edge (One Tap over
+        //       FedCM, like Pinterest) instead of a new tab; a second tap within 30 s, or any
+        //       browser without FedCM (iPhone, Firefox, in-app), gets the old popup.
+        var APP_VERSION = '235';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -710,7 +713,63 @@
         // True only between the user starting a sign-in and the auth listener seeing it.
         // A session RESTORED on page load never sets it — see the account overlay below.
         var _userSignInInProgress = false;
+
+        // --- Google account sheet (235) ---
+        // Chrome / Edge (Android + desktop) can show Google's account chooser as a sheet over the
+        // page (One Tap over FedCM) instead of a new tab, like Pinterest's login: one tap on the
+        // account and the Google ID token comes straight back; signInWithCredential then makes it
+        // the SAME Firebase user the popup would (same Google account -> same uid; purchases,
+        // single-session, everything else unchanged). A site's own buttons can only open the One
+        // Tap sheet, which Google hides for a while after the user closes it and doesn't reliably
+        // report, so: the first tap shows the sheet, and a tap within 30 s that didn't sign in
+        // opens the old popup. No FedCM (iPhone, Firefox, in-app webviews) = the popup at once.
+        // Needs the site origins in the OAuth web client's "Authorized JavaScript origins".
+        var GIS_CLIENT_ID = '427608700943-38q1go9upeku395agjom6d8e46nv4oov.apps.googleusercontent.com';
+        var _gisReady = false, _gisPromptAt = 0;
+        (function loadGoogleSheet() {
+            if (isEmbedMode || typeof window.IdentityCredential !== 'function') return;
+            function load() {
+                var s = document.createElement('script');
+                s.src = 'https://accounts.google.com/gsi/client';
+                s.async = true;
+                s.onload = function () {
+                    try {
+                        google.accounts.id.initialize({
+                            client_id: GIS_CLIENT_ID,
+                            callback: onGoogleSheetCredential,
+                            auto_select: false,
+                            cancel_on_tap_outside: true,
+                            context: 'signin'
+                        });
+                        _gisReady = true;
+                    } catch (e) { console.warn('Google account sheet unavailable:', e && e.message); }
+                };
+                document.head.appendChild(s);
+            }
+            // After the map's own loading, so it never competes with tiles or the app JS.
+            if (document.readyState === 'complete') setTimeout(load, 1500);
+            else window.addEventListener('load', function () { setTimeout(load, 1500); });
+        })();
+        function onGoogleSheetCredential(resp) {
+            if (!resp || !resp.credential) return;
+            _gisPromptAt = 0;
+            _userSignInInProgress = true;
+            try { mmAnalytics.event('login_sheet', {}); } catch (e) {}
+            firebase.auth().signInWithCredential(firebase.auth.GoogleAuthProvider.credential(resp.credential))
+                .catch(function (err) {
+                    _userSignInInProgress = false;
+                    _gisPromptAt = Date.now(); // the next tap opens the popup instead
+                    console.error('Sheet sign-in failed:', err);
+                    alert('Sign-in could not be completed. Please tap Sign in again.');
+                });
+        }
+
         function triggerGoogleSignIn() {
+            if (_gisReady && Date.now() - _gisPromptAt > 30000) {
+                _gisPromptAt = Date.now();
+                try { google.accounts.id.prompt(); return; } catch (e) { console.warn('Google sheet prompt failed:', e && e.message); }
+            }
+            _gisPromptAt = 0;
             _userSignInInProgress = true;
             firebase.auth().signInWithPopup(googleProvider).catch(err => {
                 _userSignInInProgress = false;
