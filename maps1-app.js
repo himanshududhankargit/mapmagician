@@ -669,7 +669,10 @@
         //       event login_path {sheet | sheet_skipped | popup | popup_second_tap}.
         // 237 = "Opening Google sign-in…" card (with a light dim) covers the ~1 s before the sheet;
         //       after 4 s with no account it becomes "Didn't open? Tap here to sign in" (popup).
-        var APP_VERSION = '237';
+        // 238 = Sheet fix: cancel_on_tap_outside false + prompt() after the tap finishes (the Sign
+        //       in tap itself likely cancelled the sheet -> skipped -> popup). ?signindebug=1 shows
+        //       a diagnostics panel of each sign-in step and what Google reported.
+        var APP_VERSION = '238';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -731,6 +734,47 @@
         // Needs the site origins in the OAuth web client's "Authorized JavaScript origins".
         var GIS_CLIENT_ID = '427608700943-38q1go9upeku395agjom6d8e46nv4oov.apps.googleusercontent.com';
         var _gisReady = false, _gisPromptAt = 0;
+
+        // 238: sign-in diagnostics, ONLY with ?signindebug=1 in the address. A small panel at the
+        // top lists each step and what Google reported (moment type, skipped/dismissed reason, its
+        // [GSI_LOGGER] console lines, unhandled rejections), so a phone test shows WHY the sheet
+        // didn't open without remote debugging. Off for everyone else (siLog returns at once).
+        var _siDebug = /[?&]signindebug=1\b/.test(location.search);
+        function siLog(msg) {
+            if (!_siDebug) return;
+            try {
+                var box = document.getElementById('si-debug');
+                if (!box) {
+                    box = document.createElement('div');
+                    box.id = 'si-debug';
+                    box.style.cssText = 'position:fixed;left:8px;right:8px;top:8px;z-index:30000;max-height:32vh;overflow:auto;' +
+                        'background:rgba(0,0,0,0.86);color:#9f9;font:11px/1.45 monospace;padding:8px 10px;border-radius:8px;white-space:pre-wrap;';
+                    document.body.appendChild(box);
+                }
+                box.textContent += new Date().toISOString().slice(17, 23) + '  ' + msg + '\n';
+                box.scrollTop = 1e9;
+            } catch (e) {}
+        }
+        if (_siDebug) {
+            ['log', 'info', 'warn', 'error'].forEach(function (k) {
+                var orig = console[k];
+                console[k] = function () {
+                    try {
+                        var line = Array.prototype.map.call(arguments, function (a) { return (a && a.message) || String(a); }).join(' ');
+                        if (/GSI|FedCM|IdentityCredential|One Tap/i.test(line)) siLog(k + ': ' + line.slice(0, 300));
+                    } catch (e) {}
+                    return orig.apply(console, arguments);
+                };
+            });
+            window.addEventListener('unhandledrejection', function (e) {
+                try { siLog('rejection: ' + ((e.reason && (e.reason.name + ' ' + e.reason.message)) || e.reason)); } catch (x) {}
+            });
+            setTimeout(function () {
+                siLog('debug on | FedCM in this browser: ' + (typeof window.IdentityCredential === 'function') +
+                      ' | signed in: ' + !!(currentUser && !currentUser.isAnonymous));
+            }, 500);
+        }
+
         (function loadGoogleSheet() {
             if (isEmbedMode || typeof window.IdentityCredential !== 'function') return;
             function load() {
@@ -743,12 +787,17 @@
                             client_id: GIS_CLIENT_ID,
                             callback: onGoogleSheetCredential,
                             auto_select: false,
-                            cancel_on_tap_outside: true,
+                            // 238: false. With true, the Sign in tap itself (still bubbling when
+                            // prompt() ran) could count as a "tap outside" and cancel the sheet at
+                            // once -> skipped -> popup. Our own dim handles taps outside.
+                            cancel_on_tap_outside: false,
                             context: 'signin'
                         });
                         _gisReady = true;
-                    } catch (e) { console.warn('Google account sheet unavailable:', e && e.message); }
+                        siLog('google script ready');
+                    } catch (e) { console.warn('Google account sheet unavailable:', e && e.message); siLog('init failed: ' + (e && e.message)); }
                 };
+                s.onerror = function () { siLog('google script failed to load'); };
                 document.head.appendChild(s);
             }
             // After the map's own loading, so it never competes with tiles or the app JS.
@@ -796,6 +845,7 @@
 
         function onGoogleSheetCredential(resp) {
             hideGoogleSheetWait();
+            siLog('account chosen in the sheet: ' + !!(resp && resp.credential));
             if (!resp || !resp.credential) return;
             _gisPromptAt = 0;
             _userSignInInProgress = true;
@@ -804,6 +854,7 @@
                 .catch(function (err) {
                     _userSignInInProgress = false;
                     _gisPromptAt = Date.now(); // the next tap opens the popup instead
+                    siLog('Firebase rejected the sheet sign-in: ' + (err && (err.code || err.message)));
                     console.error('Sheet sign-in failed:', err);
                     alert('Sign-in could not be completed. Please tap Sign in again.');
                 });
@@ -815,33 +866,54 @@
             if (_gisReady && Date.now() - _gisPromptAt > 30000) {
                 var tapAt = Date.now();
                 _gisPromptAt = tapAt;
-                try {
-                    try { mmAnalytics.event('login_path', { path: 'sheet' }); } catch (e) {}
-                    google.accounts.id.prompt(function (n) {
-                        // 236: under FedCM Google reports little, but a "skipped" moment within a
-                        // few seconds of the tap means the sheet could not show (Chrome's cool-down
-                        // after it was closed, or Google sign-in switched off for the site). The
-                        // tap's user activation is still live then, so open the popup on the SAME
-                        // tap instead of leaving it looking dead until a second tap.
-                        try {
-                            if (!n || !n.isSkippedMoment || !n.isSkippedMoment()) return;
-                            if (_gisPromptAt !== tapAt || Date.now() - tapAt > 4000) return;
-                            if (navigator.userActivation && !navigator.userActivation.isActive) return;
-                            try { mmAnalytics.event('login_path', { path: 'sheet_skipped', ms: Date.now() - tapAt }); } catch (e) {}
-                            _gisPromptAt = 0;
-                            popupGoogleSignIn();
-                        } catch (e) {}
-                    });
-                    showGoogleSheetWait();
-                    return;
-                } catch (e) { console.warn('Google sheet prompt failed:', e && e.message); }
+                try { mmAnalytics.event('login_path', { path: 'sheet' }); } catch (e) {}
+                showGoogleSheetWait();
+                siLog('tap -> asking Google for the account sheet');
+                // 238: prompt() runs AFTER this tap has finished bubbling (setTimeout 0), so the
+                // tap can't be mistaken for one outside the sheet. Still inside the tap's
+                // user-activation window, so the skipped -> popup fallback below isn't blocked.
+                setTimeout(function () {
+                    try {
+                        google.accounts.id.prompt(function (n) {
+                            try {
+                                var info = [];
+                                try { if (n.getMomentType) info.push('moment=' + n.getMomentType()); } catch (e) {}
+                                try { if (n.isSkippedMoment && n.isSkippedMoment()) info.push('skipped' + (n.getSkippedReason ? ':' + n.getSkippedReason() : '')); } catch (e) {}
+                                try { if (n.isDismissedMoment && n.isDismissedMoment()) info.push('dismissed:' + n.getDismissedReason()); } catch (e) {}
+                                siLog('google says: ' + (info.join(' ') || 'notification') + ' after ' + (Date.now() - tapAt) + ' ms');
+                            } catch (e) {}
+                            // 236: under FedCM Google reports little, but a "skipped" moment within a
+                            // few seconds of the tap means the sheet could not show (Chrome's
+                            // cool-down after it was closed, or Google sign-in switched off for
+                            // the site). The tap's user activation is still live then, so open the
+                            // popup on the SAME tap instead of leaving it looking dead.
+                            try {
+                                if (!n || !n.isSkippedMoment || !n.isSkippedMoment()) return;
+                                if (_gisPromptAt !== tapAt || Date.now() - tapAt > 4000) return;
+                                if (navigator.userActivation && !navigator.userActivation.isActive) { siLog('no user activation left: popup not opened'); return; }
+                                try { mmAnalytics.event('login_path', { path: 'sheet_skipped', ms: Date.now() - tapAt }); } catch (e) {}
+                                siLog('sheet skipped -> opening the sign-in window');
+                                _gisPromptAt = 0;
+                                popupGoogleSignIn();
+                            } catch (e) {}
+                        });
+                    } catch (e) {
+                        console.warn('Google sheet prompt failed:', e && e.message);
+                        siLog('prompt threw: ' + (e && e.message) + ' -> sign-in window');
+                        _gisPromptAt = 0;
+                        popupGoogleSignIn();
+                    }
+                }, 0);
+                return;
             }
+            siLog(_gisReady ? 'second tap within 30 s -> sign-in window' : 'no sheet support / script not ready -> sign-in window');
             try { mmAnalytics.event('login_path', { path: _gisReady ? 'popup_second_tap' : 'popup' }); } catch (e) {}
             _gisPromptAt = 0;
             popupGoogleSignIn();
         }
         function popupGoogleSignIn() {
             hideGoogleSheetWait();
+            siLog('opening the Google sign-in window (old popup)');
             _userSignInInProgress = true;
             firebase.auth().signInWithPopup(googleProvider).catch(err => {
                 _userSignInInProgress = false;
