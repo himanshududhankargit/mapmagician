@@ -280,6 +280,19 @@
             .profile-btn { width: 36px; padding: 0; border-radius: 50%; }
             .profile-btn:not(.signed-in) #profile-btn-icon { display: none; }
         }
+        /* 232: signed out because another device took the session. Orange "Signed out · Sign in"
+           on a computer; on a phone (<=480px, where this button is a 36px circle with no text) an
+           orange circle with a dot, so the search box keeps its width. !important beats the
+           inline background/colour the auth listener sets. */
+        .profile-btn.pb-signed-out { background:#FFF1E6 !important; color:#C2410C !important; box-shadow:inset 0 0 0 1px #FDBA8C; overflow:visible; position:relative; }
+        .profile-btn.pb-signed-out #profile-btn-svg { display:none; }
+        .profile-btn.pb-signed-out #profile-btn-svg path { fill:#C2410C; }
+        .profile-btn.pb-signed-out::before { content:""; width:7px; height:7px; border-radius:50%; background:#EA580C; flex:none; }
+        @media (max-width: 480px) {
+            .profile-btn.pb-signed-out::before { display:none; }
+            .profile-btn.pb-signed-out #profile-btn-svg { display:block; }
+            .profile-btn.pb-signed-out::after { content:""; position:absolute; top:-2px; right:-2px; width:11px; height:11px; border-radius:50%; background:#EA580C; border:2px solid #fff; box-sizing:border-box; }
+        }
 
         /* Horizontal toolbar buttons */
         .toolbar-scroll {
@@ -1092,6 +1105,17 @@
         .pd-header-icon { width:44px; height:44px; background:rgba(255,255,255,0.14); border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; }
         .pd-kicker { font-size:10px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase; opacity:0.75; margin-bottom:4px; }
         .pd-header .pd-title { margin:0; font-size:20px; color:#fff; font-weight:700; letter-spacing:-0.2px; line-height:1.3; word-break:break-word; }
+        /* 232: sign-in pill, shown while signed out IN PLACE OF the "<region> Region" line (that line
+           only repeats the title). Net +9px, so Contact Support still fits on a 440x865 phone
+           (measured with this CSS; added as an extra row it was +30px and pushed it off). It sits
+           below the close button, so it may use the header's 40px side padding. */
+        .pd-signin-row { margin:5px -28px 0; }
+        .pd-signin-pill { display:inline-flex; align-items:center; gap:7px; max-width:100%; box-sizing:border-box;
+            background:#FFF1E6; color:#C2410C; border:none; border-radius:14px; padding:3px 12px; cursor:pointer;
+            font-family:inherit; font-size:12.5px; font-weight:600; line-height:1.35; text-align:left; transition:background 0.15s; }
+        .pd-signin-pill:hover { background:#FFE4CC; }
+        .pd-signin-pill:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+        .pd-signin-dot { width:7px; height:7px; border-radius:50%; background:#EA580C; flex:none; }
         .pd-body { padding:20px 24px 4px; }
         .pd-region-label { font-size:10px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:#00796B; text-align:center; margin-bottom:10px; }
         .pd-price-card { background:#F5FBFA; border:1px solid #B2DFDB; border-radius:14px; padding:22px 20px 16px; text-align:center; margin-bottom:18px; }
@@ -2597,6 +2621,10 @@
                     <div class="pd-kicker">Choose Your Plan</div>
                     <h3 id="zoom-restrict-title" class="pd-title">Web Unlock Region</h3>
                     <div id="zoom-restrict-region" style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;display:none;"></div>
+                    <!-- 232: replaces the region line while signed out (updatePaywallSignin) -->
+                    <div class="pd-signin-row" id="pd-signin-row" hidden>
+                        <button class="pd-signin-pill" id="pd-signin-pill" type="button"><span class="pd-signin-dot" aria-hidden="true"></span><span id="pd-signin-pill-text">Not signed in &middot; Sign in</span></button>
+                    </div>
                 </div>
                 <div class="pd-review-head">
                     <div class="pd-kicker">Step 2 of 2 &middot; Review</div>
@@ -3084,15 +3112,20 @@
         <div class="magnifier-dot"></div>
     </div>
 
-    <!-- Session expired dialog -->
+    <!-- Signed out by another device. 232: says the purchases are safe and can take the session
+         back ("Use on this computer instead", no popup - this browser is still signed in until
+         "Stay signed out"). The .se-device words are set to computer / phone / device. -->
     <div class="auth-dialog-overlay" id="session-expired-overlay">
         <div class="auth-dialog">
-            <div style="width:48px;height:48px;margin:0 auto 20px;background:#FFF3E0;border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#E65100"/></svg>
+            <div style="width:48px;height:48px;margin:0 auto 20px;background:#E8F5E9;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>
             </div>
-            <h3>Session Expired</h3>
-            <p>This account is now active on another device. You've been signed out.</p>
-            <button class="auth-dialog-btn" id="session-expired-ok" style="width:100%;justify-content:center;">OK</button>
+            <h3>Your purchases are safe</h3>
+            <p>You signed in on another device, so this <span class="se-device">computer</span> was signed out. One account works on one device at a time.<span id="session-expired-acct"> Your passes stay on <strong id="session-expired-email" style="color:#202124;overflow-wrap:anywhere;"></strong>.</span></p>
+            <!-- one span: .auth-dialog-btn is a flex row with a 12px gap, which split the words apart -->
+            <button class="auth-dialog-btn mm-primary" id="session-expired-reclaim" style="width:100%;justify-content:center;"><span>Use on this <span class="se-device">computer</span> instead</span></button>
+            <button class="auth-dialog-btn" id="session-expired-ok" style="width:100%;justify-content:center;margin-top:10px;">Stay signed out</button>
+            <p style="margin:12px 0 0;font-size:12px;color:#80868b;">Using it here signs out the other device.</p>
         </div>
     </div>
 
@@ -3565,7 +3598,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=230" defer></script>
+    <script src="maps1-app.js?v=232" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">

@@ -647,7 +647,15 @@
         //       Store app via intent:// in the same tab instead of stacking play.google.com tabs.
         //       "Install it as a web app" button on Android phones (browser install prompt, else
         //       menu steps). iPhone: no Android-app card or link, no install offer.
-        var APP_VERSION = '230';
+        // 232 = Signed-out customers can find their way back (a buyer signed in on a phone, the
+        //       computer was signed out, and its paywall gave no sign of it: "my purchase is lost").
+        //       Paywall: an orange "Not signed in · Sign in" pill in the header, in place of the
+        //       region line that only repeated the title (+9px, Contact Support still fits). Signed
+        //       out by another device: the dialog says the purchases are safe and offers "Use on this
+        //       computer instead" (takes the session back, no popup); after "Stay signed out" the
+        //       top-bar button turns orange ("Signed out · Sign in"; an orange circle with a dot on a
+        //       phone) and the pill names the account, masked. A deliberate sign-out forgets it.
+        var APP_VERSION = '232';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -779,6 +787,8 @@
             }
 
             if (user && !user.isAnonymous) {
+                // Signed in again: the "signed out by another device" note has done its job.
+                forgetSignedOutAccount();
                 // Google-signed-in user — show avatar or initial
                 profileBtn.classList.add('signed-in');
                 profileSvg.style.display = 'none';
@@ -1451,14 +1461,17 @@
                 document.getElementById('signout-dialog-email').textContent = currentUser.email;
                 document.getElementById('signout-dialog-overlay').classList.add('open');
             } else {
-                document.getElementById('auth-dialog-desc').textContent =
-                    'Sign in with your Google account to access premium maps, save purchases, and sync across devices.';
+                var acct = signedOutAccount();
+                document.getElementById('auth-dialog-desc').textContent = acct
+                    ? 'This account was used on another device, so this one was signed out. Your purchases are safe. Sign in with ' + acct + ' to use them here (this signs out the other device).'
+                    : 'Sign in with your Google account to access premium maps, save purchases, and sync across devices.';
                 document.getElementById('auth-dialog-weblabel').style.display = 'block';
                 document.getElementById('auth-dialog-overlay').classList.add('open');
             }
         });
         document.getElementById('signout-dialog-confirm').addEventListener('click', () => {
             document.getElementById('signout-dialog-overlay').classList.remove('open');
+            forgetSignedOutAccount(); // chosen sign-out: nothing to point them back to
             firebase.auth().signOut();
         });
         document.getElementById('signout-dialog-cancel').addEventListener('click', () => {
@@ -1486,10 +1499,12 @@
             return fresh;
         }
 
-        function registerSession(email) {
+        // reclaim = "Use on this computer instead" from the signed-out dialog: same write, but it
+        // is not a new login, so it skips the login event.
+        function registerSession(email, reclaim) {
             const emailKey = email.replace(/\./g, ',');
             currentSessionId = getDeviceSessionId();
-            try { mmAnalytics.event('login', { method: 'google' }); } catch (e) {}
+            if (!reclaim) { try { mmAnalytics.event('login', { method: 'google' }); } catch (e) {} }
             const ref = firebase.database().ref('GISWebActiveSessions/' + emailKey);
 
             // Detach previous listener if any
@@ -1517,13 +1532,87 @@
             currentSessionId = null;
         }
 
-        function showSessionExpiredDialog() {
-            document.getElementById('session-expired-overlay').classList.add('open');
+        // --- Signed out by another device (232) ---
+        // A buyer signed in on a phone, the computer was signed out, and the computer's paywall
+        // gave no sign of it, so they thought the purchase was lost. Now the dialog says the
+        // purchases are safe and can take the session back; after "Stay signed out" this browser
+        // remembers WHICH account it was (masked, so a shared computer doesn't show the address)
+        // and the paywall pill + top-bar button say "Signed out". Only this involuntary sign-out
+        // is remembered: any real sign-in, or a chosen sign-out, forgets it. 30-day life.
+        function maskEmail(email) {
+            var e = String(email || ''), at = e.indexOf('@');
+            return at < 1 ? '' : e.charAt(0) + '••••••' + e.slice(at);
+        }
+        function rememberSignedOutAccount(email) {
+            var m = maskEmail(email);
+            if (!m) return;
+            try { localStorage.setItem('mm_signed_out_acct', JSON.stringify({ m: m, t: Date.now() })); } catch (e) {}
+        }
+        function forgetSignedOutAccount() {
+            try { localStorage.removeItem('mm_signed_out_acct'); } catch (e) {}
+        }
+        function signedOutAccount() {
+            try {
+                var o = JSON.parse(localStorage.getItem('mm_signed_out_acct') || 'null');
+                if (o && o.m && Date.now() - (o.t || 0) < 30 * 864e5) return o.m;
+            } catch (e) {}
+            return '';
+        }
+        // "this computer" / "this phone" in the dialog. A tablet gets "device".
+        function deviceWord() {
+            try {
+                if (window.matchMedia('(pointer: coarse)').matches)
+                    return Math.min(screen.width, screen.height) < 600 ? 'phone' : 'device';
+            } catch (e) {}
+            return 'computer';
         }
 
+        function showSessionExpiredDialog() {
+            var email = currentUser && !currentUser.isAnonymous ? currentUser.email : '';
+            rememberSignedOutAccount(email);
+            var word = deviceWord();
+            document.querySelectorAll('#session-expired-overlay .se-device').forEach(function (s) { s.textContent = word; });
+            document.getElementById('session-expired-email').textContent = email || '';
+            document.getElementById('session-expired-acct').style.display = email ? '' : 'none';
+            document.getElementById('session-expired-overlay').classList.add('open');
+            try { mmAnalytics.event('session_superseded', {}); } catch (e) {}
+        }
+
+        // "Use on this computer instead": this browser is still signed in (only "Stay signed out"
+        // signs it out), so taking the session back is the same one write as a login. The other
+        // device's listener sees the change and gets this dialog in turn. No Google popup.
+        document.getElementById('session-expired-reclaim').addEventListener('click', function() {
+            document.getElementById('session-expired-overlay').classList.remove('open');
+            if (currentUser && !currentUser.isAnonymous && currentUser.email) {
+                forgetSignedOutAccount();
+                registerSession(currentUser.email, true);
+                try { mmAnalytics.event('session_reclaimed', {}); } catch (e) {}
+            } else {
+                triggerGoogleSignIn();
+            }
+        });
         document.getElementById('session-expired-ok').addEventListener('click', function() {
             document.getElementById('session-expired-overlay').classList.remove('open');
-            firebase.auth().signOut();
+            try { mmAnalytics.event('session_stay_signed_out', {}); } catch (e) {}
+            firebase.auth().signOut(); // the account stays remembered (see above)
+        });
+
+        // Top-bar button while signed out by another device: orange "Signed out · Sign in" (CSS
+        // .pb-signed-out; a circle with a dot on a phone). Runs after the main auth listener,
+        // which resets the button to the plain "Sign In" first.
+        function applyProfileSignedOutLook() {
+            var btn = document.getElementById('profile-btn');
+            if (!btn) return;
+            var acct = (currentUser && !currentUser.isAnonymous) ? '' : signedOutAccount();
+            btn.classList.toggle('pb-signed-out', !!acct);
+            if (acct) {
+                document.getElementById('profile-btn-icon').textContent = 'Signed out · Sign in';
+                btn.title = 'Signed out — sign in as ' + acct;
+            }
+        }
+        firebase.auth().onAuthStateChanged(function () {
+            applyProfileSignedOutLook();
+            updatePaywallSignin();
         });
 
         // Load purchase status via Cloud Function (DB paths hidden server-side)
@@ -3844,6 +3933,10 @@
                 title.textContent = 'Web Unlock Premium Maps';
                 regionInfo.style.display = 'none';
             }
+            // Signed out: the sign-in pill takes the region line's place (232).
+            regionInfo.dataset.hasRegion = district ? '1' : '';
+            _pdSigninWanted = true;
+            updatePaywallSignin();
 
             // Display one-time price
             var pid = district ? district.productPurchaseID : 'default';
@@ -4531,6 +4624,31 @@
             };
             firebase.auth().onAuthStateChanged(function () { updateReviewAccount(); });
         })();
+        // Paywall sign-in pill (232). While signed out it takes the region line's place in the
+        // header (that line only repeats the title), so the dialog grows ~9px and Contact Support
+        // still fits on a phone. A tap opens Google sign-in straight from the gesture; after it,
+        // fetchPurchaseStatus(true) -> checkAndReenableMap() closes the paywall when the account
+        // owns this region, and this puts the region line back when it doesn't.
+        var _pdSigninWanted = false; // true while the plan cards show (not the no-data dialog)
+        function updatePaywallSignin() {
+            var row = document.getElementById('pd-signin-row');
+            var region = document.getElementById('zoom-restrict-region');
+            if (!row || !region) return;
+            var signedOut = !currentUser || currentUser.isAnonymous;
+            var show = _pdSigninWanted && signedOut && !isEmbedMode && !isDemoMode;
+            row.hidden = !show;
+            if (show) {
+                var acct = signedOutAccount();
+                document.getElementById('pd-signin-pill-text').textContent = acct
+                    ? 'Signed out · Sign in as ' + acct
+                    : 'Not signed in · Sign in';
+            }
+            region.style.display = (!show && region.dataset.hasRegion === '1') ? 'block' : 'none';
+        }
+        document.getElementById('pd-signin-pill').addEventListener('click', function () {
+            try { mmAnalytics.event('paywall_signin_tap', { remembered: signedOutAccount() ? 1 : 0 }); } catch (e) {}
+            triggerGoogleSignIn();
+        });
         function hidePlanConfirm() {
             var ov = document.getElementById('zoom-restrict-overlay');
             var box = document.getElementById('pd-review');
@@ -4618,6 +4736,9 @@
             infoBox.style.padding = '0';
             desc.style.color = '#666';
             regionInfo.style.display = 'none';
+            regionInfo.dataset.hasRegion = '';
+            _pdSigninWanted = false; // no plans here, so no sign-in pill (232)
+            updatePaywallSignin();
             supportBtn.style.display = 'none';
             document.getElementById('zoom-restrict-price').style.display = 'none';
             // Hide plan cards carousel
