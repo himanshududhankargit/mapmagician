@@ -667,7 +667,9 @@
         // 236 = If Google reports at once that the sheet can't show (cool-down after it was
         //       closed), the SAME tap opens the popup, so no Sign in tap looks dead. Analytics
         //       event login_path {sheet | sheet_skipped | popup | popup_second_tap}.
-        var APP_VERSION = '236';
+        // 237 = "Opening Google sign-in…" card (with a light dim) covers the ~1 s before the sheet;
+        //       after 4 s with no account it becomes "Didn't open? Tap here to sign in" (popup).
+        var APP_VERSION = '237';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -753,7 +755,47 @@
             if (document.readyState === 'complete') setTimeout(load, 1500);
             else window.addEventListener('load', function () { setTimeout(load, 1500); });
         })();
+        // 237: "Opening Google sign-in…" covers the ~1 s before the sheet (Chrome tells the page
+        // nothing, not even when the sheet is up; the dim then serves as its backdrop). Closes on an
+        // account (the "Loading your account" screen takes over), a skipped sheet (the popup
+        // opens), or a tap. After 4 s with no account it becomes "Didn't open? Tap here to sign
+        // in" without the dim: that tap is a fresh gesture for the popup, so a sheet Google hid
+        // silently never leaves the customer with a dead tap. Gone by itself 10 s later.
+        var _gsWaitTimers = [];
+        function hideGoogleSheetWait() {
+            _gsWaitTimers.forEach(clearTimeout);
+            _gsWaitTimers = [];
+            var w = document.getElementById('gsheet-wait');
+            if (w) w.classList.remove('open', 'late');
+        }
+        function showGoogleSheetWait() {
+            var w = document.getElementById('gsheet-wait');
+            if (!w) return;
+            hideGoogleSheetWait();
+            document.getElementById('gsheet-text').textContent = 'Opening Google sign-in…';
+            w.classList.add('open');
+            _gsWaitTimers.push(setTimeout(function () {
+                w.classList.add('late');
+                document.getElementById('gsheet-text').textContent = 'Didn’t open? Tap here to sign in';
+            }, 4000));
+            _gsWaitTimers.push(setTimeout(hideGoogleSheetWait, 14000));
+        }
+        (function () {
+            var w = document.getElementById('gsheet-wait');
+            if (!w) return;
+            w.addEventListener('click', function (e) {
+                var late = w.classList.contains('late');
+                hideGoogleSheetWait();
+                if (late && e.target.closest && e.target.closest('#gsheet-card')) {
+                    try { mmAnalytics.event('login_path', { path: 'popup_from_wait' }); } catch (e2) {}
+                    _gisPromptAt = 0;
+                    popupGoogleSignIn();
+                }
+            });
+        })();
+
         function onGoogleSheetCredential(resp) {
+            hideGoogleSheetWait();
             if (!resp || !resp.credential) return;
             _gisPromptAt = 0;
             _userSignInInProgress = true;
@@ -790,6 +832,7 @@
                             popupGoogleSignIn();
                         } catch (e) {}
                     });
+                    showGoogleSheetWait();
                     return;
                 } catch (e) { console.warn('Google sheet prompt failed:', e && e.message); }
             }
@@ -798,6 +841,7 @@
             popupGoogleSignIn();
         }
         function popupGoogleSignIn() {
+            hideGoogleSheetWait();
             _userSignInInProgress = true;
             firebase.auth().signInWithPopup(googleProvider).catch(err => {
                 _userSignInInProgress = false;
