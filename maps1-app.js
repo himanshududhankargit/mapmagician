@@ -664,7 +664,10 @@
         // 235 = Sign in opens Google's account sheet over the page on Chrome / Edge (One Tap over
         //       FedCM, like Pinterest) instead of a new tab; a second tap within 30 s, or any
         //       browser without FedCM (iPhone, Firefox, in-app), gets the old popup.
-        var APP_VERSION = '235';
+        // 236 = If Google reports at once that the sheet can't show (cool-down after it was
+        //       closed), the SAME tap opens the popup, so no Sign in tap looks dead. Analytics
+        //       event login_path {sheet | sheet_skipped | popup | popup_second_tap}.
+        var APP_VERSION = '236';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -764,12 +767,37 @@
                 });
         }
 
+        // Every sign-in entry point calls this: auth dialog, floating button, paywall pill and
+        // "Signed in as" chip, review-step account switch, Settings, the session-reclaim fallback.
         function triggerGoogleSignIn() {
             if (_gisReady && Date.now() - _gisPromptAt > 30000) {
-                _gisPromptAt = Date.now();
-                try { google.accounts.id.prompt(); return; } catch (e) { console.warn('Google sheet prompt failed:', e && e.message); }
+                var tapAt = Date.now();
+                _gisPromptAt = tapAt;
+                try {
+                    try { mmAnalytics.event('login_path', { path: 'sheet' }); } catch (e) {}
+                    google.accounts.id.prompt(function (n) {
+                        // 236: under FedCM Google reports little, but a "skipped" moment within a
+                        // few seconds of the tap means the sheet could not show (Chrome's cool-down
+                        // after it was closed, or Google sign-in switched off for the site). The
+                        // tap's user activation is still live then, so open the popup on the SAME
+                        // tap instead of leaving it looking dead until a second tap.
+                        try {
+                            if (!n || !n.isSkippedMoment || !n.isSkippedMoment()) return;
+                            if (_gisPromptAt !== tapAt || Date.now() - tapAt > 4000) return;
+                            if (navigator.userActivation && !navigator.userActivation.isActive) return;
+                            try { mmAnalytics.event('login_path', { path: 'sheet_skipped', ms: Date.now() - tapAt }); } catch (e) {}
+                            _gisPromptAt = 0;
+                            popupGoogleSignIn();
+                        } catch (e) {}
+                    });
+                    return;
+                } catch (e) { console.warn('Google sheet prompt failed:', e && e.message); }
             }
+            try { mmAnalytics.event('login_path', { path: _gisReady ? 'popup_second_tap' : 'popup' }); } catch (e) {}
             _gisPromptAt = 0;
+            popupGoogleSignIn();
+        }
+        function popupGoogleSignIn() {
             _userSignInInProgress = true;
             firebase.auth().signInWithPopup(googleProvider).catch(err => {
                 _userSignInInProgress = false;
