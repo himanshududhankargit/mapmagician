@@ -1116,6 +1116,14 @@
         .pd-signin-pill:hover { background:#FFE4CC; }
         .pd-signin-pill:focus-visible { outline:2px solid #fff; outline-offset:2px; }
         .pd-signin-dot { width:7px; height:7px; border-radius:50%; background:#EA580C; flex:none; }
+        /* One line always (a long address ends in "…"), so the header height never changes. */
+        #pd-signin-pill-text { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        /* 234: signed in -> a calm chip naming the account (the paywall only shows to an account
+           that doesn't own the region, so "which account am I on?" is the question). A tap opens
+           Google's account chooser. */
+        .pd-signin-pill.is-in { background:rgba(255,255,255,0.16); color:#fff; }
+        .pd-signin-pill.is-in:hover { background:rgba(255,255,255,0.26); }
+        .pd-signin-pill.is-in .pd-signin-dot { background:#81C784; }
         .pd-body { padding:20px 24px 4px; }
         .pd-region-label { font-size:10px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:#00796B; text-align:center; margin-bottom:10px; }
         .pd-price-card { background:#F5FBFA; border:1px solid #B2DFDB; border-radius:14px; padding:22px 20px 16px; text-align:center; margin-bottom:18px; }
@@ -2621,7 +2629,8 @@
                     <div class="pd-kicker">Choose Your Plan</div>
                     <h3 id="zoom-restrict-title" class="pd-title">Web Unlock Region</h3>
                     <div id="zoom-restrict-region" style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;display:none;"></div>
-                    <!-- 232: replaces the region line while signed out (updatePaywallSignin) -->
+                    <!-- Replaces the region line (updatePaywallSignin): 232 sign-in pill while signed
+                         out, 234 "Signed in as <email>" chip while signed in. -->
                     <div class="pd-signin-row" id="pd-signin-row" hidden>
                         <button class="pd-signin-pill" id="pd-signin-pill" type="button"><span class="pd-signin-dot" aria-hidden="true"></span><span id="pd-signin-pill-text">Not signed in &middot; Sign in</span></button>
                     </div>
@@ -3605,7 +3614,7 @@
     <!-- Main app logic — extracted to external file so the browser parses but does not
          block on it during initial document parse. defer ensures it executes in document
          order after the inline Firebase init above and before DOMContentLoaded. -->
-    <script src="maps1-app.js?v=233" defer></script>
+    <script src="maps1-app.js?v=234" defer></script>
 
     <!-- Custom right-click menu for the map (replaces native context menu) -->
     <div class="map-ctx-menu" id="map-ctx-menu">

@@ -658,7 +658,10 @@
         // 233 = Google's sign-in screen names our site: authDomain is login.dpplans.com on
         //       dpplans.com and login.mapmagician.in on mapmagician.in (maps1.html firebaseConfig),
         //       not sodium-hour-256110.firebaseapp.com.
-        var APP_VERSION = '233';
+        // 234 = Signed in: the paywall header shows "Signed in as <email>" (a calm chip) in place of
+        //       the repeated region line (owner's idea, 2026-11-15); a tap opens Google's account
+        //       chooser. The pill/chip is one line always, so the header height never changes.
+        var APP_VERSION = '234';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -4632,25 +4635,40 @@
         // still fits on a phone. A tap opens Google sign-in straight from the gesture; after it,
         // fetchPurchaseStatus(true) -> checkAndReenableMap() closes the paywall when the account
         // owns this region, and this puts the region line back when it doesn't.
+        // 234: signed in, the same spot shows "Signed in as <email>" (class is-in): the paywall only
+        // shows to an account that doesn't own the region, so naming it answers "why is it
+        // locked?" for buyers with two Google accounts. A tap there opens Google's account chooser.
         var _pdSigninWanted = false; // true while the plan cards show (not the no-data dialog)
         function updatePaywallSignin() {
             var row = document.getElementById('pd-signin-row');
             var region = document.getElementById('zoom-restrict-region');
-            if (!row || !region) return;
+            var pill = document.getElementById('pd-signin-pill');
+            if (!row || !region || !pill) return;
+            var email = (currentUser && !currentUser.isAnonymous) ? (currentUser.email || '') : '';
             var signedOut = !currentUser || currentUser.isAnonymous;
-            var show = _pdSigninWanted && signedOut && !isEmbedMode && !isDemoMode;
+            var show = _pdSigninWanted && (signedOut || !!email) && !isEmbedMode && !isDemoMode;
             row.hidden = !show;
             if (show) {
-                var acct = signedOutAccount();
-                document.getElementById('pd-signin-pill-text').textContent = acct
-                    ? 'Signed out · Sign in as ' + acct
-                    : 'Not signed in · Sign in';
+                var text = document.getElementById('pd-signin-pill-text');
+                pill.classList.toggle('is-in', !signedOut);
+                if (!signedOut) {
+                    text.textContent = 'Signed in as ' + email;
+                    pill.title = 'Use a different Google account';
+                } else {
+                    var acct = signedOutAccount();
+                    text.textContent = acct ? 'Signed out · Sign in as ' + acct : 'Not signed in · Sign in';
+                    pill.title = 'Sign in with Google';
+                }
             }
             region.style.display = (!show && region.dataset.hasRegion === '1') ? 'block' : 'none';
         }
         document.getElementById('pd-signin-pill').addEventListener('click', function () {
-            try { mmAnalytics.event('paywall_signin_tap', { remembered: signedOutAccount() ? 1 : 0 }); } catch (e) {}
-            triggerGoogleSignIn();
+            var signedIn = !!(currentUser && !currentUser.isAnonymous);
+            try {
+                if (signedIn) mmAnalytics.event('paywall_switch_account', { from: 'header' });
+                else mmAnalytics.event('paywall_signin_tap', { remembered: signedOutAccount() ? 1 : 0 });
+            } catch (e) {}
+            triggerGoogleSignIn(); // select_account: lets a signed-in buyer pick another account
         });
         function hidePlanConfirm() {
             var ov = document.getElementById('zoom-restrict-overlay');
