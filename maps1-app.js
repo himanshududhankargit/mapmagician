@@ -655,7 +655,10 @@
         //       computer instead" (takes the session back, no popup); after "Stay signed out" the
         //       top-bar button turns orange ("Signed out · Sign in"; an orange circle with a dot on a
         //       phone) and the pill names the account, masked. A deliberate sign-out forgets it.
-        var APP_VERSION = '232';
+        // 233 = Google's sign-in screen names our site: authDomain is login.dpplans.com on
+        //       dpplans.com and login.mapmagician.in on mapmagician.in (maps1.html firebaseConfig),
+        //       not sodium-hour-256110.firebaseapp.com.
+        var APP_VERSION = '233';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
