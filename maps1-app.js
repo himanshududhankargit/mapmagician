@@ -667,7 +667,12 @@
         //       doesn't tell the page; the paywall pill kept falling back to a new window).
         // 239 = Same code as 234: Sign in = the Google sign-in window everywhere (via
         //       login.dpplans.com / login.mapmagician.in, "continue to MapMagician").
-        var APP_VERSION = '239';
+        // 241 = A page load no longer asks getCloudFrontCookies for a new token when the jar's
+        //       token was issued to this same user under 2 h ago (it still expires 3 h after
+        //       issue, and the 1-min tick still renews it 15 min early). The first purchase
+        //       fetch then re-issues if the token's districts differ from what the user owns.
+        //       Logs 2026-11-24: half of all web issuances repeated one under 2 h old.
+        var APP_VERSION = '241';
 
         // --- Auth & Payment ---
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -736,10 +741,8 @@
                 currentUser = user;
                 if (!user) {
                     firebase.auth().signInAnonymously().catch(function() {});
-                } else if (!user.isAnonymous) {
-                    fetchCloudFrontCookies();
                 } else {
-                    fetchCloudFrontCookies();
+                    _issueCfCookiesForUser(user);
                 }
                 if (user) _setEntitlementsKnown(); // embed has no purchase logic to wait for
                 return;
@@ -818,7 +821,7 @@
                     profileIcon.style.fontSize = '14px';
                 }
                 profileBtn.title = user.displayName || user.email;
-                fetchCloudFrontCookies();
+                _issueCfCookiesForUser(user);
                 if (user.email) registerSession(user.email);
 
                 // Realtime listener: re-fetch when purchases change server-side (admin refund, webhook, etc.)
@@ -924,7 +927,7 @@
                     mmAnalytics.setUserProperties({ auth_method: 'anonymous' });
                     mmAnalytics.clarityTag('auth', 'anonymous');
                 } catch (e) {}
-                fetchCloudFrontCookies();
+                _issueCfCookiesForUser(user);
                 _setEntitlementsKnown(); // anonymous web visitors hold no purchases
             } else {
                 profileBtn.classList.remove('signed-in');
@@ -1043,7 +1046,11 @@
             // exact failure the no-expires= note above describes.
             _cfWrittenAtMem = ok ? Date.now() : 0;   // expiry tracking works without storage
             try {
-                if (ok) localStorage.setItem(CF_META_KEY, JSON.stringify({ at: _cfWrittenAtMem, pids: _cfGrantedPids }));
+                // sub: whose token this is (null for a pre-auth write, which has none), so a
+                // later page load can tell whether the jar was issued to the same user.
+                if (ok) localStorage.setItem(CF_META_KEY, JSON.stringify({
+                    at: _cfWrittenAtMem, pids: _cfGrantedPids, sub: _mmpTokenSub(data['mmp-token'])
+                }));
                 else localStorage.removeItem(CF_META_KEY);
             } catch (e) { /* storage blocked: reuse simply never happens */ }
             return ok;
@@ -1057,8 +1064,9 @@
         //
         // This changes NOTHING about access: the browser attaches whatever is in the jar
         // to every tile request anyway, and the edge (signed policy + mmp-token) decides.
-        // Reuse only moves the first tile request earlier. The normal issuance still runs
-        // on every load, in the background, and replaces the cookies when it lands.
+        // Reuse only moves the first tile request earlier. Since 241 the background issuance
+        // runs only when the jar's token is not this user's or may be stale - see
+        // _issueCfCookiesForUser.
         const CF_META_KEY = 'mm_cf_meta';
         const CF_REUSE_MAX_AGE_MS = 2 * 3600000;   // well inside the ~3 h token lifetime
         let _cfReusedPids;                          // undefined = this load did not reuse
@@ -1267,6 +1275,79 @@
                 dpTileStatus = Array(dpLayerData.length).fill(false);
             }
             loadTilesBasedOnViewport();
+        }
+
+        // ── Load-time issuance: skipped when the jar already holds this user's token ──
+        // The auth listener used to call getCloudFrontCookies on every page load, even right
+        // after reusing the jar: on 2026-11-24 half of all web issuances came within 2 h of
+        // the same user's previous one (Rs ~4/day of Cloud Run CPU, with the Android repeats).
+        // Skipping it changes nothing about access:
+        //  - the jar's cookies and mmp-token still expire 3 h after THEIR issuance (the edge
+        //    enforces that), and the 1-min tick and the timer below still renew them in time;
+        //  - the server's checks (ban list, entitlements) still run at every issuance. A token
+        //    already handed out was always usable until it expired, asked again or not.
+        // What it must never do is keep a token that no longer fits the user, so the jar is
+        // kept only when:
+        //  - a real issuance (not pre-auth) wrote it for THIS uid (its `sub`, saved in
+        //    mm_cf_meta), and the mmp-token cookie is still in the jar;
+        //  - it is under CF_REUSE_MAX_AGE_MS old by the device clock (the reuse test);
+        //  - and, signed in, the first purchase fetch finds the token's districts equal to
+        //    what the user owns (_cfTokenMatchesPurchases). A purchase on another device, an
+        //    admin grant, a lapse or a refund since then re-issues at once.
+        // Sign-in, sign-out, purchases, renewals and 403 heals still issue exactly as before.
+        // Signed-in EMBED callers always issue: embed runs no purchase fetch to check against.
+        let _cfIssueSkipped = false;   // this load kept the jar's token instead of issuing
+
+        function _mmpTokenSub(token) {
+            try {
+                const part = String(token || '').split('.')[1];
+                if (!part) return null;
+                const claims = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/')));
+                return claims && typeof claims.sub === 'string' ? claims.sub : null;
+            } catch (e) { return null; }
+        }
+
+        // mm_cf_meta when the jar holds a usable token issued to `user`, else null.
+        function _cfJarIssuedTo(user) {
+            if (!user || isDemoMode) return null;
+            try {
+                const jar = document.cookie;
+                if (jar.indexOf('CloudFront-Key-Pair-Id=') === -1 || jar.indexOf('CloudFront-Policy=') === -1
+                    || jar.indexOf('CloudFront-Signature=') === -1 || jar.indexOf('mmp-token=') === -1) return null;
+                const meta = JSON.parse(localStorage.getItem(CF_META_KEY) || 'null');
+                if (!meta || typeof meta.at !== 'number' || !meta.sub || meta.sub !== user.uid) return null;
+                const age = Date.now() - meta.at;
+                if (age < 0 || age > CF_REUSE_MAX_AGE_MS) return null;
+                return meta;
+            } catch (e) { return null; }
+        }
+
+        function _issueCfCookiesForUser(user) {
+            if (isEmbedMode && user && !user.isAnonymous) return fetchCloudFrontCookies();
+            const meta = _cfJarIssuedTo(user);
+            // The auth listener can beat initMap: reuse the jar here, or issue if that fails.
+            if (!meta || (!cfCookiesReady && !_tryReuseCfCookies())) return fetchCloudFrontCookies();
+            if (_cfCookieInFlight) return _cfCookieInFlight;
+            _cfIssueSkipped = true;
+            // Another tab may have renewed the shared jar since initMap reused it.
+            _cfGrantedPids = Array.isArray(meta.pids) ? meta.pids : null;
+            _cfWrittenAtMem = meta.at;
+            // What the skipped issuance would have done on landing:
+            fetchLayerData();
+            scheduleCfCookieRefresh(meta.at + CF_TTL_MS);   // device-clock expiry; the tick backs it up
+            if (_cfReusedPids !== undefined) _afterReusedCookiesRefreshed();
+            else loadTilesBasedOnViewport();
+            return Promise.resolve(true);
+        }
+
+        // Does the token kept by _issueCfCookiesForUser grant exactly what the user owns?
+        // getPurchaseStatus and the token's grantedPids come from the same rows, so any
+        // difference means it is stale. A false "no" only costs one issuance.
+        function _cfTokenMatchesPurchases() {
+            if (!Array.isArray(_cfGrantedPids)) return false;
+            const owned = [];
+            activePurchases.forEach(function(v, pid) { if (!v.refunded) owned.push(pid); });
+            return owned.sort().join('|') === _cfGrantedPids.slice().sort().join('|');
         }
 
         // ── Expiry: never let the page sit on dead cookies ───────────────────────────
@@ -1721,9 +1802,15 @@
                 const tokenLacksExpected = !!expectPid && hasPurchase(expectPid)
                     && Array.isArray(_cfGrantedPids) && _cfGrantedPids.indexOf(expectPid) === -1;
                 if (!_purchaseSyncPrimed) {
-                    // Baseline for this session. The auth path already issues a token that
-                    // reflects these purchases, so there is nothing to re-sync yet.
+                    // Baseline for this session. The auth path normally issues a token that
+                    // reflects these purchases, so there is nothing to re-sync yet - unless it
+                    // kept an older token from the jar (_issueCfCookiesForUser) that no longer
+                    // matches them.
                     _purchaseSyncPrimed = true;
+                    if (_cfIssueSkipped && !_cfTokenMatchesPurchases()) {
+                        console.log('Kept mmp-token does not match purchases - re-issuing');
+                        await syncEdgeToEntitlements(expectPid);
+                    }
                 } else if (changed || tokenLacksExpected) {
                     await syncEdgeToEntitlements(expectPid);
                 }
